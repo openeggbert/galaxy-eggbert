@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Adding a Block Type — Galaxy Eggbert Docs</title>
+<title>Authoring a World — Galaxy Eggbert Docs</title>
+<meta name="description" content="Tutorial: author a Galaxy Eggbert world with a Python generator (world 012 as the worked example), check it, play it and script its playthrough, or build one in the in-game 3D editor.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,55 +22,232 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
-  <a href="index.html">Tutorials</a>
+  <a href="../tutorials/index.html" class="active">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Adding a Block Type</div>
-  <h1>Tutorial: Adding a Block Type</h1>
-  <p class="subtitle">Add a named constant in BlockTypes.hpp and see it rendered by GETerrainRenderer.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Tutorials</a> <span>/</span> Authoring a World</div>
+  <h1>Tutorial: Authoring a World</h1>
+  <p class="subtitle">Two routes to a world: a Python generator in <code>tools/worlds/</code> (how every campaign world is made) or the in-game 3D editor (how players make theirs).</p>
 
-  <div class="warn">
-    <strong>Block type IDs are icon indices — think before adding new ones</strong>
-    A block's type ID doubles as an icon index into <code>object-m.png</code> (441 addressable
-    tiles). New "named" block types should reference an existing icon unless you also add art.
-    IDs used by mobile-eggbert <code>.txt</code> loading paths are frozen to match that format.
-  </div>
+  <div class="warn"><strong>True 3D, no conversion</strong> The original's 2D map of a mission gives its
+  identity, theme, mechanics, difficulty and progression, and nothing else. No conversion, extrusion, tracing,
+  side-view "2.5D", lane locking or row-to-row mapping: each world is its own hand-authored 3D design, using only
+  the game's existing tiles and objects as the original uses them.</div>
 
-  <h2>Step 1 — Add a Named Constant</h2>
-  <p>File: <code>include/GalaxyEggbert/BlockTypes.hpp</code></p>
-  <pre><code>static constexpr uint16_t MyBlock = 42;  // icon index in object-m.png</code></pre>
+  <h2>Route A: a Python generator</h2>
+  <p>Every campaign world is the output of a script, <code>tools/worlds/worldNNN.py</code>, and the committed
+  <code>worlds3d/worldNNN.vwr</code> is its build product. Change the script, never the file. The worked example
+  here is mission 012, the crate lesson of the blue machine world.</p>
 
-  <h2>Step 2 — Use It When Authoring a World</h2>
-  <pre><code>world.setBlock(x, y, z, Block::make(BlockTypes::MyBlock));</code></pre>
-  <p>See <a href="first-object.html">Authoring a New .vwr World</a> for the full generator pattern.</p>
+  <h3>1. Read the brief and the reference</h3>
+  <p><code>plans/briefs/world012.md</code> records what the original teaches (with the gameplay video's time span),
+  the 3D design, and the checks that were run. For world 012: rooms climbing to a ledge too high to jump, each
+  solved with crates (push one to the red dot, pull one out of a corner, stack two, then three). The 3D design
+  turns the rooms into five machine terraces climbing away from the start, each higher than the last by its
+  lesson's ledge. The original's map is <code>worlds/world012.txt</code> in the sibling repository
+  <code>mobile-eggbert</code>; <code>tools/world_inventory.py</code> summarises every world.</p>
 
-  <h2>Step 3 — (Optional) Make It Animated</h2>
-  <p>
-    If the block should animate, add it to the frame tables in <code>GETerrainRenderer</code>
-    (ported from mobile-eggbert's <code>Tables.cpp</code>) and to
-    <code>BlockTypes::tileAnimBase()</code>'s classification, following the existing pattern for
-    Lava/Crusher/Saw/Spike/Water/Fan/Marine/Temp.
-  </p>
+  <h3>2. The generator</h3>
+  <p>A generator has a docstring naming its brief and how to run it, a <code>main()</code> that builds a
+  <code>World</code> and saves it, and, where the checker cannot model a gate, a variant that writes the "solved"
+  state. Shortened from <code>tools/worlds/world012.py</code>:</p>
+  <pre><code>sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-  <h2>Step 4 — Rebuild and Verify</h2>
-  <pre><code>cmake --build build-cna --target GalaxyEggbertCNA -j2
-./build-cna/GalaxyEggbertCNA</code></pre>
-  <p>
-    Navigate the invisible collision point near your new block and confirm it renders with the
-    expected texture. If it appears untextured or seams appear, check <a href="../classes/GETileAtlas.html">GETileAtlas</a>'s
-    UV computation for that icon index.
-  </p>
+from kit import MACHINE_FACES, MACHINE_FLOOR, MONITOR, O, World, props, rect, wall  # noqa: E402
+
+RED_DOT = 3                 # the red ball tile marking where a crate goes
+X0, X1 = 40, 58
+# Terraces: (z0, z1, top); Blupi walks at top + 1.
+T0 = (62, 70, 0)
+T1 = (50, 61, 3)
+...
+SPAWN = (48, 1, 68)
+
+def main(argv) -&gt; int:
+    solved = len(argv) &gt; 1 and argv[1] == "--solved"
+    rng = random.Random(12)
+    w = World(mission=12, sky=0)
+    for z0, z1, top in (T0, T1, T2, T3, T4):
+        terrace(w, z0, z1, top, rng)
+    ...
+    def crate(x, y, z, final):
+        w.place(O.CRATE, *(final if solved else (x, y, z)))
+
+    # 1. Push the crate forward (-Z) to the red dot under the 3-high ledge of T1.
+    w.set(48, 1, T1[1], RED_DOT)
+    crate(48, 1, 66, (48, 1, 62))
+    w.hint_zone(0, X0, 1, T0[0], X1, 3, T0[1])
+    ...
+    w.place(O.EXIT, 49, top, 18)
+    w.spawn = SPAWN
+    out = Path(argv[2]) if solved else Path(__file__).resolve().parents[2] / "worlds3d" / "world012.vwr"
+    w.save(out)</code></pre>
+  <p>The authoring API is <code>tools/worldkit.py</code>: <code>World(mission, sky)</code>, <code>set</code>,
+  <code>get</code>, <code>clear</code>, <code>fill</code>, <code>box</code>, <code>stairs</code>,
+  <code>place</code> (objects, with an optional patrol <code>end</code>), <code>bigdecor</code>,
+  <code>hint_zone</code>, <code>rotate_plate</code>, <code>spawn</code>, <code>save</code>. Coordinates are the raw
+  grid (0-99, Y up); a block at height y makes y + 1 the walking level. Block numbers are icons of
+  <code>object-m.png</code>; object types are <code>Def::ObjectType</code> values (<code>ObjectType</code> in
+  worldkit names the common ones). The kits add building pieces: <code>tools/worlds/kit.py</code> for theme 1
+  (<code>wall</code>, <code>slab</code>, <code>rail</code>, <code>props</code>, <code>lift</code>, <code>mine</code>,
+  <code>sign_niche</code>, <code>rect</code>, <code>line</code>), and one module per theme
+  (<code>palace.py</code>, <code>village.py</code>, <code>cheese.py</code>, <code>station.py</code>,
+  <code>slime.py</code>, <code>toys.py</code>, <code>skyworks.py</code>, <code>clods.py</code>,
+  <code>cobbles.py</code>). The world format is described on <a href="../internals/vwr-format.html">The .vwr
+  Format</a>.</p>
+
+  <h3>3. Regenerate</h3>
+  <pre><code>python3 tools/worlds/world012.py                     # writes worlds3d/world012.vwr
+python3 tools/worlds/world012.py --solved solved.vwr # crates where the lessons put them
+git diff --stat worlds3d/</code></pre>
+  <p>Generators are deterministic (any randomness is seeded), so re-running an unchanged script reproduces the
+  committed file byte for byte; a diff after you changed nothing is a bug in the script.</p>
+
+  <h3>4. Check it</h3>
+  <pre><code>python3 tools/levelcheck.py worlds3d/world012.vwr      # FAIL by design: the crates must move first
+python3 tools/levelcheck.py solved.vwr                  # the exit is reachable
+python3 tools/campaigncheck.py
+python3 tools/watercheck.py worlds3d/world012.vwr
+python3 tools/audit/patrol_envelope.py
+python3 tools/audit/lift_envelope.py
+ctest --test-dir build-cna-opengl3 -R VerifyShippedWorlds</code></pre>
+  <p><code>levelcheck.py</code> is conservative: it models walking, jumps of up to two blocks or two cells,
+  falls, lifts, swimming and teleporters, but not crates, dynamite, vehicles or timing. That is why world 012
+  needs its solved variant (both results were reproduced on 2026-11-07). Use <code>flightcheck.py</code> when a
+  helicopter matters. Other generators have staged variants with their own options; read their docstrings.</p>
+
+  <h3>5. Play it</h3>
+  <pre><code>cd build-cna-opengl3
+./GalaxyEggbert --mission 12
+./GalaxyEggbert --mission 12 --spawn 48,1,68,0     # x,y,z in raw grid, yaw in degrees</code></pre>
+  <p>The build directory holds a staged copy of <code>worlds3d/</code>, refreshed by a post-build step of the
+  game target, so it does not change when only a world file changed: copy the regenerated file over the staged
+  one, or look at it with <code>tools/qa_live.sh</code>, which links the repository's <code>worlds3d/</code>
+  directly (<a href="../development/testing.html">Testing &amp; QA</a>).</p>
+
+  <h3>6. Script the playthrough</h3>
+  <p>Every campaign mission has a scripted playthrough in <code>tools/autoplay/</code>. The start of
+  <code>world012.txt</code>:</p>
+  <pre><code># Mission 012 played through (plans/briefs/world012.md).
+wait 30
+expect mission = 12
+expect lives &gt;= 3
+# 1. Push the crate four cells -Z to the red dot under T1 (it stops at T1's face), climb it.
+go 48.00 62.89 tol 0.05 max 400
+go 48 62 jump 1.4
+until ground = 1
+expect y &gt;= 1.95</code></pre>
+  <pre><code>tools/autoplay.sh build-cna-opengl3 tools/autoplay/world012.txt 12</code></pre>
+  <p>Write a section, run it, read the trace, repeat (<code>trace N</code> logs every tick, <code>shots N</code>
+  saves frames). Jumps need a run-up; pickups need Blupi within about 0.6; synchronise on cycles with
+  <code>temp</code>, <code>blitz</code> or <code>crush</code>, and on lifts with <code>lift X Y Z</code>. A changed
+  route needs its waits retuned: mine, lift and cycle phases are tick-bound. A theme hub's script
+  (<code>world010.txt</code>) includes its missions' scripts, so replay the hub too.</p>
+
+  <h3>7. Finish</h3>
+  <p>Update the brief (reference, design, checks) and the audit rows the change affects
+  (<code>python3 tools/audit/world_lessons.py --check</code>, <code>python3 tools/audit/lesson_inventory.py</code>).
+  Commit the script, the <code>.vwr</code>, the playthrough and the brief together, one world per commit, saying
+  what the original does and how the 3D version does it.</p>
+
+  <h2>Rules for a fair 3D world</h2>
+  <ul>
+    <li><strong>Movement.</strong> Blupi jumps up to two blocks and across up to two cells; he does not step up
+      (every one-block step is a jump, needing two free cells above). Corridors three cells wide; no long
+      one-wide, one-high tunnels (the chase camera needs room). Look for shortcuts: a crate beside a ledge is a
+      stair, a wall top next to a goal is a path.</li>
+    <li><strong>Tiles.</strong> Look up a tile's class in <code>tools/data/blocks.csv</code>. Tiles with an empty
+      collision mask and no role are passable scenery: never walls, floors or ceilings. Tiles 15-31 and 49-60 have
+      transparent parts. Block 214 is an invisible barrier that stops Blupi on foot but lets the helicopter and
+      overcraft pass.</li>
+    <li><strong>Solid BigDecor.</strong> The palms, trees, plants, houses, machines, toys, palace pieces and the
+      statue (<code>kSolidBigDecorIcons</code>) block Blupi as large as their models: keep them off required
+      routes.</li>
+    <li><strong>Creatures and lifts.</strong> <code>World.place</code> applies each creature type's original speed
+      and rest (<code>CREATURE_TIMING</code>), whatever you pass. Use <code>kit.lift</code> with the original's
+      tick timings; no lift may be faster than the original's fastest, and a lift's end must not be inside a
+      block.</li>
+    <li><strong>Water.</strong> A swimming Blupi gets out only onto a bank level with the water's top cell; build
+      every pool's water up to its banks.</li>
+    <li><strong>Ends and hints.</strong> A theme's last mission ends with the golden key (type 21), the others at
+      the red arrow (type 7). Training hints exist only for missions 11-14, placed as hint zones.</li>
+    <li><strong>Music and sky.</strong> <code>World(mission=N, sky=region)</code> takes the original's region;
+      the music defaults to the original mission's (<code>ORIGINAL_MUSIC</code>).</li>
+  </ul>
+
+  <h2>Route B: the in-game 3D editor</h2>
+  <p>The main menu's <strong>3D World Editor</strong> button opens the slot browser: ten slots for each of the
+  three players. Inside a world you fly the camera, aim with the mouse (or touch, or a gamepad) and place the
+  game's own blocks, objects, BigDecor, Blupi's start, the background and the music from an icon palette in
+  Eggbert 2's order; undo and redo cover every edit, and a box can be filled, copied and stamped. The dice saves
+  and starts a play-test; Pause's Back returns to the editor. The controls are on
+  <a href="../editor.html">3D World Editor</a>.</p>
+  <ul>
+    <li>A slot is an ordinary <code>.vwr</code>: <code>customworlds/gamerN/custom_001.vwr</code> to
+      <code>custom_010.vwr</code> in the player's folder (<code>N</code> 0-2), with a thumbnail beside it and three
+      generations of backups.</li>
+    <li>Export copies a slot to <code>customworlds/shared/</code> (a download on the web); every <code>.vwr</code>
+      there is listed in the browser, and a click copies it into a free slot. That is also how a world written by
+      a Python script could be brought into a slot (<code>CustomWorldStorage.hpp</code>; not separately verified
+      for generator output).</li>
+    <li>Worlds made in the editor can become places of the player's own galaxy (<a href="../galaxy.html">Your Own
+      Galaxy</a>).</li>
+    <li>An editor world has no generator, so it is not a campaign world. Shipping one as
+      <code>worldNNN.vwr</code> would need its mission number to match the file name
+      (<code>VerifyShippedWorlds</code> enforces it).</li>
+  </ul>
+  <div class="note"><strong>Editing a shipped world in the game</strong> The typed word <code>xnjttjpo</code>
+  opens the editor on the world being played and saves over the shipped file (keeping a backup). That is a player
+  feature. For the repository, a campaign world's source is its generator: change the script.</div>
 
   <div class="page-nav">
-    <a href="first-object.html">← Authoring a New .vwr World</a>
-    <a href="index.html">Tutorials ↑</a>
+    <a class="prev" href="../tutorials/building.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Tutorial: Building</span>
+    </a>
+    <a class="next" href="../tutorials/first-object.html">
+      <span class="label">Next</span>
+      <span class="title">Tutorial: A Block or Object Behaviour &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

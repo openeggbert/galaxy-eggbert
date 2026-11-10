@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Known Issues &amp; Roadmap — Galaxy Eggbert Docs</title>
+<title>Known Issues &amp; Open Work — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's known limitations and open work as of 2026-11-10: what waits on the owner, what cannot be verified here, what was decided and kept, and smaller backlog items.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,105 +14,182 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
-  <a href="index.html">Development</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html" class="active">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Known Issues &amp; Roadmap</div>
-  <h1>Known Issues &amp; Roadmap</h1>
-  <p class="subtitle">What GalaxyEggbertCNA can do today (2026-07-04), what's next, and the full E3D-MIG task list.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Development</a> <span>/</span> Known Issues</div>
+  <h1>Known Issues &amp; Open Work</h1>
+  <p class="subtitle">What is left as of 2026-11-10, from <code>CURRENT.md</code> ("Known limitations", "Open work") and the handbook's backlog chapter.</p>
 
-  <div class="note">
-    <strong>easy-3d replaced by cna-engine (2026-10-20)</strong>
-    The helper library easy-3d (namespace <code>Easy3D</code>) named on this page was removed on
-    2026-10-20 and replaced by the strict modules of cna-engine (<code>CnaEngine::Core</code>,
-    <code>CnaEngine::Graphics</code>). The easy-3d billboard blocker listed below no longer applies:
-    billboards are built with <code>MeshBuilder::AddBillboard</code> and drawn as a
-    <code>GpuMesh</code>. See <a href="../engine-integration.html">Engine Integration</a>.
-  </div>
+  <p>The fidelity audit's waves are done and every ledger row is settled; the completion plan's milestones and
+  the owner's later requests (main-menu demos, recordings, editing the shipped worlds, each player's own galaxy,
+  sharing them) are done too. What remains is mostly verification that needs hardware or a person, and small
+  cosmetic items.</p>
 
-  <h2>What Works Today</h2>
+  <h2>Platform status</h2>
+  <table>
+    <tr><th>Target</th><th>Status</th></tr>
+    <tr><td>Linux desktop (OpenGL)</td><td><span class="badge badge-done">Verified</span> the maintained, playable target: ctest, golden frames and trace, scripted playthroughs, live checks under Xvfb</td></tr>
+    <tr><td>Web (WebGL 2)</td><td><span class="badge badge-done">Verified manually</span> builds and plays in headless Chrome (2026-11-09); not part of CI</td></tr>
+    <tr><td>Android</td><td><span class="badge badge-wip">Partly verified</span> builds a debug APK that starts and draws the 3D models in an emulator; not played on a device</td></tr>
+    <tr><td>Windows (<code>SDLGPU</code>)</td><td><span class="badge badge-planned">Not verified</span> no fresh cross-build and live 3D run; not called supported until both pass</td></tr>
+    <tr><td>Linux runtime bundle (<code>package</code> target)</td><td>produces the archive; launching it is a host check, not a release gate</td></tr>
+  </table>
+  <p>See <a href="../platform-support.html">Platform Support</a> for details.</p>
+
+  <h2>Waiting on the owner</h2>
   <ul>
-    <li>Opt-in CMake build (<code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code>), builds clean.</li>
-    <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> world (<code>worlds3d/world001.vwr</code>).</li>
-    <li>Renders real, textured terrain across all Y layers — one cube per non-air block, via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code> (since 2026-10-20: cna-engine's <code>MeshBuilder</code>/<code>GpuMesh</code>).</li>
-    <li>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp) at 6 fps.</li>
-    <li>Invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision, 1-block step-up traversal, gravity.</li>
+    <li><strong>A release of the desktop and web builds.</strong> They pass every automated check; the release
+      audit (<code>plans/audit/release_audit.md</code>) leaves only the owner's word. The owner's decision so far
+      is no release yet.</li>
+    <li><strong>A human play pass</strong> (optional). <code>MR-0004</code> lists what to try; the owner judged
+      the automated playthroughs plus the reachability audit sufficient (<code>MR-0007</code>), so it holds
+      nothing up.</li>
   </ul>
 
-  <h2>Not Yet Implemented</h2>
-  <table>
-    <tr><th>Area</th><th>Status</th><th>Blocked on</th></tr>
-    <tr><td>Blupi sprite rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Was: easy-3d BillboardBatch vertex builder + CNA renderer adapter (E3D-MIG-061/062). No longer a blocker: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code></td></tr>
-    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Billboard-vs-cube design decision (the easy-3d billboard blocker is gone)</td></tr>
-    <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td><td>CNA SpriteBatch usage (E3D-MIG-090…093)</td></tr>
-    <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td><td>Sound wrapper around CNA audio (E3D-MIG-080…083)</td></tr>
-    <tr><td>Real gameplay (hazards, enemies, pickups, exit)</td><td><span class="badge badge-planned">Planned</span></td><td>E3D-MIG-100…107</td></tr>
-    <tr><td>Save/load</td><td><span class="badge badge-planned">Planned</span></td><td>Save-format reuse decision, not yet made</td></tr>
-    <tr><td>Chunk-radius streaming / face culling</td><td><span class="badge badge-planned">Planned</span></td><td>E3D-MIG-057; not urgent until worlds get denser</td></tr>
-  </table>
-
-  <h2>Known Bugs / Limitations</h2>
+  <h2>Needs hardware that was not available</h2>
   <ul>
-    <li>Relative asset paths (<code>"worlds3d/world001.vwr"</code>, <code>"Content/icons/object-m.png"</code>) only work when run from the build output directory.</li>
-    <li>No face culling — every non-air block draws a full cube even where fully occluded by neighbors.</li>
-    <li>Clean-exit-on-window-close path is only tested via forced kill so far, not verified end-to-end.</li>
-    <li>128 of 129 animated reference GIFs in <code>mobile-eggbert-reference/images/</code> were found corrupted (frame-ghosting from a missing GIF disposal method); the tool is fixed but only 1 GIF has been regenerated so far — a documentation gap, not a code bug.</li>
-    <li>Background <code>region=</code> → filename mapping is unresolved for most values (<code>mobile-eggbert-reference/05-backgrounds.md</code>, only 3 of 38 characterized).</li>
+    <li><strong>Android on a device</strong> (<code>Q-009</code>): no device or KVM-capable emulator was
+      available to play it. CNA's fix UB-007 made the 3D models draw on the emulator, and on 2026-11-09 a
+      release APK reached the title screen on a phone. The maintainer reported from that phone that the
+      accelerometer did not react and that the game sometimes froze until restarted; neither has been
+      reproduced yet (the next step is an <code>adb logcat</code> capture).</li>
+    <li><strong>A physical gamepad, touch screen and accelerometer</strong>: the controls were verified with an
+      SDL virtual gamepad and simulated input only.</li>
+    <li><strong>Windows</strong>: the <code>SDLGPU</code> renderer path needs a fresh cross-build and a live 3D run.</li>
   </ul>
 
-  <h2>Near-Term Roadmap (from NEXT.md)</h2>
-  <ol>
-    <li>Continue the mobile-eggbert-reference documentation rework (regenerate remaining animated GIFs, then sounds/backgrounds docs).</li>
-    <li>Chunk-radius world streaming once denser hand-authored worlds exist.</li>
-    <li>Author more <code>.vwr</code> worlds beyond the single proof-of-concept.</li>
-    <li>Add face-culling/occlusion to <code>GETerrainRenderer</code>.</li>
-    <li>Render Blupi as a billboard — the easy-3d billboard blocker is gone: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code> cover it.</li>
-    <li>Verify <code>GalaxyEggbertCNA</code>'s clean-exit-on-window-close path.</li>
-  </ol>
+  <h2>In progress</h2>
+  <ul>
+    <li><strong>2x textures.</strong> The code that loads <code>Content/icons2x/</code> and
+      <code>Content/backgrounds2x/</code> is in (the Setup's "Textures", <code>GALAXY_TEXTURES</code>), but the
+      re-rendered sheets are not committed yet, so 2x finds no sheets and stays 1x.</li>
+    <li>The working log lists release packages and a goodbye screen on quitting (as in Speedy Blupi) as next
+      steps; neither exists yet.</li>
+  </ul>
 
-  <h2>Full E3D-MIG Task List (plan.md)</h2>
-  <table>
-    <tr><th>Range</th><th>Status</th><th>Covers</th></tr>
-    <tr><td>E3D-MIG-000…005</td><td><span class="badge badge-done">Done</span></td><td>Docs/analysis/direction-lock write-up</td></tr>
-    <tr><td>E3D-MIG-NEXT-001…006</td><td><span class="badge badge-done">Done</span></td><td>Build option, skeleton tree, executable target, minimal clear-color loop</td></tr>
-    <tr><td>E3D-MIG-010…014</td><td><span class="badge badge-done">Done</span></td><td>CNA/Easy3D/mobile-eggbert CMake inspection, asset-copy strategy decided</td></tr>
-    <tr><td>E3D-MIG-020…026</td><td><span class="badge badge-done">Done</span></td><td>Option added, skeleton files, minimal Game subclass verified via smoke run</td></tr>
-    <tr><td>E3D-MIG-030…043</td><td><span class="badge badge-done">Done</span></td><td>Asset build-time copy, shared sources, world file loads end-to-end, minimal GEWorldRuntime</td></tr>
-    <tr><td>E3D-MIG-050…055</td><td><span class="badge badge-done">Done</span></td><td>CNA draw-path decision, CubeMesh, CubeMeshRenderer (easy-3d; replaced by cna-engine's MeshBuilder/GpuMesh on 2026-10-20), GETileAtlas, GETerrainRenderer, animated tiles</td></tr>
-    <tr><td>E3D-MIG-058…060</td><td><span class="badge badge-done">Done</span></td><td>.vwr as default load path, GEBlupiController invisible movement + VerifyBlupiMovement tool</td></tr>
-    <tr><td>E3D-MIG-015</td><td><span class="badge badge-wip">Pending decision</span></td><td>Whether to request a mobile-eggbert <code>add_library()</code> target</td></tr>
-    <tr><td>E3D-MIG-056</td><td>Standing constraint</td><td>Do not add a MeshCraft/mesh-import path</td></tr>
-    <tr><td>E3D-MIG-057</td><td><span class="badge badge-planned">Planned</span></td><td>Chunk-radius streaming</td></tr>
-    <tr><td>E3D-MIG-061…066</td><td><span class="badge badge-planned">Planned</span></td><td>Billboard vertex builder, CNA billboard adapter, render Blupi as billboard, Blupi state-machine port</td></tr>
-    <tr><td>E3D-MIG-070…074</td><td><span class="badge badge-planned">Planned</span></td><td>Render pickups/enemies as billboards, faithfulness checks</td></tr>
-    <tr><td>E3D-MIG-080…083</td><td><span class="badge badge-planned">Planned</span></td><td>Sound wrapper, 93-channel playback parity</td></tr>
-    <tr><td>E3D-MIG-090…093</td><td><span class="badge badge-planned">Planned</span></td><td>HUD via CNA SpriteBatch</td></tr>
-    <tr><td>E3D-MIG-100…107</td><td><span class="badge badge-planned">Planned</span></td><td>Gameplay porting: pickups, hazards, enemy stomp, respawn invincibility, exit gate, save/load</td></tr>
-    <tr><td>E3D-MIG-110…112</td><td>Standing constraint</td><td>Keep Simple3D until CNA reaches parity, retire only then</td></tr>
-    <tr><td>E3D-MIG-120…124</td><td>Out of scope</td><td>Optional items: 3D Blupi model, camera modes, Lua, renderer polish</td></tr>
-  </table>
+  <h2>Decided and kept as they are</h2>
+  <ul>
+    <li>The 56 <code>.max</code> (3D Studio MAX) sources are not converted (<code>MR-0001</code>, closed as
+      <code>MR-0010</code>): the shield and the charge stay the original's sprites, as do explosions, splashes and
+      sparks.</li>
+    <li>Procedural textures (bark, metal noise, wood grain) stay flat colours on the models without the 3D
+      effects: a bake measured worse. The wind tiles stay 2D effects (no 3D scene exists).</li>
+    <li>The fish's head (<code>BB3D-032</code>): cosmetic, every lead tested.</li>
+    <li>Blupi does not walk up one-block steps; he jumps, as the original's <code>Decor::TestPath</code>
+      requires.</li>
+  </ul>
 
-  <h2>Source of Truth</h2>
-  <p>
-    <code>NEXT.md</code> and <code>plan.md</code> in the source repository root are authoritative
-    and change frequently — check them directly before starting new work.
-  </p>
+  <h2>Known limitations</h2>
+  <ul>
+    <li>First person still uses an invisible collision point for Blupi. Without <code>avatars3d/blupi/</code>
+      the game falls back to a fox placeholder model.</li>
+    <li>3D effects: Ultra's first frame builds the finer atlas and its maps (about two seconds). The effects need
+      GLSL shaders and render targets: checked on desktop OpenGL 3.3 and WebGL 2; on Android (OpenGL ES 3) they
+      were not run, and Ultra was not run on Android or the web. Where a shader does not compile, that effect is
+      left out by itself and fog, soft shadows and particles remain. The sun's shadow reaches 160 blocks ahead of
+      the camera; the Ray Dream materials are approximations over a value noise; a skinned model above 56 bones
+      (none today) would fall back to the stock effect.</li>
+    <li>Editor text is deliberately limited to functional readouts (coordinates, background ids, notices); the
+      tool palette is icon-driven.</li>
+    <li>Intermittent window-focus or input loss has been seen under Xvfb during automated runs; it has not been
+      reproduced as a defect in the game's code.</li>
+  </ul>
+
+  <h2>Smaller backlog items</h2>
+  <p>From <code>docs/handbook/08-backlog.md</code> (2026-11-07) and checked in the code on 2026-11-10. None blocks
+  a release.</p>
+  <ul>
+    <li>Object type 31 (the charge pickup) shows the electrode model and has no pose for icon 243; it is never
+      placed in a shipped world.</li>
+    <li>No separate turn clips for vehicles, swimming or the air: the model yaws over the original's own turn
+      time, by design.</li>
+    <li>The lightning: every bolt cell shows the same frame at a time, where the original draws each cell's own
+      random frame.</li>
+    <li>The <code>zoom</code> cheat is limited by walls: the chase camera stops at them, so caves keep a short
+      view. A see-through cut-away of walls between camera and Blupi is not built.</li>
+    <li>The saws' switch machine (tiles 384/385) keeps its open side as its front and can stand edge-on to the
+      player; a version that turned it towards Blupi was reverted because it swung as he walked past.</li>
+    <li>Switch reach: <code>WorldRuntime::TryActivateSwitch</code> accepts a machine within
+      <code>kReach = 0.55</code> of Blupi; the original needs him in its tile.</li>
+    <li>The parked skateboard's height above the floor (<code>kSkateLift = 0.45f</code>,
+      <code>GalaxyEggbertGameScene.cpp</code>) was tuned by eye on a probe world.</li>
+    <li>The house's window recess is dark in the sprite (a cast shadow) and lit in the game, which casts no
+      shadows on models without the 3D effects.</li>
+    <li>A report of odd-looking grass seen from above on the title scene turned out, in the last screenshot, to
+      show plant models; which model was never identified.</li>
+  </ul>
+
+  <h2>Stale statements in the repository's documents</h2>
+  <p>Worth knowing when you read the sources; fix them when you touch the file.</p>
+  <ul>
+    <li><code>CURRENT.md</code>'s "Verification baseline" table still shows 93 tests and a quarantined easy-gl
+      test, and one bullet says CI excludes a failing test; today every registered test runs, in CI too.</li>
+    <li>The header comment of <code>Autoplay.hpp</code> omits the <code>vehicle</code> condition field that the
+      parser accepts.</li>
+    <li><code>README.md</code> and <code>ANDROID.md</code> mention <code>git submodule update</code>; the
+      repository has no submodules.</li>
+    <li>The handbook (2026-11-07) says the player's files are written to the build directory; since 2026-11-10
+      they go to the per-user data folder (or <code>--user</code> / <code>GALAXY_USER_DIR</code>).</li>
+  </ul>
+
+  <div class="note"><strong>Older roadmaps</strong> Earlier versions of this page listed the July 2026 migration
+  tasks (<code>E3D-MIG-*</code>). That work is finished; the ids survive only in old code comments and
+  <code>plan.md</code>.</div>
 
   <div class="page-nav">
-    <a href="extending-the-game.html">← Extending the Game</a>
-    <a href="index.html">Development ↑</a>
+    <a class="prev" href="../development/extending-the-game.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Extending the Game</span>
+    </a>
+    <span></span>
   </div>
 </main>
 </div>

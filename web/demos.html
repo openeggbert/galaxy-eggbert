@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demos &amp; Recordings — Galaxy Eggbert Docs</title>
+<meta name="description" content="The main menu's demos, recording your own demo from the pause screen, sharing .gdemo files, and the developer tools that record and verify the shipped demos.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html" class="active">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Demos &amp; Recordings</h1>
+  <p class="subtitle">Recorded games that play by themselves in the main menu, the demos you record yourself, and the <code>.gdemo</code> files behind both.</p>
+
+  <p>
+    Speedy Blupi plays a recorded game when nobody touches the main menu for a while. Galaxy Eggbert does
+    the same: the menu plays ten short demos, recorded input replayed through the normal simulation, so a
+    demo looks and sounds exactly like real play. Players can also record their own demo into any of the
+    ten positions, give it a name, and pass it to other players as a file. This page describes the state
+    as of 2026-11-10.
+  </p>
+  <p>
+    <span class="badge badge-done">Done</span> Main-menu demos, recordings, names, export and import (desktop and web).
+    <span class="badge badge-wip">Not verified</span> Android, a physical gamepad, a real touch screen.
+  </p>
+
+  <h2>The main menu's demos</h2>
+  <h3>How a demo starts</h3>
+  <ul>
+    <li><strong>The Demo button</strong>, top right of the main menu under Exit, starts the demos at once.</li>
+    <li><strong>40 seconds without input</strong> start them too (<code>kDemoIdleSeconds</code>; the original waited
+      1000 ticks, "about 30 seconds"). The time counts only in the settled main menu of the active window: not in
+      Play, Pause, Setup, the editor, the help panel, a menu fade or the demo positions screen. Any input, mouse
+      movement included, starts the count again.</li>
+  </ul>
+  <p>The ten positions play in turn, and after the last the first plays again. A position whose demo cannot be
+    played is skipped. Each demo lasts 45 to 50 seconds.</p>
+  <table>
+    <tr><th>Position</th><th>Shipped file</th><th>Mission</th><th>Title stored in the file</th></tr>
+    <tr><td>1</td><td><code>demo001.gdemo</code></td><td>011</td><td>World 1: pillars, mine pits and lifts</td></tr>
+    <tr><td>2</td><td><code>demo002.gdemo</code></td><td>074</td><td>World 7: skateboard over the mines and lava</td></tr>
+    <tr><td>3</td><td><code>demo003.gdemo</code></td><td>105</td><td>World 10: helicopter over the cavern</td></tr>
+    <tr><td>4</td><td><code>demo004.gdemo</code></td><td>023</td><td>World 2: the tower of keys</td></tr>
+    <tr><td>5</td><td><code>demo005.gdemo</code></td><td>033</td><td>World 3: the haunted house of the eight wasps</td></tr>
+    <tr><td>6</td><td><code>demo006.gdemo</code></td><td>055</td><td>World 5: the dark works</td></tr>
+    <tr><td>7</td><td><code>demo007.gdemo</code></td><td>065</td><td>World 6: the slime catacombs</td></tr>
+    <tr><td>8</td><td><code>demo008.gdemo</code></td><td>081</td><td>World 8: the sky steps</td></tr>
+    <tr><td>9</td><td><code>demo009.gdemo</code></td><td>112</td><td>World 11: the machine cavern</td></tr>
+    <tr><td>10</td><td><code>demo010.gdemo</code></td><td>123</td><td>World 12: the library</td></tr>
+  </table>
+  <p>While a demo plays, the recorded input drives the ordinary simulation at 60 ticks a second, with picture
+    and sound, and the word "Demo" is shown top left. The demo uses the recording's own profile (hub doors,
+    lives, controls) but your sound, volumes, 3D terrain, <a href="graphics.html">3D effects level</a> and
+    fullscreen setting.</p>
+
+  <h3>What stops a demo</h3>
+  <ul>
+    <li>A new key, mouse button, mouse wheel turn, gamepad button or touch stops it and returns to the menu.
+      Mouse movement alone does not.</li>
+    <li>Whatever was already held when the demo started (the click on Demo, for example) cannot stop it.</li>
+    <li>The press that stops a demo never reaches the menu: the menu ignores input until it is released.</li>
+    <li>Losing the window's focus stops it.</li>
+    <li>A demo shows one mission. Where play would go on to another mission, or into Pause, Win or Lost, that
+      demo ends and the next one starts.</li>
+  </ul>
+
+  <h3>What is frozen and restored</h3>
+  <p>Before a demo starts, the game keeps the player's own state: the saved profile and settings, camera mode,
+    game speed, the cheat toggles (quick, open doors, show secret, compass, debug), the cheat-entry lock, lives
+    and the list of active cheats. Nothing is saved while a demo plays, the resume file is left alone, and all
+    of it is put back when the demo stops. The shipped demos are checked against this: their replay leaves
+    <code>savedata.txt</code> and <code>resume.txt</code> byte for byte as they were.</p>
+
+  <h2>Recording your own demo</h2>
+  <p>In the original, demos could only be recorded by a trick (see below). Galaxy Eggbert offers it openly:</p>
+  <ol>
+    <li>During a campaign mission or a mission of <a href="galaxy.html">your own galaxy</a>, open Pause. The
+      <strong>Record</strong> button sits top right. It is not shown in an editor play-test, during a demo or a
+      resume replay.</li>
+    <li>Record shows the ten demo positions. Click the position to record into.</li>
+    <li>The mission restarts from its start at normal speed and is recorded; "REC" is shown top left. You play
+      and the game saves your progress as always.</li>
+    <li>The recording ends when Play is left (Pause, Win, Lost, or the move to another mission) or after
+      ten minutes. The notice "Demo recorded in position N." confirms it.</li>
+  </ol>
+  <p>From then on that position plays your recording instead of its shipped demo. A recording starts with an
+    automatic title such as "Recorded by player A: mission 11".</p>
+
+  <h2>The demo positions screen</h2>
+  <p>The same screen is reached from Pause's Record button and from the main menu's <strong>Demos</strong>
+    button (left of Exit). From the menu nothing can be recorded: a click on a position says "A recording is
+    made in a mission: Pause &gt; Record." Each position shows two lines: its name, "Recorded", "Shipped" or
+    "Empty", then "Mission N", "Galaxy N" or "(unplayable)". A recorded position has an
+    <strong>Original</strong> button under it, which deletes your recording so the shipped demo plays again.</p>
+  <table>
+    <tr><th>Button</th><th>What it does</th></tr>
+    <tr><td>Export</td><td>The next click on a position copies its demo to the shared folder, as
+      <code>A-demo-5.gdemo</code> (player A, position 5) or <code>&lt;name&gt;.gdemo</code> for a named demo.
+      A name already taken is numbered (<code>A-demo-5-2.gdemo</code>); nothing is replaced. On the web the
+      file is also offered as a download.</td></tr>
+    <tr><td>Import</td><td>Lists the shared <code>.gdemo</code> files, newest first, seven to a page. Each row
+      shows the demo's name, its mission or galaxy mission and its length, or why it cannot be imported. Click a
+      row, then a position: the file is copied into it. A row's bin deletes the shared file (two clicks). On the
+      web, Import first opens the browser's file picker; the chosen file lands in the shared folder and is listed
+      first.</td></tr>
+    <tr><td>Name</td><td>Click a recorded position, then type its name: letters, digits, spaces, <code>-</code> and
+      <code>'</code>, at most 24 characters, on the keyboard or on the keyboard drawn on the screen. OK or Enter
+      keeps it; Cancel or Escape leaves the old name.</td></tr>
+    <tr><td>Cancel</td><td>Leaves Export, Import or Name first, then the screen. Escape does the same.</td></tr>
+  </table>
+  <p>The arrow keys or a gamepad's d-pad choose a button (drawn lit) and A or Enter presses it; in Pause, B
+    leaves the positions. A recording made in a player's galaxy finds its world by its hash in any player's
+    galaxy, on the desktop and on the web. When its world is not there, the position is kept but skipped until
+    the world exists.</p>
+
+  <h2>The <code>.gdemo</code> file</h2>
+  <p>A demo is a text file holding the same input history as a <a href="save-system.html">resume log</a>
+    (<code>ResumeLog</code>: the start state, the random seed and the raw input of every 1/60 s tick) under a
+    header of its own. Shortened, the start of the shipped <code>demo001.gdemo</code>:</p>
+  <pre><code>GALAXY_DEMO 1
+1
+"World 1: pillars, mine pits and lifts"
+"Nov  8 2026 19:35:31 fnv1a64=17098780557396544612"
+9
+"Blupi" 5723123326820972394
+"Hide trail" 14695981039346656037
+...
+"objects" 940733633382668234
+"worlds3d/world011.vwr" 17476187514555174857
+11 3 1 3279155381 14 10 10 -0 0 0 0 0 0 0 1
+"soundEnabled=1
+...
+END 8344386914525136986</code></pre>
+  <table>
+    <tr><th>Part</th><th>Meaning</th></tr>
+    <tr><td><code>GALAXY_DEMO 1</code></td><td>Magic word and format version (<code>kDemoFormatVersion</code>).</td></tr>
+    <tr><td>Second line</td><td>The simulation revision it was recorded with (<code>kDemoSimulationRevision</code>, now 1).</td></tr>
+    <tr><td>Title, build</td><td>The demo's name, then the recording build. The build is for information only and is never compared.</td></tr>
+    <tr><td>End signature</td><td>A count, then named hashes of the game state after the last tick (Blupi, blocks, camera, objects, counters ...).</td></tr>
+    <tr><td>Body</td><td>The world file's path and FNV-1a hash; mission, lives, speed, seed, Blupi's position and heading, cheat flags, camera mode; the recorded profile; then runs of identical input (count, keys, mouse, buttons, viewport, touches, accelerometer, typed cheat letter).</td></tr>
+    <tr><td><code>END</code></td><td>A checksum of everything before it.</td></tr>
+  </table>
+  <p>Resume files only work with the identical binary. A demo instead names a simulation revision and the hash
+    of its world, so it survives rebuilds but is never replayed into a different game. Before anything of the
+    player's is touched, <code>ParseDemo()</code> and <code>DemoWorldStatus()</code> check the file. A demo that
+    fails is skipped with a log line such as <code>demo ... skipped: its world has changed.</code></p>
+  <table>
+    <tr><th><code>DemoLoadStatus</code></th><th>Reason</th></tr>
+    <tr><td><code>Missing</code></td><td>No such file.</td></tr>
+    <tr><td><code>Corrupt</code></td><td>Damaged, truncated, bad checksum, not a demo, not at normal speed, empty, or longer than ten minutes (36,000 ticks). Checked first, so a damaged file is reported as damaged whatever revision it claims.</td></tr>
+    <tr><td><code>IncompatibleFormat</code></td><td>Another <code>kDemoFormatVersion</code>.</td></tr>
+    <tr><td><code>IncompatibleRevision</code></td><td>Recorded with another simulation revision.</td></tr>
+    <tr><td><code>WorldMissing</code></td><td>Its world file is gone or does not load.</td></tr>
+    <tr><td><code>WorldChanged</code></td><td>Its world's bytes no longer match the stored hash.</td></tr>
+  </table>
+
+  <h2>Where the files live</h2>
+  <table>
+    <tr><th>What</th><th>Where</th></tr>
+    <tr><td>Shipped demos</td><td><code>Content/demos/demo001.gdemo</code> ... <code>demo010.gdemo</code> beside the game.</td></tr>
+    <tr><td>Your recordings</td><td><code>demos/demo001.gdemo</code> ... <code>demo010.gdemo</code> in the player's folder, beside <code>savedata.txt</code>.</td></tr>
+    <tr><td>Shared demos (export and import)</td><td><code>demos/shared/</code> in the player's folder.</td></tr>
+  </table>
+  <p>The player's folder is, since 2026-11-10, <code>~/.local/share/Galaxy Eggbert</code> on Linux (or under
+    <code>$XDG_DATA_HOME</code>), <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows, or the folder given by
+    <code>--user DIR</code> or <code>GALAXY_USER_DIR</code>. The web build keeps everything under
+    <code>/save</code> in the browser's storage (so recordings are in <code>/save/demos/</code> and survive a page
+    reload); there, Export is a download and Import uses the file picker. Android keeps the files in the app's
+    private storage. A galaxy exported as a <code>.galaxy</code> pack carries the demos recorded in it; see
+    <a href="galaxy.html">Your Own Galaxy</a>.</p>
+
+  <h2>For developers: recording and verifying demos</h2>
+  <p>The command-line flags are read in <code>src/GalaxyEggbertCNA/main.cpp</code>:</p>
+  <table>
+    <tr><th>Flag</th><th>Effect</th></tr>
+    <tr><td><code>--record-demo &lt;file&gt;</code></td><td>Records a demo into <em>file</em>; use with <code>--mission N</code>.</td></tr>
+    <tr><td><code>--demo-ticks N</code></td><td>Ends the recording after N ticks (at most ten minutes).</td></tr>
+    <tr><td><code>--demo-title &lt;text&gt;</code></td><td>The title written into the file.</td></tr>
+    <tr><td><code>--autoplay &lt;script&gt;</code></td><td>Plays the mission by a QA autoplay script while recording.</td></tr>
+    <tr><td><code>--verify-demo &lt;file&gt;</code></td><td>Replays a demo undrawn, as fast as possible, compares its end signature, prints <code>DEMO VERIFY &lt;file&gt;: equal</code> or <code>different: ...</code> and exits 0 or 1.</td></tr>
+  </table>
+  <p>A developer's recording ends at Escape (a gamepad's Start), at the mission's end, at the autoplay's end,
+    after <code>--demo-ticks</code>, or when the window closes. The F-keys and Tab are left out of the recording.
+    The two scripts wrap this:</p>
+  <pre><code># scripted, from an autoplay script, cut after 45 s, under its own Xvfb display
+tools/record_demo.sh build-cna-opengl3 Content/demos/demo001.gdemo 11 \
+    --autoplay tools/autoplay/world011.txt --demo-ticks 2700 --demo-title "World 1: lifts and mines"
+
+# replay every shipped demo and compare its end state
+tools/verify_demos.sh build-cna-opengl3</code></pre>
+  <p>When a simulation change makes <code>verify_demos.sh</code> report a shipped demo as different, bump
+    <code>kDemoSimulationRevision</code> in <code>DemoReplay.hpp</code> and record every demo again. The CTest cases:</p>
+  <ul>
+    <li><code>VerifyDemoReplay</code>: the file format and its compatibility rules, the idle timer, the input that stops a demo, the play order.</li>
+    <li><code>VerifyDemoFiles</code>: every shipped demo parses with the current revision and matches its world's bytes.</li>
+    <li><code>VerifyDemoReplays</code>: runs <code>tools/verify_demos.sh</code> under Xvfb (only where <code>xvfb-run</code> exists; not on Emscripten, Android or Windows).</li>
+  </ul>
+  <table>
+    <tr><th>Source</th><th>Role</th></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/DemoReplay.hpp/.cpp</code></td><td>Engine-independent: format, paths, parsing, import/export, naming, idle timer, stop rules. See <a href="classes/DemoReplay.html">DemoReplay</a>.</td></tr>
+    <tr><td><code>src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code></td><td>The host: <code>StartDemoFile()</code>, <code>DemoTick()</code>, <code>StopDemo()</code>, <code>UpdateDemoMenu()</code>, the player's recordings and the positions screen.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/InputPad.cpp</code></td><td>The menu's Demo and Demos buttons, Pause's Record, the positions screen.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/ResumeLog.hpp</code></td><td>The input history a demo shares with the resume file. See <a href="classes/ResumeLog.html">ResumeLog</a>.</td></tr>
+  </table>
+
+  <h2>Verification status (as of 2026-11-10)</h2>
+  <ul>
+    <li><strong>Desktop</strong>: verified live under Xvfb: the button, the idle start (40.02 s after the last
+      input), every stop input, the cycle, an 800x480 window and 1280x720 fullscreen, sound, focus loss,
+      player files untouched, recording, replay equal, Original.</li>
+    <li><strong>Web</strong> (2026-11-09, headless Chrome): the shipped demos replay as recorded; a recording made
+      there survives a reload in <code>/save/demos/</code>; a desktop galaxy recording imported on the web replays
+      equal.</li>
+    <li><strong>Not verified</strong>: Android; a physical gamepad or touch screen (an SDL virtual gamepad was used).</li>
+  </ul>
+
+  <div class="note"><strong>How Speedy Blupi did it.</strong> The original recorded a demo automatically whenever
+    a world numbered 200-219 was played, and those worlds could only be reached with the hidden XMISSION cheat,
+    typed <code>xnjttjpo</code>. Galaxy Eggbert keeps the cheat (it opens the <a href="editor.html">3D editor</a>
+    on the world being played) and makes recording an open feature instead. The research is in
+    <code>plans/audit/speedy_blupi_demos.md</code> (ledger rows BD-0115 to BD-0119).</div>
+
+  <div class="card-grid">
+    <a class="card" href="galaxy.html"><h3>Your Own Galaxy</h3><p>Record demos in your own worlds and share them in a galaxy pack.</p></a>
+    <a class="card" href="save-system.html"><h3>Save Data &amp; Resume</h3><p>The resume log a demo is built on.</p></a>
+    <a class="card" href="development/testing.html"><h3>Testing</h3><p>CTest, autoplay and the QA scripts.</p></a>
+  </div>
+
+  <div class="page-nav">
+    <a class="prev" href="cheats.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Cheats &amp; Diagnostics</span>
+    </a>
+    <a class="next" href="galaxy.html">
+      <span class="label">Next</span>
+      <span class="title">Your Own Galaxy &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

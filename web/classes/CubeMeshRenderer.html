@@ -2,106 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CnaEngine::Graphics::GpuMesh — Galaxy Eggbert Docs</title>
-<link rel="stylesheet" href="../assets/style.css">
+<title>CubeMeshRenderer — Galaxy Eggbert Docs</title>
+<meta http-equiv="refresh" content="0; url=TerrainRenderer.html">
+<link rel="canonical" href="TerrainRenderer.html">
+<meta name="robots" content="noindex">
 </head>
 <body>
-<div id="topbar">
-  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
-  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
-  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
-  <div id="search-results"></div>
-</div>
-<div id="wrapper">
-<nav id="sidebar">
-  <div class="nav-section">Getting Started</div>
-  <a href="../index.html">Home</a>
-  <a href="../overview.html">Project Overview</a>
-  <a href="../getting-started.html">Getting Started</a>
-  <a href="../build.html">Build Guide</a>
-  <div class="nav-section">Reference</div>
-  <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
-  <a href="../systems/index.html">Systems</a>
-  <div class="nav-section">Guides</div>
-  <a href="../tutorials/index.html">Tutorials</a>
-  <a href="../internals/index.html">Internals</a>
-  <a href="../development/index.html">Development</a>
-</nav>
-<main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> CnaEngine::Graphics::GpuMesh</div>
-  <h1>CnaEngine::Graphics::GpuMesh</h1>
-  <p class="subtitle">Uploads a built mesh to CNA vertex/index buffers and draws it with the caller's effect — replaced Easy3D::CubeMeshRenderer.</p>
-
-  <div class="note">
-    <strong>Replaced <code>Easy3D::CubeMeshRenderer</code> on 2026-10-20</strong>
-    This page used to document easy-3d's <code>CubeMeshRenderer</code> (and its billboard counterpart
-    <code>BillboardMeshRenderer</code>), which uploaded vertex + index buffers and drew them with a
-    <code>BasicEffect</code>. easy-3d was removed on 2026-10-20 and replaced by the strict modules of
-    cna-engine; that job is now done by <code>GpuMesh</code>. The page keeps its old file name so
-    existing links keep working.
-  </div>
-
-  <h2>Overview</h2>
-  <p>
-    Lives in the sibling <code>../cna-engine</code> repository (CMake target
-    <code>CnaEngine::Graphics</code>, namespace <code>CnaEngine::Graphics</code>; XNA 4.0 types only).
-    <code>GpuMesh::Upload(device, mesh, VertexLayout::PositionTexture())</code> uploads a mesh built
-    with <a href="CubeMesh.html">MeshBuilder</a> to CNA buffers once;
-    <code>GpuMesh::Draw(device, effect)</code> applies each pass of the effect's current technique and
-    draws the mesh. The effect — a <code>BasicEffect</code> in Galaxy Eggbert — is created and
-    configured by the game itself through CNA.
-  </p>
-  <p>Header: <code>include/CnaEngine/Graphics/GpuMesh.hpp</code> (in <code>../cna-engine</code>).</p>
-
-  <h2>API (as used by GalaxyEggbertCNA)</h2>
-  <pre><code>namespace CnaEngine::Graphics {
-
-class GpuMesh {
-public:
-    // Uploads once; Galaxy Eggbert passes VertexLayout::PositionTexture().
-    static GpuMesh Upload(Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device,
-                          const MeshData&amp; mesh, const VertexLayout&amp; layout);
-
-    // Applies each pass of effect's current technique and draws the mesh.
-    bool Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device,
-              Microsoft::Xna::Framework::Graphics::Effect&amp; effect) const;
-};
-
-}
-
-// Galaxy Eggbert: src/GalaxyEggbert/Game/TexturedMesh.hpp
-std::unique_ptr&lt;CnaEngine::Graphics::GpuMesh&gt; UploadTexturedMesh(
-    Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device,
-    const CnaEngine::Graphics::MeshData&amp; mesh);</code></pre>
-  <p>
-    The game keeps its meshes as <code>std::unique_ptr&lt;CnaEngine::Graphics::GpuMesh&gt;</code>
-    members, created with <code>UploadTexturedMesh(device, meshData)</code>. <code>Upload</code>
-    rejects an empty mesh, so callers check for one first and leave the pointer empty instead.
-  </p>
-
-  <h2>Used By</h2>
-  <p>
-    <a href="GETerrainRenderer.html">GETerrainRenderer</a> owns its terrain meshes this way: a static
-    mesh built once, and animated-tile meshes rebuilt only when the animation phase changes. Objects,
-    billboards, the HUD and the editor draw their meshes through <code>GpuMesh</code> the same way.
-  </p>
-
-  <h2>Billboards</h2>
-  <p>
-    The old roadmap note on this page — easy-3d's <code>BillboardBatch</code> had no vertex builder or
-    CNA renderer adapter yet (<code>E3D-MIG-061</code>/<code>062</code>) — is history. Billboards are
-    built with <code>MeshBuilder::AddBillboard</code> and drawn through a <code>GpuMesh</code> like
-    every other mesh.
-  </p>
-
-  <div class="page-nav">
-    <a href="CubeMesh.html">← CnaEngine::Graphics::MeshBuilder</a>
-    <a href="index.html">Classes ↑</a>
-  </div>
-</main>
-</div>
-<script src="../assets/script.js"></script>
+<p><code>CubeMeshRenderer</code> was removed with easy-3d on 2026-10-20; terrain meshes are now built by TerrainRenderer. Continue to <a href="TerrainRenderer.html">TerrainRenderer</a>.</p>
 </body>
 </html>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World — Galaxy Eggbert Docs</title>
+<meta name="description" content="Worlds::World, the engine-independent 100 x 100 x 100 voxel grid of chunks with sparse metadata, a block change journal and the .vwr load/save API.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,105 +14,199 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
+  <a href="../classes/index.html" class="active">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> World</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> World</div>
   <h1>World</h1>
-  <p class="subtitle">Fixed-size 100×100×100 voxel world with save/load API. Engine-agnostic; shared by Simple3D and CNA.</p>
+  <p class="subtitle">The voxel world: a cubic grid of palette-compressed chunks, sparse per-block metadata, a block change journal, and the <code>.vwr</code> file reader and writer.</p>
 
-  <h2>Overview</h2>
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/Worlds/World.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Worlds/World.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Worlds</code></td></tr>
+    <tr><th>Depends on</th><td><a href="Chunk.html">Chunk</a>, <a href="Block.html">Block</a>, <a href="VoxelConfig.html">VoxelConfig</a>, <code>BinaryIO.hpp</code> (little-endian helpers)</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
   <p>
-    <code>World</code> (namespace <code>GalaxyEggbert::Worlds</code>) is a pure C++ class with no
-    engine dependency. It organizes blocks into a <code>chunksPerAxis</code>³ grid of
-    <code>Chunk</code> objects (default 10, giving 1000 chunks / 100³ = 1,000,000 blocks).
+    <code>World</code> is the single data model of a Galaxy Eggbert level. It has no CNA or
+    cna-engine dependency: the game, the in-game editor, the renderers, the command-line
+    verifiers and the unit tests all use the same class. Every campaign world in
+    <code>worlds3d/</code>, every player's custom world and every galaxy world is one
+    <code>World</code> saved as a <code>.vwr</code> file.
   </p>
-  <p>Header: <code>include/GalaxyEggbert/Worlds/World.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/World.cpp</code>.</p>
+  <ul>
+    <li><strong>Grid.</strong> <code>chunksPerAxis</code>&sup3; chunks of 10 &times; 10 &times; 10 blocks. The default (and the only size the game uses) is 10 chunks per axis: 100 &times; 100 &times; 100 blocks, 1000 chunks. Y is up.</li>
+    <li><strong>Blocks.</strong> Each cell holds a 16-bit <a href="Block.html">Block</a> (12-bit type = the <code>object-m.png</code> icon number, 4-bit metadata). Air is 0.</li>
+    <li><strong>Sparse metadata.</strong> Any cell can carry extra typed byte payloads (objects, BigDecor, tile turns, hint zones, player starts). They are stored per chunk and survive save/load; see <a href="../internals/vwr-format.html">The .vwr Format</a> for the type list.</li>
+    <li><strong>World-level header fields.</strong> Sky region (background picture), music track, mission number, an optional Blupi start cell, and the "legacy saw floors" flag.</li>
+    <li><strong>Change tracking.</strong> A revision counter and a bounded journal of the last 256 block changes, so the terrain renderer can patch a few cells instead of rebuilding the whole mesh.</li>
+  </ul>
+  <p>
+    Coordinates are always <em>raw grid</em> cells, 0 to <code>blocksPerAxis() - 1</code>. The
+    game's render space is shifted by 50 on X and Z (<code>WorldRuntime::kWorldCenterX/Z</code>);
+    <code>World</code> never applies that shift.
+  </p>
 
-  <h2>API</h2>
-  <pre><code>namespace GalaxyEggbert::Worlds {
+  <h2>Public API</h2>
+  <p>All members verified in <code>World.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Description</th></tr>
+    <tr><td><code>explicit World(std::uint8_t chunksPerAxis = VoxelConfig::WorldChunksPerAxis)</code></td><td>An all-air cubic world. Throws <code>std::out_of_range</code> for 0.</td></tr>
+    <tr><td><code>chunksPerAxis()</code>, <code>blocksPerAxis()</code>, <code>chunkCount()</code></td><td>Grid dimensions (10, 100 and 1000 by default).</td></tr>
+    <tr><td><code>getBlock(x, y, z)</code> / <code>setBlock(x, y, z, Block)</code></td><td>Read or write one cell. Both throw <code>std::out_of_range</code> outside the world. <code>setBlock</code> bumps the revision and journals the change only when the raw value actually changes.</td></tr>
+    <tr><td><code>chunk(cx, cy, cz)</code> (const and mutable)</td><td>Direct access to one <a href="Chunk.html">Chunk</a> by chunk-grid coordinates.</td></tr>
+    <tr><td><code>skyRegion()</code> / <code>setSkyRegion(r)</code></td><td>Background id 0-31: selects <code>Content/backgrounds/decorNNN.png</code>.</td></tr>
+    <tr><td><code>musicTrack()</code> / <code>setMusicTrack(t)</code>, <code>kMusicTrackCount = 10</code></td><td>0 = no music, 1-10 = the original tracks <code>Content/music/music000-009.ogg</code>. Out-of-range values are stored as 0.</td></tr>
+    <tr><td><code>missionNumber()</code> / <code>setMissionNumber(n)</code></td><td>The mission this file is (1 the main hub; 10, 20, ... 120 the world hubs; 11, 12, ... their missions; 199; 998/999 the showcase worlds; 0 = none).</td></tr>
+    <tr><td><code>hasSpawnPoint()</code>, <code>spawnX/Y/Z()</code>, <code>setSpawnPoint(x, y, z)</code>, <code>clearSpawnPoint()</code></td><td>The optional explicit start cell (the yellow player start). <code>setSpawnPoint</code> throws outside the world.</td></tr>
+    <tr><td><code>hasLegacySawFloors()</code> / <code>setLegacySawFloors(bool)</code></td><td>True for files whose header flag bit 0 is clear: saws there were drawn with an implied floor. <code>WorldRuntime</code> upgrades such worlds in memory (see <a href="../internals/world-loading.html">World Loading</a>).</td></tr>
+    <tr><td><code>blockRevision()</code></td><td>Counts <code>setBlock()</code> calls that changed a block, plus metadata additions/removals.</td></tr>
+    <tr><td><code>struct BlockChange { x, y, z, oldRaw, newRaw }</code></td><td>One journaled change.</td></tr>
+    <tr><td><code>struct BlockChanges { bool known; std::vector&lt;BlockChange&gt; cells; }</code></td><td>Result of <code>blockChangesSince</code>; <code>known == false</code> means "history lost, rebuild everything".</td></tr>
+    <tr><td><code>BlockChangeCapacity = 256</code></td><td>Journal length; the oldest entries drop off.</td></tr>
+    <tr><td><code>blockChangesSince(revision)</code></td><td>Non-destructive: every consumer keeps its own last-seen revision. Returns <code>known = false</code> when more changes happened than the journal holds, or after any extra-metadata edit (which clears the journal). The journal is never saved.</td></tr>
+    <tr><td><code>struct BlockExtraMetadataRecord { x, y, z, metadataType, payload }</code></td><td>A sparse record resolved to world coordinates.</td></tr>
+    <tr><td><code>setBlockExtraMetadata(x, y, z, type, payload)</code></td><td>Adds or replaces the record of that type at that cell (one per cell and type). Payload must fit in 65 535 bytes.</td></tr>
+    <tr><td><code>removeBlockExtraMetadata(x, y, z, type)</code></td><td>Returns <code>true</code> if a record was removed.</td></tr>
+    <tr><td><code>findBlockExtraMetadata(x, y, z, type)</code></td><td>Pointer to the payload bytes, or <code>nullptr</code>. Used for per-cell lookups such as a turned fan.</td></tr>
+    <tr><td><code>collectExtraMetadata(type)</code></td><td>Every record of one type in the whole world, chunk by chunk.</td></tr>
+    <tr><td><code>saveToFile(path)</code></td><td>Writes the <code>.vwr</code> file; throws <code>std::runtime_error</code> on failure. Empty chunks (all air and no metadata) are written as table entries only.</td></tr>
+    <tr><td><code>static loadFromFile(path)</code></td><td>Reads and validates a <code>.vwr</code> file; throws <code>std::runtime_error</code> on any mismatch.</td></tr>
+    <tr><td><code>static loadFromStream(std::istream&amp;)</code></td><td>The same validation from a seekable stream starting at byte 0. The game uses it to decode the exact byte snapshot it hashed for the resume log.</td></tr>
+  </table>
 
-class World final {
-public:
-    explicit World(uint8_t chunksPerAxis = VoxelConfig::WorldChunksPerAxis);
-
-    uint8_t  chunksPerAxis() const noexcept;    // default 10
-    uint16_t blocksPerAxis() const noexcept;    // default 100
-    size_t   chunkCount()    const noexcept;    // default 1000
-
-    Block getBlock(uint16_t x, uint16_t y, uint16_t z) const;
-    void  setBlock(uint16_t x, uint16_t y, uint16_t z, Block block);
-
-    const Chunk&amp; chunk(uint8_t cx, uint8_t cy, uint8_t cz) const;
-          Chunk&amp; chunk(uint8_t cx, uint8_t cy, uint8_t cz);
-
-    void        saveToFile(const std::filesystem::path&amp; path) const;
-    static World loadFromFile(const std::filesystem::path&amp; path);
-};</code></pre>
-
-  <h2>Usage Example</h2>
+  <h2>How it is used</h2>
+  <h3>Loading and saving</h3>
+  <p>The minimal round trip (from <code>World Format.md</code>):</p>
   <pre><code>#include "GalaxyEggbert/Worlds/World.hpp"
 using namespace GalaxyEggbert::Worlds;
 
 World world;
-world.setBlock(10, 0, 10, Block::make(BlockTypes::Ground));
-world.setBlock(10, 1, 10, Block::make(BlockTypes::Wall));
-
+const Block grass = Block::make(1, 0);
+world.setBlock(10, 5, 10, grass);
 world.saveToFile("level.vwr");
 
 World loaded = World::loadFromFile("level.vwr");
-Block b = loaded.getBlock(10, 0, 10);
-assert(!b.isAir());</code></pre>
-
-  <h2>Used By</h2>
-  <ul>
-    <li><a href="GEWorldRuntime.html">GEWorldRuntime</a> (CNA) — loads <code>.vwr</code> and mobile-eggbert <code>.txt</code> data into a <code>World</code></li>
-    <li><a href="GETerrainRenderer.html">GETerrainRenderer</a> (CNA) — iterates every block to build terrain meshes</li>
-    <li><a href="GEBlupiController.html">GEBlupiController</a> (CNA) — reads blocks for collision</li>
-    <li>The equivalent Simple3D-side classes with the same names</li>
-  </ul>
-
-  <h2>Error Handling</h2>
-  <ul>
-    <li><code>getBlock</code> / <code>setBlock</code>: throw <code>std::out_of_range</code> for invalid coordinates.</li>
-    <li><code>chunk()</code>: throws <code>std::out_of_range</code> for invalid chunk coordinates.</li>
-    <li><code>loadFromFile()</code>: throws <code>std::runtime_error</code> on file read failure or format mismatch.</li>
-    <li><code>saveToFile()</code>: throws <code>std::runtime_error</code> on write failure.</li>
-  </ul>
-
-  <h2>Internal Storage</h2>
-  <pre><code>private:
-    uint8_t             chunksPerAxis_;
-    std::vector&lt;Chunk&gt;  chunks_;   // size = chunksPerAxis³</code></pre>
+return loaded.getBlock(10, 5, 10) == grass ? 0 : 1;</code></pre>
   <p>
-    Chunk grid is row-major: <code>index = cx + cy*n + cz*n²</code> where <code>n = chunksPerAxis</code>.
-    Block coordinates partition into chunk and local indices: <code>chunkX = worldX / 10; localX = worldX % 10</code>.
+    In the game, <code>WorldRuntime::LoadFromVwrStream()</code>
+    (<code>src/GalaxyEggbert/Game/WorldRuntime.cpp</code>) wraps the loaded world in a
+    <code>std::unique_ptr</code>, runs the legacy saw-floor upgrade and then derives objects,
+    BigDecor and hint zones from the sparse metadata. See <a href="WorldRuntime.html">WorldRuntime</a>.
   </p>
 
-  <h2>File Format</h2>
-  <p>The <code>.vwr</code> binary format is fully documented in <a href="../internals/vwr-format.html">VWR Format</a>.</p>
+  <h3>Patching the terrain from the change journal</h3>
+  <p>
+    When a door opens, a bridge crumbles or a switch flips the saws, the game changes blocks through
+    <code>setBlock()</code>. Each frame <code>GalaxyEggbertGame::RefreshTerrainMeshIfChanged()</code>
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameLoad.cpp</code>) compares revisions and asks for the
+    changes since its last build:
+  </p>
+  <pre><code>if (terrainRenderer_ &amp;&amp; (worldRuntime_.GetWorld().blockRevision() != terrainRevision_ || ...))
+{
+    const auto&amp; world = worldRuntime_.GetWorld();
+    const auto changes = world.blockChangesSince(terrainRevision_);
+    if (... &amp;&amp; terrainRenderer_-&gt;PatchModelCells(world, changes, StillModelIcons(), ...))
+    {
+        terrainRevision_ = world.blockRevision();
+        return;            // only the changed model cells were redrawn
+    }
+    ...                    // otherwise: full TerrainRenderer rebuild
+}</code></pre>
+
+  <h3>Who uses it</h3>
+  <ul>
+    <li><a href="WorldRuntime.html">WorldRuntime</a> owns the live world during play and in the editor.</li>
+    <li><a href="BlupiController.html">BlupiController</a> reads blocks for collision (see <a href="../internals/collision.html">Collision</a>).</li>
+    <li><a href="TerrainRenderer.html">TerrainRenderer</a> builds the meshes from it; <a href="InteractionSystem.html">InteractionSystem</a> opens doors and changes tiles through it.</li>
+    <li><a href="WorldEditor.html">WorldEditor</a> edits it in place; <a href="CustomWorldStorage.html">CustomWorldStorage</a> saves it.</li>
+    <li>The record codecs (<a href="MoveObjectRecord.html">MoveObjectRecord</a>, BigDecor, hint zones, player starts) and <a href="HubDoors.html">HubDoors</a> are free functions over a <code>World</code>.</li>
+    <li><code>tools/vwr_inspect.py</code> and <code>tools/worldkit.py</code> re-implement the reader and writer in Python; keep them in step with <code>World.cpp</code>.</li>
+  </ul>
+
+  <h2>Behaviour worth knowing</h2>
+  <ul>
+    <li>The header <code>version</code> byte must be exactly 2 (<code>VoxelConfig::FormatVersion</code>). Version 1 files are rejected, not upgraded.</li>
+    <li>Unknown header flag bits, a wrong chunk size, a chunk count that is not <code>chunksPerAxis&sup3;</code>, or a half-set spawn (one or two of the three spawn fields zero) are all load errors.</li>
+    <li>Loading never rewrites a file. A legacy file (flag bit 0 clear) round-trips byte-identically until something saves the upgraded world.</li>
+    <li>Changing the world-level fields (mission, sky, music, spawn) does not bump <code>blockRevision()</code>; metadata edits do, and they clear the journal.</li>
+  </ul>
 
   <h2>Tests</h2>
-  <p>
-    Covered by <code>tests/GalaxyEggbert/Worlds/WorldTests.cpp</code>: get/set round-trips,
-    save/load round-trips, empty chunk skipping, boundary conditions.
-  </p>
+  <ul>
+    <li><code>tests/GalaxyEggbert/Worlds/WorldTests.cpp</code> (GoogleTest, target <code>GalaxyEggbertWorldsTests</code>): dimensions, get/set across chunk boundaries, bounds checks, sparse metadata across chunks, save/load of blocks, metadata, sky region, music track, mission number and spawn point, legacy all-zero spawn slots, rejection of v1 files, bad magic, unknown flags and a wrong chunk count, <code>BlockRevisionCountsBlockChanges</code>, and <code>IndependentSawFlagIsPreservedWithoutRewritingLegacyData</code>.</li>
+    <li><code>tools/VerifyShippedWorlds.cpp</code> (ctest <code>VerifyShippedWorlds</code>): every world in <code>worlds3d/</code> loads, has the mission number its file name says, gives <code>WorldRuntime</code> its objects and survives load &rarr; save &rarr; load with identical metadata.</li>
+    <li><code>tools/VerifyTileFaces.cpp</code>: drives <code>blockChangesSince()</code> through the terrain patch path and checks incremental and full rebuilds agree.</li>
+    <li>The editor verifiers (<code>VerifyGEWorldEditor</code>, <code>VerifyGEEditorStorage</code>, <code>VerifyGEEditorObjects</code>) save and reload worlds through it.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="Chunk.html">Chunk</a>, <a href="Block.html">Block</a>, <a href="VoxelConfig.html">VoxelConfig</a></li>
+    <li><a href="../internals/vwr-format.html">The .vwr Format</a> (byte layout) and <a href="../internals/world-loading.html">World Loading</a></li>
+    <li><a href="MoveObjectRecord.html">MoveObjectRecord</a>, <a href="HubDoors.html">HubDoors</a>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a></li>
+    <li><a href="../tutorials/modifying-levels.html">Tutorial: authoring a world</a></li>
+  </ul>
 
   <div class="page-nav">
-    <a href="GEBlupiController.html">← GEBlupiController</a>
-    <a href="Chunk.html">Chunk →</a>
+    <a class="prev" href="../classes/index.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Classes</span>
+    </a>
+    <a class="next" href="../classes/Chunk.html">
+      <span class="label">Next</span>
+      <span class="title">Chunk &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

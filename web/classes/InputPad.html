@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InputPad — Galaxy Eggbert Docs</title>
+<meta name="description" content="InputPad hit-tests and draws the menus, the on-screen touch pad, the typed cheat words, the hidden cheat menu and the F1 help overlay.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> InputPad</div>
+  <h1>InputPad</h1>
+  <p class="subtitle">Menus, the on-screen touch pad, typed cheats and the help overlay: everything the player clicks, touches or types outside the 3D world.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/InputPad.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/InputPad.cpp</code>; with <code>ScreenKeyboard.hpp</code>, <code>CheatConfig.hpp</code>, <code>TextMetrics.hpp</code>, <code>QuadBatch.{hpp,cpp}</code> in the same folder</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>CNA (<code>MouseState</code>, <code>KeyboardState</code>, <code>Texture2D</code>, <code>BasicEffect</code>) and cna-engine's <code>GpuMesh</code> for drawing; the <code>Update*</code> hit-testing works without a graphics device</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p><code>InputPad</code> started as a port of the original Mobile Eggbert's <code>InputPad</code> class (its touch buttons) and
+  now owns every 2D screen of the game: the main menu with its three player slots, Setup, Pause, Resume, Win and Lost, the
+  ten demo positions, the loading and goodbye screens, the Play phase's on-screen pad, the list of active cheats, the
+  <code>debug</code> panel, the hidden cheat menu and the F1 help overlay. It also parses the typed cheat words.</p>
+  <p>Each screen has an <code>Update…</code> method that hit-tests the mouse (or touches) and returns a small struct of
+  "what was pressed", and a <code>Draw…</code> method. Layout is in the original's 640 x 480 reference space, scaled to the
+  window; where the original's rectangles do not fit that space (the five-button Pause row, the nine-button cheat menu) they
+  are proportionally adapted. <code>InputPad</code> never changes game state itself: it reports, and
+  <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> acts.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><code>ScreenKeyboard</code> (<code>ScreenKeyboard.hpp</code>): the on-screen keyboard used to name a demo; passed in through <code>DemoSlotsExtras</code> and <code>UpdateDemoSlots</code>.</li>
+    <li><code>CheatConfig.hpp</code>: <code>kCheatsEnabled</code>, from the CMake option <code>GALAXY_EGGBERT_ENABLE_CHEATS</code> (default <code>ON</code>).</li>
+    <li><code>TextMetrics</code> for the original's proportional font; <code>QuadBatch</code> for rectangles; sheets such as <code>pad.png</code>, <code>text.png</code> and the menu backgrounds.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> only: phase input in <code>GalaxyEggbertGameUpdate.cpp</code>, drawing in <code>GalaxyEggbertGameDraw.cpp</code>, the demo positions in <code>GalaxyEggbertGameDemo.cpp</code>. The host's <code>FocusNavigator</code> (arrow keys and d-pad choosing a lit button) works over InputPad's static rectangles such as <code>DemoSlotRect</code> and <code>DemoListRowRect</code>.</li>
+    <li>The help panel's open/close state is the small <code>ControlsHelp</code> struct in <code>ControlInput.hpp</code>; InputPad only draws it.</li>
+  </ul>
+
+  <h2>Screens it handles</h2>
+  <table>
+    <tr><th>Screen (phase)</th><th>Methods</th><th>Buttons reported</th></tr>
+    <tr><td>Main menu (<code>Init</code>)</td><td><code>UpdateInit</code>, <code>DrawInit</code></td><td>Player A/B/C, Play, Setup, Editor, Exit, Fullscreen, Help, Demo, Galaxy, Demos</td></tr>
+    <tr><td>Setup (<code>MainSetup</code>, <code>PlaySetup</code>)</td><td><code>UpdateSetup</code>, <code>DrawSetup</code></td><td>sounds, Jump side, zoom, accelerometer, 3D terrain, 3D effects, frame rate, textures, volume and sensitivity sliders, Reset, Return</td></tr>
+    <tr><td>Pause</td><td><code>UpdatePause</code>, <code>DrawPause</code></td><td>Home, Back, Setup, Restart, Continue, and Galaxy's Record and Original</td></tr>
+    <tr><td>Demo positions (over Pause or from the menu)</td><td><code>UpdateDemoSlots</code>, <code>DrawDemoSlots</code></td><td>a position, its Original, Cancel, Export, Import, Name, Import's file list (pages of <code>kDemoListRows</code> = 7) with a bin per row</td></tr>
+    <tr><td><code>Resume</code></td><td><code>UpdateResume</code>, <code>DrawResume</code></td><td>Home, Continue</td></tr>
+    <tr><td><code>Win</code>, <code>Lost</code></td><td><code>UpdateWinLost</code>, <code>DrawWinLost</code></td><td>Return</td></tr>
+    <tr><td><code>Play</code></td><td><code>UpdatePlay</code>, <code>UpdatePlayTouches</code>, <code>DrawPlay</code></td><td>stick, Jump, Action, Pause, back up, crouch, vehicle Fire; Forward and Back in accelerometer mode</td></tr>
+    <tr><td>Play overlays</td><td><code>DrawActiveCheats</code>, <code>DrawDebug</code>, <code>DrawLabels</code>, <code>DrawControlsHelp</code>, <code>DrawCheatMenu</code></td><td>the hidden cheat menu's nine buttons (<code>UpdateCheatMenu</code>)</td></tr>
+    <tr><td>Start and quit</td><td><code>DrawGalaxyLoading</code>, <code>DrawGoodbye</code></td><td>none (drawn over the 3D title scene)</td></tr>
+  </table>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API declared in <code>InputPad.hpp</code> (the header also has many static rectangle helpers
+  such as <code>PauseRecordRect</code> and <code>DemoExportRect</code>).</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>LoadContent</code></td><td><code>void LoadContent(GraphicsDevice&amp; device)</code></td><td>Loads the sheets and backgrounds. Hit-testing does not need it.</td></tr>
+    <tr><td><code>ResetTouchState</code></td><td><code>void ResetTouchState() noexcept</code></td><td>Drops any press in flight; the host calls it on every phase change.</td></tr>
+    <tr><td><code>UpdatePlay</code></td><td><code>bool UpdatePlay(const MouseState&amp; mouse, int viewportW, int viewportH, PlayInput&amp; outInput) noexcept</code></td><td>Mouse on the Play controls; returns whether the press landed on one (then the camera ignores it).</td></tr>
+    <tr><td><code>UpdatePlayTouches</code></td><td><code>bool UpdatePlayTouches(const std::vector&lt;TouchPoint&gt;&amp; touches, int viewportW, int viewportH, PlayInput&amp; outInput) noexcept</code></td><td>Several fingers at once: a finger that lands on the stick keeps steering wherever it moves, Jump is held by any finger on it, Action and Pause fire when their finger lifts.</td></tr>
+    <tr><td><code>UpdateInit</code></td><td><code>InitInput UpdateInit(const MouseState&amp; mouse, int viewportW, int viewportH) noexcept</code></td><td>The main menu's buttons.</td></tr>
+    <tr><td><code>UpdatePause</code></td><td><code>PauseInput UpdatePause(const MouseState&amp; mouse, int viewportW, int viewportH, bool showBack, bool showRestart, bool showRecord = false, bool showOriginal = false) noexcept</code></td><td>The Pause row; hidden buttons cannot be pressed.</td></tr>
+    <tr><td><code>UpdateDemoSlots</code></td><td><code>DemoSlotsInput UpdateDemoSlots(const MouseState&amp; mouse, int viewportW, int viewportH, const std::vector&lt;DemoSlotInfo&gt;&amp; slots, int listRows = -1, bool paged = false, const ScreenKeyboard* keyboard = nullptr) noexcept</code></td><td>The ten demo positions, Import's list, or the naming keyboard.</td></tr>
+    <tr><td><code>UpdateTypedGhostCheat</code></td><td><code>TypedCheatResult UpdateTypedGhostCheat(const KeyboardState&amp; keyboard, bool isPlayPhase, int orderedLetter = -1) noexcept</code></td><td>Feeds letters into the cheat buffer; reports the word completed this tick (<code>TypedCheat</code>), if any.</td></tr>
+    <tr><td><code>FilterGameplayKeyboard</code></td><td><code>KeyboardState FilterGameplayKeyboard(const KeyboardState&amp; keyboard) const</code></td><td>Removes letters that are being typed as a cheat, so typing does not also move Blupi.</td></tr>
+    <tr><td><code>TypedCheatWords</code></td><td><code>static const TypedCheatWord* TypedCheatWords(int&amp; count) noexcept</code></td><td>The word table (word, cheat, description); empty when cheats are compiled out.</td></tr>
+    <tr><td><code>SetCheatEntryLocked</code>, <code>LockCheatEntryForRun</code>, <code>RestoreCheatEntryLock</code></td><td><code>void SetCheatEntryLocked(bool locked) noexcept</code></td><td>The <code>fairplay</code> lock and the stronger <code>honest</code> lock; restored exactly by a resume replay or a demo.</td></tr>
+    <tr><td><code>UpdateCheatGesture</code>, <code>UpdateCheatMenu</code></td><td><code>bool UpdateCheatGesture(const MouseState&amp; mouse, int viewportW, int viewportH) noexcept</code></td><td>The original's hidden unlock (ten taps over six invisible zones; F12 in the host does the same), then its nine-button menu (returns 1-9).</td></tr>
+    <tr><td><code>DrawControlsHelp</code></td><td><code>void DrawControlsHelp(GraphicsDevice&amp; device, int viewportW, int viewportH, bool cheats = false)</code></td><td>The F1 panel (keyboard, gamepad, mouse) or, with <code>cheats</code>, the list of cheat words.</td></tr>
+    <tr><td><code>DrawActiveCheats</code></td><td><code>void DrawActiveCheats(GraphicsDevice&amp; device, int viewportW, int viewportH, const std::vector&lt;std::string&gt;&amp; names, float top = 0.0f)</code></td><td>The top-left list of active cheats; the host adds "Demo" or "REC" to it.</td></tr>
+    <tr><td><code>DrawDebug</code></td><td><code>void DrawDebug(GraphicsDevice&amp; device, int viewportW, int viewportH, const std::vector&lt;std::string&gt;&amp; lines, bool touchControls)</code></td><td>The <code>debug</code> cheat's diagnostics panel (lines from <code>DebugOverlayLines</code>).</td></tr>
+    <tr><td><code>SetJumpRight</code>, <code>SetAccelerometerMode</code>, <code>SetVehicleFireEnabled</code></td><td><code>void SetJumpRight(bool jumpRight) noexcept</code></td><td>Settings that change the Play pad's layout.</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p>In Play the host merges the pad with the keyboard and gamepad. The mouse drives the visible pad only when CNA reports a
+  touch screen; on a desktop without one the clicks belong to the camera. An excerpt from
+  <code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>:</p>
+  <pre><code>// Invisible desktop controls must not claim clicks intended for the camera.
+if (tickInput_.touchControlsEnabled)
+{
+    inputPadClaimedMouse = inputPad_.UpdatePlay(
+        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
+}
+else
+{
+    inputPad_.ResetTouchState();
+}
+{
+    GalaxyEggbert::Game::InputPad::PlayInput touchInput;
+    if (inputPad_.UpdatePlayTouches(touches, viewport.getWidthProperty(),
+                                    viewport.getHeightProperty(), touchInput))
+    {
+        inputPadClaimedMouse = true;
+    }
+    ...
+}</code></pre>
+  <p>Later in the same tick the host calls <code>UpdateTypedGhostCheat</code> and applies the returned <code>TypedCheat</code>
+  (<code>ApplyTypedCheat</code>); the effects live in the host, <a href="InteractionSystem.html">InteractionSystem</a> and
+  <a href="BlupiController.html">BlupiController</a>, which InputPad cannot reach.</p>
+
+  <h3>Typed cheats</h3>
+  <p>As in the original, letters typed during Play go into a rolling buffer of up to 32 letters, and a cheat fires when the
+  buffer ends with its word. The longest matching word wins, and the buffer is cleared after a word, except after
+  <code>quick</code>, so that <code>quicklollypop</code> can still be typed. The table has 33 words (as of 2026-11-10;
+  <code>help</code> and <code>cheats</code> are the same cheat), the original's 21 desktop words, <code>help</code>/<code>cheats</code>, the MODERN
+  build's words (<code>ghost</code>, <code>quick</code>, <code>zoom</code>, <code>debug</code>, <code>fps</code>, <code>position</code>,
+  <code>honest</code>), <code>compass</code>, <code>fairplay</code> and <code>xnjttjpo</code> (Speedy Blupi's word for editing a
+  mission; here it opens the world being played in the 3D editor). The full list is on <a href="../cheats.html">Cheats &amp; Diagnostics</a>.</p>
+  <p>Letters arrive in order from CNA's <code>KeyDownEXT</code> presses (<code>orderedLetter</code>), so fast typing works on every
+  device; autoplay passes <code>-1</code> and uses keyboard snapshots. While the buffer holds the start of a word, those letters
+  are filtered out of the gameplay keys until released (<code>weelkeys</code> no longer turns Blupi with its final S).</p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>Report, do not act.</strong> InputPad has no access to the simulation; every <code>Update…</code> returns flags or
+    an index and the host decides.</li>
+    <li>Press semantics follow the original: Jump is level-triggered (held while the pointer is on it); every other button fires
+    once, on release over the same button.</li>
+    <li>The stick is discrete: the offset from its centre is thresholded to -1, 0 or +1 per axis.</li>
+    <li>The Play pad is drawn and mouse-hit-tested only when CNA reports a touch screen
+    (<code>TouchPanel::GetCapabilities()</code>).</li>
+    <li>Typed cheats are accepted only in Play. With <code>fairplay</code> on, only <code>fairplay</code> is accepted; after
+    <code>honest</code>, nothing until the game quits. Resume log format v7 records the ordered letters and the lock, so a replay
+    reproduces them.</li>
+    <li>With <code>-DGALAXY_EGGBERT_ENABLE_CHEATS=OFF</code>, <code>TypedCheatWords</code> is empty, the gesture and the cheat menu
+    never open, and the help panel says "Cheats disabled".</li>
+  </ul>
+  <div class="warn"><strong>Hardware not tested</strong> As of 2026-11-10 the touch pad and the gamepad have been checked with
+  the verifier's synthetic input and with an SDL virtual gamepad under Xvfb only; no physical touch screen or gamepad has
+  been tried.</div>
+
+  <h2>Tests</h2>
+  <p><code>VerifyGEInputPad</code> (<code>tools/VerifyGEInputPad.cpp</code>, registered in <code>CMakeLists.txt</code>) runs without
+  a window or graphics device, driving InputPad with synthetic <code>MouseState</code>, touch and keyboard values. It checks
+  the Play stick, Jump, Action and Pause semantics, multi-touch and accelerometer controls, the Pause, Setup, Resume,
+  Win/Lost and main-menu rectangles (including Exit, Help, Demo, Galaxy and Demos), the demo positions and Import's list
+  (no two controls overlap), the cheat gesture and menu, typed cheat words, the active-cheat list's rectangle, the
+  <code>debug</code> panel's lines, the F1 help open/close behaviour (<code>ControlsHelp</code>), the WASD aliases, the
+  <code>ScreenKeyboard</code> and <code>FocusNavigator</code>.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="Hud.html">Hud</a>: the in-game information bar</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: phases and the tick that calls InputPad</li>
+    <li><a href="ResumeLog.html">ResumeLog</a>, <a href="DemoReplay.html">DemoReplay</a>: recorded input, cheat letters and locks</li>
+    <li><a href="../input.html">Input</a>, <a href="../controls.html">Controls</a>, <a href="../cheats.html">Cheats &amp; Diagnostics</a></li>
+    <li><a href="../demos.html">Demos &amp; Recordings</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/Hud.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Hud</span>
+    </a>
+    <a class="next" href="../classes/Sound.html">
+      <span class="label">Next</span>
+      <span class="title">Sound &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

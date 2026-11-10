@@ -2,84 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GETileAtlas — Galaxy Eggbert Docs</title>
-<link rel="stylesheet" href="../assets/style.css">
+<meta http-equiv="refresh" content="0; url=TileAtlas.html">
+<link rel="canonical" href="TileAtlas.html">
+<meta name="robots" content="noindex">
 </head>
 <body>
-<div id="topbar">
-  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
-  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
-  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
-  <div id="search-results"></div>
-</div>
-<div id="wrapper">
-<nav id="sidebar">
-  <div class="nav-section">Getting Started</div>
-  <a href="../index.html">Home</a>
-  <a href="../overview.html">Project Overview</a>
-  <a href="../getting-started.html">Getting Started</a>
-  <a href="../build.html">Build Guide</a>
-  <div class="nav-section">Reference</div>
-  <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
-  <a href="../systems/index.html">Systems</a>
-  <div class="nav-section">Guides</div>
-  <a href="../tutorials/index.html">Tutorials</a>
-  <a href="../internals/index.html">Internals</a>
-  <a href="../development/index.html">Development</a>
-</nav>
-<main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GETileAtlas</div>
-  <h1>GETileAtlas</h1>
-  <p class="subtitle">Maps block type IDs to UV rects (CnaEngine::Graphics::UvRect) in object-m.png via BlockTypes::tileUV().</p>
-
-  <h2>Overview</h2>
-  <p>
-    Data-only: no texture pixels are loaded and nothing is drawn. It computes each tile's rect in
-    the sheet <code>kSheetW × kSheetH = 1301 × 1431</code> (<code>object-m.png</code>) with the game's
-    own <code>BlockTypes::tileUV()</code> — <code>kTileSize = 64</code>, <code>kSheetCols = 20</code>,
-    <code>kSheetGap = 1</code> (65 px pitch: 64 px icon + 1 px inter-tile gap — confirmed against
-    mobile-eggbert's <code>Pixmap::GetSrcRectangle</code>) — and returns it as a
-    <code>CnaEngine::Graphics::UvRect</code> (fields <code>u0, v0, u1, v1</code>).
-  </p>
-  <p>
-    History: the class first wrapped an <code>Easy3D::TextureAtlas</code> grid registration; it moved
-    to <code>BlockTypes::tileUV()</code> on 2026-07-09 (half-texel inset against seams). When easy-3d
-    was replaced by cna-engine on 2026-10-20, only the rect type changed —
-    <code>Easy3D::UvRect</code> (<code>U0, V0, U1, V1</code>) became <code>CnaEngine::Graphics::UvRect</code>;
-    the UV computation is unchanged.
-  </p>
-  <p>Sources: <code>src/GalaxyEggbertCNA/Game/GETileAtlas.hpp</code> and <code>.cpp</code>.</p>
-
-  <h2>API</h2>
-  <pre><code>class GETileAtlas {
-public:
-    GETileAtlas() = default;
-    CnaEngine::Graphics::UvRect GetTileUv(int blockType) const;
-};</code></pre>
-
-  <h2><code>GetTileUv(blockType)</code></h2>
-  <p>
-    Returns an all-zero <code>UvRect</code> for <code>blockType &lt;= 0</code> (Air) or any type
-    outside the sheet's grid; otherwise the rect from <code>BlockTypes::tileUV()</code> (in
-    <code>BlockTypes.hpp</code>), which applies a half-texel inset to avoid seam bleeding.
-  </p>
-  <div class="note">
-    <strong>Bug fixed 2026-07-04</strong>
-    The atlas grid registration originally assumed a flat 64 px pitch with no inter-tile gap;
-    accounting for the sheet's real 65 px pitch (1 px gap) fixed visible seam artifacts.
-  </div>
-
-  <h2>Dependencies</h2>
-  <p><code>BlockTypes</code>, and cna-engine's <code>CnaEngine::Graphics::UvRect</code> (until 2026-10-20: <code>Easy3D::UvRect</code>).</p>
-
-  <div class="page-nav">
-    <a href="GETerrainRenderer.html">← GETerrainRenderer</a>
-    <a href="GEBlupiController.html">GEBlupiController →</a>
-  </div>
-</main>
-</div>
-<script src="../assets/script.js"></script>
+<p><code>GETileAtlas</code> was renamed TileAtlas. Continue to <a href="TileAtlas.html">TileAtlas</a>.</p>
 </body>
 </html>

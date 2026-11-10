@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SaveData — Galaxy Eggbert Docs</title>
+<meta name="description" content="SaveData keeps the player's settings and the progress of three players, campaign and galaxy, in the plain-text file savedata.txt.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> SaveData</div>
+  <h1>SaveData</h1>
+  <p class="subtitle">The player's settings and the progress of three players, kept as <code>key=value</code> lines in <code>savedata.txt</code>.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/SaveData.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/SaveData.cpp</code>; the folder it writes to: <code>src/GalaxyEggbert/Game/UserFolder.{hpp,cpp}</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. Standard library only (<code>&lt;fstream&gt;</code>, <code>&lt;array&gt;</code>); it can be tested without a window.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    <code>SaveData</code> is the game's persistent profile. It holds the global settings of the Setup
+    screen (sound, volumes, controls, 3D terrain, 3D effects level, frame rate, texture size, full
+    screen) and three independent player slots, shown in the main menu as players A, B and C. Each
+    slot remembers the lives, the mission and world last played, whether there is progress to
+    resume, and 200 door flags: one per mission number, set when that mission has been won, which
+    is what opens the hubs' mission bars and the main hub's golden posts.
+  </p>
+  <p>
+    The original game stored a fixed 640-byte binary blob. Galaxy Eggbert deliberately does not copy
+    that layout: <code>savedata.txt</code> is plain text, one <code>key=value</code> per line, readable
+    and hand-editable. Each player's <a href="../galaxy.html">own galaxy</a> has a second, separate
+    progress record (<code>galaxyN.*</code> keys), so playing a galaxy never touches the campaign's
+    doors and lives.
+  </p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><code>UserFolder</code> (<code>UserPathString("savedata.txt")</code>) for the file's path.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><code>GalaxyEggbertGame</code> (member <code>saveData_</code>): loads it in its constructor (the
+      full-screen preference is needed before the window opens), checkpoints progress at Win and Lost,
+      stores the mission on every <code>LoadMission</code>, applies the Setup's toggles, and reads the door
+      flags when it adapts a hub's doors (<a href="HubDoors.html">HubDoors</a>).</li>
+    <li><a href="InputPad.html">InputPad</a>: the Setup and gamer-select screens report which toggle or
+      slider changed; the host writes it into <code>SaveData</code>.</li>
+    <li><a href="ResumeLog.html">ResumeLog</a> and <a href="DemoReplay.html">DemoReplay</a>: a resume log
+      and a demo carry the output of <code>Write()</code> as their start settings and feed it back through
+      <code>Read()</code>.</li>
+    <li><code>TextureScale.hpp</code> reads <code>GetTextureScale()</code> at start.</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API declared in <code>src/GalaxyEggbert/Game/SaveData.hpp</code>. Most
+  setters have a matching getter that is not listed separately.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>kGamerCount</code></td><td><code>static constexpr int kGamerCount = 3</code></td><td>Number of player slots.</td></tr>
+    <tr><td><code>Load</code></td><td><code>void Load()</code></td><td>Reads <code>savedata.txt</code> from the user folder. A missing or unreadable file leaves every field at its default.</td></tr>
+    <tr><td><code>Save</code></td><td><code>void Save() const</code></td><td>Overwrites <code>savedata.txt</code> with the current state.</td></tr>
+    <tr><td><code>Read</code> / <code>Write</code></td><td><code>void Read(std::istream&amp; in)</code><br><code>void Write(std::ostream&amp; out) const</code></td><td>The same text format on any stream; used for the file and for the settings carried inside resume logs and demos.</td></tr>
+    <tr><td><code>Reset</code></td><td><code>void Reset() noexcept</code></td><td>Every field back to its default, all three slots included (the galaxy mode flag is kept). The host then saves.</td></tr>
+    <tr><td><code>SetSelectedGamer</code></td><td><code>void SetSelectedGamer(int gamer) noexcept</code></td><td>Chooses the slot the progress accessors work on; clamped to 0..2.</td></tr>
+    <tr><td><code>SetLives</code>, <code>SetMissionNumber</code>, <code>SetLastWorld</code>, <code>SetHasProgress</code></td><td><code>void SetLives(int lives) noexcept</code> (and similar)</td><td>Progress of the selected slot, or of its galaxy record while galaxy mode is on.</td></tr>
+    <tr><td><code>UnlockMissionDoor</code></td><td><code>void UnlockMissionDoor(int mission) noexcept</code></td><td>Marks a mission won; the index is the mission number (0..199). Out-of-range numbers are ignored.</td></tr>
+    <tr><td><code>IsMissionDoorUnlocked</code></td><td><code>bool IsMissionDoorUnlocked(int mission) const noexcept</code></td><td>Whether that door is open for the current slot.</td></tr>
+    <tr><td><code>GetMainGatesForGamer</code>, <code>GetSecondaryGatesForGamer</code></td><td><code>int GetMainGatesForGamer(int gamer) const noexcept</code></td><td>Counts for the menu's player panel: doors 180..199 are main gates, 0..179 secondary.</td></tr>
+    <tr><td><code>SetGalaxyMode</code></td><td><code>void SetGalaxyMode(bool on) noexcept</code></td><td>While on, the progress accessors read and write the selected player's galaxy record. The mode itself is never saved.</td></tr>
+    <tr><td><code>GalaxyProgress</code>, <code>GetGalaxyGatesForGamer</code>, <code>ResetGalaxyProgress</code></td><td><code>const GamerSlot&amp; GalaxyProgress(int gamer) const noexcept</code></td><td>Galaxy progress of any slot, whatever the mode; reset when a galaxy is imported in place of the old one.</td></tr>
+    <tr><td><code>SetEffectsLevel</code></td><td><code>void SetEffectsLevel(int level) noexcept</code></td><td>3D effects 0..4 (Off, Low, Medium, High, Ultra), clamped.</td></tr>
+    <tr><td><code>SetFrameRate</code>, <code>NextFrameRate</code></td><td><code>void SetFrameRate(int rate) noexcept</code><br><code>static int NextFrameRate(int rate) noexcept</code></td><td>One of <code>kFrameRates</code> = {60, 120, 144, 240}; any other value becomes 60.</td></tr>
+    <tr><td><code>SetTextureScale</code></td><td><code>void SetTextureScale(int scale) noexcept</code></td><td>0 auto, 1 or 2; anything else is auto. Applies at the next start.</td></tr>
+    <tr><td><code>SetEffectsVolume</code>, <code>SetMusicVolume</code>, <code>SetAccelSensitivity</code></td><td><code>void SetEffectsVolume(int volume) noexcept</code></td><td>0..100, clamped by <code>ClampVolume</code>.</td></tr>
+  </table>
+
+  <h2>The file: <code>savedata.txt</code></h2>
+  <p><code>Write()</code> produces the lines in this order (shown here with the default values; the door
+  strings are 200 characters of <code>0</code>/<code>1</code> and are shortened):</p>
+  <pre><code>soundEnabled=1
+jumpRight=1
+autoZoom=1
+accelActive=0
+effectsVolume=100
+musicVolume=100
+accelSensitivity=50
+fullscreen=0
+terrainRelief=0
+effectsLevel=0
+frameRate=60
+textureScale=0
+selectedGamer=0
+gamer0.lives=3
+gamer0.missionNumber=0
+gamer0.lastWorld=1
+gamer0.hasProgress=0
+gamer0.doorsUnlocked=0000...0000
+gamer1.lives=3
+...
+gamer2.doorsUnlocked=0000...0000</code></pre>
+  <table>
+    <tr><th>Key</th><th>Values (default)</th><th>Meaning</th></tr>
+    <tr><td><code>soundEnabled</code></td><td>0/1 (1)</td><td>Sounds on or off.</td></tr>
+    <tr><td><code>jumpRight</code>, <code>autoZoom</code>, <code>accelActive</code></td><td>0/1 (1, 1, 0)</td><td>The original's Setup toggles: which side the on-screen action buttons sit on, automatic zoom, accelerometer.</td></tr>
+    <tr><td><code>effectsVolume</code>, <code>musicVolume</code></td><td>0..100 (100)</td><td>The Setup's volume sliders (a Galaxy addition; 100 is the original loudness).</td></tr>
+    <tr><td><code>accelSensitivity</code></td><td>0..100 (50)</td><td>Accelerometer sensitivity.</td></tr>
+    <tr><td><code>fullscreen</code></td><td>0/1 (0)</td><td>Desktop window mode; F11 and the menu's Fullscreen / Window button store it.</td></tr>
+    <tr><td><code>terrainRelief</code></td><td>0/1 (0)</td><td>The Setup's "3D terrain".</td></tr>
+    <tr><td><code>effectsLevel</code></td><td>0..4 (0)</td><td>The Setup's "3D effects". An older key <code>effects3d=1</code> is still read, as level 3 (High).</td></tr>
+    <tr><td><code>frameRate</code></td><td>60, 120, 144, 240 (60)</td><td>Frames drawn per second; the simulation still steps 60 times a second.</td></tr>
+    <tr><td><code>textureScale</code></td><td>0, 1, 2 (0)</td><td>The Setup's "Textures": Auto, 1x, 2x.</td></tr>
+    <tr><td><code>selectedGamer</code></td><td>0..2 (0)</td><td>The player chosen in the main menu.</td></tr>
+    <tr><td><code>gamerN.lives</code>, <code>.missionNumber</code>, <code>.lastWorld</code>, <code>.hasProgress</code>, <code>.doorsUnlocked</code></td><td>N = 0..2</td><td>Campaign progress of player N (lives 3, mission 0, last world 1 by default).</td></tr>
+    <tr><td><code>galaxyN.*</code></td><td>same fields</td><td>Progress in player N's own galaxy. Written only once that record differs from the default, so a file of a player who never played a galaxy has no such lines.</td></tr>
+  </table>
+  <p>Reading is tolerant: lines without <code>=</code> and unknown keys are skipped, an out-of-range
+  <code>selectedGamer</code> is ignored, volumes are clamped, and an unknown frame rate falls back to 60.</p>
+
+  <h3>Where the file lives</h3>
+  <p>Since 2026-11-10 the player's files (<code>savedata.txt</code>, <code>resume.txt</code>,
+  <code>demos/</code>, <code>customworlds/</code>) live in a per-user folder chosen at start
+  (<code>ChooseUserFolder()</code> in <code>src/GalaxyEggbertCNA/main.cpp</code>):</p>
+  <ul>
+    <li>Desktop: CNA's storage root for "Galaxy Eggbert", i.e. <code>$XDG_DATA_HOME</code> or
+      <code>~/.local/share/Galaxy Eggbert</code> on Linux and <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows.
+      <code>--user DIR</code> or the environment variable <code>GALAXY_USER_DIR</code> overrides it (the test scripts use their run folder).</li>
+    <li>Web: <code>/save</code>, the browser-persisted (IDBFS) mount.</li>
+    <li>Android: the app's private storage (its working folder).</li>
+  </ul>
+  <p>A player of an earlier build, which kept these files in the working folder, has them copied
+  (never moved or overwritten) the first time, when the new folder has no <code>savedata.txt</code> yet
+  (<code>CopyOldUserFiles()</code>).</p>
+
+  <h2>How it is used</h2>
+  <p>
+    The host never calls <code>Save()</code> directly but goes through
+    <code>GalaxyEggbertGame::SavePlayerData()</code>, which refuses to write while a resume log is being
+    reconstructed or a main-menu demo plays: both run the normal simulation with someone else's
+    settings, and neither may change the player's profile. The checkpoint at the end of a mission
+    looks like this (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>):
+  </p>
+  <pre><code>if (interaction_.GameOverCount() &gt; gameOverCountBeforeUpdate)
+{
+    // Real MemorizeGamerProgress() checkpoint ...
+    if (!editorPlayTestActive_)
+    {
+        saveData_.SetLives(interaction_.Lives());
+        saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
+        saveData_.SetHasProgress(true);
+        SavePlayerData();
+    }
+    SetPhase(GalaxyEggbert::Def::GamePhase::Lost);
+}</code></pre>
+  <p>
+    At start-up the Resume screen is offered when <code>resume.txt</code> holds a valid
+    <a href="ResumeLog.html">resume log</a> or when the selected slot's <code>hasProgress</code> is set;
+    the log wins, the checkpoint (mission number and lives) is the fallback.
+  </p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>Settings are global; progress is per slot. The single-slot accessors (<code>GetLives()</code> ...)
+      always act on <code>gamers_[selectedGamer_]</code>, or on the galaxy record in galaxy mode, which is why
+      <code>SetSelectedGamer()</code> and <code>Read()</code> both keep the index in range.</li>
+    <li>An editor play-test never writes progress: a custom world has no real mission number.</li>
+    <li>Door flags are indexed by mission number directly, as the original's <code>m_doors[]</code>.</li>
+    <li>The text format is the contract shared with resume logs and demos: they embed the full
+      <code>Write()</code> output, so adding a key is safe (old readers skip it), renaming one is not.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyGESaveData</code> (<code>tools/VerifyGESaveData.cpp</code>): defaults without a file,
+      round trips of every setting (full screen, sound, 3D terrain, the Setup toggles, volumes and their
+      clamping), <code>Reset()</code>, progress and door flags, three independent slots, rejection of an
+      out-of-range <code>selectedGamer</code>, and the galaxy records (no <code>galaxy</code> lines until a
+      galaxy is played, campaign and galaxy progress kept apart, gate counts). It runs in its own
+      directory of the build tree (<code>verify-savedata/</code>) because it creates and deletes
+      <code>savedata.txt</code> where it runs.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../save-system.html">Save Data &amp; Resume</a></li>
+    <li><a href="ResumeLog.html">ResumeLog</a>, <a href="DemoReplay.html">DemoReplay</a></li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="InputPad.html">InputPad</a>, <a href="HubDoors.html">HubDoors</a></li>
+    <li><a href="CustomWorldStorage.html">CustomWorldStorage</a> (the galaxy's worlds; its progress is here)</li>
+    <li><a href="../configuration.html">Configuration</a>, <a href="../galaxy.html">Your Own Galaxy</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/Sound.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Sound</span>
+    </a>
+    <a class="next" href="../classes/ResumeLog.html">
+      <span class="label">Next</span>
+      <span class="title">ResumeLog &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

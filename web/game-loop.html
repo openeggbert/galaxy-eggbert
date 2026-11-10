@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Loop — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's game loop: the fixed 1/60 s step, the order of a Play tick, drawing through SceneFrame and WorldRenderer, game phases, speeds, frame rates above 60 and determinism.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,87 +24,211 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html" class="active">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Game Loop</div>
   <h1>Game Loop</h1>
-  <p class="subtitle">How CNA's Game base class drives GalaxyEggbertCnaGame each frame.</p>
+  <p class="subtitle">One fixed 1/60 s step per update, a fixed order inside it, and a frame drawn from the result (as of 2026-11-10).</p>
 
-  <h2>Loop Ownership</h2>
-  <p>
-    <code>GalaxyEggbertCnaGame</code> does not implement its own loop — it inherits one from CNA's
-    <code>Microsoft::Xna::Framework::Game</code> base class (XNA-style: <code>LoadContent</code>
-    once, then <code>Update</code>/<code>Draw</code> every frame with a <code>GameTime</code>).
-  </p>
+  <p>The loop itself is CNA's: <code>Game::Run()</code> calls <code>GalaxyEggbertGame::Update()</code> and
+  <code>Draw()</code>. The game sets the target elapsed time to 1/60 s, and every <code>Update()</code> advances the
+  simulation by exactly <code>dt = 1.0f / 60.0f</code>; the measured frame time is never used for the simulation.
+  The functions named here are in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code> unless stated
+  otherwise.</p>
 
-  <h2><code>Update(GameTime&amp; gameTime)</code></h2>
-  <pre><code>void GalaxyEggbertCnaGame::Update(GameTime&amp; gameTime) {
-    Game::Update(gameTime);
-    worldRuntime_.Update(dt);              // advances 6 fps tile-animation phase
-    auto keys = Keyboard::GetState();
-    float dx = /* from arrow keys */;
-    float dz = /* from arrow keys */;
-    bool jump = keys.IsKeyDown(Keys::Space);
-    blupi_.Step(worldRuntime_.GetWorld(), dx, dz, jump, dt);
-    camera_.SetTarget(blupi_.GetPosition());
-    camera_.Update(dt);
-}</code></pre>
+  <h2>Update()</h2>
+  <p>Each call does at most one tick, in this order:</p>
+<pre><code>Update(gameTime)
+  first pass only: ApplyFrameRate()                 the Setup's frame rate
+  resume replay running?   ReplayBatch(); return    up to 600 recorded ticks, nothing drawn
+  frame rate above 60?     less than 1/60 s since the last step: return (draw in between)
+  UpdateMusic()
+  demo playing?            UpdateDemo(); return     recorded input drives the same UpdateTick()
+  one-time start modes     --golden-capture, --golden-capture-trace, --mission N
+  mission just started?    StartResumeLog()         (and a demo recording, if armed)
+  autoplay?                StepAutoplay()           the script's keys for this tick
+  CaptureInput()                                    one input record for the tick
+  UpdateDemoMenu()                                  the demo positions' screens
+  UpdateTick()
+  append the input record to the resume log (and to a demo being recorded)</code></pre>
+  <p>Because the whole tick reads its input from that one record, the same records replayed give the same game:
+  this is how mission resume and the demos work (<a href="input.html">Input</a>,
+  <a href="save-system.html">Save Data &amp; Resume</a>).</p>
 
-  <h2><code>Draw(const GameTime&amp; gameTime)</code></h2>
-  <pre><code>void GalaxyEggbertCnaGame::Draw(const GameTime&amp; gameTime) {
-    device.Clear(Color(0.392f, 0.584f, 0.929f, 1.0f));  // sky blue
-    device.SetDepthTestEnabled(true);
-    terrainEffect_-&gt;View       = camera_.GetViewMatrix();
-    terrainEffect_-&gt;Projection = camera_.GetProjectionMatrix();
-    terrainEffect_-&gt;World      = Matrix::Identity;
-    terrainRenderer_-&gt;Draw(device, *terrainEffect_);
-}</code></pre>
+  <h2>UpdateTick()</h2>
+  <ol>
+    <li>The controls help (F1) is checked first; while it is open the screen is frozen and nothing else runs.</li>
+    <li>A pending phase fade freezes all input and simulation until it commits (1.0 s; 0.25 s into the Setup screens),
+      as in the original.</li>
+    <li><code>UpdateTickScreens()</code> handles every phase's own input: the main menu, Setup, Pause, Win and Lost, the
+      Resume question, the editor, the demo screens, and in Play the on-screen pad, pausing, the game-speed keys,
+      typed cheats and F12 (<code>UpdateScreenPlay()</code>). It may end the tick.</li>
+    <li>The menu's title scene is loaded and animated when the menu or the editor's world list shows.</li>
+    <li>Outside the Play phase the tick ends here. In Play: <code>simDt = dt * GameSpeedFactor(gameSpeed_)</code>, then
+      <code>worldRuntime_.Update(simDt)</code> and <code>UpdateTickWorld()</code>.</li>
+  </ol>
 
-  <h2>Tile Animation Timing</h2>
-  <p>
-    <code>GEWorldRuntime::Update(dt)</code> accumulates an internal timer and advances
-    <code>animPhase_</code> at a fixed period of 1/6 second (6 fps) — matching both
-    <code>GalaxyEggbertSimple3D</code> and mobile-eggbert's original animation rate.
-    <code>GETerrainRenderer</code> checks <code>GetAnimPhase()</code> and only rebuilds its animated
-    cube mesh when the phase actually changes.
-  </p>
+  <h3>The Play tick, in order</h3>
+  <table>
+    <tr><th>#</th><th>Step</th><th>Code</th></tr>
+    <tr><td>1</td><td><strong>World clock.</strong> The 20&nbsp;Hz animation phase and each object's phase advance; the terrain's small animated meshes are rebuilt when the phase changes.</td>
+        <td><code>WorldRuntime::Update(simDt)</code>, <code>TerrainRenderer::Update()</code></td></tr>
+    <tr><td>2</td><td><strong>Input.</strong> Directions from the keyboard (arrows or WASD), the on-screen pad and the accelerometer; jump, crouch, look up, back up, the turn-around.</td>
+        <td><code>ReadPlayDirections()</code>, <code>InputPad::FilterGameplayKeyboard()</code>, <code>AccelTurnInput()</code></td></tr>
+    <tr><td>3</td><td><strong>Blupi.</strong> Movement, collision, gravity, swimming, vehicles, crouching, bars, his animation state.</td>
+        <td><code>BlupiController::Step()</code></td></tr>
+    <tr><td>4</td><td><strong>Tile actions.</strong> What he touches or uses: hazards, springs, water, world signs, teleporters, fans, switches, the action key; the lightning's zaps.</td>
+        <td><code>UpdateTickActions()</code>, <code>PlayBlitzZaps()</code></td></tr>
+    <tr><td>5</td><td><strong>Interactions.</strong> Lifts and creature patrols, pickups, enemy and hazard contact, projectiles, dynamite, crates; results come back as events.</td>
+        <td><code>InteractionSystem::Update()</code></td></tr>
+    <tr><td>6</td><td><strong>World changes.</strong> Changed blocks (switches, bridges, doors) patch the terrain from the world's change journal, or rebuild it for unknown history.</td>
+        <td><code>RefreshTerrainMeshIfChanged()</code></td></tr>
+    <tr><td>7</td><td><strong>Requests.</strong> A pickup's flight to the HUD, a death lock, a two-stage pickup; the pollution puff and the magic trail.</td>
+        <td><code>ResolvePendingVoyage()</code>, <code>ResolveDeathLock()</code>, <code>ResolvePickupFreeze()</code></td></tr>
+    <tr><td>8</td><td><strong>Events.</strong> Camera shakes, shots, glue, the vehicle's motor sound, a life lost or the exit reached (the checkpoint is saved here), powers, the balloon.</td>
+        <td><code>UpdateTickEvents()</code></td></tr>
+    <tr><td>9</td><td><strong>Camera and presentation.</strong> F3 first/third person, the chase camera, mouse look, Blupi's clip and its time.</td>
+        <td><code>UpdateTickCamera()</code></td></tr>
+  </table>
+  <p>Each of these helpers returns <code>true</code> when the tick has to end early (the mission was left, a phase
+  took over). Sounds are started where their cause happens, through <code>Sound</code>, heard from Blupi's position.
+  Why the order is what it is, and which system may know what, is on <a href="architecture.html">Architecture</a>.</p>
 
-  <h2>What's Missing Compared to a Full Game Loop</h2>
+  <h2>Drawing</h2>
+  <p><code>Draw()</code> (in <code>GalaxyEggbertGameDraw.cpp</code>) draws nothing during a resume replay. Otherwise it
+  calls <code>DrawFrame()</code>:</p>
+<pre><code>Draw()
+  frame rate above 60, between two steps: move the camera, Blupi and moving objects part way
+  DrawFrame()
+    the world is visible in this phase?
+      BuildSceneFrame()                         GalaxyEggbertGameScene.cpp: the draw list
+      WorldRenderer::RenderShadowMap()          3D effects only
+      (Ultra: geometry pass; post-process target)
+      DrawWorld()  -&gt;  WorldRenderer::Draw(device, sceneFrame_, assets)
+      the editor's gizmos, against the world's depth
+      finish the post-process, if any
+    DrawOverlay()                               HUD, on-screen pad, menus, Pause/Win/Lost, Setup,
+                                                demo screens, editor UI, cheat menu, F1 help
+    DrawFrameCaptures()                         golden frames, autoplay shots, thumbnails
+  put the camera and objects back where the simulation left them</code></pre>
+  <p>The world is not drawn in the Setup screens (they cover the window) and, in the main menu and the loading
+  screen, only when the title scene is loaded. See <a href="rendering.html">Rendering</a> for the passes.</p>
+
+  <h2>Phases</h2>
+  <p>The game is always in one <code>GalaxyEggbert::Def::GamePhase</code>
+  (<code>include/GalaxyEggbert/Def/GamePhase.hpp</code>), changed through <code>SetPhase()</code>
+  (<code>GalaxyEggbertGameMissions.cpp</code>).</p>
+  <table>
+    <tr><th>Phase</th><th>What it is</th></tr>
+    <tr><td><code>Wait</code></td><td>The loading screen at start (it lasts a fixed 5 s), also the galaxy's loading screen.</td></tr>
+    <tr><td><code>Resume</code></td><td>"Continue or menu?" when a resume log or a checkpoint exists.</td></tr>
+    <tr><td><code>Init</code></td><td>The main menu: the three players, Play, Setup, Editor, Galaxy, Demo, Demos, Help, Fullscreen/Window, Exit.</td></tr>
+    <tr><td><code>Play</code></td><td>The game itself.</td></tr>
+    <tr><td><code>Pause</code></td><td>The pause screen: continue, restart, back, Setup, menu, and Galaxy's Record (and Original for an edited shipped world).</td></tr>
+    <tr><td><code>Win</code>, <code>Lost</code></td><td>The end screens (Win only after the true ending, the showcase and play-tests).</td></tr>
+    <tr><td><code>MainSetup</code>, <code>PlaySetup</code></td><td>The Setup screen, from the menu or from Pause.</td></tr>
+    <tr><td><code>Editor</code></td><td>The 3D world editor and its world and galaxy screens (not an original phase).</td></tr>
+    <tr><td><code>None</code></td><td>Used as "no fade pending".</td></tr>
+  </table>
+  <p><code>First</code>, <code>Trial</code> and <code>Ranking</code> mirror the original's enum and are not used.
+  At start the game shows <code>Wait</code>, then reads <code>resume.txt</code> and goes to <code>Resume</code> if there is
+  a mission to continue or a checkpoint, else to <code>Init</code>.</p>
+
+  <h2>20 Hz reference ticks, 60 Hz steps</h2>
+  <p>The original game counts time in ticks of 1/20 s. Galaxy steps three times as often but keeps the original's
+  clock: <code>WorldRuntime::Update()</code> advances its animation phase once per 1/20 s of simulated time, object
+  phases run at the same rate, and each tile type divides it by its own divisor (fans and saws every tick, lava every
+  2, water every 3, spikes every 4). Crates, lifts, creatures and many action timers are defined in 20&nbsp;Hz ticks
+  copied from the original, and <code>BlupiController</code> converts the original's per-tick speeds. Worlds and autoplay
+  scripts are tuned to those numbers, so a small timing change can break a playthrough without any compile error.</p>
+
+  <h2>Game speeds</h2>
+  <p><code>Def::GameSpeed</code> (<code>include/GalaxyEggbert/Def/GameSpeed.hpp</code>) scales <code>simDt</code>, the
+  time the simulation advances per step.</p>
+  <table>
+    <tr><th>Key</th><th>Speed</th><th>Factor</th></tr>
+    <tr><td>F5</td><td><code>Normal</code></td><td>1</td></tr>
+    <tr><td>F6</td><td><code>Fast</code></td><td>2</td></tr>
+    <tr><td>F7, F8</td><td><code>Faster</code>, <code>Fastest</code> (only with the <code>quick</code> cheat)</td><td>4, 8</td></tr>
+    <tr><td>Tab</td><td><code>Slow</code> &rarr; <code>SuperSlow</code> &rarr; <code>UltraSlow</code> &rarr; <code>Normal</code></td><td>0.5, 0.25, 0.125, 1</td></tr>
+  </table>
   <ul>
-    <li>No phase/state-machine dispatch (<code>GamePhase</code> exists as an enum but nothing switches on it in CNA yet).</li>
-    <li>No fixed-timestep accumulator — CNA's own <code>Game</code> loop timing model is used as-is.</li>
-    <li>No pause, no menu, no win/lose handling.</li>
+    <li>Only the simulation is scaled. The camera, sound timers and menus keep the real 1/60 s, and steering is divided
+      by the factor so Blupi turns at the player's pace at any speed.</li>
+    <li>Without <code>quick</code> or ghost, a speed above <code>Fast</code> drops back to <code>Normal</code>.</li>
+    <li>The original's Tab toggled 0.5/1; the three slow steps are Galaxy's (2026-11-09). The enum's raw values are
+      stored in demo files, so compare speeds with its helpers (<code>SpeedFactor()</code>, <code>IsSlow()</code>), not by
+      order.</li>
   </ul>
 
+  <h2>Frame rates above 60</h2>
+  <p>The Setup's frame rate is 60, 120, 144 or 240 (<code>frameRate=</code> in <code>savedata.txt</code>). Above 60,
+  <code>ApplyFrameRate()</code> sets CNA's target time to 1/rate and turns vertical sync off. <code>Update()</code> then runs
+  that often, but the game still steps once per 1/60 s of accumulated time, at most one step per pass (no catching up).
+  Between two steps <code>Draw()</code> places the camera (with its shake), Blupi, every moving object and the particles
+  part way between their previous and current positions; nothing in the simulation changes. Captures, autoplay, demo
+  verification and resume replays always run at one step per pass without interpolation. Set
+  <code>GALAXY_INTERP_TRACE=&lt;file&gt;</code> to log each drawn frame's step, fraction and camera.</p>
+
+  <h2>Determinism</h2>
+  <p>Given the same world, start state, seed and input records, the Play path produces the same result on every run:</p>
+  <ul>
+    <li>the step is the constant 1/60 s, never the measured frame time;</li>
+    <li>each mission gets a random seed when it loads (<code>InteractionSystem::SeedRandom()</code>), and the seed is stored
+      in the resume log and in demo files so a replay uses the same one;</li>
+    <li>nothing in the simulation reads the clock (the real-time clock in <code>Update()</code> only times the menu's
+      40-second idle wait before a demo);</li>
+    <li>the 3D effects are presentation only (the golden trace and the autoplay traces are equal with them on), and
+      interpolation above 60 frames a second only moves what is drawn.</li>
+  </ul>
+  <p>Autoplay runs unthrottled (as fast as the machine draws) and still matches tick for tick;
+  <code>AUTOPLAY_REALTIME=1</code> keeps the 60&nbsp;Hz pace for watching. The golden frames and trace, the autoplay
+  playthroughs, the resume self-test (<code>GALAXY_RESUME_SELFTEST=N</code>) and the demo checks all rely on this
+  (<a href="development/testing.html">Testing</a>).</p>
+  <div class="warn"><strong>Keep it deterministic.</strong> Do not add wall-clock time, unseeded randomness or anything
+  that depends on the frame rate to the simulation. A change that alters the simulation also changes how the shipped
+  demos replay: <code>tools/verify_demos.sh</code> reports it, and the demos must then be recorded again with a new
+  simulation revision (<a href="demos.html">Demos &amp; Recordings</a>).</div>
+
   <div class="page-nav">
-    <a href="engine-integration.html">
+    <a class="prev" href="engine-integration.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Engine Integration</span>
     </a>

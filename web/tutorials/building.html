@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Building GalaxyEggbertCNA — Galaxy Eggbert Docs</title>
+<title>Tutorial: Building — Galaxy Eggbert Docs</title>
+<meta name="description" content="Step by step from empty folders to a running Galaxy Eggbert, a passing ctest run and a web build.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,77 +22,179 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
-  <a href="index.html">Tutorials</a>
+  <a href="../tutorials/index.html" class="active">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Building GalaxyEggbertCNA</div>
-  <h1>Tutorial: Building GalaxyEggbertCNA</h1>
-  <p class="subtitle">From a fresh clone to a running window on Linux.</p>
 
-  <h2>Step 1 — Clone the Repository and Its Siblings</h2>
-  <pre><code>cd ~/development
-git clone https://github.com/openeggbert/galaxy-eggbert.git
-git clone &lt;url&gt; cna
-git clone &lt;url&gt; cna-engine
-git clone &lt;url&gt; mobile-eggbert
-cd galaxy-eggbert</code></pre>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Tutorials</a> <span>/</span> Building</div>
+  <h1>Tutorial: Building</h1>
+  <p class="subtitle">From empty folders to a running game and a passing ctest on Linux, then the web build.</p>
+
   <p>
-    By default, CMake expects <code>cna</code>, <code>cna-engine</code>, and <code>mobile-eggbert</code>
-    as siblings of <code>galaxy-eggbert</code>. Use <code>-DCNA_HOME=</code>,
-    <code>-DCNA_ENGINE_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> if yours are elsewhere.
-    (Until 2026-10-20 the second sibling was <code>easy-3d</code>, overridden with
-    <code>-DEASY3D_HOME=</code>; cna-engine replaced it.)
+    This walkthrough uses Debian or Ubuntu package names and the directory names the project itself
+    uses. It takes a while the first time, mostly because CNA builds SDL from source on its first
+    configure. Background and every alternative are in the <a href="../build.html">Build Guide</a>.
   </p>
 
-  <h2>Step 2 — Configure</h2>
-  <pre><code>cmake -S . -B build-cna \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
-  -DCMAKE_BUILD_TYPE=Debug</code></pre>
-  <div class="warn">
-    <strong>CNA is added first and built statically</strong>
-    <code>CMakeLists.txt</code> adds <code>CNA</code> before <code>cna-engine</code>; cna-engine links
-    CNA's static module libraries instead of building its own copy, so CNA is built with
-    <code>CNA_SHARED_LIBRARY=OFF</code> (forced by the game's CMake).
-  </div>
+  <h2>1. Install the tools</h2>
+  <p>
+    You need CMake 3.23 or newer, a C++23 compiler (GCC or Clang), Ninja and git, plus the development
+    packages SDL builds against. The full package list is on
+    <a href="../getting-started.html">Getting Started</a>; it starts with:
+  </p>
+<pre><code>sudo apt-get install -y --no-install-recommends \
+  build-essential ninja-build pkg-config cmake git \
+  libasound2-dev libpulse-dev libx11-dev libxext-dev ...   # see Getting Started</code></pre>
+  <p>Add <code>xvfb</code> if you want the demo-replay test and headless runs. If your distribution's
+    CMake is older than 3.23, install a newer one first: <code>easy-gl</code> and <code>meta-gl</code> require it.</p>
 
-  <h2>Step 3 — Build</h2>
-  <pre><code>cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
-  <p>This also builds and runs the post-build asset-copy step (mobile-eggbert's <code>Content/</code> + <code>worlds/</code>, plus this repo's own <code>worlds3d/</code>).</p>
+  <h2>2. Clone the game and its siblings</h2>
+  <p>Everything goes into one parent folder. The siblings are ordinary clones, not submodules.</p>
+<pre><code>mkdir eggbert &amp;&amp; cd eggbert
+git clone https://github.com/openeggbert/galaxy-eggbert.git
+git clone https://github.com/libcna/cna.git
+git clone https://github.com/libcna/cna-engine.git
+git clone https://github.com/libcna/easy-gl.git
+git clone https://github.com/libcna/meta-gl.git
+git clone https://github.com/libcna/sharp-runtime.git
 
-  <h2>Step 4 — Run</h2>
-  <pre><code>cd build-cna
-./GalaxyEggbertCNA</code></pre>
-  <div class="note">
-    <strong>Run from the build directory</strong>
-    The loader uses relative paths (<code>worlds3d/world001.vwr</code>, <code>Content/icons/object-m.png</code>) — you must run the binary from where the asset copy placed those files.
-  </div>
-  <p>Expected: a window titled "Galaxy Eggbert (CNA)" showing a sky-blue-cleared 3D view of textured terrain (a ground floor, staircase, platform, walled room, and pillars). Arrow keys + Space move an invisible collision point around; there is nothing visible to represent it.</p>
+# test data for two tests: only the worlds/ folder of mobile-eggbert
+git clone --filter=blob:none --sparse https://github.com/openeggbert/mobile-eggbert.git
+git -C mobile-eggbert sparse-checkout set worlds</code></pre>
 
-  <h2>Step 5 — Run the Worlds Data Model Tests</h2>
-  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
-cmake --build build-cna --target GalaxyEggbertWorldsTests
-ctest --test-dir build-cna --output-on-failure</code></pre>
+  <h2>3. Match the revisions CI builds</h2>
+  <p>
+    The newest CNA may be ahead of what the game was last checked against. The safe set is the one
+    in <code>galaxy-eggbert/.github/workflows/cna-ci.yml</code> (its <code>ref:</code> lines). As of
+    2026-11-10:
+  </p>
+<pre><code>git -C cna           checkout 594eb28dc5129b20c822d51032fd0c02e20a55d8
+git -C cna-engine    checkout 6737a1cf0895df3e4de73776ad1052e06e49541f
+git -C easy-gl       checkout b582bd85f646678d1de38473160defed4729f323
+git -C sharp-runtime checkout c793ef3e886043b565749b071c6514cedc805b75
+git -C meta-gl       checkout 795bcdcfe9e2c418ced189717d3699cbb0847cc0
 
-  <h2>Troubleshooting</h2>
+git -C cna submodule update --init     # SDL3, SDL3_mixer, ... (not recursive)</code></pre>
+  <p>Initialise CNA's submodules after the checkout, so they match the CNA revision.</p>
+
+  <h2>4. Configure</h2>
+<pre><code>cd galaxy-eggbert
+cmake -S . -B build-cna-opengl3 -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DCNA_GRAPHICS_RENDERER=OPENGL33</code></pre>
+  <p>
+    Expect several minutes the first time: CNA builds SDL3 and SDL3_mixer, and CMake downloads
+    GoogleTest. The log names the CNA and cna-engine folders it found and includes
+    <code>GalaxyEggbertCNA target enabled (maintained playable game).</code> If ccache is installed,
+    add <code>-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache</code> to make
+    later rebuilds faster.
+  </p>
+
+  <h2>5. Build and run the game</h2>
+<pre><code>cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4
+cd build-cna-opengl3
+./GalaxyEggbert</code></pre>
+  <p>
+    Pick a lower <code>--parallel</code> number if the machine runs short of memory. The build copies
+    the game's assets into the build directory; always start the game from there. Press F1 in the game
+    for the controls. To jump straight into a mission without the menus, try
+    <code>./GalaxyEggbert --mission 12</code> (<a href="../running.html">Running the Game</a> lists every
+    flag).
+  </p>
+
+  <h2>6. Build everything and run the tests</h2>
+<pre><code>cd ..                                    # back to galaxy-eggbert/
+cmake --build build-cna-opengl3 --parallel 4
+ctest --test-dir build-cna-opengl3 --output-on-failure</code></pre>
+  <p>
+    The tests are separate executables, so the whole tree must be built first. Once built they take
+    seconds. A good run ends with <code>100% tests passed, 0 tests failed out of N</code> (N was 120 on
+    2026-11-10; it is a little lower without <code>xvfb-run</code>, which the demo-replay test needs).
+    What each test covers: <a href="../development/testing.html">Testing</a>.
+  </p>
+
+  <h2>7. Build for the web</h2>
+  <p>Install and activate the Emscripten SDK once:</p>
+<pre><code>git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk &amp;&amp; ./emsdk install latest &amp;&amp; ./emsdk activate latest &amp;&amp; cd ..</code></pre>
+  <p>Then, in a separate build directory (never reuse the desktop one):</p>
+<pre><code>source emsdk/emsdk_env.sh
+cd galaxy-eggbert
+emcmake cmake -S . -B build-cna-webgl2 \
+  -DCNA_GRAPHICS_RENDERER=WEBGL2 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build build-cna-webgl2 --target GalaxyEggbertCNA --parallel 4
+emrun build-cna-webgl2/GalaxyEggbert.html</code></pre>
+  <p>
+    The result is <code>GalaxyEggbert.html</code>, <code>.js</code>, <code>.wasm</code> and
+    <code>.data</code> plus a <code>Content/music/</code> folder. Serve them over HTTP; a
+    <code>file:</code> URL does not work. Click into the page if the sound does not start.
+  </p>
+
+  <h2>If something goes wrong</h2>
   <table>
-    <tr><th>Problem</th><th>Fix</th></tr>
-    <tr><td>CMake can't find CNA/cna-engine/mobile-eggbert</td><td>Pass <code>-DCNA_HOME=</code>, <code>-DCNA_ENGINE_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> explicitly</td></tr>
-    <tr><td>Duplicate-symbol link errors</td><td>Reconfigure from a clean build directory. (The old cause — configuring easy-3d before CNA — is gone: <code>CMakeLists.txt</code> now adds CNA first and builds it statically for cna-engine.)</td></tr>
-    <tr><td>Binary can't find <code>worlds3d/world001.vwr</code></td><td>Run from inside <code>build-cna/</code>, not the repo root</td></tr>
-    <tr><td>No visible terrain</td><td>Check <code>Content/icons/object-m.png</code> was copied next to the binary</td></tr>
+    <tr><th>Symptom</th><th>Fix</th></tr>
+    <tr><td><code>CNA not found at '...'</code> or <code>cna-engine not found at '...'</code></td><td>Clone it beside <code>galaxy-eggbert</code>, or pass <code>-DCNA_HOME=&lt;path&gt;</code> / <code>-DCNA_ENGINE_HOME=&lt;path&gt;</code>.</td></tr>
+    <tr><td><code>CNA: Missing sharp-runtime checkout at ...</code></td><td>Clone <code>sharp-runtime</code> next to <code>cna</code> (or set <code>CNA_SHARP_RUNTIME_ROOT</code>).</td></tr>
+    <tr><td>Errors that mention missing SDL sources under <code>cna/third_party/</code></td><td>Run <code>git -C cna submodule update --init</code>.</td></tr>
+    <tr><td><code>renderer SDL_GPU ... was renamed to SDLGPU</code></td><td>Use the new spelling, <code>-DCNA_GRAPHICS_RENDERER=SDLGPU</code>.</td></tr>
+    <tr><td><code>OPENGLES3 is a desktop/mobile GL renderer and cannot target Emscripten</code></td><td>A desktop renderer reached a web configure: use a fresh directory for <code>emcmake</code>, with <code>WEBGL2</code>.</td></tr>
+    <tr><td>The game starts but finds no worlds or models</td><td>Start it from its build directory, not through a symlink or from the source folder.</td></tr>
+    <tr><td><code>VerifyMoveObjectTypesCna</code> and <code>VerifyBigDecorParsingCna</code> fail</td><td>They need <code>../mobile-eggbert/worlds/</code> (step 2).</td></tr>
   </table>
 
+  <h2>Next</h2>
+  <ul>
+    <li><a href="../build.html">Build Guide</a> - the Linux bundle, Android, Windows, CI.</li>
+    <li><a href="../configuration.html">Configuration</a> - options, environment variables, settings.</li>
+    <li><a href="modifying-levels.html">Tutorial: Modifying Levels</a> - make a world of your own.</li>
+  </ul>
+
   <div class="page-nav">
-    <a href="index.html">← Tutorials</a>
-    <a href="first-object.html">Authoring a New .vwr World →</a>
+    <a class="prev" href="../tutorials/index.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Tutorials</span>
+    </a>
+    <a class="next" href="../tutorials/modifying-levels.html">
+      <span class="label">Next</span>
+      <span class="title">Tutorial: Authoring a World &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

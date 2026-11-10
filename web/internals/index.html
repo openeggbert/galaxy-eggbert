@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Internals — Galaxy Eggbert Docs</title>
+<meta name="description" content="Deep dives into how Galaxy Eggbert starts, loads a world, stores worlds on disk, runs its objects and resolves Blupi's collision.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,46 +14,113 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
-  <a href="index.html" class="active">Internals</a>
+  <a href="../internals/index.html" class="active">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Internals</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> Internals</div>
   <h1>Internals</h1>
-  <p class="subtitle">Deep dives into GalaxyEggbertCNA's algorithms and file formats.</p>
+  <p class="subtitle">How the game works inside, traced through the real code: start-up, world loading, the world file, objects and collision.</p>
+
+  <p>
+    These pages follow concrete code paths step by step, with the function names you will find when you
+    open the files. They describe the tree as of 2026-11-10. For the overall layering (CNA,
+    cna-engine, the <code>GalaxyEggbertCNA</code> host, the game and editor code, the
+    engine-independent model) start with <a href="../architecture.html">Architecture</a>; for the
+    per-frame order see <a href="../game-loop.html">Game Loop</a>.
+  </p>
 
   <div class="card-grid">
     <a class="card" href="startup.html">
       <h3>Startup Sequence</h3>
-      <p>From <code>main()</code> to the first rendered frame.</p>
-    </a>
-    <a class="card" href="vwr-format.html">
-      <h3>VWR Binary Format</h3>
-      <p>Complete spec for the <code>.vwr</code> world file: header, chunk table, VCH1 payload.</p>
+      <p>From <code>main()</code> to the title scene: the player's folder, command-line flags, <code>GalaxyEggbertGame</code>, <code>LoadContent()</code>, the Wait screen and the main menu, and the <code>--mission</code> shortcut.</p>
     </a>
     <a class="card" href="world-loading.html">
       <h3>World Loading</h3>
-      <p>How GEWorldRuntime selects a format and GETerrainRenderer builds meshes from it.</p>
+      <p><code>LoadMission()</code>: which file, reading it into <code>WorldRuntime</code>, legacy upgrades, objects and BigDecor, hub doors, placing Blupi, the resume log. Campaign, galaxy and custom worlds.</p>
+    </a>
+    <a class="card" href="vwr-format.html">
+      <h3>The .vwr Format</h3>
+      <p>The binary world file byte by byte: <code>VWR1</code> header, chunk table, <code>VCH1</code> chunks, palette packing, the <code>BMD1</code> sparse metadata types and their record layouts.</p>
     </a>
     <a class="card" href="object-lifecycle.html">
       <h3>Object Lifecycle</h3>
-      <p>Not implemented yet — what mobile-eggbert's Decor system does, as the porting target.</p>
+      <p>A MoveObject from its world record to <code>MobileObjSpec</code>, through <code>InteractionSystem</code> (patrols, contact, pickups, shots, dynamite) to a 3D model or a billboard on screen.</p>
     </a>
     <a class="card" href="collision.html">
-      <h3>Collision System</h3>
-      <p>GEBlupiController's grid collision, step-up traversal, and gravity.</p>
+      <h3>Collision</h3>
+      <p><code>BlupiController</code>: quarter-cell masks, crates and solid BigDecor, no step-up (he jumps), ledges, swimming, penetration recovery, and the exact hazard shapes of lava, saws and fans.</p>
+    </a>
+  </div>
+
+  <h2>Conventions used on these pages</h2>
+  <ul>
+    <li><strong>Raw grid</strong> coordinates are a world's own cells, 0-99 on each axis. <strong>Render space</strong> is the same shifted by &minus;50 on X and Z (<code>WorldRuntime::kWorldCenterX/Z</code>); Y is never shifted. Blupi's controller works in render space and converts to grid cells when it reads blocks.</li>
+    <li><strong>Ticks</strong>: the simulation runs at 60 updates a second; timings copied from the original game are in its 20 Hz ticks, and 64 original pixels make one block.</li>
+    <li>Ledger IDs such as <code>BD-0077</code> or <code>OR-0069</code> point into <code>plans/audit/</code> in the repository, where each behaviour decision is recorded.</li>
+  </ul>
+
+  <h2>See also</h2>
+  <ul>
+    <li><a href="../classes/index.html">Classes</a>: the reference pages of the types named here.</li>
+    <li><a href="../systems/index.html">Systems</a> and <a href="../modules/index.html">Modules</a>.</li>
+    <li><a href="../development/testing.html">Testing</a>: the tests and verifiers that pin this behaviour down.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../tutorials/first-object.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Tutorial: A Block or Object Behaviour</span>
+    </a>
+    <a class="next" href="../internals/startup.html">
+      <span class="label">Next</span>
+      <span class="title">Startup Sequence &#8594;</span>
     </a>
   </div>
 </main>

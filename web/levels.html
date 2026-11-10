@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Levels &amp; Worlds — Galaxy Eggbert Docs</title>
+<title>Campaign &amp; Worlds — Galaxy Eggbert Docs</title>
+<meta name="description" content="The structure of Galaxy Eggbert's campaign: the main hub, twelve theme worlds with 64 missions, the bonus world, how hubs unlock missions and how the worlds are made.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,114 +24,163 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html" class="active">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html" class="active">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Levels &amp; Worlds</div>
-  <h1>Levels &amp; Worlds</h1>
-  <p class="subtitle">Two world formats: mobile-eggbert's flat 2D levels, and the genuinely-3D <code>.vwr</code> format.</p>
+  <h1>Campaign &amp; Worlds</h1>
+  <p class="subtitle">The main hub, twelve theme worlds with 64 missions, the bonus world, how missions unlock and how every world is built.</p>
 
-  <h2>World Data Model (engine-agnostic, shared by Simple3D and CNA)</h2>
+  <p>
+    The campaign has the original's structure and the original's numbers: 78 worlds, each a hand-authored 3D design
+    that teaches what the same-numbered world of Speedy Blupi teaches. All of them are built, and each has a scripted
+    playthrough; all 78 passed on 2026-11-06. The whole campaign in one run from a new game last reached the ending on
+    2026-11-01; a later run stopped early at a script check in world 021 (that mission passes alone), so a full run is
+    not claimed for the build of 2026-11-10.
+  </p>
+
+  <h2>Structure</h2>
   <table>
-    <tr><th>Property</th><th>Value</th></tr>
-    <tr><td>World size</td><td>100 × 100 × 100 blocks (<code>VoxelConfig::WorldBlocksPerAxis</code>)</td></tr>
-    <tr><td>Chunk size</td><td>10 × 10 × 10 blocks (<code>VoxelConfig::ChunkSize</code>)</td></tr>
-    <tr><td>Chunks per axis</td><td>10 (<code>VoxelConfig::WorldChunksPerAxis</code>)</td></tr>
-    <tr><td>Block encoding</td><td>16-bit: 12-bit type ID (0–4095) + 4-bit metadata (0–15)</td></tr>
-    <tr><td>World center offset</td><td><code>kWorldCenterX = kWorldCenterZ = 50</code> — centers the grid on the origin</td></tr>
+    <tr><th>World file</th><th>What it is</th></tr>
+    <tr><td><code>world001</code></td><td>The <strong>main hub</strong>. The original's machine shaft becomes a stepped machine ziggurat: seven tiers, each a jump above the last, the twelve world signs in niches paired per tier as the original pairs them per level, and on the summit a tunnel of twelve gold bars before the exit to the bonus world.</td></tr>
+    <tr><td><code>world010</code> &hellip; <code>world120</code></td><td>The twelve <strong>theme hubs</strong>, one per world, each with one sign per mission.</td></tr>
+    <tr><td><code>world011</code> &hellip; <code>world125</code></td><td>The <strong>64 missions</strong>: mission <em>k</em> of world <em>N</em> is number <em>N</em>&times;10 + <em>k</em>.</td></tr>
+    <tr><td><code>world199</code></td><td>The <strong>bonus world</strong>, the original's final world rebuilt in 3D as one journey (rebuilt on 2026-11-06). Its red arrow ends the game with the Win screen.</td></tr>
+    <tr><td><code>world999</code></td><td>Galaxy Eggbert's <strong>showcase</strong> of the mechanics, reached by its own portal on the main hub's bottom tier; used by several tests and the golden frames.</td></tr>
+    <tr><td><code>world998</code></td><td>The <strong>gallery</strong>: every block, object and big decor in one place (its map: <code>plans/audit/gallery_map.md</code>). The editor gives it a slot of its own.</td></tr>
+    <tr><td><code>title.vwr</code></td><td>The scene behind the main menu.</td></tr>
   </table>
-  <p>See <a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a>, <a href="classes/Block.html">Block</a>, and <a href="classes/VoxelConfig.html">VoxelConfig</a> for the full API.</p>
+  <p>All 81 files live in <code>worlds3d/</code>. A world's mission number is stored in its header, and
+    <code>VerifyShippedWorlds</code> checks that it matches the file name.</p>
 
-  <h2>Two World File Formats</h2>
+  <h2>The twelve worlds</h2>
+  <p>The themes, mission counts and last missions are the original's; <code>tools/campaigncheck.py</code> checks them
+    against the shipped files. The first mission's title is the one of its design brief in <code>plans/briefs/</code>.</p>
+  <table>
+    <tr><th>World</th><th>Theme</th><th>Hub</th><th>Missions</th><th>Golden key in</th><th>First mission</th></tr>
+    <tr><td>1</td><td>Blue machines</td><td><code>world010</code></td><td>011-014 (4)</td><td>014</td><td>The first lesson</td></tr>
+    <tr><td>2</td><td>White palace</td><td><code>world020</code></td><td>021-025 (5)</td><td>025</td><td>The palace garden</td></tr>
+    <tr><td>3</td><td>Village</td><td><code>world030</code></td><td>031-034 (4)</td><td>034</td><td>Birds over the rooftops</td></tr>
+    <tr><td>4</td><td>Cheese</td><td><code>world040</code></td><td>041-046 (6)</td><td>046</td><td>The helicopter caves</td></tr>
+    <tr><td>5</td><td>Space station</td><td><code>world050</code></td><td>051-058 (8)</td><td>058</td><td>The station and the cistern</td></tr>
+    <tr><td>6</td><td>Slime</td><td><code>world060</code></td><td>061-066 (6)</td><td>066</td><td>The slime chasm</td></tr>
+    <tr><td>7</td><td>Toys</td><td><code>world070</code></td><td>071-075 (5)</td><td>075</td><td>The jeep and the toy tower</td></tr>
+    <tr><td>8</td><td>Machine works in the sky</td><td><code>world080</code></td><td>081-084 (4)</td><td>084</td><td>The sky steps</td></tr>
+    <tr><td>9</td><td>Clay clods</td><td><code>world090</code></td><td>091-095 (5)</td><td>095</td><td>The climb out of the clods</td></tr>
+    <tr><td>10</td><td>Grey cobbles</td><td><code>world100</code></td><td>101-107 (7)</td><td>107</td><td>The dynamite caves</td></tr>
+    <tr><td>11</td><td>Hangar of blue machine panels</td><td><code>world110</code></td><td>111-115 (5)</td><td>115</td><td>The hangar shaft</td></tr>
+    <tr><td>12</td><td>Brick house</td><td><code>world120</code></td><td>121-125 (5)</td><td>125</td><td>The brick house</td></tr>
+  </table>
+  <p>Missions 11-14 carry the original's training hints. The inventory of every world (the original's objects and
+    tiles beside the 3D world's counts) is <code>plans/inventory/worlds.md</code>.</p>
 
-  <h3>1. <code>.vwr</code> — Native Binary, Genuinely 3D</h3>
-  <p>
-    A palette-compressed voxel format (magic <code>VWR1</code>, chunk payload magic <code>VCH1</code>).
-    Empty chunks are skipped entirely. This is the <strong>only</strong> format with real Y
-    variation — it is <code>GalaxyEggbertCNA</code>'s default load path
-    (<code>GEWorldRuntime::LoadFromVwrFile</code>). Full spec: <a href="internals/vwr-format.html">VWR Format</a>.
-  </p>
-  <p>
-    The only <code>.vwr</code> world that exists today is <code>worlds3d/world001.vwr</code>,
-    generated by the <code>GenerateSampleWorld3D</code> CMake tool target: a ground floor, a
-    10-step ascending staircase, a raised platform, a walled room with a doorway, and two
-    pillars — 2729 non-air blocks, Y range [0, 13].
-  </p>
-  <div class="warn">
-    <strong>No automated 2D→3D converter</strong>
-    There is deliberately no automated <code>.txt</code>→<code>.vwr</code> converter that "promotes"
-    a flat mobile-eggbert level into a 3D one — this was explicitly rejected as a direction.
-    3D worlds are hand-authored.
-  </div>
+  <h2>How hubs unlock missions</h2>
+  <p>The hubs work as the original's <code>Decor::AdaptDoors</code>, read along X and Z in 3D
+    (<a href="classes/HubDoors.html">HubDoors</a>, <code>include/GalaxyEggbert/HubDoors.hpp</code>):</p>
+  <ol>
+    <li>In the <strong>main hub</strong> every world sign is open from the start. Walking into a sign makes Blupi wave
+      goodbye and loads that world's hub.</li>
+    <li>In a <strong>theme hub</strong>, mission 1's sign is open; every later mission's sign sits behind a blue bar
+      (tile 182) one or two cells away. Winning mission <em>k</em> opens the bar of mission <em>k</em>+1: Blupi comes
+      back to the hub just outside it and watches it slide up.</li>
+    <li>The world's last mission ends at the <strong>golden key</strong>. It leads back to the main hub, where the
+      world's sign shows it finished and one more <strong>gold bar</strong> (tile 183) slides up, the lowest first.
+      Blupi arrives beside the sign of the world he last played.</li>
+    <li>With all twelve worlds finished the gold bars are gone and the main hub's red arrow leads to <strong>world
+      199</strong>. Its own red arrow is the ending.</li>
+  </ol>
+  <p>Pause's <strong>Back</strong> returns from a theme mission to its hub and from a theme hub to the main hub. Progress is kept
+    per player (A, B, C) in <code>savedata.txt</code>; see <a href="save-system.html">Save Data &amp; Resume</a>. The
+    <code>opendoors</code> <a href="cheats.html">cheat</a> opens every bar while it is on.</p>
 
-  <h3>2. mobile-eggbert <code>.txt</code> — Flat 2D, Reference/Secondary Path</h3>
-  <p>
-    mobile-eggbert's original plain-text level format: a header (<code>blupiPos=</code>,
-    <code>region=</code>), a 100×100 <code>Decor:</code> tile grid (placed at Y=0 only — this
-    format is inherently flat), a second 100×100 <code>BigDecor:</code> background layer (parsed
-    and stored but not rendered anywhere yet), and <code>MoveObject:</code> entries (object
-    placements, not yet parsed by <code>GEWorldRuntime</code> for CNA).
-  </p>
-  <p>
-    <code>GEWorldRuntime::LoadFromMobileEggbertFile</code> still exists as a secondary/reference
-    path in CNA (e.g. for later faithful-remake level porting) — it is <strong>no longer the
-    default</strong> loader, having been superseded by <code>LoadFromVwrFile</code>.
-  </p>
+  <h2>How the worlds are made</h2>
+  <p>Every world is a <code>.vwr</code> file: a 100 &times; 100 &times; 100 grid of blocks in 10 &times; 10 &times; 10
+    chunks, whose block numbers are the original's tile icons, plus sparse records for objects, big decor, hint zones
+    and turns. The format is described on <a href="internals/vwr-format.html">The .vwr Format</a>.</p>
+  <h3>Hand-authored true 3D</h3>
+  <p>The original's 2D maps give a world its identity, theme, mechanics, difficulty and order, and nothing else. No map
+    is converted, extruded or traced; a side-view 2.5D conversion was tried and rejected on 2026-10-25. Each world is its
+    own design, using only the original's tiles and objects as the original uses them.</p>
+  <h3>Python generators</h3>
+  <p>Each campaign world is the output of a script in <code>tools/worlds/</code> (<code>world001.py</code> &hellip;
+    <code>world199.py</code>, <code>gallery.py</code>, <code>title.py</code>) built on <code>tools/worldkit.py</code>
+    and the theme kits (<code>kit.py</code>, <code>palace.py</code>, <code>village.py</code>, <code>cheese.py</code>,
+    <code>station.py</code>, <code>slime.py</code>, <code>toys.py</code>, <code>skyworks.py</code>, <code>clods.py</code>,
+    <code>cobbles.py</code>). Re-running a script reproduces the committed file byte for byte:</p>
+  <pre><code>python3 tools/worlds/world012.py            # writes worlds3d/world012.vwr
+python3 tools/vwr_inspect.py worlds3d/world012.vwr   # header, block counts, objects</code></pre>
+  <p>The showcase <code>world999</code> has no Python script: the C++ tool <code>GenerateSampleWorld3D</code> writes it.
+    Each world has a brief in <code>plans/briefs/worldNNN.md</code>: what the original teaches, the 3D design and the
+    checks that were run.</p>
+  <h3>Checks</h3>
+  <table>
+    <tr><th>Tool</th><th>Checks</th></tr>
+    <tr><td><code>tools/levelcheck.py</code>, <code>tools/flightcheck.py</code></td><td>Every goal is reachable on foot, and with the helicopter.</td></tr>
+    <tr><td><code>tools/campaigncheck.py</code></td><td>Signs, mission counts, one red arrow or golden key per mission.</td></tr>
+    <tr><td><code>tools/watercheck.py</code></td><td>No pool Blupi cannot climb out of.</td></tr>
+    <tr><td><code>VerifyShippedWorlds</code> (CTest)</td><td>Every shipped world loads and carries its own mission number.</td></tr>
+    <tr><td><code>tools/autoplay/</code></td><td>Scripted playthroughs of all 64 missions, each world's chain from its hub to the main hub, world 199 and the whole campaign (<a href="development/testing.html">Testing</a>).</td></tr>
+  </table>
+  <h3>The in-game editor</h3>
+  <p>Worlds can also be built in the game's <a href="editor.html">3D world editor</a>, which writes the same format.
+    Typing <code>xnjttjpo</code> in play opens the world being played in it. Each player can also build a
+    <a href="galaxy.html">galaxy of their own</a> with the campaign's hub rules. Step-by-step authoring:
+    <a href="tutorials/modifying-levels.html">Modifying Levels</a>.</p>
 
-  <h2>Block Types</h2>
-  <p>
-    A block's type ID is an icon index into <code>object-m.png</code> (441 addressable tile IDs,
-    64×64 px each, 20 columns, 65 px pitch including a 1 px gap). <code>BlockTypes::fromMobileIconId()</code>
-    converts a mobile-eggbert icon ID into a block type when loading <code>.txt</code> levels.
-  </p>
-
-  <h2>World Loading Pipeline (GalaxyEggbertCNA)</h2>
-  <pre><code>GalaxyEggbertCnaGame::LoadContent():
-  worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")
-  terrainRenderer_ = GETerrainRenderer(world, tileAtlas)
-  // builds one CnaEngine::Graphics::GpuMesh (via MeshBuilder) for static blocks,
-  // and a second one for animated blocks, rebuilt on anim-phase change</code></pre>
-
-  <div class="tip">
-    <strong>More detail</strong>
-    Full binary layout: <a href="internals/vwr-format.html">VWR Format</a>.
-    Loading internals: <a href="internals/world-loading.html">World Loading</a>.
-  </div>
+  <h2>Jumping to a mission</h2>
+  <p>For development and checks, the desktop build starts straight in a world, skipping the menus. Run it from the
+    build directory, where the assets are:</p>
+  <pre><code>./GalaxyEggbert --mission 12                   # mission 012
+./GalaxyEggbert --mission 999 --spawn 34,1,6,0     # showcase, Blupi at raw cell 34,1,6 facing 0 degrees
+./GalaxyEggbert --galaxy --mission 11              # mission 11 of the selected player's galaxy</code></pre>
+  <p><code>--spawn x,y,z[,yaw]</code> takes raw grid coordinates (0-99, Y up), the ones <code>vwr_inspect.py</code>
+    and the editor show. In play, Pause's <strong>Restart</strong> starts the current mission again. More options:
+    <a href="running.html">Running the Game</a>.</p>
 
   <div class="page-nav">
-    <a href="controls.html">
+    <a class="prev" href="controls.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Controls</span>
     </a>
-    <a class="next" href="assets.html">
+    <a class="next" href="cheats.html">
       <span class="label">Next</span>
-      <span class="title">Assets &#8594;</span>
+      <span class="title">Cheats &amp; Diagnostics &#8594;</span>
     </a>
   </div>
 </main>

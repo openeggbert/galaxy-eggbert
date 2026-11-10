@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testing &amp; QA — Galaxy Eggbert Docs</title>
+<meta name="description" content="How Galaxy Eggbert is verified: ctest suites, golden frames and trace, autoplay playthroughs, demo replays, live QA scripts, Python world checkers and CI.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html" class="active">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Development</a> <span>/</span> Testing &amp; QA</div>
+  <h1>Testing &amp; QA</h1>
+  <p class="subtitle">Five layers of checks, from two seconds of ctest to a two-hour campaign playthrough, and which of them to run for which change (as of 2026-11-10).</p>
+
+  <table>
+    <tr><th>Layer</th><th>Cost</th><th>Covers</th><th>In CI</th></tr>
+    <tr><td>ctest</td><td>seconds once built</td><td>rules, data model, registries, editor logic, shipped worlds and demos</td><td>yes</td></tr>
+    <tr><td>Python world checkers</td><td>seconds</td><td>reachability, campaign structure, water, creature and lift timing</td><td>no</td></tr>
+    <tr><td>Golden frames and trace</td><td>about a minute, needs a display</td><td>rendering and movement did not change</td><td>no</td></tr>
+    <tr><td>Autoplay playthroughs</td><td>minutes per mission; about two hours for the campaign</td><td>every mission can still be finished</td><td>no</td></tr>
+    <tr><td>Live QA scripts</td><td>manual review of screenshots</td><td>what it looks like, menus and editor flows</td><td>no</td></tr>
+  </table>
+  <p>Compiling is not evidence of visual parity: look at the result.</p>
+
+  <h2>ctest</h2>
+  <pre><code>ctest --test-dir build-cna-opengl3 -N                     # list the tests
+ctest --test-dir build-cna-opengl3 -j4 --output-on-failure
+ctest --test-dir build-cna-opengl3 -R VerifyShippedWorlds  # one test</code></pre>
+  <p><code>CMakeLists.txt</code> registers 32 tool tests (23 with <code>add_test</code>, nine through
+  <code>ge_add_editor_verify</code>) and the GoogleTest target <code>GalaxyEggbertWorldsTests</code>, whose 83
+  <code>TEST</code> cases <code>gtest_discover_tests</code> turns into one ctest entry each. The easy-gl
+  dependency adds five tests of its own. A native build directory listed 120 tests on 2026-11-10;
+  <code>CURRENT.md</code>'s last full verification line records 117/117 on 2026-11-09, before the latest
+  additions. <code>VerifyDemoReplays</code> is registered only when CMake finds <code>xvfb-run</code>.</p>
+
+  <h3>GoogleTest: <code>GalaxyEggbertWorldsTests</code></h3>
+  <p>Sources in <code>tests/GalaxyEggbert/</code>: <code>Block</code>, <code>BitPacking</code>,
+  <code>Chunk</code>, <code>World</code> (serialization round trips, rejection of bad files),
+  <code>BlockMetadata</code>, <code>MoveObjectRecord</code>, <code>BigDecorRecord</code>,
+  <code>HintZoneRecord</code>, <code>HubDoors</code>. They link only the engine-independent model, no CNA.</p>
+
+  <h3>Tool tests (<code>tools/Verify*.cpp</code>)</h3>
+  <p>Plain <code>main()</code> programs that print <code>PASS:</code>/<code>FAIL:</code> lines and return
+  non-zero on failure.</p>
+  <table>
+    <tr><th>Area</th><th>Tests</th><th>What they check</th></tr>
+    <tr><td>Movement and rules</td><td><code>VerifyBlupiMovement</code>, <code>VerifyInteractionSystem</code></td><td><code>BlupiController</code> and <code>InteractionSystem</code> against <code>world999</code>: walking, jumping, collision, swimming, vehicles, lifts, crates against the original's timing tables, pickups, hazards, dynamite. Run from the repository root</td></tr>
+    <tr><td>Worlds and data</td><td><code>VerifyShippedWorlds</code>, <code>VerifyBlockDefinitionsCsv</code>, <code>VerifyDefinitionRegistries</code>, <code>VerifyMoveObjectTypesCna</code>, <code>VerifyBigDecorParsingCna</code></td><td>every <code>worlds3d/*.vwr</code> loads, carries its file's mission number and survives load-save-load; <code>tools/data/blocks.csv</code> equals the C++ registry (<code>DumpBlockDefinitions --check</code>); the block and object registries; the last two parse the original's world files and need the sibling <code>mobile-eggbert</code></td></tr>
+    <tr><td>Sprites and models</td><td><code>VerifyGetObjIcon</code>, <code>VerifyObjIconAgainstReferenceDoc</code>, <code>VerifyObjectModelTable</code></td><td>object animation frames (a regression lock, and a cross-check against <code>mobile-eggbert-reference/08-animations.md</code>); the <code>avatars3d/objects/</code> manifests</td></tr>
+    <tr><td>Rendering support</td><td><code>VerifyTileUvBounds</code>, <code>VerifyTileCoverage</code>, <code>VerifyTileFaces</code>, <code>VerifyTerrainLighting</code>, <code>VerifyTerrainAnimDivisor</code>, <code>VerifyUnverifiedRenderMapping</code></td><td>pure functions: atlas rectangles, cut-out versus opaque tiles, directional tile faces, terrain light, animation divisors</td></tr>
+    <tr><td>3D effects</td><td><code>VerifyEffectParticles</code>, <code>VerifySceneEffects</code>, <code>VerifyUltra</code></td><td>particles stepped by ticks; shadows, lights and occlusion decided without a GPU; Ultra's CPU-side computations</td></tr>
+    <tr><td>Camera and input</td><td><code>VerifyCameraShake</code>, <code>VerifyChaseCameraYaw</code>, <code>VerifyGEInputPad</code></td><td>camera state machines; on-screen pad and menu hit-testing with synthetic mouse state</td></tr>
+    <tr><td>Editor</td><td><code>VerifyGEWorldEditor</code>, <code>VerifyGEEditorPalette</code>, <code>VerifyGEEditorStorage</code>, <code>VerifyGEEditorObjects</code>, <code>VerifyGEEditorDevices</code></td><td>placement, undo, palette, slots and backups, objects, gamepad and touch controls; run in the build tree's <code>verify-run/</code></td></tr>
+    <tr><td>Harnesses and saves</td><td><code>VerifyAutoplay</code>, <code>VerifyGESaveData</code>, <code>VerifyDemoReplay</code>, <code>VerifyDemoFiles</code>, <code>VerifyDemoReplays</code></td><td>the autoplay parser; the save round trip; the demo format; every shipped demo parses and matches its world; the shipped demos replayed by the game (below)</td></tr>
+  </table>
+
+  <h3>Adding a test</h3>
+  <ol>
+    <li>Write <code>tools/VerifyYourThing.cpp</code> in the <code>check(cond, "what")</code> pattern of
+      <code>tools/VerifyCameraShake.cpp</code>. Keep it deterministic, without audio or windows.</li>
+    <li>In <code>CMakeLists.txt</code>, add an <code>add_executable</code> with the sources it needs
+      (plus <code>${GE_SHARED_SOURCES}</code> for the world model), the include directories
+      <code>include</code> and <code>src</code>, and an <code>add_test</code> inside
+      <code>if(BUILD_TESTING)</code>, with <code>WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}</code> when it opens
+      repository paths. Tests that touch CNA types copy the link pattern of
+      <code>VerifyInteractionSystem</code>; editor tests use <code>ge_add_editor_verify</code>.</li>
+    <li>For a world-model unit test, add a <code>TEST</code> under <code>tests/GalaxyEggbert/</code> and list
+      the file in <code>GalaxyEggbertWorldsTests</code>.</li>
+  </ol>
+
+  <h2>Golden frames and trace</h2>
+  <p><code>tests/golden/</code> holds three screenshots of the showcase world (<code>golden_frame_0060.png</code>,
+  <code>_0120</code>, <code>_0180</code>) and a movement trace (<code>golden_trace.txt</code>);
+  <code>tests/golden/effects-medium/</code> and <code>effects-high/</code> hold the same three frames with the
+  3D effects at those levels. The comparison is byte for byte.</p>
+  <pre><code>xvfb-run -a tools/verify_golden_frames.sh build-cna-opengl3
+xvfb-run -a tools/verify_golden_trace.sh build-cna-opengl3</code></pre>
+  <p><code>verify_golden_frames.sh</code> runs the game with <code>--golden-capture</code> three times
+  (<code>GALAXY_EFFECTS=0</code>, <code>medium</code>, <code>high</code>) and compares each set with its
+  references. <code>verify_golden_trace.sh</code> runs <code>--golden-capture-trace</code>, which also walks and
+  jumps Blupi through a fixed script and records position, vertical speed, ground state and animation per
+  tick. Both need a real or virtual display; neither is in ctest or CI.</p>
+  <div class="warn"><strong>Re-baselining</strong> Only after an intended change of look or physics, never
+  to silence a failure. Compare the new images with the old ones (and read the trace diff the script prints),
+  then commit the new references on their own with the reason. <code>GOLDEN_UPDATE=1</code> makes
+  <code>verify_golden_frames.sh</code> write the effects-level references; the classic ones are only replaced
+  by hand. Whether the files are byte-identical on other GPU drivers is not verified.</div>
+
+  <h2>Autoplay playthroughs</h2>
+  <p>A script plays a mission tick for tick against the real game (<code>--mission N --autoplay
+  &lt;script&gt;</code>) and checks conditions; see <a href="../classes/Autoplay.html">Autoplay</a>.</p>
+  <pre><code>tools/autoplay.sh build-cna-opengl3 tools/autoplay/world012.txt 12     # one mission
+tools/autoplay_all.sh build-cna-opengl3                                # every worldNNN.txt
+tools/autoplay_all.sh build-cna-opengl3 world011 world121              # chosen ones
+tools/play_pass.sh build-cna-opengl3 &lt;out-dir&gt;                        # all, with contact sheets</code></pre>
+  <p><code>autoplay.sh</code> runs the game under its own Xvfb display from a run directory (default
+  <code>build-probe/autoplay-run/</code>, or <code>AUTOPLAY_RUN=&lt;dir&gt;</code>) whose asset directories link
+  to the repository's, with a fresh save and <code>GALAXY_USER_DIR</code> set to the run directory. It prints
+  <code>autoplay_trace.txt</code> and exits with the game's code: 0 when the script passed. Silent
+  (<code>SDL_AUDIODRIVER=dummy</code>) unless <code>QA_SOUND=1</code>; <code>AUTOPLAY_WORLDS=&lt;dir&gt;</code>
+  substitutes <code>worlds3d/</code>; <code>AUTOPLAY_REALTIME=1</code> paces at 60 Hz instead of flat out;
+  <code>AUTOPLAY_SHOTS=N</code> saves a frame every N ticks. Extra game arguments follow the mission number.
+  <code>autoplay_all.sh</code> skips a script whose first line says <code>BLOCKED</code>.</p>
+  <p><code>tools/autoplay/</code> has one script per campaign world (<code>world001.txt</code> to
+  <code>world199.txt</code>); a theme hub's script (<code>world010.txt</code>...) <code>include</code>s its
+  missions and plays the hub as a chain to its golden key. <code>campaign.txt</code> (written by
+  <code>python3 tools/autoplay_campaign.py</code>) plays a new game through all twelve worlds and world 199.
+  <code>probes/</code> holds one-off scripts, <code>spare/</code> alternate routes.</p>
+
+  <h3>The script language</h3>
+  <p>The authoritative text is the header comment of <code>src/GalaxyEggbert/Game/Autoplay.hpp</code>. One
+  command per line, <code>#</code> comments, raw grid coordinates (a cell's centre is its integer value), yaw
+  in degrees (0 faces -Z, 90 faces +X).</p>
+  <table>
+    <tr><th>Command</th><th>Meaning</th></tr>
+    <tr><td><code>wait N</code>, <code>hold N KEY...</code></td><td>no keys / hold keys (<code>up down left right jump action crouch lookup</code>) for N ticks of 1/60 s</td></tr>
+    <tr><td><code>type WORD</code>, <code>face DEG</code></td><td>type letters (cheat words); turn on the spot</td></tr>
+    <tr><td><code>go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...</code></td><td>walk towards a point, optionally jumping once within D of it</td></tr>
+    <tr><td><code>fly X Y Z ...</code></td><td>a <code>go</code> that also holds a height (helicopter, overcraft)</td></tr>
+    <tr><td><code>until COND [max N]</code>, <code>lift X Y Z</code>, <code>crate X Y Z [tol T]</code></td><td>wait for a condition, a lift platform or a crate at a place</td></tr>
+    <tr><td><code>clear X Y Z R [lane x|z]</code>, <code>near ...</code></td><td>wait until no enemy / an enemy is within R: time a pass by a patrol</td></tr>
+    <tr><td><code>expect COND</code>, <code>mortal</code></td><td>record a pass or failure; from <code>mortal</code> on a death is traced, not a failure</td></tr>
+    <tr><td><code>log TEXT</code>, <code>trace N</code>, <code>shots N</code>, <code>end</code>, <code>include FILE</code></td><td>trace and flow control</td></tr>
+  </table>
+  <p>A condition is <code>FIELD OP VALUE</code> with <code>= != &lt; &lt;= &gt; &gt;=</code>. Fields: <code>x y z yaw
+  tick mtick mission treasures eggs lives keys dynamite vehicle ground dead ghost anim exit blitz temp switches
+  saws crush phase</code> (<code>vehicle</code> is accepted by the parser but missing from the header comment).
+  Use <code>mtick</code> (ticks since the current mission started), never <code>tick</code>, in anything that
+  can run inside a chain. A command that runs out of ticks, or Blupi dying before <code>mortal</code>, fails the
+  run. <code>tools/autoplay_search.py</code> tries a <code>wait {D}</code> over a range and
+  <code>tools/autoplay_chains.py</code> re-times synced chains after a timing change.</p>
+  <p>Last recorded results: the handbook records a full pass of all 78 campaign scripts on 2026-11-07
+  (<code>CURRENT.md</code> still names 2026-11-06 as its baseline); the whole-campaign run
+  (<code>campaign.txt</code>) was last recorded on 2026-10-27.</p>
+
+  <h2>Demo verification</h2>
+  <p>The main-menu demos (<code>Content/demos/demoNNN.gdemo</code>, see <a href="../demos.html">Demos &amp;
+  Recordings</a>) are recorded input, so a simulation change can make them replay differently.
+  <code>VerifyDemoFiles</code> (<code>VerifyDemoReplay --shipped</code>) checks that every shipped demo parses
+  with the current simulation revision and names its world's current bytes; <code>tools/verify_demos.sh
+  &lt;build-dir&gt;</code> (ctest <code>VerifyDemoReplays</code>) replays each one in the game under Xvfb with
+  <code>--verify-demo</code>, compares its end state, and checks that the stand-in player files were left
+  untouched. When a demo reports "different", bump <code>kDemoSimulationRevision</code>
+  (<code>DemoReplay.hpp</code>) and record the demos again with <code>tools/record_demo.sh</code>.</p>
+
+  <h2>Live QA</h2>
+  <p><code>tools/qa_live.sh &lt;build-dir&gt; &lt;out-dir&gt; &lt;steps-file&gt; [game args]</code> runs the game
+  under its own Xvfb display (needs <code>xvfb-run</code>, <code>xdotool</code> and ImageMagick's
+  <code>import</code>) and executes a step file: <code>sleep S</code>, <code>shot NAME</code>, <code>key
+  KEYSYM...</code>, <code>keydown</code>/<code>keyup</code>, <code>click X Y</code>,
+  <code>mousedown</code>/<code>mouseup</code>, <code>move X Y</code>, <code>focus</code>, <code>type WORD</code>,
+  <code>resize W H</code>. <code>QA_LIVE_RUN</code>, <code>QA_LIVE_AVATARS</code>, <code>QA_LIVE_WORLDS</code>
+  and <code>QA_LIVE_SCREEN</code> choose the run directory, substitute asset directories (to look at a
+  re-exported model or a probe world before it replaces the committed one) and size the display. Editor step
+  files live in <code>tools/qa_steps/</code> (<code>editor_playtest.txt</code>,
+  <code>editor_copy_paste.txt</code>, <code>editor_lift.txt</code>, <code>editor_backups.txt</code>...).</p>
+  <ul>
+    <li><code>tools/qa_sweep.sh &lt;build-dir&gt; [out-dir]</code> loads every shipped world, walks two seconds,
+      takes a screenshot and writes one line per world to <code>result.txt</code>.</li>
+    <li><code>tools/qa_original.sh &lt;port-dir&gt; &lt;out-dir&gt; &lt;steps&gt;</code> drives a <em>copy</em> of the
+      original game's Linux build with the same steps, to see what the original does where its source leaves
+      it open.</li>
+    <li><code>python3 tools/verify_lava_depth.py &lt;build-dir&gt;</code> is a real-render regression (BD-0114:
+      lava drawn over a translucent ghost Blupi).</li>
+  </ul>
+
+  <h2>Python world checkers</h2>
+  <p>Run from the repository root; all are read-only.</p>
+  <table>
+    <tr><th>Tool</th><th>Checks</th></tr>
+    <tr><td><code>tools/levelcheck.py worlds3d/worldNNN.vwr [--rides]</code></td><td>conservative reachability from the spawn to every treasure, key, egg, exit and (in a hub) sign: walking, falling, jumps, lifts, swimming, teleporters; also traps. Crates, dynamite, vehicles and timing are not modelled, so check a generator's "solved" variant for those</td></tr>
+    <tr><td><code>tools/flightcheck.py ... [--mine-margin 0]</code></td><td>the same plus the helicopter</td></tr>
+    <tr><td><code>tools/campaigncheck.py</code></td><td>the campaign's structure: twelve world signs, each hub's mission signs (4, 5, 4, 6, 8, 6, 5, 4, 5, 7, 5, 5), a spawn and one way out per mission</td></tr>
+    <tr><td><code>tools/watercheck.py [worlds...]</code></td><td>every body of water has a way out for a swimming Blupi</td></tr>
+    <tr><td><code>tools/audit/patrol_envelope.py</code>, <code>tools/audit/lift_envelope.py</code></td><td>every creature uses its type's original speed and rest; no lift is faster than the original's fastest</td></tr>
+    <tr><td><code>tools/vwr_inspect.py [--summary] [--objects 7,21] worlds3d/*.vwr</code></td><td>a dump of header, blocks per type and height, objects, BigDecor and hint zones</td></tr>
+  </table>
+
+  <h2>CI</h2>
+  <p><code>.github/workflows/cna-ci.yml</code> runs one job, "Build + ctest" on <code>ubuntu-latest</code>: it
+  checks out this repository and the siblings (cna, cna-engine, easy-gl, sharp-runtime, meta-gl) at pinned
+  commits, plus a sparse checkout of <code>mobile-eggbert</code>'s <code>worlds/</code> as test data, installs the
+  system packages, configures with <code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code> and ccache, builds, and runs
+  <code>ctest --output-on-failure</code>. Every registered test runs. Golden files, playthroughs, live QA and
+  the web build are local, manual steps. <code>.github/workflows/pages.yml</code> deploys this website.</p>
+
+  <h2>Which checks for which change</h2>
+  <table>
+    <tr><th>You changed</th><th>Run at least</th></tr>
+    <tr><td>a world generator</td><td>the generator, <code>levelcheck.py</code> (and a solved variant), <code>campaigncheck.py</code>, <code>watercheck.py</code>, <code>patrol_envelope.py</code>, <code>lift_envelope.py</code>, <code>VerifyShippedWorlds</code>, the world's autoplay script, a live look</td></tr>
+    <tr><td>gameplay (<code>BlupiController</code>, <code>InteractionSystem</code>, registries)</td><td>ctest, golden trace, the affected missions' playthroughs (ideally all), <code>verify_demos.sh</code></td></tr>
+    <tr><td>rendering or the 3D effects</td><td>ctest, golden frames (all three levels), a live look at the affected worlds (<code>world998</code> shows every block and object)</td></tr>
+    <tr><td>the editor</td><td>the editor verifiers, the relevant <code>tools/qa_steps/editor_*.txt</code></td></tr>
+    <tr><td>the world or record format</td><td>ctest, and update <code>tools/vwr_inspect.py</code> and <code>tools/worldkit.py</code> with it; every shipped world must still load</td></tr>
+    <tr><td>a block's class in <code>BlockDefinitionRegistry</code></td><td>rebuild, refresh <code>tools/data/blocks.csv</code> (<a href="../tutorials/first-object.html">tutorial</a>), then the world checks</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a class="prev" href="../development/coding-style.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Coding Style</span>
+    </a>
+    <a class="next" href="../development/debugging.html">
+      <span class="label">Next</span>
+      <span class="title">Debugging &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

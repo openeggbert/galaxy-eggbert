@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObjectDefinitionRegistry — Galaxy Eggbert Docs</title>
+<meta name="description" content="ObjectDefinitionRegistry is the single table of per-type facts for every moving object type 0-203: render mode, texture sheet, placement, kind and capability flags.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> ObjectDefinitionRegistry</div>
+  <h1>ObjectDefinitionRegistry</h1>
+  <p class="subtitle">The one table of what every moving object type is, how it is drawn and which shared rules apply to it.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp</code>, <code>src/GalaxyEggbert/Game/ObjectIcons.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp</code> (the table), <code>src/GalaxyEggbert/Game/ObjectIcons.cpp</code> (animation frames)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. Both headers include only <code>GalaxyEggbert/Def/ObjectType.hpp</code> and the standard library.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>A world's moving objects (lifts, enemies, treasure, eggs, keys, exits, effects, the enemy Blupis...) are
+  identified by a <code>Def::ObjectType</code> number from 0 to 203, the same numbers as the original game's
+  world files. <code>ObjectDefinitionRegistry</code> holds one <code>ObjectDefinition</code> per type: how it
+  renders, which texture sheet its sprite comes from, whether a world may place it, what kind of thing it is,
+  and a set of declarative capability flags such as "touching it kills" or "dynamite destroys it".</p>
+  <p>It is one of the project's two single sources of truth (the other is
+  <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> for blocks). Rendering, the world loader,
+  <a href="InteractionSystem.html">InteractionSystem</a> and the <a href="WorldEditor.html">editor</a> read
+  their per-type facts from here instead of keeping their own lists of type numbers.
+  <code>GetObjIcon</code> in <code>ObjectIcons.cpp</code> supplies the animation frame (sprite icon) for a
+  type at a given animation phase.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><code>Def::ObjectType</code> (<code>include/GalaxyEggbert/Def/ObjectType.hpp</code>): the type numbers, which must never be renumbered.</li>
+    <li><code>ResolveObjectIconFrame</code> (<code>ObjectIcons.cpp</code>): the frame tables taken from the original's animation data.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="WorldRuntime.html">WorldRuntime</a>: skips records whose type is unsupported or <code>Null</code>, reads <code>mobileWorldSupported</code> and <code>patrolMotion</code> while importing objects.</li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>: lifts, enemy contact, pickups, dynamite, exits and the compass target all test capability flags.</li>
+    <li><code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code>: calls <code>ResolveObjectVisual</code> for every object when it builds the frame for <a href="WorldRenderer.html">WorldRenderer</a>.</li>
+    <li>The editor: <code>EditorPalette.cpp</code>, <code>ObjectPlacement.hpp</code> (one exit per world, via <code>levelExit</code>), <code>ObjectPathMarkers.hpp</code> (route cubes from the patrol fields), <code>WorldEditorUpdate.cpp</code>.</li>
+  </ul>
+
+  <h2>ObjectDefinition fields</h2>
+  <p>Every field of <code>struct ObjectDefinition</code>, with the types the table in
+  <code>ObjectDefinitionRegistry.cpp</code> sets (as of 2026-11-10). Types not listed keep the default.</p>
+  <table>
+    <tr><th>Field</th><th>Values</th><th>Set for</th></tr>
+    <tr><td><code>type</code></td><td><code>Def::ObjectType</code></td><td>Its own id, 0-203.</td></tr>
+    <tr><td><code>renderMode</code></td><td><code>Hidden</code>, <code>Billboard</code> (default), <code>SolidCube</code></td><td><code>SolidCube</code>: lifts 1, 47, 48 and the crate 12. <code>Hidden</code>: type 0 and unsupported types.</td></tr>
+    <tr><td><code>textureSource</code></td><td><code>None</code>, <code>Element</code> (default), <code>ObjectM</code>, <code>Explo</code>, <code>Blupi</code>, <code>Blupi1</code>, <code>PhaseDependent</code></td><td><code>ObjectM</code>: 1, 12, 47, 48 and 14, 15, 31, 35, 52. <code>Explo</code>: explosions and effects 8-11, 53, 90-93, 98-100. <code>Blupi</code>: 200. <code>Blupi1</code>: 32, 33, 201-203. <code>PhaseDependent</code>: the electric arc 38.</td></tr>
+    <tr><td><code>placementKind</code></td><td><code>Null</code>, <code>Direct</code>, <code>Transient</code>, <code>Reserved</code> (default)</td><td><code>Direct</code>: placed directly in a world (40 types; the editor palette selects only these). <code>Transient</code>: created only at run time (explosions, splashes, projectiles...). <code>Reserved</code>: unidentified types.</td></tr>
+    <tr><td><code>semanticKind</code></td><td><code>Null</code>, <code>Lift</code>, <code>Enemy</code>, <code>Collectible</code>, <code>Pickup</code>, <code>StaticObstacle</code>, <code>Projectile</code>, <code>Effect</code>, <code>MovingLevelObject</code>, <code>Avatar</code>, <code>Reserved</code></td><td>For example <code>Lift</code> 1, 47, 48; <code>Collectible</code> 5, 6, 7, 21, 49, 50, 51; <code>StaticObstacle</code> 12 (crate); <code>Avatar</code> 200-203.</td></tr>
+    <tr><td><code>verticalPlacement</code></td><td><code>CellCenter</code></td><td>Every type today; <code>ResolveObjectVisualCenterY</code> is the one place a new policy would go.</td></tr>
+    <tr><td><code>liftConveyorDirection</code></td><td><code>None</code>, <code>PositiveX</code>, <code>NegativeX</code></td><td>47 carries towards +X, 48 towards -X.</td></tr>
+    <tr><td><code>mobileWorldSupported</code></td><td><code>bool</code></td><td>Types found in the original's 78 world files; the text-world importer skips the rest.</td></tr>
+    <tr><td><code>patrolMotion</code></td><td><code>bool</code></td><td>2, 3, 4, 20, 32, 33, 44, 54.</td></tr>
+    <tr><td><code>dynamiteDestructible</code></td><td><code>bool</code></td><td>30 types (enemies, the crate, several pickups, the Blupi avatars).</td></tr>
+    <tr><td><code>genericContactHazard</code></td><td><code>bool</code></td><td>2, 3, 4, 16, 17, 20, 96, 97.</td></tr>
+    <tr><td><code>genericContactHazardFeedback</code></td><td><code>Small</code> (default), <code>Big</code></td><td><code>Big</code> for 17 and 20.</td></tr>
+    <tr><td><code>genericContactHazardCrouchImmune</code></td><td><code>bool</code></td><td>3.</td></tr>
+    <tr><td><code>balloonPoppableHazard</code></td><td><code>bool</code></td><td>3, 16, 96, 97.</td></tr>
+    <tr><td><code>standardPickupTouch</code></td><td><code>bool</code></td><td>5, 6, 7, 21, 25, 26, 29, 30, 31, 40, 49, 50, 51, 55.</td></tr>
+    <tr><td><code>smallEnemy</code></td><td><code>bool</code></td><td>4, 32, 33.</td></tr>
+    <tr><td><code>lethalDecorContactHazard</code></td><td><code>bool</code></td><td>201, 202, 203.</td></tr>
+    <tr><td><code>levelExit</code></td><td><code>bool</code></td><td>7 (exit) and 21 (secret exit).</td></tr>
+    <tr><td><code>patrolTicksPerCell</code>, <code>patrolRestTicks</code></td><td><code>std::uint16_t</code>, 20 Hz ticks</td><td>The original's per-type creature timing (BD-0016): 4: 30/20, 16: 10/0, 17: 15/47, 20: 8/8, 32: 8/25, 33: 10/23, 44: 6/4, 54: 20/200. 0 means no fixed timing (lifts vary per record).</td></tr>
+  </table>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API of <code>ObjectDefinitionRegistry.hpp</code> and <code>ObjectIcons.hpp</code>
+  (types in signatures shortened: <code>ObjectType</code> is <code>GalaxyEggbert::Def::ObjectType</code>).</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>MaxObjectType</code>, <code>DefinitionCount</code></td><td><code>static constexpr std::uint16_t MaxObjectType = 203;</code></td><td>The highest type id; the table has 204 entries.</td></tr>
+    <tr><td><code>Instance</code></td><td><code>static const ObjectDefinitionRegistry&amp; Instance() noexcept</code></td><td>The single, immutable table, built on first use.</td></tr>
+    <tr><td><code>Get</code></td><td><code>const ObjectDefinition&amp; Get(ObjectType type) const noexcept</code></td><td>The definition; an id above 203 gets a hidden "unsupported" definition.</td></tr>
+    <tr><td><code>IsSupported</code></td><td><code>bool IsSupported(ObjectType type) const noexcept</code></td><td>True for ids 0-203.</td></tr>
+    <tr><td><code>Resolve</code></td><td><code>ResolvedObjectVisual Resolve(ObjectType type, int phase, std::uint16_t visualIconOverride = 0) const noexcept</code></td><td>Render mode, texture sheet, icon and visibility for one object at one animation phase.</td></tr>
+    <tr><td><code>GetObjectDefinition</code></td><td><code>inline const ObjectDefinition&amp; GetObjectDefinition(ObjectType type) noexcept</code></td><td>The usual accessor: <code>Instance().Get(type)</code>.</td></tr>
+    <tr><td><code>IsSupportedObjectType</code></td><td><code>inline bool IsSupportedObjectType(ObjectType type) noexcept</code></td><td>Free-function form of <code>IsSupported</code>.</td></tr>
+    <tr><td><code>ResolveObjectVisual</code></td><td><code>inline ResolvedObjectVisual ResolveObjectVisual(ObjectType type, int phase, std::uint16_t visualIconOverride = 0) noexcept</code></td><td>Free-function form of <code>Resolve</code>; what renderers call.</td></tr>
+    <tr><td><code>ResolveObjectVisualCenterY</code></td><td><code>inline float ResolveObjectVisualCenterY(ObjectType type, float objectCenterY) noexcept</code></td><td>Vertical draw position from <code>verticalPlacement</code> (today always the cell centre).</td></tr>
+    <tr><td><code>GetObjIcon</code></td><td><code>int GetObjIcon(ObjectType type, int phase)</code></td><td>Sprite icon for a type at an animation phase; returns <code>ResolveObjectVisual(type, phase).icon</code>.</td></tr>
+    <tr><td><code>GetBulldozerIcon</code>, <code>GetFishIcon</code>, <code>GetBirdIcon</code>, <code>GetWaspIcon</code>, <code>GetBlupihIcon</code>, <code>GetBlupitIcon</code></td><td><code>int GetBulldozerIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)</code> (same shape for each)</td><td>Direction- and turn-aware icons for patrolling enemies, following the original's four-step patrol (dwell, advance, dwell, recede).</td></tr>
+    <tr><td><code>GetCreatureIcon</code></td><td><code>int GetCreatureIcon(int patrolStep, int patrolTimeTicks)</code></td><td>The large creature (54), which has no left/right frames.</td></tr>
+    <tr><td><code>GetElementIconUv</code>, <code>GetExploIconUv</code>, <code>GetBlupiIconUv</code></td><td><code>ObjectIconUv GetElementIconUv(int icon)</code></td><td>UV rectangle of an icon in <code>element.png</code>, <code>explo.png</code> or <code>blupi.png</code>/<code>blupi1.png</code>.</td></tr>
+  </table>
+  <p><code>ResolvedObjectVisual</code> carries <code>definition</code>, <code>renderMode</code>, <code>textureSource</code>,
+  <code>icon</code> and <code>visible</code>. <code>Resolve</code> takes the icon from the frame tables, unless a
+  per-object <code>visualIconOverride</code> (a tile look, for example a lift's) is given: then the icon is that tile
+  and the sheet is <code>object-m.png</code>. For the phase-dependent arc (38) the sheet is <code>blupi1.png</code>
+  for the first 30 ticks of its 90-tick cycle and <code>element.png</code> after. An object is visible when its render
+  mode is not <code>Hidden</code> and its icon is not negative. Older predicates such as <code>IsUniformCubeObject</code>
+  and <code>IsExploPngSourced</code> remain as registry-backed compatibility accessors; new code uses
+  <code>ResolveObjectVisual</code>.</p>
+
+  <h2>How it is used</h2>
+  <p>Gameplay code asks a capability question instead of comparing type numbers. The dynamite blast in
+  <code>src/GalaxyEggbert/Game/InteractionSystem.cpp</code>:</p>
+  <pre><code>for (auto&amp; victim : objects)
+{
+    if (!victim.active || &amp;victim == &amp;obj)
+    {
+        continue;
+    }
+    if (!GetObjectDefinition(victim.type).dynamiteDestructible)
+    {
+        continue;
+    }
+    ...</code></pre>
+  <p>The scene builder in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code> resolves each object's look once
+  per frame and draws lifts and crates as textured cubes:</p>
+  <pre><code>const auto visual = ResolveObjectVisual(obj.type, static_cast&lt;int&gt;(obj.phase), obj.visualIcon);
+if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::SolidCube)
+{
+    continue;
+}
+...
+const auto tileUv = tileAtlas_.GetTileUv(visual.icon);</code></pre>
+  <p>Whether a billboard icon is replaced by a 3D model pose is decided separately, by <code>ObjectModelTable</code> from
+  <code>avatars3d/objects/&lt;name&gt;/icons.txt</code>; the registry only names the icon.</p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>Single source of truth.</strong> A new object behaviour or a changed classification goes into this table
+    first; consumers follow. Do not add parallel lists of type numbers elsewhere.</li>
+    <li>The capability flags are deliberately not a general behaviour-dispatch table. Each one replaces an exact membership
+    test whose members are treated identically at the call site; distinct state machines (a bulldozer, a fish) stay in code.</li>
+    <li>Type ids are the original's and are stored in world files: never renumber them.</li>
+    <li>The registry is engine-independent and immutable after construction.</li>
+    <li>The patrol timing table is mirrored by <code>CREATURE_TIMING</code> in <code>tools/worldkit.py</code>; change both
+    together, then run <code>tools/audit/patrol_envelope.py</code>.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <table>
+    <tr><th>ctest entry</th><th>Source</th><th>Checks</th></tr>
+    <tr><td><code>VerifyDefinitionRegistries</code></td><td><code>tools/VerifyDefinitionRegistries.cpp</code></td><td>Every type 0-203 keeps its id, is supported, and has the expected texture sheet and capability flags; 204 is unsupported; <code>Resolve(type, 0).icon</code> equals <code>GetObjIcon(type, 0)</code>; the arc's sheet switch at phase 30; the visual override. Also checks the block registry.</td></tr>
+    <tr><td><code>VerifyGetObjIcon</code></td><td><code>tools/VerifyGetObjIcon.cpp</code></td><td>A regression lock on the frame arrays and divisors behind <code>GetObjIcon</code>.</td></tr>
+    <tr><td><code>VerifyObjIconAgainstReferenceDoc</code></td><td><code>tools/VerifyObjIconAgainstReferenceDoc.cpp</code></td><td>Parses the animation tables in <code>mobile-eggbert-reference/08-animations.md</code> and compares <code>GetObjIcon</code>'s frame counts with them (runs from the repository root).</td></tr>
+    <tr><td><code>VerifyObjectModelTable</code></td><td><code>tools/VerifyObjectModelTable.cpp</code></td><td>The <code>avatars3d/objects/</code> manifests and <code>icons.txt</code> files that map icons to model poses.</td></tr>
+  </table>
+  <p><code>VerifyInteractionSystem</code>, <code>VerifyShippedWorlds</code> and <code>VerifyGEEditorObjects</code> exercise the
+  table indirectly through its consumers.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>: the matching table for blocks</li>
+    <li><a href="MoveObjectRecord.html">MoveObjectRecord</a>: how an object is stored in a world file</li>
+    <li><a href="WorldRuntime.html">WorldRuntime</a>, <a href="InteractionSystem.html">InteractionSystem</a>, <a href="WorldRenderer.html">WorldRenderer</a></li>
+    <li><a href="../tutorials/first-object.html">Tutorial: changing a block or object behaviour</a></li>
+    <li><a href="../internals/object-lifecycle.html">Object lifecycle</a></li>
+    <li><a href="../development/testing.html">Testing</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/InteractionSystem.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; InteractionSystem</span>
+    </a>
+    <a class="next" href="../classes/Hud.html">
+      <span class="label">Next</span>
+      <span class="title">Hud &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

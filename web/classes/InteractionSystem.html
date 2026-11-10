@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InteractionSystem — Galaxy Eggbert Docs</title>
+<meta name="description" content="InteractionSystem runs the world's objects each tick (lifts, creatures, pickups, hazards, projectiles, dynamite, doors, crates) and reports events and requests to the host instead of touching Blupi, the camera or graphics.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> InteractionSystem</div>
+  <h1>InteractionSystem</h1>
+  <p class="subtitle">The rules of every moving and touchable object, behind an event and request boundary that keeps it free of Blupi's controller, the camera and graphics.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/InteractionSystem.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/InteractionSystem.cpp</code> (with <code>CratePush.hpp</code>, <code>TankShot.hpp</code>, <code>ObjectVerticalPlacement.hpp</code>)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None for its logic. The header includes only <code>ObjectiveHint.hpp</code>, <code>Sound.hpp</code>, <code>WorldRuntime.hpp</code> and <code>Def/BlupiAction.hpp</code>. Through <a href="Sound.html">Sound</a> it links against CNA's audio types, but it plays sounds only by channel number and its tests never load an audio device.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>Each Play tick, <code>InteractionSystem::Update</code> advances every object of the world and resolves its contact with Blupi,
+  following the original game's <code>Decor</code> code. It works directly on the <code>MobileObjSpec</code> list in
+  <a href="WorldRuntime.html">WorldRuntime</a> and on Blupi's position as plain floats. It covers:</p>
+  <ul>
+    <li><strong>Patrols:</strong> platform lifts and conveyors (and Blupi riding them), patrolling creatures, fish, birds, wasps, the big
+      creature, bulldozers, moving mines, all in the original's 20&nbsp;Hz dwell/advance/dwell/recede timing.</li>
+    <li><strong>Contacts:</strong> the shared kill list of hazards, balloon pops, mines, followers that wake and home in, enemy projectiles,
+      near misses (which make Blupi gasp), lightning columns.</li>
+    <li><strong>Pickups:</strong> treasure, eggs (at most ten), keys, dynamite, decoys, ammunition, secret-power items, the exit (red arrow
+      or golden key), and the treasure doors that open as chests are collected.</li>
+    <li><strong>Blupi's own tools:</strong> placing and detonating dynamite, the tank's shots and the helicopter's glue, decoys, crates
+      pushed and pulled (<code>UpdateCratePush</code>).</li>
+    <li><strong>Counters:</strong> lives (reset to three on game over), treasures collected and total, three key colours, eggs, dynamite,
+      bullets, the game-over count.</li>
+    <li><strong>Effects as objects:</strong> explosions, splashes, bubbles, sparkle bursts, wrecks, pieces flying away ("bye-bye"), the
+      reward icon flying to the HUD ("voyage").</li>
+  </ul>
+  <p>Which object type does what is not decided here but read from the capability flags of
+  <a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a> (<code>patrolMotion</code>, <code>genericContactHazard</code>,
+  <code>standardPickupTouch</code>, <code>dynamiteDestructible</code>, ...). Type-specific branches remain only for distinct state
+  machines.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><a href="WorldRuntime.html">WorldRuntime</a>: the object list (mutable), the <a href="World.html">World</a> for tile reactions and doors, solid BigDecor boxes, the hazard cycles.</li>
+    <li><a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a> and <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>: per-type facts.</li>
+    <li><a href="Sound.html">Sound</a>: plays the original's channels for pickups, blasts and deaths.</li>
+    <li><code>CratePush.hpp</code> (crate kinematics), <code>TankShot.hpp</code> (shots against the grid), <code>ObjectiveHint.hpp</code> (compass).</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> only (one <code>interaction_</code> member), plus <code>VerifyInteractionSystem</code>.</li>
+    <li><a href="WorldEditor.html">WorldEditor</a>'s lift preview through the static <code>AdvanceEditorPlatforms</code>, called by the host.</li>
+  </ul>
+
+  <h2>The event and request boundary</h2>
+  <p><code>InteractionSystem</code> never calls <a href="BlupiController.html">BlupiController</a>, the camera, the HUD or the renderer.
+  Anything that needs them is <em>reported</em>: <code>Update()</code> fills a list of <code>Event</code>s that the host reads with
+  <code>EventsThisFrame()</code> and applies. Facts about Blupi that it needs (crouching, ballooned, invincible, in which vehicle,
+  whether he may receive a power, whether the action button was just pressed) come <em>in</em> as parameters computed by the host.</p>
+  <table>
+    <tr><th>Event kind</th><th>The host then</th></tr>
+    <tr><td><code>BalloonTouched</code>, <code>BalloonPopped</code></td><td>calls <code>TriggerBalloon()</code> / <code>PopBalloon()</code> on Blupi</td></tr>
+    <tr><td><code>SmallShakeTriggered</code>, <code>BigShakeTriggered</code></td><td>starts a camera shake</td></tr>
+    <tr><td><code>TankFired</code>, <code>GlueDropStarted</code>, <code>GlueDropped</code></td><td>plays Blupi's <code>FireTank</code> / <code>HelicoGlu</code> pose, kicks the helicopter up</td></tr>
+    <tr><td><code>EnemyNearMiss</code></td><td>arms Blupi's <code>Ouf4</code> reaction</td></tr>
+    <tr><td><code>ShieldGranted</code>, <code>PowerGranted</code>, <code>CloudGranted</code>, <code>HideGranted</code>, <code>InvertGranted</code>, <code>DynamiteTaken</code></td><td>grants the power on Blupi (two-stage pickups carry their position for the item's return)</td></tr>
+    <tr><td><code>VoyageRequested</code></td><td>projects the end points to the screen and calls <code>BeginVoyage()</code> (<code>ResolvePendingVoyage</code>)</td></tr>
+    <tr><td><code>DeathLockRequested</code></td><td>locks Blupi in his death (<code>ResolveDeathLock</code>), then loses a life and respawns</td></tr>
+    <tr><td><code>Died</code></td><td>kept for tests; the live game uses <code>DeathLockRequested</code></td></tr>
+  </table>
+  <p><code>VoyageRequested</code> and <code>DeathLockRequested</code> are <em>requests</em>: at most one of each exists per tick (the last
+  wins, as in the original). Lift riding is reported through getters instead (<code>IsRidingLift()</code>, <code>RideDeltaX()</code>,
+  <code>RideStandY()</code>, ...), which the host passes to Blupi before his next step.</p>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API of <code>InteractionSystem.hpp</code> (verified 2026-11-10; the header is about 1&nbsp;200 lines,
+  much of it notes on the original's behaviour):</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>Update</code></td><td><code>void Update(float dt, WorldRuntime&amp; worldRuntime, float blupiX, float blupiY, float blupiZ, float blupiMoveDX, Sound&amp; sound, bool blupiCrouching = false, bool blupiBallooned = false, ...)</code></td><td>One tick of every object. About thirty parameters, almost all booleans describing Blupi's state and gates, with defaults so tests can pass only what they need.</td></tr>
+    <tr><td><code>EventsThisFrame</code></td><td><code>const std::vector&lt;Event&gt;&amp; EventsThisFrame() const noexcept</code></td><td>What happened this tick (see above).</td></tr>
+    <tr><td><code>UpdateCratePush</code></td><td><code>CratePushOutput UpdateCratePush(float dt, WorldRuntime&amp; worldRuntime, const CratePushInput&amp; input)</code></td><td>Push, hold and pull crates along X or Z at the original's speed; tells the host where Blupi's hands keep him.</td></tr>
+    <tr><td><code>CrateBeingPushedThisFrame</code>, <code>LastCratePush</code></td><td><code>bool ...() const noexcept</code></td><td>For Blupi's <code>Push</code> animation and the crate sound.</td></tr>
+    <tr><td><code>SeedRandom</code></td><td><code>void SeedRandom(std::uint32_t seed)</code></td><td>Seeds the <code>std::mt19937</code> used for the original's random choices; set per mission and recorded for resume and demos.</td></tr>
+    <tr><td><code>Lives</code>, <code>SetLives</code>, <code>LoseLife</code>, <code>GameOverCount</code></td><td><code>int Lives() const noexcept</code>, <code>void LoseLife()</code></td><td>The lives counter; the caller chooses the death sound.</td></tr>
+    <tr><td><code>TreasuresCollected</code>, <code>TotalTreasures</code>, <code>Key1Count</code> ... <code>Key3Count</code>, <code>LifeEggCount</code>, <code>DynamiteCount</code>, <code>BulletCount</code></td><td><code>int ...() const noexcept</code></td><td>Counters shown by the <a href="Hud.html">HUD</a>.</td></tr>
+    <tr><td><code>ExitReached</code>, <code>ExitWasGoldenKey</code></td><td><code>bool ...() const noexcept</code></td><td>The mission is won (the host plays the 40-tick win cheer first).</td></tr>
+    <tr><td><code>PlaceDynamite</code>, <code>TryPerso</code></td><td><code>bool PlaceDynamite(WorldRuntime&amp;, float x, float y, float z, bool grounded, ...)</code></td><td>Blupi's action button with dynamite or a decoy.</td></tr>
+    <tr><td><code>OpenDoor</code></td><td><code>static void OpenDoor(WorldRuntime&amp; worldRuntime, int gx, int gy, int gz, Sound&amp; sound)</code></td><td>Opens the door block at a raw cell: the block becomes air and a slide carries its icon up, as the original's <code>Decor::OpenDoor()</code>. Used for the hub doors when a hub loads.</td></tr>
+    <tr><td><code>BeginVoyage</code>, <code>VoyageActive</code>, <code>VoyageProgress</code></td><td><code>void BeginVoyage(WorldRuntime&amp;, VoyageKind kind, int iconId, bool isButtonChannel, ...)</code></td><td>A reward or life icon flying between world and HUD; the reward is applied when it lands.</td></tr>
+    <tr><td><code>IsRidingLift</code>, <code>RideDeltaX/Z</code>, <code>RideStandY</code>, <code>LiftTopsNear</code></td><td><code>bool</code> / <code>float</code> getters, <code>static int LiftTopsNear(...)</code></td><td>Lift support for Blupi's next <code>Step()</code>.</td></tr>
+    <tr><td><code>NearestObjective</code>, <code>NearestTreasureDistance</code></td><td><code>static std::optional&lt;ObjectiveHint&gt; NearestObjective(...)</code></td><td>The <code>compass</code> aid: nearest chest, then the exit.</td></tr>
+    <tr><td><code>MockeryDetect</code>, <code>BlupiTouches</code></td><td><code>static Def::BlupiAction MockeryDetect(const WorldRuntime&amp;, float blupiX, ...)</code></td><td>Pure queries: which taunt an enemy calls for, whether a type's contact box touches Blupi.</td></tr>
+    <tr><td><code>AdvanceEditorPlatforms</code></td><td><code>static void AdvanceEditorPlatforms(WorldRuntime&amp; worldRuntime, float dt)</code></td><td>The editor's lift preview: the same patrol routine, no contacts, rewards or world writes.</td></tr>
+    <tr><td><code>CheatCleanAll</code>, <code>CheatAllTreasure</code>, <code>CheatFindExit</code>, <code>CheatAllKeys</code>, <code>CheatSetDynamite</code></td><td><code>bool CheatCleanAll(WorldRuntime&amp;)</code>, ...</td><td>Entry points for the cheats.</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p>The host creates a fresh instance for every mission, keeping only the lives, and seeds it:</p>
+  <pre><code>const int preservedLives = interaction_.Lives();
+interaction_ = InteractionSystem();
+interaction_.SetLives(preservedLives);
+...
+interaction_.SeedRandom(missionSeed_);</code></pre>
+  <p>Each tick, after Blupi's step and the crate update, it calls <code>interaction_.Update(simDt, worldRuntime_, ...)</code>, patches
+  the terrain if tile reactions changed blocks, resolves a pending voyage, and then applies the events:</p>
+  <pre><code>if (FindInteractionEvent(InteractionSystem::EventKind::SmallShakeTriggered))
+{
+    cameraShake_.Trigger(CameraShakeType::Small);
+}
+...
+if (FindInteractionEvent(InteractionSystem::EventKind::EnemyNearMiss) &amp;&amp; !blupi_.IsInVehicle() &amp;&amp; ...)
+{
+    blupi_.ArmOuf(BlupiController::AnimState::Ouf4);
+}</code></pre>
+  <p>(from <code>GalaxyEggbertGame::UpdateTickEvents</code>, <code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>).</p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>No controller, camera or graphics dependency.</strong> This is one of the project's non-negotiable boundaries
+      (<code>CURRENT.md</code>): keep <code>InteractionSystem</code> independent of <code>BlupiController</code>, the camera and graphics, and
+      use the established event/request boundary for anything that crosses systems. A new interaction adds a parameter or an event,
+      never an include.</li>
+    <li><strong>Registry first.</strong> Per-type behaviour comes from <code>ObjectDefinitionRegistry</code>; do not add parallel type
+      lists here.</li>
+    <li><strong>The original's timing.</strong> Patrols, dwells, crate speeds and lift moves are in 20&nbsp;Hz ticks copied from the
+      reference. Worlds and autoplay scripts are tuned to them; a small change can break a playthrough without any compile error.</li>
+    <li><strong>Deterministic.</strong> All randomness goes through the seeded <code>rng_</code>.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyInteractionSystem</code> (ctest, runs from the repository root against <code>worlds3d/world999.vwr</code>): lift patrols
+      and riding, crate push and pull timing against the original's tables, pickups (treasure, egg, keys, exit), enemy and hazard
+      contact, balloons, followers, dynamite blasts, doors, the Blitz/crusher/Temp cycles. <code>Sound</code> is constructed but never
+      loaded, so no audio device is needed.</li>
+    <li><code>VerifyDefinitionRegistries</code> checks the capability flags it reads.</li>
+    <li><code>tools/audit/patrol_envelope.py</code> and <code>tools/audit/lift_envelope.py</code> check that shipped worlds use the original's
+      creature and lift timings; the autoplay playthroughs exercise everything end to end.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../internals/object-lifecycle.html">Object Lifecycle</a>, <a href="../game-loop.html">Game Loop</a>, <a href="../gameplay.html">Gameplay</a></li>
+    <li><a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>, <a href="WorldRuntime.html">WorldRuntime</a>, <a href="BlupiController.html">BlupiController</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="Hud.html">Hud</a>, <a href="Sound.html">Sound</a></li>
+    <li><a href="../tutorials/first-object.html">Changing an object's behaviour</a>, <a href="../development/extending-the-game.html">Extending the Game</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/BlupiController.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; BlupiController</span>
+    </a>
+    <a class="next" href="../classes/ObjectDefinitionRegistry.html">
+      <span class="label">Next</span>
+      <span class="title">ObjectDefinitionRegistry &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

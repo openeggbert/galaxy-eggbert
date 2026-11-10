@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sound — Galaxy Eggbert Docs</title>
+<meta name="description" content="The Sound class plays Galaxy Eggbert's 93 original sound channels with the original's per-channel volume and pitch, positioned relative to Blupi.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> Sound</div>
+  <h1>Sound</h1>
+  <p class="subtitle">The 93 sound channels of <code>Content/sounds/</code>, played with the original's volume, pitch and conflict rules, heard from Blupi's place.</p>
+
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/Sound.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Game/Sound.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Channel enum</th><td><code>GalaxyEggbert::Def::SoundChannel</code> in <code>include/GalaxyEggbert/Def/SoundChannel.hpp</code></td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    <code>Sound</code> owns one CNA <code>SoundEffect</code> and at most one <code>SoundEffectInstance</code> per channel. Channel <var>n</var> is
+    <code>Content/sounds/sound<var>NNN</var>.wav</code>; a missing file makes that channel a silent no-op. Every play takes the channel's
+    volume and pitch from <code>kVolumePitch</code>, ported with approval from Mobile Eggbert's <code>tableVolumePitch</code>, times the
+    player's effects volume. A channel already playing is not restarted, except channel 10, as in the original. Music is not part of this
+    class: the host plays it with CNA's <code>MediaPlayer</code> (<a href="../audio.html">Audio &amp; Music</a>).
+  </p>
+
+  <h2>Collaborators</h2>
+  <ul>
+    <li><code>Def::SoundChannel</code>: the original's channel numbers 0-92 (0 reserved, never renumber).</li>
+    <li>CNA's <code>Microsoft::Xna::Framework::Audio</code>: <code>SoundEffect</code>, <code>SoundEffectInstance</code>, <code>SoundState</code>.</li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a> receives a <code>Sound&amp;</code> and plays the world's sounds (doors, pickups, enemies, voyages).</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> owns <code>sound_</code>: loads it, sets the listener and the hidden flag every frame,
+      plays Blupi's and the vehicles' sounds, applies the Setup's switch and volume.</li>
+    <li><a href="BlupiController.html">BlupiController</a> supplies the ground icon for <code>PlayLand()</code> and the motor state for the vehicle loops.</li>
+    <li><a href="SaveData.html">SaveData</a>: sound on/off and <code>effectsVolume=</code> (0-100).</li>
+  </ul>
+
+  <h2>Public API</h2>
+  <table>
+    <tr><th>Member</th><th>What it does</th></tr>
+    <tr><td><code>static constexpr int kNumChannels = 93</code></td><td>Channels 0-92.</td></tr>
+    <tr><td><code>void LoadContent()</code></td><td>Loads every <code>Content/sounds/soundNNN.wav</code> that exists (path relative to the working directory).</td></tr>
+    <tr><td><code>int LoadedCount() const</code></td><td>How many channels have a file.</td></tr>
+    <tr><td><code>void Play(SoundChannel channel, bool loop = false)</code></td><td>Plays a channel with its table volume and pitch; left out while Blupi is hidden if it is one of his sounds.</td></tr>
+    <tr><td><code>void PlayDirect(SoundChannel channel, bool loop = false)</code></td><td>As <code>Play()</code> but past the hidden-Blupi filter (sounds the original played directly).</td></tr>
+    <tr><td><code>void PlayAt(SoundChannel channel, float x, float y, float z, bool loop = false)</code></td><td>A sound of the world at a place; played only if <code>Audible()</code> from the listener.</td></tr>
+    <tr><td><code>void SetListener(float x, float y, float z)</code></td><td>Where sounds are heard from: Blupi, set every frame of play.</td></tr>
+    <tr><td><code>static bool Audible(float dx, float dy, float dz)</code>, <code>kAudibleAcross</code> = 15, <code>kAudibleUpDown</code> = 11.25</td><td>Within 15 cells along X and Z and 11.25 up or down: the original's one screen beyond the view (BD-0076).</td></tr>
+    <tr><td><code>void SetBlupiHidden(bool)</code>, <code>static bool MutedWhileHidden(SoundChannel)</code></td><td>While Blupi is hidden (Hide power) his own channels are not played (BD-0075).</td></tr>
+    <tr><td><code>void Stop(SoundChannel)</code>, <code>void StopAll()</code></td><td>Stop one channel (a crate push, a motor loop) or all.</td></tr>
+    <tr><td><code>void SetReplayMuted(bool)</code></td><td>Silence everything during a resume replay or demo verification.</td></tr>
+    <tr><td><code>void SetEnabled(bool)</code>, <code>bool IsEnabled() const</code></td><td>The Setup's sound switch; disabling stops all.</td></tr>
+    <tr><td><code>void SetEffectsVolume(float)</code>, <code>float GetEffectsVolume() const</code></td><td>0 silent to 1 the original's loudness, clamped; applies from the next play.</td></tr>
+    <tr><td><code>void PlayJump()</code>, <code>void PlayLand(std::uint16_t groundIcon)</code></td><td>Channel 1; the landing, channel 3 or its material variant.</td></tr>
+    <tr><td><code>static SoundChannel FootstepChannelFor(std::uint16_t icon)</code></td><td>The landing channel for a ground tile: 78, 80, ... 90 in seven icon ranges, else 3.</td></tr>
+    <tr><td><code>static SoundChannel CeilingChannelFor(std::uint16_t icon)</code></td><td>The same ranges' second sound (79, 81, ... 91) for a ceiling met rising, else 4.</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p>Each frame of play, in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>:</p>
+  <pre><code>sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play &amp;&amp; blupi_.IsHidden());
+...
+sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());</code></pre>
+  <p>A world sound at a cell, here the lightning's zap:</p>
+  <pre><code>sound_.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel69, cell.X, cell.Y, cell.Z);</code></pre>
+  <ul>
+    <li>A looped channel (a vehicle motor) is started with <code>Play(channel, true)</code> and ended with <code>Stop(channel)</code>; the host's
+      <code>UpdateVehicleMotorSound()</code> and <code>StopVehicleMotorSound()</code> do this for channels 15-18 and 28-31.</li>
+    <li>Inside the audible box a sound plays at full table volume; there is no distance fade and no stereo balance (GP-0412).</li>
+    <li>The pitch is applied as the original applies it (XNA octaves, clamped at 0 below); before 2026-11-02 it was missing (BD-0031).</li>
+    <li>An instance's looping flag is set only when the instance is created: XNA forbids changing it after the first play.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyInteractionSystem</code> (<code>tools/VerifyInteractionSystem.cpp</code>): <code>MutedWhileHidden()</code> for all 93 channels against the
+      original's list, <code>Audible()</code> inside and at the edges, every range of <code>FootstepChannelFor()</code> and
+      <code>CeilingChannelFor()</code>. The test links <code>Sound</code> without <code>LoadContent()</code>, so no audio device is used.</li>
+    <li><code>VerifyGESaveData</code>: the effects and music volumes stored in <code>savedata.txt</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../audio.html">Audio &amp; Music</a> &mdash; channels, vehicle motors, music and the backend.</li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="SaveData.html">SaveData</a>.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/InputPad.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; InputPad</span>
+    </a>
+    <a class="next" href="../classes/SaveData.html">
+      <span class="label">Next</span>
+      <span class="title">SaveData &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

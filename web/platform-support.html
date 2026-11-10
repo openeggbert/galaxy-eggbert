@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Platform Support — Galaxy Eggbert Docs</title>
+<meta name="description" content="Which platforms, CNA renderers and input devices Galaxy Eggbert is verified on, and where each platform keeps the player's files.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,75 +24,136 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html" class="active">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Platform Support</div>
-  <h1>Platform Support</h1>
-  <p class="subtitle">What platforms GalaxyEggbertCNA targets today.</p>
 
-  <h2>Summary</h2>
+<main id="content">
+  <h1>Platform Support</h1>
+  <p class="subtitle">What is verified where: platforms, CNA renderers, input devices and storage, as of 2026-11-10.</p>
+
+  <p>
+    "Verified" below means built and played or checked live, not just compiled. The project's status
+    file, <code>CURRENT.md</code>, is the authority; this page follows it and the code.
+  </p>
+
+  <h2>Platforms</h2>
   <table>
-    <tr><th>Platform</th><th>Status</th><th>Notes</th></tr>
-    <tr><td>Linux x86-64</td><td><span class="badge badge-done">Working</span></td><td>Primary development platform; CNA graphics backend defaults to EasyGL (OpenGL)</td></tr>
-    <tr><td>Windows x86-64</td><td><span class="badge badge-wip">Untested recently</span></td><td>MinGW cross-compile toolchain exists (<code>cmake/toolchains/mingw-w64.cmake</code>); CNA backend elsewhere defaults to SDL Renderer</td></tr>
-    <tr><td>Web (Emscripten)</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>EMSCRIPTEN</code> is set, implying future support, but no build has been attempted</td></tr>
-    <tr><td>Android</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>ANDROID</code> is set; a separate <code>android/</code> directory and <code>ANDROID.md</code> exist but are not confirmed to cover <code>GalaxyEggbertCNA</code></td></tr>
+    <tr><th>Platform</th><th>Status</th><th>What has been checked</th></tr>
+    <tr><td>Linux desktop (x86-64)</td><td><span class="badge badge-done">Verified</span></td><td>Built and tested by CI. Played live on a GPU and under Xvfb; every mission has an automated playthrough (last full pass 2026-11-06); golden frames match (2026-11-09). Renderers <code>OPENGL33</code> and <code>OPENGLES3</code>.</td></tr>
+    <tr><td>Linux runtime bundle</td><td><span class="badge badge-done">Builds</span></td><td>The <code>package</code> target produces <code>GalaxyEggbert-linux-x86_64.tar.gz</code> reproducibly. Starting it on other distributions is a check of the host, not part of CI or a release gate.</td></tr>
+    <tr><td>Web (Emscripten, WebGL 2)</td><td><span class="badge badge-wip">Manually verified</span></td><td>Built and run in headless Chrome (2026-11-09: demos, recording, galaxies, the kept world edits, persistence over a reload). Not in CI and not published by any pipeline.</td></tr>
+    <tr><td>Android (APK)</td><td><span class="badge badge-wip">Partial</span></td><td>Builds APKs for <code>arm64-v8a</code> and <code>x86_64</code> and starts in the emulator, where the 3D models draw since CNA's UB-007 fix (2026-11-06). On 2026-11-09 a release APK was installed on a phone: the assets were copied, <code>world001</code> loaded and the title screen drew. It has not been played further on a device. The maintainer reported from the phone that the accelerometer did not react and that the game sometimes froze; neither is reproduced yet.</td></tr>
+    <tr><td>Windows (MinGW)</td><td><span class="badge badge-planned">Not verified</span></td><td>An earlier cross-build reached a window with a since-retired CNA renderer. The current configuration has had no fresh build and no live 3D run; not supported until both pass.</td></tr>
+    <tr><td>macOS</td><td><span class="badge badge-planned">Not a target</span></td><td>No build is documented or tried.</td></tr>
+  </table>
+  <p>How to build each one: <a href="build.html">Build Guide</a>. Open problems:
+    <a href="development/known-issues.html">Known Issues</a>.</p>
+
+  <h2>CNA renderers</h2>
+  <p>
+    The renderer is CNA's own cache option <code>CNA_GRAPHICS_RENDERER</code>, not a game option. The
+    game sets its default before adding CNA: <code>OPENGLES3</code> for native builds,
+    <code>WEBGL2</code> under Emscripten. CNA's identity registry
+    (<code>cmake/RendererIdentities.cmake</code> in the <code>cna</code> repository) is the list of valid
+    names; retired or renamed names stop the configure with an error.
+  </p>
+  <table>
+    <tr><th>Identity</th><th>What it is (CNA)</th><th>With Galaxy Eggbert</th></tr>
+    <tr><td><code>OPENGLES3</code></td><td>OpenGL ES 3 (EasyGL family). Native default here; CNA tests it on Linux and Android.</td><td><span class="badge badge-done">Verified</span> Linux (2026-10-20 on cna-engine: tests, golden frames, trace); the Android build uses it</td></tr>
+    <tr><td><code>OPENGL33</code></td><td>Desktop OpenGL 3.3 core (EasyGL family).</td><td><span class="badge badge-done">Verified</span> the renderer the maintained Linux build runs</td></tr>
+    <tr><td><code>WEBGL2</code></td><td>WebGL 2 (EasyGL family), Emscripten only; the default there.</td><td><span class="badge badge-wip">Manual</span> the web build</td></tr>
+    <tr><td><code>SDLGPU</code></td><td>SDL's GPU API; CNA's own default on Windows and macOS. Spelled <code>SDL_GPU</code> before CNA renamed it; the old spelling is refused.</td><td><span class="badge badge-planned">Not verified</span> the documented Windows choice</td></tr>
+    <tr><td><code>DIRECTX9</code></td><td>Direct3D 9, Windows only.</td><td><span class="badge badge-planned">Not tried</span></td></tr>
+    <tr><td><code>WEBGPU</code></td><td>WebGPU (wgpu-native).</td><td><span class="badge badge-planned">Not tried</span></td></tr>
+    <tr><td><code>FNA3D</code></td><td>FNA3D with MojoShader.</td><td><span class="badge badge-planned">Not tried</span></td></tr>
+    <tr><td><code>HEADLESS</code>, <code>SOFTWARE</code>, <code>STUB</code></td><td>No GPU or window; a CPU rasteriser; a no-op renderer.</td><td><span class="badge badge-planned">Not tried</span></td></tr>
+  </table>
+  <p>
+    <code>EASYGL</code> is no longer a renderer name: it is the internal family behind the three GL
+    identities. The game's 3D effects use GLSL shaders and render targets; they are checked on
+    <code>OPENGL33</code> and <code>WEBGL2</code>. Where a shader does not compile, the effect leaves
+    itself out and fog, soft shadows and particles remain (<a href="graphics.html">3D Effects &amp;
+    Graphics</a>).
+  </p>
+
+  <h2>Graphics features by platform</h2>
+  <table>
+    <tr><th>Feature</th><th>Linux</th><th>Web</th><th>Android</th></tr>
+    <tr><td>3D effects Off to High</td><td>Checked</td><td>Checked (High played in headless Chrome)</td><td>Not run</td></tr>
+    <tr><td>3D effects Ultra</td><td>Checked</td><td>Shaders compile in headless Chrome (2026-11-09)</td><td>Not run</td></tr>
+    <tr><td>2x textures (Setup "Textures")</td><td>Auto, 1x, 2x; 2x only once the 2x sheets are committed</td><td>Always 1x</td><td>Always 1x (left out of the APK)</td></tr>
+    <tr><td>Frame rate above 60 (Setup)</td><td>120, 144, 240: drawn between the 60 simulation steps</td><td colspan="2">Not separately verified</td></tr>
   </table>
 
-  <div class="note">
-    <strong>Simple3D vs CNA</strong>
-    <code>GalaxyEggbertSimple3D</code> (the currently-playable reference target) has separately
-    been built for Linux and Windows; its Android/Web builds are noted in <code>NEXT.md</code> as
-    "untested since the last engine change." <code>GalaxyEggbertCNA</code> is a newer, desktop-only
-    effort so far — do not assume its platform matrix mirrors Simple3D's.
-  </div>
+  <h2>Input devices</h2>
+  <table>
+    <tr><th>Device</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>Keyboard and mouse</td><td><span class="badge badge-done">Verified</span></td><td>Desktop and web. Typed cheat words use CNA's ordered key-down events, so short presses between updates count.</td></tr>
+    <tr><td>Gamepad</td><td><span class="badge badge-wip">Virtual only</span></td><td>The first connected pad in XNA slots 1-4 (<code>GamepadInput.hpp</code>), in play, menus and the editor. Checked with an SDL virtual gamepad (2026-11-08 onwards); no physical gamepad yet.</td></tr>
+    <tr><td>Touch screen</td><td><span class="badge badge-wip">Simulated only</span></td><td>On-screen controls appear only when CNA reports a touch screen; several fingers at once. Direct-touch events checked under Xvfb; no real touch screen yet.</td></tr>
+    <tr><td>Accelerometer</td><td><span class="badge badge-planned">Not working yet</span></td><td>The Setup's <em>Accelerometer</em> toggle steers Blupi by tilting where CNA finds a sensor (Android). <code>GALAXY_ACCEL_PAD=1</code> shows its on-screen pad on a desktop. On a phone it was reported not to react (not reproduced yet).</td></tr>
+  </table>
+  <p>Bindings: <a href="controls.html">Controls</a>; implementation: <a href="input.html">Input</a>.</p>
 
-  <h2>No Engine-Difference #ifdef Guards</h2>
+  <h2>Where each platform stores things</h2>
+  <table>
+    <tr><th>Platform</th><th>Game data (read-only)</th><th>Player's files</th></tr>
+    <tr><td>Linux</td><td>Beside the executable: <code>Content/</code>, <code>worlds3d/</code>, <code>textures3d/</code>, <code>avatars3d/</code></td><td><code>$XDG_DATA_HOME/Galaxy Eggbert</code> or <code>~/.local/share/Galaxy Eggbert</code></td></tr>
+    <tr><td>Windows</td><td>Beside <code>GalaxyEggbert.exe</code>, with the SDL DLLs</td><td><code>%LOCALAPPDATA%\Galaxy Eggbert</code></td></tr>
+    <tr><td>Any desktop</td><td>-</td><td><code>--user DIR</code> or <code>GALAXY_USER_DIR</code> when given</td></tr>
+    <tr><td>Web</td><td>The <code>.data</code> pack; music fetched from <code>Content/music/</code></td><td><code>/save</code>, kept in the browser's IndexedDB</td></tr>
+    <tr><td>Android</td><td>Inside the APK, copied to internal storage on first start</td><td>The app's internal storage (<code>/data/data/org.openeggbert.galaxyeggbert/files</code>), private, removed on uninstall</td></tr>
+  </table>
   <p>
-    Per the project's direction-lock rules, neither <code>GalaxyEggbertSimple3D</code> nor
-    <code>GalaxyEggbertCNA</code> uses <code>#ifdef</code> guards to paper over engine
-    differences — each target speaks its own API (Simple3D, or CNA + cna-engine) directly. If a backend
-    beneath either is missing a feature, that is a problem for the sub-repo (<code>simple-3d</code>
-    or <code>CNA</code>/<code>cna-engine</code>), not something to work around inside galaxy-eggbert.
-    Platform differences that do exist are resolved entirely by CMake (<code>if(ANDROID)</code>,
-    <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, …).
+    The player's files are <code>savedata.txt</code>, <code>resume.txt</code>, <code>demos/</code> and
+    <code>customworlds/</code> (<a href="running.html">Running the Game</a>,
+    <a href="save-system.html">Save Data &amp; Resume</a>).
   </p>
 
   <div class="page-nav">
-    <a href="configuration.html">
+    <a class="prev" href="running.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Configuration</span>
+      <span class="title">&#8592; Running the Game</span>
     </a>
-    <a class="next" href="modules/index.html">
+    <a class="next" href="gameplay.html">
       <span class="label">Next</span>
-      <span class="title">Module Index &#8594;</span>
+      <span class="title">Gameplay &#8594;</span>
     </a>
   </div>
 </main>

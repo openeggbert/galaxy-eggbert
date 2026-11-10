@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project Overview — Galaxy Eggbert Docs</title>
+<meta name="description" content="What Galaxy Eggbert is, where it comes from, the rules it is built by, and how it got here.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,104 +24,143 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Project Overview</div>
-  <h1>Project Overview</h1>
-  <p class="subtitle">What Galaxy Eggbert is, where it comes from, and where it is going.</p>
 
-  <h2>Lineage</h2>
+<main id="content">
+  <h1>Project Overview</h1>
+  <p class="subtitle">Where Galaxy Eggbert comes from, the rules it is built by, and how it got to where it is.</p>
+
+  <h2>From Speedy Blupi to Galaxy Eggbert</h2>
   <table>
-    <tr><th>Project</th><th>Description</th></tr>
-    <tr><td>Speedy Blupi (original)</td><td>C#/XNA Windows Phone platformer, 2013</td></tr>
-    <tr><td>mobile-eggbert</td><td>C++ port: ILSpy decompile → MonoGame → CNA (SDL3). Read-only reference for Galaxy Eggbert.</td></tr>
-    <tr><td>GalaxyEggbertSimple3D</td><td>Current playable 3D remake, built on Simple3D (wraps U3D/Urho3D). Kept as reference until CNA reaches parity.</td></tr>
-    <tr><td>GalaxyEggbertCNA</td><td><strong>Long-term target.</strong> Built directly on CNA, with cna-engine's strict modules as helpers beside it (easy-3d until 2026-10-20). This documentation's focus.</td></tr>
+    <tr><th>Game</th><th>What it is</th></tr>
+    <tr><td><em>Speedy Blupi</em></td><td>A 2D platform game by Daniel Roux and EPSITEC, released for Windows Phone (XNA) in 2013.</td></tr>
+    <tr><td><strong>Mobile Eggbert</strong> (<code>mobile-eggbert</code>)</td><td>The C++ port of Speedy Blupi. Galaxy Eggbert treats it as the <em>read-only reference</em>. Its source code, mainly <code>Decor.cpp</code>, is the authority for gameplay numbers and timing, and its pictures, sounds and world files are the source of truth for assets.</td></tr>
+    <tr><td><strong>Galaxy Eggbert</strong> (<code>galaxy-eggbert</code>)</td><td>A faithful 3D remake. The player moves Blupi freely in X and Z with real heights, through worlds designed in 3D, while the rules, timings, sounds and look stay those of the original.</td></tr>
   </table>
 
-  <h2>The Current Direction Lock</h2>
-  <p>The project's <code>CLAUDE.md</code> records an explicit, binding direction:</p>
-  <pre><code>Galaxy Eggbert
-  -&gt; CNA directly
-  -&gt; cna-engine's strict modules beside CNA (CnaEngine::Core, CnaEngine::Graphics —
-     camera, mesh builder, GPU meshes, texture regions; XNA 4.0 types only)
-  -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
+  <h2>The rules the project is built by</h2>
   <p>
-    Until 2026-10-20 the helper beside CNA was the sibling library easy-3d (namespace <code>Easy3D</code>:
-    cameras, texture atlas, billboard/cube batching); cna-engine's strict modules replaced it that day.
+    These rules come from the maintainer and are written down in the repository (<code>CLAUDE.md</code>,
+    <code>CURRENT.md</code>, <code>plans/GALAXY_EGGBERT_COMPLETION.md</code> and the handbook in
+    <code>docs/handbook/</code>). Most defects in the project's history came from breaking one of them.
   </p>
-  <p>
-    This supersedes an older long-term direction (<code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>).
-    <code>GalaxyEggbertSimple3D</code> is <strong>not being removed</strong> — it remains the only
-    fully playable target and stays in the repository as a historical/reference implementation
-    until <code>GalaxyEggbertCNA</code> reaches feature parity with it.
-  </p>
+  <ol>
+    <li><strong>Every gameplay feature traces to confirmed Mobile Eggbert behaviour.</strong> No mechanic is
+      invented because it seems plausible. Where a 2D rule has no single 3D reading, one reading is picked,
+      kept small and recorded as an intentional 3D adaptation (<code>plans/audit/mechanics_3d_decisions.md</code>,
+      rows <code>M3D-NNNN</code>).</li>
+    <li><strong>The reference is never modified.</strong> Larger pieces of its code, tables or byte layouts
+      are not copied without approval. A standing approval covers small data tables needed for fidelity
+      (glyph widths, animation and timing tables), with the source cited.</li>
+    <li><strong>Real numeric IDs are preserved.</strong> <code>Def::ObjectType</code>, block (icon) numbers
+      and sound channels are the original's numbers and are stored in world files. They are never
+      renumbered.</li>
+    <li><strong>Worlds are hand-authored true 3D designs.</strong> The original's 2D maps give a world its
+      identity, theme, mechanics, difficulty and progression, and nothing else: no conversion, extrusion,
+      side-view "2.5D" or lane locking. A 2.5D conversion was tried and rejected on 2026-10-25.</li>
+    <li><strong>Models and animations come from the original Ray Dream scenes</strong> wherever they can be
+      recovered, never from a modernised redesign. Effects (explosions, sparks, glows) may stay
+      sprites.</li>
+    <li><strong>The in-game 3D world editor is the one approved exception.</strong> Its user interface
+      may be invented, but it must not add gameplay behaviour.</li>
+  </ol>
 
-  <h2>Type of Project</h2>
-  <p>
-    Galaxy Eggbert is a <strong>faithful game remake</strong> — not an emulator, not a generic engine demo.
-    The rule from <code>CLAUDE.md</code> is explicit: <em>"Galaxy Eggbert is a faithful 3D remake of
-    mobile-eggbert. Nothing more."</em> Before any feature is implemented or suggested, its existence
-    in mobile-eggbert must be verified first. Forbidden inventions include coins, time bonuses/star
-    ratings, coyote time/wall jump/double jump, combo multipliers, or any other mechanic not present
-    in the original. The only allowed additions are the natural technical consequences of moving to
-    3D: a perspective camera, billboard sprites, shadows, and step-up traversal.
-  </p>
-
-  <h2>What GalaxyEggbertCNA Does Today</h2>
+  <h2>What the remake contains</h2>
   <ul>
-    <li>Builds clean via <code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code> (opt-in, default OFF).</li>
-    <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world (<code>worlds3d/world001.vwr</code>) — not a flat mobile-eggbert layout.</li>
-    <li>Renders real, textured terrain across all Y layers: one cube per non-air world cell, textured from <code>object-m.png</code>, built with cna-engine's <code>MeshBuilder</code> and drawn as <code>GpuMesh</code>es (until 2026-10-20 via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>).</li>
-    <li>Animates hazard/special tiles (lava, crusher, saw, spike, water, fan, marine, temp) at 6 fps, matching mobile-eggbert's original rate.</li>
-    <li>Moves an invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision with 1-block step-up traversal and gravity — no sprite yet.</li>
+    <li><strong>The campaign:</strong> the main hub <code>world001</code>, twelve theme hubs
+      (<code>world010</code>, <code>world020</code> &hellip; <code>world120</code>), 64 missions and the bonus
+      world <code>world199</code>. Two more worlds are Galaxy Eggbert's own: <code>world999</code>, a showcase
+      of the mechanics, and <code>world998</code>, a gallery of every block, object and big decor.
+      <code>title.vwr</code> is the scene behind the main menu. See <a href="levels.html">Campaign &amp; Worlds</a>.</li>
+    <li><strong>The game:</strong> Blupi, objects, enemies, hazards, pickups, vehicles, doors, switches, bridges,
+      teleporters, swimming, crates, the HUD, menus, sound and music, three players with saved progress,
+      and resuming an interrupted mission. See <a href="gameplay.html">Gameplay</a>.</li>
+    <li><strong>Additions around the game:</strong> the <a href="editor.html">3D world editor</a>, each player's
+      <a href="galaxy.html">own galaxy</a>, <a href="demos.html">demos and recordings</a>, and
+      <a href="graphics.html">3D effect levels</a>. All of them are presentation or authoring
+      features: none adds a gameplay mechanic.</li>
   </ul>
-  <div class="warn">
-    <strong>Not yet implemented</strong>
-    No Blupi sprite/rendering, no object or pickup rendering, no HUD, no sound, no real gameplay
-    (hazard damage, enemies, pickups, exit-gate, save/load). The former blocker for rendering Blupi
-    and objects — easy-3d's <code>BillboardBatch</code> had no vertex builder or CNA renderer adapter —
-    no longer applies: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and
-    drawn as a <code>GpuMesh</code>. See <a href="development/known-issues.html">Known Issues</a>.
-  </div>
 
-  <h2>Key Facts (verified from source, 2026-07-04)</h2>
-  <ul>
-    <li>World: 100×100×100 blocks, arranged as 10×10×10 chunks (<code>include/GalaxyEggbert/Worlds/</code> — engine-agnostic, shared by Simple3D and CNA).</li>
-    <li><code>worlds3d/world001.vwr</code>: 2729 non-air blocks, Y range [0, 13] — ground floor, a 10-step staircase, a raised platform, a walled room, two pillars.</li>
-    <li>All gameplay enums (<code>ObjectType</code> 0–203, <code>SoundChannel</code> 0–92, <code>BlupiAction</code>, etc.) are numerically frozen to match mobile-eggbert's level/save format exactly.</li>
-    <li>mobile-eggbert's assets (sprite sheets, sounds, world files) are directly reused by file path / build-time copy; its <em>code</em> (Decor.cpp, Tables.cpp, GameData.cpp) is reference-only and may not be copied or linked without explicit approval.</li>
-  </ul>
+  <h2>Repositories involved</h2>
+  <p>The game is built against its engine as source. These checkouts sit side by side:</p>
+  <table>
+    <tr><th>Repository</th><th>Role</th></tr>
+    <tr><td><code>galaxy-eggbert</code></td><td>The game, its worlds, assets, tools, tests, documentation and this website (<code>web/</code>).</td></tr>
+    <tr><td><code>cna</code></td><td>The engine: the XNA 4.0 API reimplemented in C++ on SDL3. Required.</td></tr>
+    <tr><td><code>cna-engine</code></td><td>Strict helper modules over CNA (camera, mesh builder, GPU meshes, texture regions). Required.</td></tr>
+    <tr><td><code>easy-gl</code>, <code>meta-gl</code>, <code>sharp-runtime</code></td><td>Build dependencies of CNA, expected next to it.</td></tr>
+    <tr><td><code>mobile-eggbert</code></td><td>The reference game. Read-only; a few verification tests and tools read its world files.</td></tr>
+    <tr><td><code>speedyblupi-data</code></td><td>The original Ray Dream scenes. Needed only by the asset converters, not to build or play.</td></tr>
+  </table>
+  <p>Details: <a href="getting-started.html">Getting Started</a> and <a href="engine-integration.html">Engine Integration</a>.</p>
+
+  <h2>How it got here</h2>
+  <table>
+    <tr><th>Date</th><th>Milestone</th></tr>
+    <tr><td>2026-05-12</td><td>The repository starts. Early experiments use other engines (Nova3D, Urho3D/U3D, a Simple3D target).</td></tr>
+    <tr><td>2026-07-05</td><td>Direction locked: the game runs directly on CNA, with a small helper library beside it.</td></tr>
+    <tr><td>2026-07-25</td><td>The earlier <code>GalaxyEggbertSimple3D</code> target is removed once the CNA target reaches playable parity (recoverable at commit <code>4afd53e</code>).</td></tr>
+    <tr><td>2026-10-20</td><td>cna-engine's strict modules replace the helper library easy-3d. Golden frames and traces stay byte-identical.</td></tr>
+    <tr><td>2026-10-23</td><td>The original Ray Dream scenes are converted into Blupi's 3D model; the objects follow.</td></tr>
+    <tr><td>2026-10-25</td><td>A side-view 2.5D conversion is rejected. Every world is hand-authored in true 3D.</td></tr>
+    <tr><td>2026-10-26</td><td>All twelve theme worlds, their 64 missions and the bonus world are built. Scripted playthroughs finish every mission, every world's chain of hubs, and the whole campaign in one run from a new game.</td></tr>
+    <tr><td>2026-11-04</td><td>Terrain tiles can show the relief of their Ray Dream scenes near the camera (the Setup's "3D terrain" option, off by default).</td></tr>
+    <tr><td>2026-11-08 &ndash; 09</td><td>Main-menu demos and recordings, editing campaign worlds in the game, every player's own galaxy and sharing it, and the 3D effect levels up to Ultra.</td></tr>
+    <tr><td>2026-11-10</td><td>The player's files move to the system's user folder in preparation for a release.</td></tr>
+  </table>
+
+  <h2>The project's own documents</h2>
+  <p>The repository carries its documentation next to the code. This website is a guided summary of it.</p>
+  <table>
+    <tr><th>Document</th><th>Use it for</th></tr>
+    <tr><td><code>CURRENT.md</code></td><td>The verified current state, limitations and open work: the status authority.</td></tr>
+    <tr><td><code>docs/handbook/</code></td><td>A condensed handbook for developers: overview, architecture, build, testing, worlds, assets, contributing, backlog.</td></tr>
+    <tr><td><code>World Format.md</code></td><td>The <code>.vwr</code> world format. See also <a href="internals/vwr-format.html">The .vwr Format</a>.</td></tr>
+    <tr><td><code>plans/</code></td><td>The completion plan, the fidelity audit and its ledgers (<code>plans/audit/</code>), one design brief per world (<code>plans/briefs/</code>).</td></tr>
+    <tr><td><code>handoff.md</code>, <code>plan.md</code>, <code>NEXT.md</code></td><td>Long working logs and history (<code>NEXT.md</code> is frozen since 2026-10-24).</td></tr>
+    <tr><td><code>upstream_bugs.md</code></td><td>Defects found in the sibling repositories (<code>UB-NNN</code>).</td></tr>
+    <tr><td><code>docs/provenance/</code></td><td>Where every asset comes from and under which licence.</td></tr>
+  </table>
 
   <div class="page-nav">
-    <a href="index.html">
+    <a class="prev" href="index.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Home</span>
     </a>

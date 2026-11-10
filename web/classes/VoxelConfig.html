@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VoxelConfig — Galaxy Eggbert Docs</title>
+<meta name="description" content="Worlds::VoxelConfig, the compile-time constants of the voxel world format: format version, chunk and world sizes, block field limits and palette size.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,53 +22,115 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
+  <a href="../classes/index.html" class="active">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> VoxelConfig</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> VoxelConfig</div>
   <h1>VoxelConfig</h1>
-  <p class="subtitle">Compile-time constants shared by the whole Worlds data model.</p>
+  <p class="subtitle">Compile-time limits and default dimensions of the voxel world and its <code>.vwr</code> file format.</p>
 
-  <h2>Overview</h2>
-  <p>Header: <code>include/GalaxyEggbert/Worlds/VoxelConfig.hpp</code>, namespace <code>GalaxyEggbert::Worlds::VoxelConfig</code>.</p>
-
-  <h2>Constants</h2>
+  <h2>Location</h2>
   <table>
-    <tr><th>Constant</th><th>Value</th><th>Meaning</th></tr>
-    <tr><td><code>FormatVersion</code></td><td>1</td><td>.vwr/chunk format version</td></tr>
-    <tr><td><code>ChunkSize</code></td><td>10</td><td>Blocks per chunk axis</td></tr>
-    <tr><td><code>ChunkVolume</code></td><td>1000</td><td>10³</td></tr>
-    <tr><td><code>WorldChunksPerAxis</code></td><td>10</td><td>Chunks per world axis</td></tr>
-    <tr><td><code>WorldBlocksPerAxis</code></td><td>100</td><td>10 × 10</td></tr>
-    <tr><td><code>MaxBlockType</code></td><td>4095</td><td>12-bit type ID ceiling</td></tr>
-    <tr><td><code>MaxBlockMetadata</code></td><td>15</td><td>4-bit metadata ceiling</td></tr>
-    <tr><td><code>MaxPaletteEntries</code></td><td>256</td><td>Max unique blocks per chunk (8-bit index)</td></tr>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/Worlds/VoxelConfig.hpp</code> (header-only)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Worlds</code></td></tr>
+    <tr><th>Kind</th><td><code>struct VoxelConfig final</code> with <code>static constexpr</code> members only</td></tr>
   </table>
 
-  <h2>Related Helpers</h2>
+  <h2>Purpose</h2>
   <p>
-    <code>BitPacking.hpp</code>/<code>.cpp</code> provides <code>bitsNeededForPalette(count)</code>
-    (1 bit for 1–2 entries, up to 8 bits for 129–256), <code>packPaletteIndices</code>,
-    <code>unpackPaletteIndices</code>, <code>getPackedIndex</code>, <code>setPackedIndex</code>, and
-    <code>packedWordCount</code> — all consumed by <a href="Chunk.html">Chunk</a>.
-  </p>
-  <p>
-    <code>BinaryIO.hpp</code>/<code>.cpp</code> provides little-endian
-    <code>writeU8/16/32/64LE</code>, <code>readU8/16/32/64LE</code>, and
-    <code>writeMagic</code>/<code>readMagic</code> for 4-byte file signatures — used by
-    <a href="World.html">World</a> and <a href="Chunk.html">Chunk</a> serialization.
+    One place for the numbers that <a href="Block.html">Block</a>, <a href="Chunk.html">Chunk</a>,
+    the bit-packing helpers and <a href="World.html">World</a> must agree on. Nothing outside
+    <code>src/GalaxyEggbert/Worlds/</code> and the headers next to it reads these constants directly;
+    the rest of the game asks a <code>World</code> for <code>blocksPerAxis()</code>.
   </p>
 
+  <h2>Constants</h2>
+  <p>Values verified in <code>VoxelConfig.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Constant</th><th>Type</th><th>Value</th><th>Meaning</th></tr>
+    <tr><td><code>FormatVersion</code></td><td><code>uint8_t</code></td><td>2</td><td>The <code>version</code> byte of the <code>VWR1</code> world header. <code>World::loadFromFile()</code> accepts exactly this value. Raised from 1 on 2026-07-09 when the sky region and the four world-level fields were added; version 1 files no longer load. Independent of the chunk payload's own version (also 2).</td></tr>
+    <tr><td><code>ChunkSize</code></td><td><code>uint8_t</code></td><td>10</td><td>Blocks along one chunk axis. Stored in both headers and checked on load.</td></tr>
+    <tr><td><code>ChunkVolume</code></td><td><code>size_t</code></td><td>1000</td><td><code>ChunkSize&sup3;</code>, the block count of a chunk.</td></tr>
+    <tr><td><code>WorldChunksPerAxis</code></td><td><code>uint8_t</code></td><td>10</td><td>The default <code>World</code> constructor argument.</td></tr>
+    <tr><td><code>WorldBlocksPerAxis</code></td><td><code>uint16_t</code></td><td>100</td><td><code>ChunkSize &times; WorldChunksPerAxis</code>.</td></tr>
+    <tr><td><code>MaxBlockType</code></td><td><code>uint16_t</code></td><td>4095</td><td>Largest 12-bit block type. The game uses 0-440 (<code>BlockDefinitionRegistry::MaxObjectMIcon</code>).</td></tr>
+    <tr><td><code>MaxBlockMetadata</code></td><td><code>uint8_t</code></td><td>15</td><td>Largest 4-bit metadata value.</td></tr>
+    <tr><td><code>MaxPaletteEntries</code></td><td><code>uint16_t</code></td><td>256</td><td>Distinct block values per chunk; palette indices need at most 8 bits.</td></tr>
+  </table>
+
+  <div class="note"><strong>Only cubic worlds.</strong> The header stores one
+    <code>chunksPerAxis</code>. A non-cubic header with separate X/Y/Z chunk counts is described in
+    <code>World Format.md</code> as a possible future version; it is not implemented.</div>
+
+  <h2>Usage</h2>
+  <pre><code>// src/GalaxyEggbert/Worlds/World.cpp
+std::uint16_t World::blocksPerAxis() const noexcept {
+    return static_cast&lt;std::uint16_t&gt;(chunksPerAxis_) * VoxelConfig::ChunkSize;
+}
+...
+if (version != VoxelConfig::FormatVersion) {
+    throw std::runtime_error("Unsupported world format version");
+}</code></pre>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>WorldTests.ConstructorAndWorldDimensionsAreConsistent</code>, <code>WorldSerializationTests.LoadRejectsV1FormatVersion</code> and <code>BlockTests.MakeSupportsMaximumValues</code> depend on these values; <code>BitPackingTests.BitsNeededForPaletteBoundaries</code> checks the 256-entry limit.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="World.html">World</a>, <a href="Chunk.html">Chunk</a>, <a href="Block.html">Block</a></li>
+    <li><a href="../internals/vwr-format.html">The .vwr Format</a></li>
+  </ul>
+
   <div class="page-nav">
-    <a href="BlockMetadata.html">← BlockMetadata</a>
-    <a href="CubeMesh.html">CnaEngine::Graphics::MeshBuilder →</a>
+    <a class="prev" href="../classes/BlockMetadata.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; BlockMetadata</span>
+    </a>
+    <a class="next" href="../classes/BlockDefinitionRegistry.html">
+      <span class="label">Next</span>
+      <span class="title">BlockDefinitionRegistry &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

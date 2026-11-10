@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Loading — Galaxy Eggbert Docs</title>
+<meta name="description" content="What happens when Galaxy Eggbert loads a world: LoadMission, the .vwr read into WorldRuntime, the legacy saw upgrade, objects and BigDecor, hub doors, placing Blupi, the resume log; campaign, galaxy and custom worlds.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,87 +14,179 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
-  <a href="index.html">Internals</a>
+  <a href="../internals/index.html" class="active">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> World Loading</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Internals</a> <span>/</span> World Loading</div>
   <h1>World Loading</h1>
-  <p class="subtitle">GEWorldRuntime picks a format; GETerrainRenderer turns it into draw calls.</p>
+  <p class="subtitle">From a mission number to a playable world: file, decoding, upgrades, objects, hub doors, Blupi's start and the resume log.</p>
 
-  <h2>Load Path (GalaxyEggbertCnaGame::LoadContent)</h2>
-  <pre><code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr");   // the only path used today
-terrainRenderer_ = GETerrainRenderer(worldRuntime_.GetWorld(), tileAtlas);</code></pre>
   <p>
-    <code>LoadFromMobileEggbertFile(path)</code> exists as a secondary/reference method on the same
-    class but is not called from <code>GalaxyEggbertCnaGame</code> today.
+    The main path is <code>GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes = nullptr)</code>
+    in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code>. It is called for the main
+    menu's Play (mission 1), every hub sign and exit, Continue, the <code>--mission</code> flag, demos
+    and the golden captures. The decoding itself is <code>WorldRuntime::LoadFromVwrStream()</code>
+    (<code>src/GalaxyEggbert/Game/WorldRuntime.cpp</code>). Described as of 2026-11-10.
   </p>
 
-  <h2><code>LoadFromVwrFile(path)</code></h2>
-  <pre><code>bool GEWorldRuntime::LoadFromVwrFile(const std::string&amp; path) {
-    try {
-        world_ = std::make_unique&lt;Worlds::World&gt;(Worlds::World::loadFromFile(path));
-    } catch (...) {
-        return false;   // prior world (if any) is left untouched
-    }
-    spawnTileX_ = spawnTileZ_ = 0;
-    skyRegion_ = 0;
-    bigDecor_.clear();
-    return true;
-}</code></pre>
-  <p>
-    Delegates entirely to <code>World::loadFromFile()</code> / <code>Chunk::read()</code> — see
-    <a href="vwr-format.html">VWR Format</a> for the binary layout. Because <code>.vwr</code>
-    carries no spawn/sky-region header, those fields are simply reset to defaults.
-  </p>
+  <h2>Which file</h2>
+  <p><code>MissionPath(n)</code> picks the file:</p>
+  <table>
+    <tr><th>Kind</th><th>Path</th><th>Loaded by</th></tr>
+    <tr><td>Campaign (shipped)</td><td><code>worlds3d/worldNNN.vwr</code> relative to the working folder (<code>MissionWorldPath()</code>, <code>GameHelpers.hpp</code>)</td><td><code>LoadMission()</code></td></tr>
+    <tr><td>A player's galaxy</td><td><code>customworlds/gamerG/galaxy/worldNNN.vwr</code> in the player's folder (<code>Editor::GalaxyWorldPath()</code>)</td><td><code>LoadMission()</code> while <code>galaxyGamer_ &gt;= 0</code> (<code>StartGalaxy()</code>, <code>--galaxy</code>)</td></tr>
+    <tr><td>Custom slot</td><td><code>customworlds/gamerG/custom_00N.vwr</code> in the player's folder</td><td><code>LoadCustomWorldForEditing()</code>, <code>LoadCustomWorldForPlayTest()</code></td></tr>
+    <tr><td>Title scene</td><td><code>worlds3d/title.vwr</code></td><td><code>LoadTitleScene()</code></td></tr>
+  </table>
+  <p>Mission numbers follow the original: 1 is the main hub, 10, 20, ... 120 the world hubs, 11-18, 21-28, ... their missions, 199 the bonus world, 998 and 999 Galaxy's showcase worlds. See <a href="../levels.html">Campaign &amp; Worlds</a>.</p>
 
-  <h2><code>LoadFromMobileEggbertFile(path)</code> (secondary path, not wired into CNA's game loop yet)</h2>
+  <h2><code>LoadMission()</code> step by step</h2>
   <ol>
-    <li><strong>Header</strong> — <code>blupiPos=</code>, <code>region=</code> key/value pairs.</li>
-    <li><strong>Decor section</strong> — 100×100 tile IDs, one row per line; each converted via <code>BlockTypes::fromMobileIconId(id)</code> and placed at <code>Y=0</code> (inherently flat).</li>
-    <li><strong>BigDecor section</strong> — a second 100×100 background layer; parsed and stored in <code>bigDecor_</code> but not rendered anywhere.</li>
-    <li><strong>MoveObject entries</strong> — object placements; not currently parsed by this method for CNA.</li>
+    <li><strong>Demo guard.</strong> A demo shows one mission. If a demo is playing or being recorded, the request ends the demo instead and nothing is loaded.</li>
+    <li><strong>Resume bookkeeping.</strong> Unless a resume is being replayed, the old <code>resume.txt</code> is deleted and recording stops. Transient state (title scene, win cheer, pending skateboard, teleport guard) is cleared.</li>
+    <li><strong>Read the bytes once.</strong> <code>ReadWorldBytes(path)</code> reads the whole file into a string. When resuming, <code>BeginResume()</code> has already read and hash-checked the file and passes that same snapshot as <code>validatedBytes</code>, so a file replaced in between cannot change what is played.</li>
+    <li><strong>Decode.</strong> <code>worldRuntime_.LoadFromVwrStream()</code> on a string stream (next section). On failure the game prints "not found or failed to load" and stays on the current mission.</li>
+    <li><strong>Identity.</strong> <code>loadedMissionPath_</code> and <code>loadedMissionHash_ = ResumeLog::HashBytes(bytes)</code> (FNV-1a 64) are kept for the resume log. A galaxy world is told its mission number from its place in the galaxy (<code>OverrideMissionNumber()</code>).</li>
+    <li><strong>Presentation.</strong> <code>RebuildWorldPresentation()</code> (below).</li>
+    <li><strong>Hubs.</strong> For any mission but 1 the save remembers <code>SetLastWorld(n / 10)</code>. <code>AdaptHubDoors(n)</code> opens what the save has unlocked (<a href="../classes/HubDoors.html">HubDoors</a>): gold bars and completed signs in the main hub, mission doors in a world hub; doors slide up with sound 33. In a world hub the arrival is past the last opened door; in the main hub beside the sign of the last world played. <code>RefreshTerrainMeshIfChanged()</code> then patches the terrain for the changed cells.</li>
+    <li><strong>Fresh rules state</strong> (the original's <code>PlayPrepare()</code>): <code>interaction_ = InteractionSystem()</code> with only the lives carried over; vehicles, powers, keys, dynamite and the treasure count start from zero. A random seed is drawn (or taken from the resume log or demo) and passed to <code>SeedRandom()</code>.</li>
+    <li><strong>Fresh Blupi.</strong> <code>blupi_ = BlupiController()</code>, then <code>SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes())</code> so solid BigDecor blocks him (a fresh controller knows none).</li>
+    <li><strong>Placement.</strong> At the world's spawn cell with the yellow start's heading; for a galaxy world without a spawn, at the editor's starter position; otherwise at (0, 1, 0). A hub arrival overrides it. <code>PlaceBlupi()</code> sets the position, gives the controller the current crate cells and calls <code>BlupiController::SettleOnGround()</code>, so he stands (and can walk on the first tick) instead of starting in the air. The chase camera is reset behind him.</li>
+    <li><strong>Save.</strong> <code>saveData_.SetMissionNumber(n)</code> and the save file is written. <code>missionStartPending_</code> is set, and on the next <code>Update()</code> in Play <code>StartResumeLog()</code> records the mission's start and begins recording input (<a href="../classes/ResumeLog.html">ResumeLog</a>).</li>
   </ol>
 
-  <h2>GETerrainRenderer Construction</h2>
-  <pre><code>GETerrainRenderer(world, tileAtlas):
-  staticMesh = MakeTexturedMeshBuilder()          // cna-engine MeshBuilder, positions + one UV
-  for x, y, z in world.blocksPerAxis()³:
-      block = world.getBlock(x, y, z)
-      if block.isAir(): continue
-      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ
-      if BlockTypes::tileAnimBase(block.type()) is animated:
-          m_animBlocks.push_back({worldX, y, worldZ, baseIcon})
-      else:
-          AddCenteredBox(staticMesh, (worldX, y, worldZ), 1×1×1, faces)   // MeshBuilder::AddBox
-          // faces: one BoxFaceStyle{visible, uv} per face, uv = tileAtlas.GetTileUv(block.type())
-  staticRenderer = UploadTexturedMesh(device, staticMesh.Mesh())   // CnaEngine::Graphics::GpuMesh</code></pre>
+  <h2>Inside <code>WorldRuntime::LoadFromVwrStream()</code></h2>
+  <pre><code>world_ = std::make_unique&lt;Worlds::World&gt;(Worlds::World::loadFromStream(in));
+UpgradeLegacySawFloors(*world_);
+...                         // any exception: return false
+animPhase_ = 0;             // a new world's tiles start their cycles at 0
+ResyncFromWorld();</code></pre>
+  <ul>
+    <li><code>World::loadFromStream()</code> validates the file completely (<a href="vwr-format.html">The .vwr Format</a>).</li>
+    <li><code>ResyncFromWorld()</code> derives everything the game needs from the world: sky region, mission number, spawn cell, hint zones (<code>CollectHintZones()</code>), BigDecor cells (<code>CollectBigDecor()</code>, shifted into render space) and the live object list from <code>CollectMoveObjects()</code> (see <a href="object-lifecycle.html">Object Lifecycle</a>). The editor calls the same function after every edit, so edited objects appear without a save.</li>
+  </ul>
+
+  <h3>The legacy saw upgrade</h3>
   <p>
-    See <a href="../classes/GETerrainRenderer.html">GETerrainRenderer</a> and
-    <a href="../rendering.html">Rendering</a> for the animated-tile mesh rebuild logic.
+    Until 2026-11-08 a saw drew an invented floor under itself. Files from that time have header flag
+    bit 0 clear. <code>UpgradeLegacySawFloors()</code>
+    (<code>src/GalaxyEggbert/Game/LegacySawFloors.hpp</code>) converts such a world in memory before
+    play or editing:
+  </p>
+  <ul>
+    <li>Every saw cell (378-383) with air above becomes an explicit floor block, and the saw moves up one cell. The floor material is the most common full, still, harmless block within three cells at the same level (or one below); rock if none.</li>
+    <li>The saw's plate-turn record moves with it.</li>
+    <li>A switch whose row (X &plusmn; 20, same Y and Z) contained moved saws gets a type 6 record so it still drives the row one cell up.</li>
+    <li>A saw with something already above it is left where it is and becomes an independent saw.</li>
+  </ul>
+  <p>
+    The world is then marked current. Loading never rewrites the file; saving the upgraded world (for
+    example from the editor) sets flag bit 0 so the conversion does not repeat. As of 2026-11-10, 80 of
+    the 81 files in <code>worlds3d/</code> still carry flag 0 and are upgraded each time they load.
   </p>
 
-  <h2>What's Not Wired Up</h2>
+  <h2><code>RebuildWorldPresentation()</code></h2>
+  <p>In <code>GalaxyEggbertGameLoad.cpp</code>, run for every world switch:</p>
+  <ol>
+    <li><code>ResyncFromWorld()</code> again (a no-op unless the editor changed the world), copy the BigDecor cells, hand the BigDecor shapes measured from the 3D models to <code>WorldRuntime</code> and the resulting solid boxes to Blupi.</li>
+    <li>Background: <code>Content/backgrounds/decorNNN.png</code> for the sky region. Only 28 of the 32 possible ids have a picture; a missing one falls back to a flat clear colour. The picture's horizon colour becomes the distance haze, and the Ultra sky light is built from it.</li>
+    <li>A new <a href="../classes/TerrainRenderer.html">TerrainRenderer</a> for the world, block models applied (<code>ApplyBlockModels()</code>), and <code>terrainRevision_</code> set to the world's <code>blockRevision()</code>.</li>
+  </ol>
+
+  <h2>Galaxy, custom and play-test worlds</h2>
   <ul>
-    <li>No sky dome / background rendering (region index is parsed by the secondary loader but goes nowhere).</li>
-    <li>No object/pickup placement, even when loading a mobile-eggbert <code>.txt</code> file's MoveObject entries.</li>
-    <li>No chunk-radius streaming — the entire world is walked and uploaded at load time.</li>
+    <li><strong>Galaxy.</strong> <code>StartGalaxy()</code> opens the editor's galaxy screen if the selected player has no main hub yet; otherwise it sets <code>galaxyGamer_</code>, restores the galaxy's mission and lives and calls <code>LoadMission()</code>. Everything else is the campaign path. See <a href="../galaxy.html">Your Own Galaxy</a>.</li>
+    <li><strong>Editing a custom slot.</strong> <code>LoadCustomWorldForEditing()</code> loads the file, rebuilds the presentation and starts the editor's free camera above the terrain's centroid (or at (0, 15, 0) for an empty world).</li>
+    <li><strong>Play-testing.</strong> <code>LoadCustomWorldForPlayTest()</code> loads the file with a fresh <code>InteractionSystem</code> (no lives carried over), places Blupi at the spawn or the starter position and enters Play. No resume log is recorded; Win or Lost return to the editor.</li>
+  </ul>
+
+  <h2>Shipped worlds edited in play</h2>
+  <p>
+    The <code>xnjttjpo</code> cheat opens the mission being played in the 3D editor
+    (<code>OpenMissionInEditor()</code>, BD-0118). On the desktop the file in <code>worlds3d/</code> is
+    edited in place; its versions go to <code>customworlds/campaign-backups/</code>, every save is also
+    copied to <code>customworlds/campaign-edits/</code>, and the world as shipped is kept once in
+    <code>customworlds/campaign-originals/</code> for Pause's "Original" (<code>RevertWorld()</code>).
+  </p>
+  <div class="note"><strong>Web build: the campaign-edits overlay.</strong> In the browser
+    <code>worlds3d/</code> is the page's packed data, in memory, so an edit cannot persist there. Saves are
+    kept in the browser's storage under <code>/save/customworlds/campaign-edits/</code>. At every start,
+    before anything loads a world, <code>main.cpp</code> calls
+    <code>Editor::ApplyCampaignEdits("worlds3d", CampaignOriginalsDir())</code>, which copies each kept
+    <code>worldNNN.vwr</code> over the packed file of that name, first keeping the shipped file in
+    <code>worlds3d-shipped/</code> for "Original".</div>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyShippedWorlds</code>: every world in <code>worlds3d/</code> loads through the game's reader (including the saw upgrade), carries its mission number and gives <code>WorldRuntime</code> its objects.</li>
+    <li><code>WorldTests.IndependentSawFlagIsPreservedWithoutRewritingLegacyData</code>: the flag survives and loading alone never changes bytes.</li>
+    <li><code>VerifyBlupiMovement</code>: placement establishes standing before the first input tick.</li>
+    <li>Autoplay playthroughs and the resume equality self-tests (<a href="../development/testing.html">Testing</a>).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="startup.html">Startup Sequence</a>, <a href="vwr-format.html">The .vwr Format</a>, <a href="object-lifecycle.html">Object Lifecycle</a></li>
+    <li><a href="../classes/WorldRuntime.html">WorldRuntime</a>, <a href="../classes/World.html">World</a>, <a href="../classes/HubDoors.html">HubDoors</a>, <a href="../classes/CustomWorldStorage.html">CustomWorldStorage</a></li>
+    <li><a href="../save-system.html">Save Data &amp; Resume</a>, <a href="../editor.html">3D World Editor</a></li>
   </ul>
 
   <div class="page-nav">
-    <a href="vwr-format.html">← VWR Format</a>
-    <a href="object-lifecycle.html">Object Lifecycle →</a>
+    <a class="prev" href="../internals/startup.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Startup Sequence</span>
+    </a>
+    <a class="next" href="../internals/vwr-format.html">
+      <span class="label">Next</span>
+      <span class="title">The .vwr Format &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

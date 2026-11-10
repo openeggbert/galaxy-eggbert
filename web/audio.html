@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio — Galaxy Eggbert Docs</title>
+<title>Audio &amp; Music — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's sound effects and music: the 93 original sound channels with their volume and pitch table, positional sound, vehicle motors, the ten music tracks and how they are chosen and played.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,77 +24,201 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html" class="active">Audio</a>
+  <a href="audio.html" class="active">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Audio</div>
-  <h1>Audio</h1>
-  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA.</p>
 
-  <div class="warn">
-    <strong>Planned, not implemented</strong>
-    <code>GalaxyEggbertCNA</code> plays no sound at all today. This page describes the sound system
-    it must eventually replicate faithfully from mobile-eggbert (per the E3D-MIG-080…083 roadmap
-    tasks), plus what already works in the <code>GalaxyEggbertSimple3D</code> reference target.
+<main id="content">
+  <h1>Audio &amp; Music</h1>
+  <p class="subtitle">The original's 93 sound channels played as the original plays them, and its ten music tracks, one per world (as of 2026-11-10).</p>
+
+  <table>
+    <tr><th>Part</th><th>Files</th><th>Code</th></tr>
+    <tr><td>Sound effects</td><td><code>Content/sounds/sound000.wav</code> &hellip; <code>sound092.wav</code> (93 files)</td><td><a href="classes/Sound.html">Sound</a> (<code>src/GalaxyEggbert/Game/Sound.{hpp,cpp}</code>), channel numbers in <code>include/GalaxyEggbert/Def/SoundChannel.hpp</code></td></tr>
+    <tr><td>Vehicle motors</td><td>channels 15-18 and 28-31</td><td><code>GalaxyEggbertGame::UpdateVehicleMotorSound()</code>, <code>StopVehicleMotorSound()</code></td></tr>
+    <tr><td>Music</td><td><code>Content/music/music000.ogg</code> &hellip; <code>music009.ogg</code> (10 tracks, 27 MB)</td><td><code>GalaxyEggbertGame::UpdateMusic()</code>, <code>ApplyMusicVolume()</code> in <code>src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code></td></tr>
+    <tr><td>Playback</td><td>&mdash;</td><td>CNA's XNA audio API (<code>SoundEffect</code>, <code>SoundEffectInstance</code>, <code>Song</code>, <code>MediaPlayer</code>) over SDL3_mixer</td></tr>
+  </table>
+
+  <h2>Sound effects</h2>
+  <p>
+    A sound is a <em>channel</em>, <code>Def::SoundChannel</code> 0-92, and the channel number is the file number:
+    <code>SoundChannel10</code> plays <code>sound010.wav</code>. The numbers are the original's and must never be renumbered.
+    Channel 0 is reserved; the game uses it to mean "no sound". The WAV files are copies of Mobile Eggbert's and are
+    played as they are.
+  </p>
+
+  <h3>Volume and pitch, as the original</h3>
+  <p>
+    Each channel has a volume multiplier and a pitch in XNA's octaves, ported with approval from Mobile Eggbert's
+    <code>tableVolumePitch</code> (<code>kVolumePitch</code> in <code>Sound.cpp</code>). The table's pitch replaces any other: most channels
+    play 0.1-0.5 octave up, the life-loss sounds (1, 2) and Blupi's push and pull efforts (38, 39) a whole octave up.
+    The pitch was missing until 2026-11-02, when every effect played lower than the original's (BD-0031).
+  </p>
+  <p>
+    The original's conflict rule is kept: a channel that is already playing is not restarted, except channel 10.
+    Each channel owns one <code>SoundEffectInstance</code>; <code>Stop(channel)</code> ends one channel (a crate push's sound when the
+    push ends) without silencing the others.
+  </p>
+
+  <h3>Positional sound</h3>
+  <p>
+    The listener is Blupi: the game calls <code>SetListener()</code> with his position every frame of play. A sound of the world
+    is played with <code>PlayAt(channel, x, y, z)</code> and is heard only within the original's reach of the view: the original
+    plays a sound on the screen and up to one screen beyond each side, and not at all farther (BD-0076). In 3D that is
+    15 cells from Blupi along X and along Z, and 11.25 cells up or down (<code>Sound::kAudibleAcross</code>,
+    <code>kAudibleUpDown</code>). Inside that box a sound plays at its table volume; there is no fading with distance and no
+    stereo panning (GP-0412).
+  </p>
+
+  <h3>The ground underfoot</h3>
+  <p>
+    Landing plays channel 3; there are no footsteps while walking, as in the original (BD-0037). Like the original's
+    <code>Decor::SoundEnviron()</code>, <code>FootstepChannelFor(icon)</code> swaps channel 3 for a material's own sound when the tile
+    underfoot is in one of seven icon ranges, and <code>CeilingChannelFor(icon)</code> swaps channel 4 (a ceiling met while rising)
+    for the next channel of the same pair.
+  </p>
+  <table>
+    <tr><th>Tile icons</th><th>Landing</th><th>Ceiling</th></tr>
+    <tr><td>32-34, 41-47, 139-143</td><td>78</td><td>79</td></tr>
+    <tr><td>1-28, 78-90, 250-260, 311-316, 324-329</td><td>80</td><td>81</td></tr>
+    <tr><td>284-303, 338</td><td>82</td><td>83</td></tr>
+    <tr><td>341-363</td><td>84</td><td>85</td></tr>
+    <tr><td>215-234</td><td>86</td><td>87</td></tr>
+    <tr><td>246-249</td><td>88</td><td>89</td></tr>
+    <tr><td>107-109 (grass)</td><td>90</td><td>91</td></tr>
+    <tr><td>anything else</td><td>3</td><td>4</td></tr>
+  </table>
+
+  <h3>When sounds are left out</h3>
+  <ul>
+    <li><strong>Blupi hidden</strong> (the lollipop's Hide power): his own sounds (steps, landings, jumps, water, crate efforts,
+      taps and falls; <code>Sound::MutedWhileHidden()</code>) are not played; the world's still are (BD-0075).
+      <code>PlayDirect()</code> bypasses this for the few sounds the original played directly.</li>
+    <li><strong>Replays</strong>: while an interrupted mission is being replayed to its resume point, or a demo file is being verified,
+      <code>SetReplayMuted(true)</code> silences everything. A demo playing in the main menu is heard, with the player's own sound settings.</li>
+    <li><strong>Settings</strong>: the Setup's sound switch (<code>SetEnabled</code>) and its effects-volume slider, 0-100 in
+      <code>savedata.txt</code> as <code>effectsVolume=</code>, which multiplies every channel's table volume (a Galaxy addition; the
+      original has only sound on/off).</li>
+  </ul>
+
+  <h2>Vehicle motors</h2>
+  <p>
+    <code>UpdateVehicleMotorSound()</code> runs every tick of play and follows the original's <code>AdaptMotorVehicleSound()</code>: a
+    start sound when a motor starts, a loop while it runs (the "high" loop while the vehicle moves, the "low" one while it
+    idles, <code>BlupiController::IsVehicleMotorHigh()</code>), a stop sound when it stops. The skateboard has no motor.
+  </p>
+  <table>
+    <tr><th>Vehicle</th><th>Start</th><th>Loop moving / idle</th><th>Stop</th></tr>
+    <tr><td>Helicopter</td><td>15</td><td>16 / 18</td><td>17</td></tr>
+    <tr><td>Jeep, tank, overcraft</td><td>28</td><td>29 / 31</td><td>30</td></tr>
+  </table>
+  <p>
+    The loops belong to the live vehicle. <code>StopVehicleMotorSound()</code> stops all eight channels whenever the phase changes to
+    anything but Play (pause, menus, the next world), when an editor play-test world is replaced and when the in-game editor
+    is opened on a mission. Back in Play, the next update starts the current vehicle's loop again; the main menu and a new
+    world on foot keep no engine sound. This was verified against the audio instances' states with a dummy audio driver.
+  </p>
+
+  <h2>Music</h2>
+  <p>
+    The ten tracks are the original Speedy Eggbert 1 (1998) MIDI files <code>SOUND/MUSIC000-009.BLP</code>, rendered by
+    <code>tools/music/render_music.py</code>: libfluidsynth through <code>ctypes</code> with a General MIDI soundfont, then, with
+    <code>--ogg</code>, ffmpeg cuts the trailing silence, normalises loudness (EBU R128, -18 LUFS) and encodes Vorbis.
+  </p>
+  <pre><code>python3 tools/music/render_music.py &lt;midi...&gt; --out &lt;dir&gt; [--soundfont &lt;file.sf2&gt;] [--ogg]</code></pre>
+
+  <h3>One track per world</h3>
+  <p>
+    A world stores its track in the second byte of the header's sky-region word (<code>World::musicTrack()</code>): 0 is no music,
+    1-10 play <code>music000.ogg</code>-<code>music009.ogg</code>. The world generators default to the original level's own
+    <code>music=</code> value (<code>ORIGINAL_MUSIC</code> in <code>tools/worldkit.py</code>), and the <a href="editor.html">3D editor</a> sets it from
+    its palette. In the shipped files, 15 of the 81 worlds are silent: the title scene, the main hub <code>world001</code>, the world
+    hubs <code>world020</code>-<code>world120</code>, the gallery <code>world998</code> and the showcase <code>world999</code> (the hub
+    <code>world010</code> plays track 10).
+  </p>
+
+  <h3>When it plays</h3>
+  <p>
+    <code>UpdateMusic()</code> runs every update. A track plays while a world is shown in Play, Pause, the in-play Setup or the editor
+    (not its slot browser), if sound is on; never in autoplay, while a resume is replayed or a demo verified. The main menu is
+    silent. The track loops (<code>MediaPlayer</code> repeating) until the world's track changes. <code>MediaPlayer</code>'s volume is
+    0.5 &times; the Setup's music slider / 100 (<code>musicVolume=</code>, 0-100): at full slider the music sits at half volume under
+    the effects (OR-0014's mix).
+  </p>
+
+  <h3>On the web</h3>
+  <p>
+    The web build does not pack the music. <code>Content/music/</code> is staged beside <code>GalaxyEggbert.html</code>, and the first time a
+    world asks for a track the game fetches it into the virtual file system (<code>emscripten_async_wget</code>); until it has arrived,
+    nothing plays and the next frame asks again. A deployment that forgets to copy <code>Content/music/</code> next to the page
+    simply has no music.
+  </p>
+
+  <h2>The audio backend</h2>
+  <p>
+    The game uses only CNA's XNA audio and media classes. In the shipped builds CNA plays them through SDL3 and SDL3_mixer,
+    which CNA builds from its own <code>third_party/</code>; the Linux bundle includes the SDL3_mixer library and the Windows staging
+    copies <code>SDL3_mixer.dll</code>. Browsers start audio only after a user gesture, so on the web the first sound may wait for a
+    click or key press.
+  </p>
+  <div class="note"><strong>Verified.</strong> Linux desktop: checked live (the demos with sound, the motor loops' states). Web, in
+    headless Chrome: all 93 channels load, and the music of mission 11 plays (checked 2026-11-09). Android: the APK builds and
+    starts in an emulator; audio on a real device is not verified.</div>
+
+  <h2>Tests</h2>
+  <p>
+    <code>VerifyInteractionSystem</code> (CTest) checks <code>Sound::MutedWhileHidden()</code> against the original's list,
+    <code>Sound::Audible()</code> at the edges of the box, and every range of <code>FootstepChannelFor()</code> and
+    <code>CeilingChannelFor()</code>. It links <code>Sound</code> without loading any file, so every <code>Play()</code> there is silent.
+    <code>VerifyGESaveData</code> checks that the two volumes default to 100, clamp and survive a save.
+  </p>
+
+  <h2>Related pages</h2>
+  <div class="card-grid">
+    <a class="card" href="classes/Sound.html"><h3>Sound</h3><p>The class reference.</p></a>
+    <a class="card" href="assets.html"><h3>Assets &amp; Tools</h3><p>Where the sounds and tracks come from.</p></a>
+    <a class="card" href="configuration.html"><h3>Configuration</h3><p>Setup values in <code>savedata.txt</code>.</p></a>
+    <a class="card" href="demos.html"><h3>Demos &amp; Recordings</h3><p>Demos replay with sound.</p></a>
   </div>
 
-  <h2>The Target: 93-Channel WAV Playback</h2>
-  <p>
-    mobile-eggbert (and <code>GalaxyEggbertSimple3D</code>, which already ports this faithfully)
-    uses 93 WAV files, <code>sound000.wav</code> through <code>sound092.wav</code>, indexed 1:1 by
-    the <code>SoundChannel</code> enum (<code>SoundChannel0</code>–<code>SoundChannel92</code>).
-    Channel 0 is reserved; channels 1–92 are sound effects. These indices are frozen — they must
-    not be renumbered, matching the original game's sound table exactly.
-  </p>
-  <p>
-    The WAV assets themselves are already copied into <code>Content/sounds/</code> at build time
-    (part of the standard mobile-eggbert asset copy), so they are available on disk — CNA simply
-    doesn't load or play them yet.
-  </p>
-
-  <h2>Roadmap (plan.md, E3D-MIG-080…083)</h2>
-  <ol>
-    <li>Add a sound wrapper around CNA's audio API.</li>
-    <li>Reuse <code>sound000.wav</code>–<code>sound092.wav</code> directly (asset reuse, no code copy).</li>
-    <li>Reuse/cross-check the <code>SoundChannel</code> enum against mobile-eggbert.</li>
-    <li>Reach 93-channel playback parity with mobile-eggbert / GalaxyEggbertSimple3D.</li>
-  </ol>
-
-  <h2>Documentation Gap</h2>
-  <p>
-    <code>mobile-eggbert-reference/07-sounds.md</code> is currently pointer-only — the 93 channels
-    are known to exist and be ID-matched, but no per-channel trigger/purpose catalog has been
-    written yet (tracked as an open documentation task, not a code task).
-  </p>
-
   <div class="page-nav">
-    <a href="rendering.html">
+    <a class="prev" href="rendering.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Rendering</span>
     </a>

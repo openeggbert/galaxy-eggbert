@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheats &amp; Diagnostics — Galaxy Eggbert Docs</title>
+<meta name="description" content="Every typed cheat word of Galaxy Eggbert, the F12 cheat menu, the debug, compass, fps and position diagnostics, fairplay and honest, xnjttjpo, and building without cheats.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html" class="active">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Cheats &amp; Diagnostics</h1>
+  <p class="subtitle">The typed cheat words, the F12 cheat menu, the diagnostics they switch on, and how to build the game without them.</p>
+
+  <p>
+    Mobile Eggbert has two ways to cheat: a hidden menu of nine cheats and words typed during play. Galaxy Eggbert keeps
+    both, with the original's words and effects, and adds a few words of its own for diagnostics and fair play. As of
+    2026-11-10 the parser knows 33 words (<code>help</code> and <code>cheats</code> are the same one). The list is
+    <code>InputPad::TypedCheatWords()</code> in <code>src/GalaxyEggbert/Game/InputPad.cpp</code>; the effects are
+    applied in <code>GalaxyEggbertGame::ApplyTypedCheat()</code> and <code>ApplyCheat()</code>
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code>).
+  </p>
+
+  <h2>Typing a cheat</h2>
+  <ul>
+    <li>Type the word <strong>during play</strong>, without Enter. Words are not read in menus, Pause or the editor.</li>
+    <li>Letters are read as ordered key presses through CNA's <code>Keyboard::KeyDownEXT</code>, so even very fast
+      typing between two frames is kept, on every device, including keyboards used with touch screens. No IME or
+      on-screen keyboard is needed. (This needs CNA <code>594eb28dc</code> or newer.)</li>
+    <li>The game keeps the last 32 letters. A word fires when they end with it; if one word ends with another, the
+      longer wins. The letters are cleared after a word, except after <code>quick</code>, so that
+      <code>quicklollypop</code> can still be typed. Slow typing works too.</li>
+    <li>While the letters typed so far begin a word, those letter keys do not reach Blupi until released: the S that
+      ends <code>weelkeys</code> does not turn him round.</li>
+    <li>Type <strong>help</strong> or <strong>cheats</strong> to pause the game under a panel listing every word with
+      its explanation; F1, Esc or [Close] closes it. F1 alone shows the controls and works even when cheats are locked.</li>
+  </ul>
+
+  <h2>The words</h2>
+  <p>Words marked <em>toggle</em> switch on and off and, while on, are listed at the top left of the screen.</p>
+  <table>
+    <tr><th>Word</th><th>Effect</th><th>Origin</th></tr>
+    <tr><td><code>opendoors</code></td><td><em>Toggle.</em> Opens every bar of the hubs (mission bars and gold bars) and gives all three keys.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>cleanall</code></td><td>Blows up every enemy in the world, mines included.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>megablupi</code></td><td><em>Toggle.</em> Invincibility.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>layegg</code></td><td>Sets the lives to nine.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>killegg</code></td><td>Nothing, as in the original (it is in its list but has no effect).</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>funskate</code>, <code>givecopter</code>, <code>jeepdrive</code>, <code>drivetank</code>, <code>iovercraft</code></td><td>Put Blupi on a skateboard, in a helicopter, jeep, tank or on an overcraft (ending ghost mode).</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>alltreasure</code></td><td>Collects every remaining chest.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>endgoal</code></td><td>Moves Blupi to the exit; he wins only if every chest is taken.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>showsecret</code></td><td><em>Toggle.</em> Draws the invisible flight barriers (block 214).</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>roundshield</code></td><td>The shield, as from its pickup.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>quicklollypop</code></td><td>The lollipop's power (the spelling is the original's).</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>powercharge</code></td><td>The charge's cloud power.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>hidedrink</code></td><td>The drink's invisibility.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>tenbombs</code></td><td>Ten decoys: Blupi statues put down with Action. The bulldozer and the enemy Blupis are destroyed with one they meet.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>birdlime</code></td><td>Ten glue shots for the tank and helicopter.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>udynamite</code></td><td>One stick of dynamite.</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>weelkeys</code></td><td>All three keys (the spelling is the original's).</td><td>Mobile Eggbert</td></tr>
+    <tr><td><code>ghost</code></td><td><em>Toggle.</em> Walk through walls: tile reactions and object contacts are skipped (a dynamite blast still kills), Blupi is drawn at 75 % opacity. Ending it inside a wall puts him back at his last valid place.</td><td>Mobile Eggbert (MODERN)</td></tr>
+    <tr><td><code>quick</code></td><td><em>Toggle.</em> Unlocks F7 (4&times;) and F8 (8&times;) game speed.</td><td>Mobile Eggbert (MODERN)</td></tr>
+    <tr><td><code>zoom</code></td><td>Steps the chase camera 2, 4, 8 and 16 times farther out, then back (listed as zoom 50 %, 25 %, 12 %, 6 %). Walls still limit it.</td><td>Mobile Eggbert (MODERN)</td></tr>
+    <tr><td><code>cheats</code> / <code>help</code></td><td>The cheat panel described above.</td><td>MODERN / Galaxy alias</td></tr>
+    <tr><td><code>debug</code></td><td><em>Toggle.</em> The diagnostics panel (below).</td><td>Mobile Eggbert (MODERN)</td></tr>
+    <tr><td><code>fps</code></td><td><em>Toggle.</em> Frames drawn per second, in the top-left list.</td><td>Galaxy Eggbert</td></tr>
+    <tr><td><code>position</code></td><td><em>Toggle.</em> Blupi's place (below).</td><td>Galaxy Eggbert</td></tr>
+    <tr><td><code>compass</code></td><td><em>Toggle.</em> The objective aid (below).</td><td>Galaxy Eggbert</td></tr>
+    <tr><td><code>fairplay</code></td><td><em>Toggle.</em> Turns cheats off and locks them (below).</td><td>Galaxy Eggbert</td></tr>
+    <tr><td><code>honest</code></td><td>Turns cheats off and locks them until the game quits (below).</td><td>Galaxy Eggbert</td></tr>
+    <tr><td><code>xnjttjpo</code></td><td>Opens the 3D editor on the world being played (below).</td><td>Speedy Blupi</td></tr>
+  </table>
+  <p>MODERN marks the words Mobile Eggbert adds in its modern build (<code>quick</code>, <code>ghost</code>,
+    <code>debug</code>, <code>zoom</code>, <code>cheats</code>). The 21 words marked Mobile Eggbert are its original list;
+    its world-building switch <code>buildofficialmissions</code> is not a player cheat here. Decoys are placed in no campaign world, so
+    <code>tenbombs</code> is the only way to get them.</p>
+
+  <h2>Diagnostics</h2>
+  <h3>debug</h3>
+  <p>A panel with fixed label and value columns, so it does not jump as digits change: simulation time (minutes,
+    seconds and 20 Hz ticks), mission and background region, lives, position and cell in raw 3D grid coordinates,
+    velocity in blocks per second, heading, movement mode, animation and icon, game speed, the number of keys held
+    and of touches, whether a gamepad is connected and whether accelerometer readings arrive. It sits at the upper right on a desktop and upper centre with
+    touch controls, appears only in play (also in an editor play-test) and is drawn by
+    <code>src/GalaxyEggbert/Game/DebugOverlay.hpp</code>.</p>
+  <h3>compass</h3>
+  <p>An aid in the lower right, off by default. It points to the nearest chest not yet taken, then, with every chest
+    taken or none in the world, to the nearest red arrow or golden key. Three unlabelled rows: the straight-line distance
+    in blocks, rounded; <code>&lt;</code> or <code>&gt;</code> for the shorter turn, <code>|</code> when he faces it
+    (within 3 degrees); <code>^</code> or <code>v</code> when it is above or below, <code>-</code> at the same height
+    (within 0.1 block). A direction, not a route finder. Touch layouts keep it clear of the controls.</p>
+  <h3>position and fps</h3>
+  <p><code>position</code> lists <em>x= y= z=</em> in the editor's cell coordinates (x and z from the world's corner,
+    y up) and draws three arrows under the list, X red, Y green, Z blue, turning with the camera, to show which way each
+    axis runs. <code>fps</code> lists the frames drawn per second, measured every half second.</p>
+  <p>Developer diagnostics outside the game's cheats (environment variables, traces) are on
+    <a href="development/debugging.html">Debugging</a>.</p>
+
+  <h2>fairplay and honest</h2>
+  <p><code>fairplay</code> turns off every switched-on cheat (megablupi, ghost, opendoors, showsecret, compass, debug,
+    fps, position, quick and zoom; a speed above fast drops to normal) and locks cheat entry: no other word, no F12 and
+    no hidden menu are taken. Typing <code>fairplay</code> again unlocks; the old toggles do not come back by themselves.
+    Lives, bombs, ammunition, keys, vehicles, powers and world changes already gained stay. <code>honest</code> does the
+    same and keeps the lock until the game quits: not even <code>fairplay</code> or <code>honest</code> is taken any
+    more. Both locks are kept in the resume file, so a resumed mission has them again.</p>
+
+  <h2>xnjttjpo: edit the world being played</h2>
+  <p>Speedy Blupi's XMISSION cheat, typed with every letter after the first moved one on (x-n-j-t-t-j-p-o), switched
+    its editor to the official missions. Here it opens the <a href="editor.html">3D world editor</a> on the world being
+    played (not during a demo, a recording or an editor play-test). Saving writes the shipped world file itself and
+    keeps the version before it in <code>customworlds/campaign-backups/</code>; Stop returns to the mission from its
+    start. An edited world shows <strong>Original</strong> in Pause, which brings back the world as shipped. On the web
+    the edit is kept in the browser's storage and laid over the packed worlds at every start.</p>
+
+  <h2>The F12 cheat menu</h2>
+  <p>In play, F12 opens and closes the original's hidden cheat menu: a row of nine square buttons across the top of the screen,
+    a letter under each. Clicking or tapping one closes the menu and applies the cheat.</p>
+  <table>
+    <tr><th>Button</th><th>Letter</th><th>Cheat</th></tr>
+    <tr><td>1</td><td>D</td><td>Doors: as <code>opendoors</code>, without the keys</td></tr>
+    <tr><td>2</td><td>B</td><td>SuperBlupi: as <code>megablupi</code></td></tr>
+    <tr><td>3</td><td>S</td><td>As <code>showsecret</code></td></tr>
+    <tr><td>4</td><td>E</td><td>As <code>layegg</code>: nine lives</td></tr>
+    <tr><td>5</td><td>R</td><td>Reset: erases the selected player's progress, as the Setup's Erase progress</td></tr>
+    <tr><td>6</td><td>T</td><td>Trial: no effect (the original's trial mode cannot be reached)</td></tr>
+    <tr><td>7</td><td>C</td><td>As <code>cleanall</code></td></tr>
+    <tr><td>8</td><td>T</td><td>As <code>alltreasure</code></td></tr>
+    <tr><td>9</td><td>G</td><td>As <code>endgoal</code></td></tr>
+  </table>
+  <div class="warn"><strong>Button R is not undoable.</strong> It erases the current player's saved progress at once.</div>
+  <p>The original's way in also works during play: ten taps or clicks on six invisible zones covering the upper-left two thirds of
+    the width and 57 % of the height, three columns by two rows. In (column, row) order: (1,2) (2,2) (3,2) (1,2) (1,1)
+    (2,1) (2,2) (2,1) (3,1) (3,2). A wrong zone starts the count again.</p>
+
+  <h2>Building without cheats</h2>
+  <p>The CMake option <code>GALAXY_EGGBERT_ENABLE_CHEATS</code> (default <code>ON</code>) sets the macro of the same
+    name, read in <code>src/GalaxyEggbert/Game/CheatConfig.hpp</code> as <code>kCheatsEnabled</code>:</p>
+  <pre><code>cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_ENABLE_CHEATS=OFF
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA</code></pre>
+  <p>With it <code>OFF</code> every typed word (<code>help</code>, <code>compass</code>, <code>debug</code> and
+    <code>xnjttjpo</code> included), F12, the hidden menu and the application of cheats are compiled out; the F1 panel
+    says "Cheats disabled" and no longer lists F12 and F7/F8. <code>fairplay</code> cannot turn them back on. Both
+    configurations were built and tested; set the option back to <code>ON</code> and rebuild to restore them.
+    <code>VerifyGEInputPad</code> tests the parser and the locks.</p>
+
+  <h2>Cheats, demos and resume</h2>
+  <p>A main-menu demo freezes the player's cheats with the rest of the profile and gives them back after it. The resume
+    file records the typed letters, the compass, debug and the locks, so an interrupted mission resumes with the same
+    cheats. See <a href="demos.html">Demos &amp; Recordings</a> and <a href="save-system.html">Save Data &amp; Resume</a>.</p>
+
+  <div class="page-nav">
+    <a class="prev" href="levels.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Campaign &amp; Worlds</span>
+    </a>
+    <a class="next" href="demos.html">
+      <span class="label">Next</span>
+      <span class="title">Demos &amp; Recordings &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

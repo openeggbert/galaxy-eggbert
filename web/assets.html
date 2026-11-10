@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Assets — Galaxy Eggbert Docs</title>
+<title>Assets &amp; Tools — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's runtime assets, where each comes from, the tools that convert the original Ray Dream scenes and music, and what the repository records about provenance and licences.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,96 +24,185 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html" class="active">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html" class="active">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Assets</div>
-  <h1>Assets</h1>
-  <p class="subtitle">Reused mobile-eggbert assets, and what GalaxyEggbertCNA actually uses today.</p>
+  <h1>Assets &amp; Tools</h1>
+  <p class="subtitle">What the game loads, where each asset comes from, and the scripts that produce the generated ones (as of 2026-11-10).</p>
 
-  <h2>The Reuse Rule</h2>
-  <p>
-    mobile-eggbert is <strong>read-only</strong>. Its <em>assets</em> (sprite sheets, sounds, world
-    files) are freely reused by direct file path or build-time copy. Its <em>code</em>
-    (<code>Decor.cpp</code>, <code>Tables.cpp</code>, <code>GameData.cpp</code>) is reference-only
-    — copying or linking requires explicit user approval, even for "just data" like animation tables.
-  </p>
+  <div class="warn"><strong>Never edit a generated file by hand.</strong> Each runtime asset is either a copy of the original's media
+    or the output of a script in this repository. Change the script or its input table and regenerate:
+    <code>avatars3d/**</code>, <code>tools/data/blocks.csv</code>, <code>BoltPaths.hpp</code>, <code>GlueStrands.hpp</code>,
+    <code>LavaSurfaceData.hpp</code>, <code>textures3d/grass_top.png</code>, <code>worlds3d/*.vwr</code> and <code>plans/inventory/*.md</code> are all generated.</div>
 
-  <h2>What GalaxyEggbertCNA Actually Loads Today</h2>
+  <h2>Runtime assets</h2>
   <table>
-    <tr><th>Asset</th><th>Source</th><th>Used for</th></tr>
-    <tr><td><code>Content/icons/object-m.png</code></td><td>1301×1431 px, 64×64 px tiles, 20 columns, 65 px pitch (1 px gap)</td><td>Terrain block textures, mapped via <code>GETileAtlas</code></td></tr>
-    <tr><td><code>worlds3d/world001.vwr</code></td><td>Hand-authored 3D world (this repo)</td><td>Default loaded world</td></tr>
-  </table>
-  <p>Nothing else is currently loaded — no Blupi sprite, no object/element sprites, no sounds, no backgrounds.</p>
-
-  <h2>mobile-eggbert Asset Inventory (available for future use)</h2>
-  <table>
-    <tr><th>Directory</th><th>Contents</th></tr>
-    <tr><td><code>Content/icons/</code></td><td><code>object-m.png</code> (terrain), <code>blupi.png</code>/<code>blupi1.png</code> (player), <code>element.png</code> (objects), <code>explo.png</code> (explosions), <code>button.png</code>, <code>jauge.png</code> (HUD gauge), <code>pad.png</code> (touch pad), <code>text.png</code> (font)</td></tr>
-    <tr><td><code>Content/sounds/</code></td><td>93 WAV files, <code>sound000.wav</code>–<code>sound092.wav</code>, matching <code>SoundChannel</code> 1:1</td></tr>
-    <tr><td><code>Content/backgrounds/</code></td><td>~34 sky/menu PNGs (<code>decor000.png</code>… non-contiguous, plus title/menu screens)</td></tr>
-    <tr><td><code>worlds/</code></td><td>78 mobile-eggbert <code>.txt</code> levels upstream (5 sample files, <code>world001.txt</code>–<code>world005.txt</code>, committed locally)</td></tr>
+    <tr><th>Directory</th><th>Contents</th><th>Source</th></tr>
+    <tr><td><code>Content/icons/</code></td><td>Sprite sheets: <code>object-m.png</code> (terrain tiles), <code>element.png</code> (objects), <code>explo.png</code> (explosions, big decor), <code>blupi.png</code>, <code>blupi1.png</code>, <code>pad.png</code>, <code>button.png</code>, <code>text.png</code>, <code>jauge.png</code>; <code>.xml</code> sidecars for three of them</td><td>Copied from Mobile Eggbert</td></tr>
+    <tr><td><code>Content/backgrounds/</code></td><td>28 sky pictures <code>decorNNN.png</code> (region ids 0-31; 005, 014, 017 and 023 have none) and the screens: <code>init</code>, <code>wait</code>, <code>pause</code>, <code>win</code>, <code>lost</code>, <code>setup</code>, <code>trial</code>, <code>gear</code>, <code>speedyblupi</code>, <code>blupiyoupie</code>, plus <code>galaxyeggbert.png</code> (Galaxy's logo on the Setup screen, added 2026-11-08)</td><td>Copied from Mobile Eggbert; the logo is Galaxy's</td></tr>
+    <tr><td><code>Content/sounds/</code></td><td>93 WAV files, one per sound channel (<a href="audio.html">Audio &amp; Music</a>)</td><td>Copied from Mobile Eggbert</td></tr>
+    <tr><td><code>Content/music/</code></td><td>10 OGG tracks, 27 MB</td><td>The original's MIDI, rendered by <code>tools/music/render_music.py</code></td></tr>
+    <tr><td><code>Content/demos/</code></td><td><code>demo001.gdemo</code>-<code>demo010.gdemo</code>, the main menu's ten demos (<a href="demos.html">Demos &amp; Recordings</a>)</td><td>Recorded in the game (<code>tools/record_demo.sh</code>)</td></tr>
+    <tr><td><code>Content/icons2x/</code>, <code>Content/backgrounds2x/</code></td><td>Optional sheets at twice the size, loaded only when a file is exactly twice its 1x one (<code>TextureScale.hpp</code>)</td><td>Not committed yet; the game stays at 1x without them. Never used on the web or Android</td></tr>
+    <tr><td><code>avatars3d/blupi/</code></td><td>Blupi: skinned model, 68 clips, face textures, <code>clips.txt</code>; <code>vehicles/</code> holds the helicopter, jeep, overcraft, skateboard and tank</td><td>Ray Dream scenes via <code>tools/rd4_to_gltf/</code></td></tr>
+    <tr><td><code>avatars3d/objects/</code></td><td>121 model directories listed in <code>index.txt</code>, each with its parts, skeleton, clip, <code>icons.txt</code> and <code>materials.txt</code></td><td>Ray Dream scenes via <code>tools/rd4_to_gltf/</code></td></tr>
+    <tr><td><code>avatars3d/terrain/</code></td><td>145 relief files (<code>.gtr</code>) and <code>index.txt</code>, which maps 158 tile icons to them</td><td>Ray Dream scenes via <code>tools/terrain_relief/</code></td></tr>
+    <tr><td><code>avatars3d/blupi_placeholder/</code></td><td>A fox model, used only when <code>avatars3d/blupi/</code> is missing</td><td>Khronos glTF sample "Fox" (third-party)</td></tr>
+    <tr><td><code>textures3d/grass_top.png</code></td><td>The grass seen from above (64&nbsp;&times;&nbsp;64, tiles seamlessly)</td><td><code>tools/textures/grass_top.py</code>, from the leaves of tile 107</td></tr>
+    <tr><td><code>worlds3d/</code></td><td>81 <code>.vwr</code> worlds: the title scene, the campaign, <code>world998</code> (gallery) and <code>world999</code> (showcase)</td><td><code>tools/worlds/*.py</code> with <code>tools/worldkit.py</code>; <code>world999</code> by <code>GenerateSampleWorld3D</code> (<a href="levels.html">Campaign &amp; Worlds</a>)</td></tr>
+    <tr><td><code>worlds/</code></td><td>Five original-format level files</td><td>Copied from Mobile Eggbert; read by the world generators and QA scripts, not by the game</td></tr>
   </table>
   <p>
-    All of the above is copied at build time from <code>../mobile-eggbert/Content</code> and
-    <code>../mobile-eggbert/worlds</code> next to the <code>GalaxyEggbertCNA</code> binary (skipped
-    under Emscripten/Android) — it is present on disk even though CNA doesn't load most of it yet.
+    The game opens every asset relative to its working directory. A desktop build copies <code>Content/</code>, <code>worlds3d/</code>,
+    <code>textures3d/</code> and <code>avatars3d/</code> next to the executable after each link (changed files only). The web build packs
+    <code>Content/icons</code>, <code>backgrounds</code>, <code>sounds</code>, <code>demos</code>, <code>worlds3d</code>, <code>textures3d</code> and
+    <code>avatars3d</code> into its <code>.data</code> file and serves <code>Content/music/</code> beside the page. Android packs the same
+    directories into the APK (without the 2x sheets) and, before the game starts, copies them to internal storage when they are
+    missing or come from an older build (<code>AndroidAssets.cpp</code>).
   </p>
 
-  <h2>Reference Catalog: mobile-eggbert-reference/</h2>
+  <h2>The tile sheet <code>object-m.png</code></h2>
   <p>
-    A factual catalog of mobile-eggbert's 2D content lives at <code>mobile-eggbert-reference/</code>
-    in the source repo — it exists specifically to ground future 3D-mapping decisions in verified
-    fact rather than assumption:
+    Every terrain block's texture is an icon of this sheet, and a block's type number is its icon number. The sheet is
+    1301&nbsp;&times;&nbsp;1431 pixels: 64-pixel tiles with a 1-pixel gap before each (a pitch of 65), 20 columns by 22 rows, so 440 slots,
+    icons 0-439. Icon <var>n</var> starts at pixel (1 + 65 &times; (<var>n</var> mod 20), 1 + 65 &times; &lfloor;<var>n</var> / 20&rfloor;).
+    <code>BlockTypes::tileUV()</code> (<code>include/GalaxyEggbert/BlockTypes.hpp</code>) adds a half-texel inset so filtering never samples
+    the neighbouring tile. The block registry has 441 entries (0-440); icon 440 lies outside the sheet, a known gap that
+    <code>VerifyTileUvBounds</code> tracks.
   </p>
+  <p>
+    For the terrain the game builds a padded copy in memory (1920&nbsp;&times;&nbsp;2112: each tile with a 16-pixel border of its own edge
+    texels, a pitch of 96) and mipmaps it, so distant floors do not shimmer (<a href="classes/TileAtlas.html">TileAtlas</a>). It also
+    classifies every tile by its alpha channel as opaque, cut-out or translucent (<code>TileCoverage.hpp</code>), which picks the pass the tile is
+    drawn in (<a href="rendering.html">Rendering</a>).
+  </p>
+
+  <h2>Models from the original scenes: <code>tools/rd4_to_gltf/</code></h2>
+  <p>
+    The original's sprites were rendered from Ray Dream Designer / Studio scenes. This toolchain reads those scenes, rebuilds
+    their geometry, and checks each result against the sprites. Its <code>README.md</code> records every verified convention of the format.
+  </p>
+  <ol>
+    <li><code>rd4.py</code>, <code>primitives.py</code>, <code>freeform_mesh.py</code>, <code>geometry.py</code> and <code>scene.py</code> parse the ASCII scenes and build cones,
+      spheres, cylinders, free-form surfaces and deformers.</li>
+    <li><code>rd4_to_gltf.py</code> converts one animated scene into a skinned glTF (<code>gltf.py</code> writes it), one joint per scene object.</li>
+    <li><code>scene_render.py</code>, <code>render_cna.py</code> and <code>verify_sprites.py</code> render with the original game camera and compare with the
+      sprite icons by silhouette IoU (intersection over union).</li>
+    <li><code>export_cna_avatar.py</code> runs CNA's own converter (<code>tools/avatar_asset_pipeline/convert_avatar.py</code> in the CNA repository)
+      to write CNA's <code>SkinnedModelEXT</code> directory, then fixes winding and per-part colours and textures.</li>
+  </ol>
+  <ul>
+    <li><strong>Blupi</strong>: <code>match_icons.py</code> finds the scene frame each icon of <code>blupi.png</code> came from;
+      <code>build_clip_library.py</code> makes one clip per <code>BlupiController::AnimState</code>, playing its icon table at 20 frames a second.
+      Command lines are in <code>avatars3d/blupi/README.md</code>. Compare a rebuild clip by clip before replacing anything.</li>
+    <li><strong>Objects</strong>: <code>tools/rd4_to_gltf/objects.txt</code> has one line per object (sheet, icon range, scenes, options such as
+      <code>yaw=</code>, <code>tone=</code>, <code>min_iou=</code>). <code>build_object_library.py</code> and <code>export_objects.py</code> write
+      <code>avatars3d/objects/&lt;name&gt;/</code> with its <code>icons.txt</code> and rewrite <code>index.txt</code>; <code>calibrate_tone.py</code> suggests
+      colour tones; <code>procedural_materials.py</code> writes <code>materials.txt</code>. Commands are in <code>avatars3d/objects/README.md</code>.</li>
+    <li><strong>Special cases</strong>: <code>sign_decals.py</code>, <code>dynamite_sparks.py</code>, <code>electro_sparks.py</code>, <code>top_texture.py</code>,
+      <code>saw_upper_half.py</code>, <code>lower_spheres.py</code>.</li>
+  </ul>
+  <p>
+    These tools need sibling checkouts: the original scenes (<code>speedyblupi-data</code>), Mobile Eggbert's sheets and CNA. Without them
+    you can still build, play and test the game, but not regenerate models.
+  </p>
+
+  <h2>Terrain reliefs: <code>tools/terrain_relief/</code></h2>
+  <p>
+    <code>tiles.txt</code> says which scene belongs to which tile icon (reviewed by eye); <code>match_tiles.py</code> ranks candidate scenes;
+    <code>build_relief.py</code> keeps each scene's front half, decimates it to about 700 triangles with headless Blender
+    (<code>blender_decimate.py</code>), cuts it along the cell's edges, textures it with the tile's sprite and writes
+    <code>avatars3d/terrain/*.gtr</code> and <code>index.txt</code>. <code>reliefs.txt</code> holds per-model options. Tiles without a scene stay textured cubes.
+  </p>
+
+  <h2>Other generators</h2>
   <table>
-    <tr><th>File</th><th>Covers</th></tr>
-    <tr><td><code>01-world-file-format.md</code></td><td>The mobile-eggbert <code>.txt</code> level format</td></tr>
-    <tr><td><code>02-tiles.md</code></td><td>All 441 tile/block icon IDs in <code>object-m.png</code></td></tr>
-    <tr><td><code>03-objects.md</code></td><td>All 204 <code>ObjectType</code> IDs, classified by behavior</td></tr>
-    <tr><td><code>04-enemy-behavior.md</code></td><td>Table-driven vs. hand-coded enemy movement</td></tr>
-    <tr><td><code>05-backgrounds.md</code></td><td>Sky/background images (partial — only 3 of 38 characterized)</td></tr>
-    <tr><td><code>06-doors.md</code></td><td>Door tiles: key-bitmask logic, opening animation</td></tr>
-    <tr><td><code>07-sounds.md</code></td><td>93 sound channels (pointer-only, not yet expanded)</td></tr>
-    <tr><td><code>08-animations.md</code></td><td>All 155 animated sequences (tiles, Blupi, objects, explosions, doors) — complete</td></tr>
-    <tr><td><code>09-open-questions.md</code></td><td>Unresolved 3D-mapping design questions</td></tr>
+    <tr><th>Tool</th><th>Writes</th></tr>
+    <tr><td><code>tools/music/render_music.py</code></td><td><code>Content/music/musicNNN.ogg</code> from the original MIDI (libfluidsynth, ffmpeg)</td></tr>
+    <tr><td><code>tools/bolt/bolt_paths.py</code></td><td><code>src/GalaxyEggbert/Game/BoltPaths.hpp</code>: the lightning's centre lines from icons 305-307</td></tr>
+    <tr><td><code>tools/glue/glue_strands.py</code></td><td><code>src/GalaxyEggbert/Game/GlueStrands.hpp</code>: the glue death's strands</td></tr>
+    <tr><td><code>tools/a3d/a3d.py</code>, <code>lava_surface.py</code></td><td><code>src/GalaxyEggbert/Game/LavaSurfaceData.hpp</code>: the lava's wave from the original Amapi shapes</td></tr>
+    <tr><td><code>tools/textures/grass_top.py</code></td><td><code>textures3d/grass_top.png</code></td></tr>
+    <tr><td><code>tools/DumpBlockDefinitions.cpp</code></td><td><code>tools/data/blocks.csv</code> for the Python world checkers (<code>VerifyBlockDefinitionsCsv</code> fails when it is stale)</td></tr>
   </table>
+  <p>
+    Inventories: <code>python3 tools/model_parity.py &gt; plans/inventory/model_parity.md</code>, <code>tools/asset_inventory.py</code>
+    (<code>plans/inventory/assets.md</code>; <code>--check</code> reports a stale file, and on 2026-11-07 it was stale), and the ledgers
+    <code>plans/audit/asset_sources.csv</code> and <code>render_representation.csv</code> (how each block icon and object is drawn).
+  </p>
+
+  <h2>Provenance and licences</h2>
+  <p>
+    <code>docs/provenance/</code> is an inventory with evidence, taken on 2026-11-07; it is not legal advice and decides nothing.
+    In short:
+  </p>
+  <ul>
+    <li>The repository is GPLv3 (<code>LICENSE</code>); this website (<code>web/</code>) carries its own MIT licence.</li>
+    <li>Sprites, backgrounds, sounds and the five level files are copies of Mobile Eggbert's (MIT); the original game is by Daniel Roux
+      and EPSITEC SA. The repository records no grant from the original's authors for the media as such.</li>
+    <li>The models are generated from the original Ray Dream scenes, which the repository labels "GPLv3, &copy; Daniel Roux &amp; EPSITEC SA".</li>
+    <li>The music's MIDI source and the soundfont used for rendering are not recorded.</li>
+    <li>The fox placeholder's rig and animation are CC BY 4.0 and need attribution (recorded in its README).</li>
+    <li>Engine dependencies are sibling checkouts, not vendored: CNA (Ms-PL), cna-engine, easy-gl, sharp-runtime (MIT), SDL3 and SDL3_mixer (zlib).</li>
+  </ul>
+  <p>
+    The open questions are listed in <code>docs/provenance/README.md</code> and <code>licences.md</code>; per-asset detail is in
+    <code>original-game-material.md</code>, <code>generated-assets.md</code> and <code>third-party.md</code>.
+  </p>
+
+  <h2>Related pages</h2>
+  <div class="card-grid">
+    <a class="card" href="rendering.html"><h3>Rendering</h3><p>How the sheets and models are drawn.</p></a>
+    <a class="card" href="audio.html"><h3>Audio &amp; Music</h3><p>Sound channels and music tracks.</p></a>
+    <a class="card" href="tutorials/modifying-levels.html"><h3>Modifying Levels</h3><p>Generating and editing worlds.</p></a>
+    <a class="card" href="project-structure.html"><h3>Project Structure</h3><p>Where everything lives in the repository.</p></a>
+  </div>
 
   <div class="page-nav">
-    <a href="levels.html">
+    <a class="prev" href="configuration.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Levels &amp; Worlds</span>
+      <span class="title">&#8592; Configuration</span>
     </a>
-    <a class="next" href="architecture.html">
+    <a class="next" href="modules/index.html">
       <span class="label">Next</span>
-      <span class="title">Architecture &#8594;</span>
+      <span class="title">Modules &#8594;</span>
     </a>
   </div>
 </main>

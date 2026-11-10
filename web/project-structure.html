@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project Structure — Galaxy Eggbert Docs</title>
+<meta name="description" content="A map of the Galaxy Eggbert repository: the host's source files, the game, editor and model code, tools, tests, worlds, assets, plans and the root documents.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,110 +24,244 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html" class="active">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Project Structure</div>
   <h1>Project Structure</h1>
-  <p class="subtitle">All important directories and files, as they exist today.</p>
+  <p class="subtitle">What lives where in the repository, checked against the tracked files on 2026-11-10.</p>
 
-  <h2>Root Layout</h2>
-  <pre><code>galaxy-eggbert/
-├── CMakeLists.txt          ← main build configuration (both targets)
-├── CLAUDE.md                ← direction lock + developer guidelines
-├── NEXT.md                  ← current status / roadmap
-├── plan.md                  ← full task list, incl. E3D-MIG-* (CNA migration)
-├── easy3d.md                ← historical easy-3d migration analysis (easy-3d replaced by cna-engine 2026-10-20)
-├── README.md
-├── World Format.md           ← .vwr binary format spec
-├── LICENSE
-│
-├── include/GalaxyEggbert/    ← engine-agnostic public headers
-│   ├── Worlds/                 ← World, Chunk, Block, BlockMetadata, VoxelConfig, BinaryIO, BitPacking
-│   ├── def/                    ← gameplay enums (BlupiAction, ObjectType, SoundChannel, …)
-│   ├── BlockTypes.hpp, Def.hpp, GameConstants.hpp
-│
-├── src/GalaxyEggbert/Worlds/  ← implementation of the engine-agnostic world/voxel model
-│
-├── src/GalaxyEggbertSimple3D/ ← current playable reference target (Simple3D/U3D)
-│   └── Game/                    GEBlupiController, GEBridgeSystem, GECameraRig, GEDecorSystem,
-│                                 GEExploSystem, GEHud, GESound, GETerrainRenderer, GEWorldRuntime
-│
-├── src/GalaxyEggbertCNA/      ← long-term target (this documentation's focus)
-│   ├── main.cpp
-│   ├── GalaxyEggbertCnaGame.hpp/.cpp
-│   └── Game/                    GEBlupiController, GETerrainRenderer, GETileAtlas, GEWorldRuntime
-│
-├── mobile-eggbert-reference/  ← factual catalog of mobile-eggbert's 2D content (docs + images/)
-│
-├── tools/                     ← GenerateSampleWorld3D, VerifyBlupiMovement (engine-agnostic)
-├── worlds3d/                  ← hand-authored 3D .vwr worlds (world001.vwr)
-├── worlds/                    ← mobile-eggbert-format .txt sample levels
-├── Content/                   ← copied game assets (icons/, sounds/, backgrounds/)
-├── tests/GalaxyEggbert/Worlds/ ← GoogleTest unit tests for the Worlds data model
-│
-├── cmake/toolchains/mingw-w64.cmake
-├── build-cna/                 ← generated; GalaxyEggbertCNA build
-└── cmake-build-debug/          ← generated; GalaxyEggbertSimple3D build</code></pre>
+  <p>The repository holds the game's code, its worlds and assets, the tools that make and check them, the
+  plans and audit ledgers, and this website. CNA and cna-engine are <strong>not</strong> inside it: they are
+  sibling checkouts found at <code>../cna</code> and <code>../cna-engine</code> (or wherever
+  <code>-DCNA_HOME</code> and <code>-DCNA_ENGINE_HOME</code> point; see <a href="build.html">Build Guide</a>).</p>
 
-  <h2><code>src/GalaxyEggbertCNA/</code> Files</h2>
+<pre><code>galaxy-eggbert/
+├── src/
+│   ├── GalaxyEggbertCNA/    the application host (main.cpp, GalaxyEggbertGame*.cpp)
+│   └── GalaxyEggbert/
+│       ├── Game/            the game: simulation, renderers, HUD, menus, saving
+│       ├── Editor/          the in-game 3D world editor
+│       ├── Worlds/          the voxel container (engine-independent)
+│       └── *.cpp            record codecs, HubDoors, BlockDefinitionRegistry
+├── include/GalaxyEggbert/   public engine-independent headers (Worlds/, Def/, records)
+├── tools/                   verifiers, generators, world and asset tools, QA scripts
+├── tests/                   GoogleTest unit tests and the golden frames/trace
+├── worlds3d/                the shipped .vwr worlds (81 files)
+├── Content/                 2D assets: sprite sheets, backgrounds, sounds, music, demos
+├── avatars3d/               3D models (CNA SkinnedModelEXT directories)
+├── textures3d/              Galaxy's own 3D textures
+├── worlds/                  five old text-format maps
+├── mobile-eggbert-reference/ research notes on the original game
+├── plans/                   active plan, per-world briefs, audit ledgers, evidence
+├── docs/                    handbook/ and provenance/
+├── android/                 Gradle project for the APK
+├── cmake/                   CMake helpers, MinGW toolchain, web shells
+├── packaging/               Linux runtime-bundle launcher and README
+├── web/                     this website
+├── .github/workflows/       cna-ci.yml (build and test), pages.yml (website)
+└── CMakeLists.txt, CURRENT.md, handoff.md, plan.md, ... (root documents, below)</code></pre>
+
+  <h2>The host: <code>src/GalaxyEggbertCNA/</code></h2>
+  <p>The thin application layer, namespace <code>GalaxyEggbert::CNA</code>. Until 2026-11-09 the game class was
+  one very large <code>GalaxyEggbertGame.cpp</code> (about 8 400 lines); it is now split by topic into seven
+  translation units that share one header. Line counts are approximate (2026-11-10).</p>
   <table>
-    <tr><th>File</th><th>Role</th></tr>
-    <tr><td><code>main.cpp</code></td><td>Constructs and runs <code>GalaxyEggbertCnaGame</code></td></tr>
-    <tr><td><code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>CNA <code>Game</code> subclass — LoadContent/Update/Draw</td></tr>
-    <tr><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>World loading (.vwr, secondary .txt), tile-animation phase</td></tr>
-    <tr><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>Builds static + animated cube meshes from world blocks</td></tr>
-    <tr><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect mapping into <code>object-m.png</code></td></tr>
-    <tr><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Invisible collision-only player movement</td></tr>
+    <tr><th>File</th><th>Lines</th><th>What it holds</th></tr>
+    <tr><td><code>main.cpp</code></td><td>~200</td><td>Chooses the player's folder (<code>--user</code>, <code>GALAXY_USER_DIR</code>), parses the command-line flags, creates the game and calls <code>Run()</code>.</td></tr>
+    <tr><td><code>GalaxyEggbertGame.hpp</code></td><td>~1 490</td><td>The class <code>GalaxyEggbertGame</code> (an <code>Microsoft::Xna::Framework::Game</code>): every member and helper declaration.</td></tr>
+    <tr><td><code>GalaxyEggbertGame.cpp</code></td><td>~1 490</td><td>Constructor, input capture (<code>CaptureInput()</code>, the accelerometer), focus loss and exit (<code>OnDeactivated</code>, <code>OnExiting</code>), frame rate, music, cheats, voyage and death resolution, vehicles.</td></tr>
+    <tr><td><code>GalaxyEggbertGameUpdate.cpp</code></td><td>~3 500</td><td><code>Update()</code> and the tick: <code>UpdateTick()</code>, <code>UpdateTickScreens()</code>, <code>UpdateTickWorld()</code>, <code>UpdateTickActions()</code>, <code>UpdateTickEvents()</code>, <code>UpdateTickCamera()</code>, <code>UpdateScreenPlay()</code>.</td></tr>
+    <tr><td><code>GalaxyEggbertGameDraw.cpp</code></td><td>~990</td><td>The frame: <code>Draw()</code>, <code>DrawFrame()</code>, <code>DrawWorld()</code>, <code>DrawOverlay()</code> (HUD, menus, editor), <code>DrawFrameCaptures()</code>.</td></tr>
+    <tr><td><code>GalaxyEggbertGameScene.cpp</code></td><td>~1 540</td><td><code>BuildSceneFrame()</code> and its <code>AppendScene*()</code> helpers: what the 3D world draws this frame.</td></tr>
+    <tr><td><code>GalaxyEggbertGameLoad.cpp</code></td><td>~1 220</td><td><code>LoadContent()</code>, the world presentation (<code>RebuildWorldPresentation()</code>, <code>RefreshTerrainMeshIfChanged()</code>), effect-level and relief settings.</td></tr>
+    <tr><td><code>GalaxyEggbertGameMissions.cpp</code></td><td>~710</td><td><code>LoadMission()</code>, <code>SetPhase()</code>, <code>PlaceBlupi()</code>, <code>StepAutoplay()</code>, the title scene, galaxy start and exit, worlds opened in the editor.</td></tr>
+    <tr><td><code>GalaxyEggbertGameDemo.cpp</code></td><td>~1 300</td><td>The resume log (<code>StartResumeLog()</code>, <code>ReadResumeLog()</code>, <code>BeginResume()</code>, <code>ReplayBatch()</code>), the main-menu demos and the player's recordings.</td></tr>
+    <tr><td><code>GameHelpers.hpp</code>, <code>GameInternal.hpp</code></td><td></td><td>Helpers shared by those files only (keyboard and gamepad merge, the build identity, world paths, timing constants).</td></tr>
+    <tr><td><code>AndroidAssets.hpp</code>, <code>.cpp</code></td><td></td><td>Android only: copies the packaged assets into internal storage and makes it the working directory; sends stdout to logcat.</td></tr>
   </table>
 
-  <h2><code>include/GalaxyEggbert/Worlds/</code> Files (engine-agnostic)</h2>
+  <h2>The game, editor and model</h2>
   <table>
-    <tr><th>File</th><th>Role</th></tr>
-    <tr><td><code>Block.hpp</code></td><td>16-bit packed voxel value: 12-bit type + 4-bit metadata</td></tr>
-    <tr><td><code>BlockMetadata.hpp</code></td><td>Bit-level accessor wrapper around the 4-bit metadata nibble</td></tr>
-    <tr><td><code>Chunk.hpp</code></td><td>10×10×10 palette-compressed voxel container</td></tr>
-    <tr><td><code>World.hpp</code></td><td>10×10×10 grid of chunks (100³ blocks); save/load API</td></tr>
-    <tr><td><code>VoxelConfig.hpp</code></td><td>Compile-time constants: ChunkSize=10, MaxPaletteEntries=256, etc.</td></tr>
-    <tr><td><code>BinaryIO.hpp/.cpp</code></td><td>Little-endian read/write helpers, magic-signature I/O</td></tr>
-    <tr><td><code>BitPacking.hpp/.cpp</code></td><td>Palette index bit-packing</td></tr>
-    <tr><td><code>test_worlds.hpp</code></td><td>Test world generation utilities</td></tr>
+    <tr><th>Path</th><th>Contents</th></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/</code></td><td>About 115 files, namespace <code>GalaxyEggbert::Game</code>.
+      Simulation: <code>BlupiController</code>, <code>InteractionSystem</code>, <code>WorldRuntime</code>,
+      <code>CratePush.hpp</code>, <code>ObjectDefinitionRegistry</code>. Presentation: <code>TerrainRenderer</code>,
+      <code>TileAtlas</code>, <code>SceneFrame.hpp</code>, <code>WorldRenderer</code>, <code>ObjectModelTable</code>,
+      <code>TerrainRelief</code>, the 3D-effects classes (<code>SceneShaders</code>, <code>PostProcess</code>,
+      <code>UltraFinish</code>, <code>EffectParticles</code>), <code>Hud</code>, <code>InputPad</code>,
+      <code>QuadBatch</code>, <code>Sound</code>. Input helpers: <code>ControlInput.hpp</code>,
+      <code>GamepadInput.hpp</code>. Persistence: <code>SaveData</code>, <code>UserFolder</code>,
+      <code>ResumeLog</code>, <code>DemoReplay</code>. QA: <code>Autoplay</code>.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Editor/</code></td><td>Namespace <code>GalaxyEggbert::Editor</code>: <code>WorldEditor</code>
+      (<code>WorldEditor.cpp</code>, <code>WorldEditorUpdate.cpp</code>), the palette (<code>EditorPalette*</code>,
+      <code>PaletteCategories</code>), <code>EditCommandStack</code>, <code>BoxRegion</code>, <code>Clipboard</code>,
+      <code>VoxelRaycast</code>, <code>EditorDeviceControls</code> (touch and gamepad), <code>CustomWorldStorage</code>,
+      <code>PlatformFiles</code> (web downloads and uploads), <code>EditorBrowserScreen</code>,
+      <code>GalaxyBrowserScreen</code>, object path markers.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Worlds/</code></td><td><code>World.cpp</code>, <code>Chunk.cpp</code>, <code>BitPacking.cpp</code>,
+      <code>BinaryIO.cpp</code>, <code>test_worlds.cpp</code>.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/*.cpp</code></td><td><code>BlockDefinitionRegistry.cpp</code>, <code>MoveObjectRecord.cpp</code>,
+      <code>BigDecorRecord.cpp</code>, <code>HintZoneRecord.cpp</code>, <code>HubDoors.cpp</code>.</td></tr>
+    <tr><td><code>include/GalaxyEggbert/</code></td><td><code>Worlds/</code> (<code>World</code>, <code>Chunk</code>, <code>Block</code>,
+      <code>BlockMetadata</code>, <code>VoxelConfig</code>, <code>GridRaycast</code>, <code>BitPacking</code>,
+      <code>BinaryIO</code>), <code>Def/</code> (the original's enums: <code>ObjectType</code>, <code>GamePhase</code>,
+      <code>GameSpeed</code>, <code>SoundChannel</code>, <code>BlupiAction</code>, ...), <code>BlockTypes.hpp</code>,
+      <code>BlockDefinitionRegistry.hpp</code>, the record headers, <code>HubDoors.hpp</code>,
+      <code>PlayerStart.hpp</code>, <code>GameConstants.hpp</code>.</td></tr>
+  </table>
+  <p>The layering rules between them are on <a href="architecture.html">Architecture</a>.</p>
+
+  <h2>Tools: <code>tools/</code></h2>
+  <table>
+    <tr><th>Path</th><th>Contents</th></tr>
+    <tr><td><code>tools/Verify*.cpp</code></td><td>About 30 verification programs registered with CTest
+      (<code>VerifyInteractionSystem</code>, <code>VerifyBlupiMovement</code>, <code>VerifyGESaveData</code>,
+      <code>VerifyDemoReplay</code>, <code>VerifyGEWorldEditor</code>, ...). The <code>GE</code> in some names is
+      historical.</td></tr>
+    <tr><td><code>tools/DumpBlockDefinitions.cpp</code>, <code>tools/GenerateSampleWorld3D.cpp</code></td><td>Exports the block
+      registry to <code>tools/data/blocks.csv</code>; writes the sample world.</td></tr>
+    <tr><td><code>tools/*.py</code></td><td>World tools and checkers: <code>worldkit.py</code>, <code>vwr_inspect.py</code>,
+      <code>levelcheck.py</code>, <code>flightcheck.py</code>, <code>campaigncheck.py</code>, <code>watercheck.py</code>,
+      inventories, <code>autoplay_campaign.py</code>, <code>ci_pin_siblings.py</code>.</td></tr>
+    <tr><td><code>tools/*.sh</code></td><td>QA scripts: <code>autoplay.sh</code>, <code>autoplay_all.sh</code>, <code>qa_live.sh</code>,
+      <code>play_pass.sh</code>, <code>record_demo.sh</code>, <code>verify_demos.sh</code>,
+      <code>verify_golden_frames.sh</code>, <code>verify_golden_trace.sh</code>.</td></tr>
+    <tr><td><code>tools/worlds/</code></td><td>One Python generator per shipped world (<code>world001.py</code> ... <code>world199.py</code>,
+      <code>title.py</code>, <code>gallery.py</code>) plus shared theme kits (<code>kit.py</code>, <code>cheese.py</code>,
+      <code>palace.py</code>, ...).</td></tr>
+    <tr><td><code>tools/autoplay/</code></td><td>Scripted playthroughs, one per mission and world chain, <code>campaign.txt</code>,
+      plus <code>probes/</code> and <code>spare/</code>.</td></tr>
+    <tr><td><code>tools/rd4_to_gltf/</code></td><td>The Ray Dream scene converter that produces <code>avatars3d/</code>.</td></tr>
+    <tr><td><code>tools/terrain_relief/</code>, <code>tools/a3d/</code>, <code>tools/bolt/</code>, <code>tools/glue/</code>, <code>tools/music/</code>, <code>tools/textures/</code></td>
+        <td>Other asset generators (terrain reliefs, lava surface, lightning paths, glue strands, music rendering, the grass texture).</td></tr>
+    <tr><td><code>tools/audit/</code>, <code>tools/qa_steps/</code>, <code>tools/data/</code></td><td>Ledger generators, step files for
+      <code>qa_live.sh</code>, the exported <code>blocks.csv</code>.</td></tr>
+  </table>
+  <p>See <a href="assets.html">Assets &amp; Tools</a> and <a href="development/testing.html">Testing</a>.</p>
+
+  <h2>Tests: <code>tests/</code></h2>
+  <ul>
+    <li><code>tests/GalaxyEggbert/</code>: GoogleTest suites for the world model and records (<code>Worlds/WorldTests.cpp</code>,
+      <code>ChunkTests.cpp</code>, <code>BitPackingTests.cpp</code>, <code>MoveObjectRecordTests.cpp</code>,
+      <code>HubDoorsTests.cpp</code>, ...), built as <code>GalaxyEggbertWorldsTests</code>.</li>
+    <li><code>tests/golden/</code>: the approved golden frames at ticks 60, 120 and 180 of world 999, again under
+      <code>effects-medium/</code> and <code>effects-high/</code>, and <code>golden_trace.txt</code>.</li>
+  </ul>
+
+  <h2>Worlds and assets</h2>
+  <table>
+    <tr><th>Path</th><th>Contents</th></tr>
+    <tr><td><code>worlds3d/</code></td><td>81 <code>.vwr</code> files: <code>world001</code> (main hub), twelve theme hubs
+      (<code>world010</code> ... <code>world120</code>), 64 missions, <code>world199</code> (bonus), <code>world998</code>
+      (gallery), <code>world999</code> (showcase), <code>title.vwr</code> (the menu's scene). See <a href="levels.html">Campaign &amp; Worlds</a>.</td></tr>
+    <tr><td><code>Content/</code></td><td><code>icons/</code> (sprite sheets: <code>object-m.png</code>, <code>blupi.png</code>,
+      <code>element.png</code>, <code>explo.png</code>, <code>pad.png</code>, <code>text.png</code>, ...),
+      <code>backgrounds/</code> (sky panoramas <code>decorNNN.png</code> and the menu screens), <code>sounds/</code>
+      (93 channels, <code>sound000.wav</code> ...), <code>music/</code> (<code>music000.ogg</code> ... <code>music009.ogg</code>),
+      <code>demos/</code> (<code>demo001.gdemo</code> ... <code>demo010.gdemo</code>), <code>Content.mgcb</code>.</td></tr>
+    <tr><td><code>avatars3d/</code></td><td>Converted 3D models: <code>blupi/</code>, <code>objects/</code> (one directory per object or big
+      decor), <code>terrain/</code> (tile reliefs), <code>blupi_placeholder/</code> (fallback). Generated; edit the generator.</td></tr>
+    <tr><td><code>textures3d/</code></td><td><code>grass_top.png</code>.</td></tr>
+    <tr><td><code>worlds/</code></td><td>Five old text-format maps (<code>world001.txt</code> ... <code>world005.txt</code>); the game does not load them.</td></tr>
+    <tr><td><code>mobile-eggbert-reference/</code></td><td>Numbered notes on the original's tiles, objects, enemies, doors, sounds,
+      animations, mechanics and save format, with images.</td></tr>
+  </table>
+  <p><code>android/app/src/main/assets/</code> holds only links to <code>Content/</code>, <code>avatars3d/</code>,
+  <code>textures3d/</code> and <code>worlds3d/</code>; nothing is duplicated for the APK.</p>
+
+  <h2>Plans and documentation</h2>
+  <table>
+    <tr><th>Path</th><th>Contents</th></tr>
+    <tr><td><code>plans/GALAXY_EGGBERT_COMPLETION.md</code></td><td>The active plan (milestones A-F done).</td></tr>
+    <tr><td><code>plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md</code></td><td>The fidelity audit and its waves.</td></tr>
+    <tr><td><code>plans/audit/</code></td><td>Ledgers: <code>behavior_differences.md</code> (<code>BD-NNNN</code>),
+      <code>mechanics_3d_decisions.md</code> (<code>M3D-NNNN</code>), <code>owner_reports.md</code> (<code>OR-NNNN</code>),
+      <code>release_audit.md</code>, <code>editor_parity.md</code>, CSV inventories.</td></tr>
+    <tr><td><code>plans/briefs/</code></td><td>One design brief per world.</td></tr>
+    <tr><td><code>plans/inventory/</code>, <code>plans/evidence/</code>, <code>plans/codex/</code></td><td>Generated inventories, evidence images, older task briefs.</td></tr>
+    <tr><td><code>docs/handbook/</code></td><td>The developer handbook, chapters 01-08 (overview, architecture, build and run, testing,
+      worlds, assets and tools, contributing, backlog).</td></tr>
+    <tr><td><code>docs/provenance/</code></td><td>Licences, third-party components, original-game material, generated assets.</td></tr>
   </table>
 
-  <h2><code>include/GalaxyEggbert/def/</code> Enums</h2>
-  <p>All 12 headers are aggregated by <code>include/GalaxyEggbert/Def.hpp</code>: <code>BlupiAction</code>, <code>ContinueMissionType</code>, <code>DecorAction</code>, <code>Direction</code>, <code>DoorKeyFlags</code>, <code>GamePhase</code>, <code>GameSpeed</code>, <code>KeyPressFlags</code>, <code>ObjectType</code>, <code>SecretPower</code>, <code>SoundChannel</code>, <code>SpriteChannel</code>.</p>
+  <h2>Build and platform files</h2>
+  <ul>
+    <li><code>CMakeLists.txt</code>: the game target <code>GalaxyEggbertCNA</code>, the verifiers, the tests, the Linux bundle
+      and the Emscripten link options.</li>
+    <li><code>cmake/</code>: <code>CopyDirectoryIfDifferent.cmake</code> (copies the asset directories next to the executable),
+      <code>toolchains/mingw-w64.cmake</code>, <code>web/shell-cna.html</code> (the page around the web build).</li>
+    <li><code>android/</code>: the Gradle project (<code>app/build.gradle</code>, <code>gradlew</code>,
+      <code>local.properties.template</code>, <code>SpeedyBlupiActivity.java</code>).</li>
+    <li><code>packaging/</code>: <code>run-galaxy-eggbert.sh.in</code> and <code>README-linux-bundle.md</code>.</li>
+    <li><code>.github/workflows/</code>: <code>cna-ci.yml</code> (Linux build and CTest with pinned siblings),
+      <code>pages.yml</code> (deploys <code>web/</code>).</li>
+    <li><code>Doxyfile</code>: the API documentation target <code>GalaxyEggbertDocs</code> (only when Doxygen is installed).</li>
+    <li>Build trees (<code>build/</code>, <code>build-cna-opengl3/</code>, <code>build-cna-webgl2/</code>, ...) are git-ignored.</li>
+  </ul>
 
-  <h2>Tests</h2>
-  <p><code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code> data model — no CNA, cna-engine, or Simple3D dependency.</p>
+  <h2>Root documents</h2>
+  <table>
+    <tr><th>File</th><th>Use it for</th></tr>
+    <tr><td><code>CURRENT.md</code></td><td>The status authority: what works now, the verified baseline, known limitations, open work.</td></tr>
+    <tr><td><code>README.md</code></td><td>Introduction and onboarding.</td></tr>
+    <tr><td><code>handoff.md</code></td><td>The detailed working log: where work stands, commands, sibling pins, gotchas.</td></tr>
+    <tr><td><code>plan.md</code></td><td>Historical implementation log and full task inventory.</td></tr>
+    <tr><td><code>NEXT.md</code></td><td>Frozen since 2026-10-24: earlier write-ups and architecture notes.</td></tr>
+    <tr><td><code>World Format.md</code></td><td>The <code>.vwr</code> binary voxel format (<a href="internals/vwr-format.html">summary</a>).</td></tr>
+    <tr><td><code>upstream_bugs.md</code></td><td>Defects found in CNA, cna-engine and other siblings (<code>UB-NNN</code>).</td></tr>
+    <tr><td><code>ANDROID.md</code>, <code>WINDOWS.md</code></td><td>Platform build notes.</td></tr>
+    <tr><td><code>renderers.md</code>, <code>renderers-next-steps.md</code></td><td>The renderer seam design (now realised as <code>SceneFrame</code>) and its history.</td></tr>
+    <tr><td><code>missing.md</code></td><td>Cases where existing engine-independent code was not reused.</td></tr>
+    <tr><td><code>REMAKE-ANALYSIS.md</code>, <code>easy3d.md</code>, <code>assets-3d-analysis.md</code></td><td>Older analyses (root causes, the 2026-07 migration to CNA, 3D sources).</td></tr>
+    <tr><td><code>backlog.md</code>, <code>editor-wireframe-gles-bug.md</code>, <code>texture-distance-washout-bug.md</code></td><td>Small notes and bug records, partly historical.</td></tr>
+    <tr><td><code>AGENTS.md</code>, <code>CLAUDE.md</code></td><td>The contributor rules (direction, fidelity, boundaries, build hygiene).</td></tr>
+    <tr><td><code>LICENSE</code></td><td>The licence.</td></tr>
+  </table>
+
+  <div class="tip"><strong>Where to start reading.</strong> <code>CURRENT.md</code>, then
+  <code>docs/handbook/01-overview.md</code> and <code>02-architecture.md</code>, then
+  <code>src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp</code>. When documents disagree, the code and
+  <code>CURRENT.md</code> win.</div>
 
   <div class="page-nav">
-    <a href="architecture.html">
+    <a class="prev" href="architecture.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Architecture</span>
     </a>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GalaxyEggbertGame — Galaxy Eggbert Docs</title>
+<meta name="description" content="GalaxyEggbertGame is the XNA Game subclass that hosts Galaxy Eggbert: phases, the fixed 1/60 s tick, mission loading, drawing, cheats, demos and the editor hand-off.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> GalaxyEggbertGame</div>
+  <h1>GalaxyEggbertGame</h1>
+  <p class="subtitle">The application host: one XNA <code>Game</code> that owns every subsystem, runs the phases and the fixed 60 Hz tick, and draws each frame.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp</code></td></tr>
+    <tr><th>Sources</th><td>
+      <code>GalaxyEggbertGame.cpp</code> (input capture, cheats, vehicles, death and pickup resolution, music),
+      <code>GalaxyEggbertGameUpdate.cpp</code> (<code>Update</code>, <code>UpdateTick</code> and its stages),
+      <code>GalaxyEggbertGameDraw.cpp</code> (<code>Draw</code>, <code>DrawFrame</code>, overlays, captures),
+      <code>GalaxyEggbertGameScene.cpp</code> (<code>BuildSceneFrame</code>: what the 3D world draws),
+      <code>GalaxyEggbertGameLoad.cpp</code> (<code>LoadContent</code>, world presentation),
+      <code>GalaxyEggbertGameMissions.cpp</code> (missions, phases, editor and galaxy worlds, autoplay steps),
+      <code>GalaxyEggbertGameDemo.cpp</code> (resume log, main-menu demos, recordings) &mdash; all in <code>src/GalaxyEggbertCNA/</code>.
+      Shared file-local helpers: <code>GameHelpers.hpp</code>, <code>GameInternal.hpp</code>. Entry point: <code>main.cpp</code>.</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::CNA</code></td></tr>
+    <tr><th>Base class</th><td><code>Microsoft::Xna::Framework::Game</code> (CNA)</td></tr>
+    <tr><th>Engine dependency</th><td>Yes: CNA (graphics, audio, input, windowing) and cna-engine (<code>Camera</code>, debug drawing). This is the only class tree that is allowed to know about the platform.</td></tr>
+  </table>
+  <p>Until 2026-11-09 nearly all of this lived in one <code>GalaxyEggbertGame.cpp</code> of about 8&nbsp;400 lines; it was then split by topic into the seven files above (a refactor only). Older pages called the class <code>GalaxyEggbertCnaGame</code>.</p>
+
+  <h2>Purpose</h2>
+  <p><code>GalaxyEggbertGame</code> is the glue between the engine-independent game code and CNA. It loads the content, owns the
+  world (<a href="WorldRuntime.html">WorldRuntime</a>), Blupi (<a href="BlupiController.html">BlupiController</a>), the objects'
+  rules (<a href="InteractionSystem.html">InteractionSystem</a>), the renderers, the HUD, sound, menus, save data and the editor,
+  and calls them in a fixed order once per 1/60&nbsp;s step. It decides which <em>phase</em> the game is in (menus, Play, Pause,
+  Win, Lost, Setup, Resume, Editor) and applies the state changes that cross subsystem boundaries: the events
+  <code>InteractionSystem</code> and <code>BlupiController</code> report are turned here into deaths, camera shakes, sounds,
+  HUD updates and mission changes.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li>Simulation: <a href="WorldRuntime.html">WorldRuntime</a>, <a href="BlupiController.html">BlupiController</a>, <a href="InteractionSystem.html">InteractionSystem</a>, <a href="HubDoors.html">HubDoors</a>, <code>ChaseCameraYaw</code>, <code>CameraShake</code>.</li>
+    <li>Presentation: <a href="TileAtlas.html">TileAtlas</a>, <a href="TerrainRenderer.html">TerrainRenderer</a>, <a href="WorldRenderer.html">WorldRenderer</a> (fed a <code>SceneFrame</code>), <code>ObjectModelTable</code>, <code>EffectParticles</code>, <code>PostProcess</code>, <code>UltraFinish</code>, <a href="Hud.html">Hud</a>, <a href="Sound.html">Sound</a>.</li>
+    <li>Input and UI: <a href="InputPad.html">InputPad</a>, <code>ControlInput</code>, <code>GamepadInput</code>, <code>FocusNavigator</code>, <code>ScreenKeyboard</code>, <code>EditorDeviceControls</code>.</li>
+    <li>Persistence and tooling: <a href="SaveData.html">SaveData</a>, <a href="ResumeLog.html">ResumeLog</a>, <a href="DemoReplay.html">DemoReplay</a>, <a href="Autoplay.html">Autoplay</a>, <a href="WorldEditor.html">WorldEditor</a>, <a href="CustomWorldStorage.html">CustomWorldStorage</a> functions.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><code>src/GalaxyEggbertCNA/main.cpp</code> only: it picks the player's folder, creates one instance, applies the command-line flags and calls <code>Run()</code>.</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>The public interface is small: the XNA overrides plus the start-up switches that <code>main.cpp</code> sets before
+  <code>Run()</code>. The rest of the header (about 1&nbsp;500 lines) is private state and helpers; the table names a selection of
+  both, verified against <code>GalaxyEggbertGame.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>LoadContent</code></td><td><code>void LoadContent() override</code></td><td>Loads sprite sheets, the tile atlas, sounds, the 3D model libraries in <code>avatars3d/</code> (Blupi, objects, BigDecor shapes), and creates the HUD, pad, editor and renderers. Falls back to first person when no Blupi model loads.</td></tr>
+    <tr><td><code>Update</code></td><td><code>void Update(GameTime&amp; gameTime) override</code></td><td>One fixed 1/60&nbsp;s step: resume replay, demo playback, one-time start modes, autoplay, <code>CaptureInput()</code>, <code>UpdateTick()</code>, then appends the tick's input to the resume log and to a demo being recorded.</td></tr>
+    <tr><td><code>Draw</code></td><td><code>void Draw(const GameTime&amp; gameTime) override</code></td><td>Calls <code>DrawFrame()</code>.</td></tr>
+    <tr><td><code>OnDeactivated</code></td><td><code>void OnDeactivated(System::Object*, const System::EventArgs&amp;) override</code></td><td>Focus lost: stops a demo; in Play writes the resume log (to a temporary file, then renamed), otherwise deletes it.</td></tr>
+    <tr><td><code>OnExiting</code></td><td><code>void OnExiting(System::Object*, const System::EventArgs&amp;) override</code></td><td>Finishes a demo recording and deletes the resume file (a clean exit leaves nothing to resume).</td></tr>
+    <tr><td><code>EnableStartMission</code></td><td><code>void EnableStartMission(int missionNumber) noexcept</code></td><td><code>--mission N</code>: skip the menus and start mission N in Play.</td></tr>
+    <tr><td><code>EnableStartSpawn</code></td><td><code>void EnableStartSpawn(float x, float y, float z, float yawDegrees) noexcept</code></td><td><code>--spawn x,y,z[,yaw]</code>: place Blupi at a raw-grid position instead of the world's spawn.</td></tr>
+    <tr><td><code>EnableGalaxyStart</code></td><td><code>void EnableGalaxyStart() noexcept</code></td><td><code>--galaxy</code>: <code>--mission N</code> is a mission of the selected player's own galaxy.</td></tr>
+    <tr><td><code>EnableAutoplay</code></td><td><code>bool EnableAutoplay(const std::string&amp; scriptPath)</code></td><td><code>--autoplay</code>: a QA script plays instead of the keyboard; false when the script cannot be read or parsed.</td></tr>
+    <tr><td><code>AutoplayExitCode</code></td><td><code>int AutoplayExitCode() const noexcept</code></td><td>The process exit code <code>main.cpp</code> returns (0 when a script or demo verification passed).</td></tr>
+    <tr><td><code>EnableDemoRecording</code>, <code>EnableDemoVerify</code></td><td><code>void EnableDemoRecording(const std::string&amp; path, int maxTicks, const std::string&amp; title)</code><br><code>void EnableDemoVerify(const std::string&amp; path)</code></td><td><code>--record-demo</code> / <code>--verify-demo</code>: record a mission as a <code>.gdemo</code>, or replay one silently and compare its end state.</td></tr>
+    <tr><td><code>EnableGoldenCaptureMode</code>, <code>EnableGoldenTraceMode</code></td><td><code>void ...() noexcept</code></td><td><code>--golden-capture</code> / <code>--golden-capture-trace</code>: load world 999, run fixed ticks, write <code>golden_frame_NNNN.png</code> or <code>golden_trace.txt</code>, exit.</td></tr>
+    <tr><td><code>UpdateTick</code> <em>(private)</em></td><td><code>void UpdateTick()</code></td><td>The tick: help overlay, fades, <code>UpdateTickScreens</code> (every phase's input), title scene, then in Play <code>WorldRuntime::Update</code> and <code>UpdateTickWorld</code>.</td></tr>
+    <tr><td><code>LoadMission</code> <em>(private)</em></td><td><code>void LoadMission(int missionNumber, const std::string* validatedBytes = nullptr)</code></td><td>Reads <code>worlds3d/worldNNN.vwr</code> (or the galaxy's world), rebuilds the presentation, applies hub doors, resets <code>InteractionSystem</code> (keeping lives) with a fresh seed, places Blupi and arms the resume log.</td></tr>
+    <tr><td><code>SetPhase</code> <em>(private)</em></td><td><code>void SetPhase(GamePhase next, bool bypassFade = false) noexcept</code></td><td>Changes phase (with the original's fade unless bypassed); ends demos and the resume recording when leaving Play for a menu, Win, Lost or the editor.</td></tr>
+    <tr><td><code>DrawFrame</code> <em>(private)</em></td><td><code>void DrawFrame()</code></td><td>Builds the <code>SceneFrame</code>, renders shadows and the world through <code>WorldRenderer</code> (with the effect passes the level asks for), then <code>DrawOverlay</code> (HUD, menus, editor) and <code>DrawFrameCaptures</code>.</td></tr>
+    <tr><td><code>ApplyCheat</code>, <code>ApplyTypedCheat</code> <em>(private)</em></td><td><code>void ApplyCheat(int cheatNumber)</code><br><code>void ApplyTypedCheat(InputPad::TypedCheat cheat)</code></td><td>The nine cheats of the hidden menu (F12 or the ten-tap gesture) and the typed cheat words recognised by <code>InputPad</code>.</td></tr>
+    <tr><td><code>OpenMissionInEditor</code>, <code>LeaveMissionEditor</code> <em>(private)</em></td><td><code>void ...()</code></td><td>The <code>xnjttjpo</code> hand-off: open the world being played in the editor, and return to the mission from its start.</td></tr>
+  </table>
+
+  <h2>Phases</h2>
+  <p>The phase is a <code>GalaxyEggbert::Def::GamePhase</code> (<code>include/GalaxyEggbert/Def/GamePhase.hpp</code>), the original's
+  enum plus one value: <code>None</code>, <code>First</code>, <code>Wait</code>, <code>Init</code> (main menu and player select),
+  <code>Play</code>, <code>Pause</code>, <code>Lost</code>, <code>Win</code>, <code>Trial</code>, <code>MainSetup</code>,
+  <code>PlaySetup</code>, <code>Resume</code>, <code>Ranking</code> and <code>Editor</code> (Galaxy Eggbert's own). <code>Trial</code> and
+  <code>Ranking</code> exist for numbering only; nothing switches to them. Menus are drawn and hit-tested by
+  <a href="InputPad.html">InputPad</a> in the original's 640&nbsp;&times;&nbsp;480 layout; the title scene (<code>worlds3d/title.vwr</code>)
+  plays behind the menu and the editor's slot list.</p>
+
+  <h2>How it is used</h2>
+  <h3>The tick in Play</h3>
+  <p><code>UpdateTickWorld</code> (in <code>GalaxyEggbertGameUpdate.cpp</code>) runs the simulation in this order: terrain animation,
+  input to steering, <code>BlupiController::Step</code> and its events (sounds, landing, teleports), actions
+  (<code>UpdateTickActions</code>: switches, dynamite, vehicles), crate pushing, <code>InteractionSystem::Update</code>, terrain
+  patching (<code>RefreshTerrainMeshIfChanged</code>), voyages, then <code>UpdateTickEvents</code> (shakes, Lost, Win) and
+  <code>UpdateTickCamera</code>. A simulation speed factor (F5/F6, Tab) scales <code>simDt</code>; the tick itself stays 1/60&nbsp;s.
+  See <a href="../game-loop.html">Game Loop</a> for the full walk-through.</p>
+  <pre><code>const float simDt = dt * GameSpeedFactor(gameSpeed_);
+
+worldRuntime_.Update(simDt);
+
+if (terrainRenderer_ &amp;&amp; UpdateTickWorld(dt, simDt, padPlayInput, inputPadClaimedMouse))
+{
+    return; // the world left (a mission over, the bye) or a phase took over
+}</code></pre>
+
+  <h3>Loading a mission</h3>
+  <p><code>LoadMission(n)</code> reads the world's bytes once and passes the same bytes to
+  <code>WorldRuntime::LoadFromVwrStream</code> and to <code>ResumeLog::HashBytes</code>, so the resume log records exactly the
+  world that was played. <code>AdaptHubDoors</code> applies the hub rules (<a href="HubDoors.html">HubDoors</a>) and can choose
+  where Blupi arrives; in the main hub he starts beside the sign of the last world he played. <code>PlaceBlupi</code> gives Blupi the crate cells and calls
+  <code>BlupiController::SettleOnGround</code>, so walking starts on the first tick. If the file is missing or invalid the
+  current mission stays.</p>
+
+  <h3>Command-line flags (parsed in <code>main.cpp</code>)</h3>
+  <table>
+    <tr><th>Flag</th><th>Effect</th></tr>
+    <tr><td><code>--user DIR</code></td><td>The player's folder (else <code>GALAXY_USER_DIR</code>, else the system's user data folder).</td></tr>
+    <tr><td><code>--mission N</code>, <code>--galaxy</code>, <code>--spawn x,y,z[,yaw]</code></td><td>Start a mission directly (development and QA, not a player feature).</td></tr>
+    <tr><td><code>--autoplay &lt;script&gt;</code></td><td>Play the mission by an <a href="Autoplay.html">autoplay</a> script, write <code>autoplay_trace.txt</code>.</td></tr>
+    <tr><td><code>--record-demo &lt;file&gt;</code>, <code>--demo-ticks N</code>, <code>--demo-title &lt;text&gt;</code>, <code>--verify-demo &lt;file&gt;</code></td><td>Record or verify a main-menu demo (<code>tools/record_demo.sh</code>, <code>tools/verify_demos.sh</code>).</td></tr>
+    <tr><td><code>--golden-capture</code>, <code>--golden-capture-trace</code></td><td>Deterministic screenshots or movement trace of world 999 for <code>tests/golden/</code>.</td></tr>
+  </table>
+
+  <h3>Demos, resume and the editor hand-off</h3>
+  <ul>
+    <li><strong>Resume.</strong> Every Play tick's input record is appended to a <a href="ResumeLog.html">ResumeLog</a>; on focus loss it is
+      written, on a clean exit deleted. Continue replays it from the mission start (<code>ReplayBatch</code>).</li>
+    <li><strong>Demos.</strong> <code>StartDemo</code>/<code>UpdateDemo</code> replay a <code>.gdemo</code> through the same simulation; the
+      player's profile, settings and resume file are frozen during a demo and restored after it. See <a href="DemoReplay.html">DemoReplay</a>
+      and <a href="../demos.html">Demos &amp; Recordings</a>.</li>
+    <li><strong>Editor.</strong> The main menu's Editor button calls <code>WorldEditor::EnterBrowser</code> and switches to
+      <code>GamePhase::Editor</code>; Play-Test runs <code>LoadCustomWorldForPlayTest</code>, and Win, Lost and Back return to the editor.
+      Typing <code>xnjttjpo</code> in Play calls <code>OpenMissionInEditor</code> on the world being played (campaign saves keep a backup of the
+      shipped file). The menu's Galaxy button calls <code>StartGalaxy</code>, which opens the editor's galaxy screen when the player has no
+      main hub yet. See <a href="../editor.html">3D World Editor</a> and <a href="../galaxy.html">Your Own Galaxy</a>.</li>
+  </ul>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>Platform code stays here.</strong> Android asset copying (<code>AndroidAssets.cpp</code>), Emscripten storage and the
+      executable hash for the resume log's build identity live in <code>src/GalaxyEggbertCNA/</code>; the game and editor layers below do
+      not know which platform they run on.</li>
+    <li><strong>Determinism.</strong> The tick is a fixed 1/60&nbsp;s; randomness comes from <code>InteractionSystem</code>'s generator,
+      seeded per mission and recorded in the resume log and demos. Wall-clock time paces frames and drives the menu's demo idle
+      timer and on-screen notices, never the simulation. Golden files, autoplay, resume and demos all depend on this.</li>
+    <li><strong>Cross-system state changes happen here.</strong> <code>InteractionSystem</code> reports events and requests; the host
+      applies what needs Blupi, the camera, the HUD or the phase.</li>
+    <li>Some long comments in the header describe states that no longer exist (the class comment still speaks of an invisible
+      collision-only Blupi). Trust the code.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <p>No ctest unit test constructs the host. It is covered by end-to-end checks that run the real executable:</p>
+  <ul>
+    <li><code>VerifyDemoReplays</code> (ctest, needs <code>xvfb-run</code>; <code>tools/verify_demos.sh</code>): replays every shipped demo with
+      <code>--verify-demo</code> and fails when one ends differently.</li>
+    <li>Golden frames and trace (<code>tools/verify_golden_frames.sh</code>, <code>tools/verify_golden_trace.sh</code>): byte comparisons
+      against <code>tests/golden/</code>; manual, need a display.</li>
+    <li>Autoplay playthroughs (<code>tools/autoplay.sh</code>, <code>tools/autoplay_all.sh</code>) and live QA step files
+      (<code>tools/qa_live.sh</code>).</li>
+  </ul>
+  <p>See <a href="../development/testing.html">Testing</a>.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../architecture.html">Architecture</a> and <a href="../game-loop.html">Game Loop</a></li>
+    <li><a href="../internals/startup.html">Startup</a> and <a href="../engine-integration.html">Engine Integration</a></li>
+    <li><a href="../rendering.html">Rendering</a>, <a href="../input.html">Input</a>, <a href="../save-system.html">Save Data &amp; Resume</a></li>
+    <li><a href="../cheats.html">Cheats &amp; Diagnostics</a>, <a href="../running.html">Running the Game</a></li>
+    <li><a href="WorldRuntime.html">WorldRuntime</a>, <a href="BlupiController.html">BlupiController</a>, <a href="InteractionSystem.html">InteractionSystem</a>, <a href="WorldEditor.html">WorldEditor</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/HubDoors.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; HubDoors</span>
+    </a>
+    <a class="next" href="../classes/WorldRuntime.html">
+      <span class="label">Next</span>
+      <span class="title">WorldRuntime &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

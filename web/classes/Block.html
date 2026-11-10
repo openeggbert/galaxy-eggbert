@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Block — Galaxy Eggbert Docs</title>
+<meta name="description" content="Worlds::Block, the 16-bit voxel value: a 12-bit block type (the object-m.png icon number) and 4 bits of metadata.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,56 +22,130 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
+  <a href="../classes/index.html" class="active">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Block</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> Block</div>
   <h1>Block</h1>
-  <p class="subtitle">A single 16-bit packed voxel value: 12-bit type ID + 4-bit metadata.</p>
+  <p class="subtitle">One voxel as a 16-bit value: block type in the high 12 bits, metadata in the low 4.</p>
 
-  <h2>Overview</h2>
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/Worlds/Block.hpp</code> (header-only)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Worlds</code></td></tr>
+    <tr><th>Block type names</th><td><code>include/GalaxyEggbert/BlockTypes.hpp</code> (namespace <code>GalaxyEggbert::BlockTypes</code>)</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
   <p>
-    <code>Block</code> (namespace <code>GalaxyEggbert::Worlds</code>) is a <code>uint16_t</code>-packed
-    voxel value. High 12 bits encode the block type ID (0..4095, matching an icon index into
-    <code>object-m.png</code>); low 4 bits encode metadata (0..15).
+    <code>Block</code> is a small value type wrapping one <code>uint16_t</code>. It is what
+    <a href="World.html">World</a> and <a href="Chunk.html">Chunk</a> store per cell and what the
+    palette of a chunk holds.
   </p>
-  <p>Header: <code>include/GalaxyEggbert/Worlds/Block.hpp</code>.</p>
-
-  <h2>API</h2>
-  <pre><code>class Block {
-public:
-    static Block air();                                   // raw value 0
-    static Block make(uint16_t type, uint8_t metadata = 0); // validates ranges
-
-    uint16_t type() const;
-    uint8_t  metadata() const;
-    BlockMetadata blockMetadata() const;   // wraps the 4-bit nibble
-
-    bool isAir() const;
-    uint16_t rawValue() const;
-};</code></pre>
+  <pre><code>bits 15..4   block type   0..4095
+bits  3..0   metadata     0..15
+raw = (type &lt;&lt; 4) | metadata          raw 0 = Air</code></pre>
   <p>
-    <code>make()</code> throws <code>std::out_of_range</code> if <code>type &gt; VoxelConfig::MaxBlockType</code>
-    (4095) or <code>metadata &gt; VoxelConfig::MaxBlockMetadata</code> (15).
+    The block type is the icon number of the tile in the original game's terrain sheet
+    <code>Content/icons/object-m.png</code>, icons 0-440. <code>BlockTypes.hpp</code> names the ones
+    the code refers to, for example <code>Ground = 10</code>, <code>Lava = 68</code>,
+    <code>HubDoor = 182</code>, <code>GoldDoor = 183</code>, <code>FlightBarrier = 214</code>,
+    <code>Saw = 378</code>. What a type <em>does</em> (how it is drawn, whether it is solid, whether it
+    kills) is not in <code>Block</code>; it is looked up in the
+    <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>.
   </p>
+  <div class="note"><strong>The metadata nibble is unused by the shipped game.</strong>
+    As of 2026-11-10 no world in <code>worlds3d/</code> has a block with non-zero metadata, and no game
+    system interprets it; the editor's clipboard only carries it along when it swaps the icon of a turned or mirrored side fan or wind tile (<code>src/GalaxyEggbert/Editor/Clipboard.cpp</code>). Per-cell
+    state such as a turned plate or fan is stored as sparse extra metadata instead (see
+    <a href="../internals/vwr-format.html">The .vwr Format</a>).</div>
 
-  <h2>Encoding</h2>
-  <pre><code>rawValue = (type &lt;&lt; 4) | (metadata &amp; 0xF)</code></pre>
-  <p><code>type() == 0</code> means Air (no block).</p>
+  <h2>Public API</h2>
+  <p>Verified in <code>Block.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Description</th></tr>
+    <tr><td><code>MetadataMask = 0x000F</code>, <code>TypeMask = 0x0FFF</code></td><td>Field masks.</td></tr>
+    <tr><td><code>constexpr Block()</code></td><td>Air (raw 0).</td></tr>
+    <tr><td><code>explicit constexpr Block(std::uint16_t rawValue)</code></td><td>From a packed value, no validation (used when reading palettes).</td></tr>
+    <tr><td><code>static constexpr Block air()</code></td><td>The canonical air block.</td></tr>
+    <tr><td><code>static Block make(std::uint16_t type, std::uint8_t metadata = 0)</code></td><td>Validated constructor; throws <code>std::out_of_range</code> if the type exceeds 4095 or the metadata 15.</td></tr>
+    <tr><td><code>static Block make(std::uint16_t type, BlockMetadata metadata)</code></td><td>The same with a <a href="BlockMetadata.html">BlockMetadata</a> helper.</td></tr>
+    <tr><td><code>rawValue()</code></td><td>The packed 16 bits.</td></tr>
+    <tr><td><code>type()</code></td><td>The 12-bit type.</td></tr>
+    <tr><td><code>metadata()</code></td><td>The 4-bit metadata as <code>uint8_t</code>.</td></tr>
+    <tr><td><code>blockMetadata()</code></td><td>The metadata as a <a href="BlockMetadata.html">BlockMetadata</a> object.</td></tr>
+    <tr><td><code>isAir()</code></td><td><code>rawValue() == 0</code>.</td></tr>
+    <tr><td><code>operator==</code>, <code>operator!=</code></td><td>Compare packed values.</td></tr>
+  </table>
 
-  <h2>Used By</h2>
-  <p><a href="Chunk.html">Chunk</a> stores a palette of unique <code>Block</code> values per 10³ sub-volume; <a href="World.html">World</a> stores 1000 chunks.</p>
+  <h2>Usage</h2>
+  <p>Opening a hub's completed world sign, from <code>GalaxyEggbertGame::AdaptHubDoors()</code> (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code>):</p>
+  <pre><code>terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(
+                              GalaxyEggbert::CompletedWorldSignIcon(terrain.getBlock(x, y, z).type())));</code></pre>
+  <p>Reading a type for a registry lookup, from <code>BlupiController</code>:</p>
+  <pre><code>const auto block = world.getBlock(gx, gy, gz);
+return !block.isAir() &amp;&amp; !GalaxyEggbert::GetBlockDefinition(block.type()).decor;</code></pre>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tests/GalaxyEggbert/Worlds/BlockTests.cpp</code>: <code>AirDefaultsToZeroAndIsAir</code>, <code>MakePacksAndUnpacksTypeAndMetadata</code>, <code>MakeSupportsMaximumValues</code>, <code>MakeThrowsForOutOfRangeValues</code>, <code>EqualityComparesPackedValue</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="BlockMetadata.html">BlockMetadata</a>, <a href="VoxelConfig.html">VoxelConfig</a>, <a href="Chunk.html">Chunk</a>, <a href="World.html">World</a></li>
+    <li><a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> (what each type means)</li>
+    <li><a href="../tutorials/first-object.html">Tutorial: changing a block or object behaviour</a></li>
+  </ul>
 
   <div class="page-nav">
-    <a href="Chunk.html">← Chunk</a>
-    <a href="BlockMetadata.html">BlockMetadata →</a>
+    <a class="prev" href="../classes/Chunk.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Chunk</span>
+    </a>
+    <a class="next" href="../classes/BlockMetadata.html">
+      <span class="label">Next</span>
+      <span class="title">BlockMetadata &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

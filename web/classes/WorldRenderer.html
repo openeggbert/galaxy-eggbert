@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldRenderer — Galaxy Eggbert Docs</title>
+<meta name="description" content="WorldRenderer draws Galaxy Eggbert's 3D world from a SceneFrame draw list with the effects, textures, models and terrain the game lends it each frame.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> WorldRenderer</div>
+  <h1>WorldRenderer</h1>
+  <p class="subtitle">Draws the 3D world from a <code>SceneFrame</code>: the draw list says what, <code>WorldRenderer</code> says how.</p>
+
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/WorldRenderer.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Game/WorldRenderer.cpp</code>; the effects' parts in <code>src/GalaxyEggbert/Game/WorldEffects.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Since</th><td>2026-11-09 (extracted from the game's draw code; frames byte-equal to before)</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    <code>WorldRenderer</code> is the drawing half of the seam between simulation and rendering. The host builds a
+    <code>SceneFrame</code> (<code>src/GalaxyEggbert/Game/SceneFrame.hpp</code>) from the game's state in
+    <code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code>; <code>WorldRenderer</code> reads only that list and the assets it is lent,
+    and sets all device state itself. It owns only what drawing needs from frame to frame: per-frame GPU meshes for the
+    background, cubes, billboards, shadows and particles, a decal effect, a tint texture, the effects' shaders
+    (<code>SceneShaders</code>, <code>SurfaceShaders</code>) and Ultra's smoothed model parts. The content it draws with &mdash; effects, textures,
+    models, the <a href="TerrainRenderer.html">TerrainRenderer</a> &mdash; belongs to the game and arrives each frame as a
+    <code>WorldRenderAssets</code>; any of it may be null, and then that part is left out.
+  </p>
+
+  <h2>Collaborators</h2>
+  <ul>
+    <li><code>SceneFrame</code> and its parts (<code>SceneCamera</code>, <code>SceneModel</code>, <code>SceneQuad</code>, <code>SceneBillboardBatch</code>, <code>SceneEffects</code>).</li>
+    <li><a href="TerrainRenderer.html">TerrainRenderer</a>: <code>UpdateRelief</code>, <code>DrawOpaque</code>, <code>DrawGrass</code>, <code>DrawTransparent</code>, shadow and geometry passes.</li>
+    <li><code>SceneShaders</code> (shadow map, occlusion, point lights, Ultra's lighting), <code>SurfaceShaders</code> (water, lava), <code>ModelSubdivision.hpp</code> (Ultra's smoother models), <code>BlockModels.hpp</code> (which saw and teleporter parts show).</li>
+    <li>CNA: <code>BasicEffect</code>, <code>SkinnedEffect</code>, <code>SkinnedModelEXT</code>, <code>GraphicsDevice</code>; cna-engine: <code>MeshBuilder</code>, <code>GpuMesh</code>.</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: owns one <code>worldRenderer_</code>, builds the frame, lends the assets (<code>SceneAssets()</code>), runs <code>PostProcess</code> or <code>UltraFinish</code> around it.</li>
+  </ul>
+
+  <h2>Public API</h2>
+  <table>
+    <tr><th>Member</th><th>What it does</th></tr>
+    <tr><td><code>using TerrainDrawnHook = std::function&lt;void(GraphicsDevice&amp;)&gt;</code></td><td>Called once the terrain, every model and decal are drawn, before the billboards.</td></tr>
+    <tr><td><code>void Draw(GraphicsDevice&amp; device, const SceneFrame&amp; frame, const WorldRenderAssets&amp; assets, const TerrainDrawnHook&amp; terrainDrawn = {})</code></td><td>Draws the world: fog, background, terrain pass (with cubes, grass, models, decals, water last), billboards, particles. Nothing when <code>frame.world</code> is false.</td></tr>
+    <tr><td><code>void RenderShadowMap(device, frame, assets)</code></td><td>The effects' sun shadow map; call before <code>Draw()</code> and before anything is drawn into the frame's target. Leaves the screen bound; does nothing without the effects or where the device cannot.</td></tr>
+    <tr><td><code>bool DrawGeometry(device, frame, assets)</code></td><td>Ultra's geometry pass (normal, depth, mirror per pixel) into the bound target; false when there is none.</td></tr>
+    <tr><td><code>bool DrawSmoothPart(device, part)</code></td><td>Ultra's subdivided version of a model part, made on first request; false where it cannot be.</td></tr>
+    <tr><td><code>const SceneShaders&amp; Scene() const</code></td><td>The effects' shading, e.g. the shadow map's cascades for Ultra's fog.</td></tr>
+    <tr><td><code>bool TerrainShadersReady(device)</code></td><td>Whether the effects' terrain shader compiles here; decides if the terrain is built with ambient occlusion.</td></tr>
+    <tr><td><code>const WorldRenderStatistics&amp; Statistics() const</code>, <code>void ResetStatistics()</code></td><td>Model draws, triangles and culled models, for the performance output.</td></tr>
+  </table>
+  <p>
+    <code>WorldRenderAssets</code> fields: <code>background</code>, <code>terrain</code>, <code>grass</code>, <code>cubes</code> (<code>BasicEffect*</code>),
+    <code>models</code> (<code>SkinnedEffect*</code>), one effect per sprite sheet (<code>element</code>, <code>objectM</code>, <code>explo</code>,
+    <code>blupi</code>, <code>blupi1</code>, <code>bigDecor</code>), <code>terrainRenderer</code> and <code>ultra</code>.
+    <code>WorldRenderStatistics</code>: <code>modelDraws</code>, <code>modelTriangles</code>, <code>modelsCulled</code>.
+  </p>
+
+  <h2>How it is used</h2>
+  <p>From <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp</code>:</p>
+  <pre><code>BuildSceneFrame(sceneFrame_, soulDrawnIn3D);
+...
+const auto assets = SceneAssets();
+worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
+...
+worldRenderer_.ResetStatistics();
+worldRenderer_.Draw(device, sceneFrame_, assets,
+                    [this](Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; drawn) { CheckTerrainVisibility(drawn); });</code></pre>
+  <ul>
+    <li>Keep the frame's list order. What is drawn first stays first, so blending and depth come out the same as before the refactor;
+      water must stay after the models (OR-0052).</li>
+    <li>To show something new in the world, add it to <code>SceneFrame</code> in the scene builder and draw it here. Do not let
+      <code>WorldRenderer</code> read the simulation directly.</li>
+    <li>With the effects off, every frame must stay byte-equal to the classic look; the golden frames check that.</li>
+    <li>Billboards are blended with <code>NonPremultiplied</code> because the sprite sheets are loaded with straight alpha.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <p>
+    No CTest drives <code>WorldRenderer</code> itself: it needs a GPU. Its output is locked by the golden frames
+    (<code>tools/verify_golden_frames.sh</code>: <code>tests/golden/</code>, <code>effects-medium/</code>, <code>effects-high/</code>) and the lava depth
+    regression (<code>tools/verify_lava_depth.py</code>), both run by hand under Xvfb. The effects' decisions are tested without a GPU:
+    <code>VerifySceneEffects</code> (shadows, lights, occlusion; <code>SceneEffectsLogic.hpp</code>), <code>VerifyUltra</code> and
+    <code>VerifyEffectParticles</code>.
+  </p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../rendering.html">Rendering</a> &mdash; the whole frame, the effect levels, the HUD.</li>
+    <li><a href="TerrainRenderer.html">TerrainRenderer</a>, <a href="TileAtlas.html">TileAtlas</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>.</li>
+    <li><a href="../graphics.html">3D Effects &amp; Graphics</a> &mdash; the settings as a player sees them.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/TileAtlas.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; TileAtlas</span>
+    </a>
+    <a class="next" href="../classes/WorldEditor.html">
+      <span class="label">Next</span>
+      <span class="title">WorldEditor &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

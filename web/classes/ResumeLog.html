@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeLog — Galaxy Eggbert Docs</title>
+<meta name="description" content="ResumeLog saves an interrupted mission as its start state plus the recorded input of every tick, and replays it to continue exactly where the player left.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> ResumeLog</div>
+  <h1>ResumeLog</h1>
+  <p class="subtitle">An interrupted mission saved as its start plus every tick's raw input, replayed deterministically to continue it (<code>resume.txt</code>, format 7).</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/ResumeLog.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/ResumeLog.cpp</code>; recording and replay in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code> and <code>GalaxyEggbertGame.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. Plain data and text I/O; the host fills it from CNA input.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    The original game saved "the current moment" of a mission when the application was put away
+    and offered to continue it on the next start. Galaxy Eggbert reaches the same result differently:
+    because the simulation is a fixed 1/60 s tick and fully deterministic, a mission's moment can be
+    rebuilt from where it started and what the player pressed. <code>ResumeLog</code> holds exactly that:
+    a <code>ResumeStart</code> record (world, Blupi's place, lives, speed, seed, cheats, settings) and a
+    run-length-encoded list of <code>ResumeInput</code> snapshots, one per tick. On Continue the host
+    replays the whole list at high speed, undrawn and muted, and hands control back to the player at
+    the exact tick where the game was left.
+  </p>
+  <p>
+    The checkpoint in <a href="SaveData.html">SaveData</a> (mission number and lives) remains the
+    fallback whenever no valid log exists. The behaviour and its platform limits are recorded as
+    BD-0077 in <code>plans/audit/behavior_differences.md</code>.
+  </p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><code>UserFolder</code> for the path (<code>resume.txt</code> in the player's folder).</li>
+    <li><a href="SaveData.html">SaveData</a>'s text format, embedded as <code>start.saveData</code>.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: <code>StartResumeLog()</code>, <code>ReadResumeLog()</code>,
+      <code>BeginResume()</code>, <code>ReplayBatch()</code>, <code>CheckResumeSelftest()</code>, <code>OnDeactivated()</code>, <code>OnExiting()</code>.</li>
+    <li><a href="DemoReplay.html">DemoReplay</a>: a <code>.gdemo</code> file carries the same body
+      (<code>WriteBody</code>/<code>ReadBody</code>) under its own header.</li>
+    <li><a href="CustomWorldStorage.html">CustomWorldStorage</a>: <code>HashBytes</code> identifies a galaxy world a demo was recorded in.</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API declared in <code>src/GalaxyEggbert/Game/ResumeLog.hpp</code>.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>start</code></td><td><code>ResumeStart start</code></td><td>Build identity, world path and hash, mission, lives, speed, seed, Blupi's x/y/z/yaw, the cheat toggles (quick, open doors, show secret, compass, debug), the cheat-input lock, camera mode, and the settings as text.</td></tr>
+    <tr><td><code>runs</code></td><td><code>std::vector&lt;ResumeRun&gt; runs</code></td><td>Input runs: a <code>count</code> of identical consecutive ticks and their <code>ResumeInput</code>.</td></tr>
+    <tr><td><code>Append</code></td><td><code>void Append(const ResumeInput&amp; input)</code></td><td>Adds one tick, extending the last run when the input is identical.</td></tr>
+    <tr><td><code>TickCount</code></td><td><code>std::uint64_t TickCount() const</code></td><td>Total ticks recorded.</td></tr>
+    <tr><td><code>Serialize</code></td><td><code>std::string Serialize() const</code></td><td>The complete file text: header, body, checksum footer.</td></tr>
+    <tr><td><code>Parse</code></td><td><code>static bool Parse(const std::string&amp; text, const std::string&amp; build, ResumeLog&amp; result)</code></td><td>Validates and reads a file for the given build. Transactional: <code>result</code> is unchanged on failure.</td></tr>
+    <tr><td><code>MatchesWorld</code></td><td><code>bool MatchesWorld(const std::string&amp; path, std::uint64_t hash) const</code></td><td>True only for the same world path and the same hash of its bytes.</td></tr>
+    <tr><td><code>WriteBody</code> / <code>ReadBody</code></td><td><code>void WriteBody(std::ostream&amp; out) const</code><br><code>static bool ReadBody(std::istream&amp; in, ResumeLog&amp; parsed)</code></td><td>The shared body (world, start, runs); <code>ReadBody</code> range-checks every field.</td></tr>
+    <tr><td><code>AppendChecksum</code> / <code>VerifiedBody</code></td><td><code>static std::string AppendChecksum(const std::string&amp; body)</code><br><code>static std::optional&lt;std::string&gt; VerifiedBody(const std::string&amp; text)</code></td><td>Adds and checks the <code>END &lt;hash&gt;</code> footer; a truncated or damaged text yields <code>nullopt</code>.</td></tr>
+    <tr><td><code>HashBytes</code> / <code>HashFile</code></td><td><code>static std::uint64_t HashBytes(std::string_view bytes)</code><br><code>static std::optional&lt;std::uint64_t&gt; HashFile(const std::filesystem::path&amp; path)</code></td><td>64-bit FNV-1a over raw bytes (NULs included). A file that cannot be read has no hash.</td></tr>
+    <tr><td><code>Path</code></td><td><code>static std::string Path()</code></td><td><code>resume.txt</code> in the player's folder.</td></tr>
+  </table>
+
+  <h2>Format 7</h2>
+  <p>Text with the classic locale and round-trip float precision. Strings are quoted. Layout as written by <code>Serialize()</code> and <code>WriteBody()</code>:</p>
+  <pre><code>GALAXY_RESUME 7
+"&lt;build identity&gt;"
+"&lt;world path&gt;" &lt;world hash&gt;
+&lt;mission&gt; &lt;lives&gt; &lt;speed&gt; &lt;seed&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt; &lt;yaw&gt; &lt;quick&gt; &lt;openDoors&gt; &lt;showSecret&gt; &lt;compass&gt; &lt;cheatsLocked&gt; &lt;debug&gt; &lt;cameraMode&gt;
+"&lt;savedata.txt text at the start&gt;"
+&lt;run count&gt; &lt;tick count&gt;
+&lt;count&gt; &lt;n keys&gt; &lt;keys...&gt; &lt;mouseX&gt; &lt;mouseY&gt; &lt;wheel&gt; &lt;buttons&gt; &lt;viewW&gt; &lt;viewH&gt; &lt;n touches&gt; [&lt;id&gt; &lt;x&gt; &lt;y&gt; &lt;state&gt;]... &lt;touchControls&gt; &lt;accelValid&gt; &lt;accelReset&gt; &lt;accelY&gt; &lt;cheatLetter&gt;
+...
+END &lt;FNV-1a of everything above&gt;</code></pre>
+  <ul>
+    <li><strong>Input</strong> is raw: held key codes (sorted), mouse, wheel and buttons, viewport size,
+      touches, and the accelerometer's Y value, after the gamepad has been merged into keys and before
+      the game interprets anything.</li>
+    <li><strong>Typed cheat letters</strong> are recorded as ordered events in <code>cheatLetter</code>
+      (<code>-1</code> keyboard snapshot only, <code>0</code> no letter, <code>a</code>-<code>z</code> a letter
+      pressed that tick), so a fast-typed word replays the same way.</li>
+    <li><strong>Touch capability</strong> (<code>touchControls</code>) is stored per tick, so a replay does
+      not ask the current device whether it has a touch screen.</li>
+    <li><strong>Compass, debug overlay and the cheat-input lock</strong> (<code>cheatsLocked</code>: 1 for
+      <code>fairplay</code>'s lock, 2 for <code>honest</code>'s, which lasts until the game quits) are part of the start record.</li>
+    <li><strong>Build identity</strong> is the compile date and time; on desktop builds it adds
+      <code>fnv1a64=&lt;hash&gt;</code> of the running executable (Linux verified; the Windows and macOS code
+      paths exist but are not verified). Android, the web build and an unreadable executable keep the
+      compile-time identifier only.</li>
+  </ul>
+
+  <h2>How it is used</h2>
+  <p>
+    Recording starts when a mission is in Play after its fade-in (<code>StartResumeLog()</code>); every
+    following tick appends <code>tickInput_</code>. Nothing is written during play. The file is written
+    only when the window is deactivated in Play (focus lost, application sent to the background),
+    atomically through a temporary file (<code>src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code>):
+  </p>
+  <pre><code>if ((replayingResume_ || phase_ == GalaxyEggbert::Def::GamePhase::Play) &amp;&amp;
+    recordingResume_ &amp;&amp; !missionStartPending_)
+{
+    const std::string temporary = ResumeLog::Path() + ".tmp";
+    std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+    out &lt;&lt; resumeLog_.Serialize();
+    ...
+    if (out) std::filesystem::rename(temporary, ResumeLog::Path(), error);
+    ...
+}
+else
+{
+    DeleteResumeFile();
+}</code></pre>
+  <p>
+    The file is deleted on a clean exit (<code>OnExiting</code>), when the mission's exit is reached, and
+    when it is deactivated outside Play. After the start-up wait, <code>ReadResumeLog()</code> parses it;
+    a valid log (or a <a href="SaveData.html">SaveData</a> checkpoint) leads to the Resume screen. Continue
+    calls <code>BeginResume()</code>, which checks the world <em>before</em> touching anything, restores
+    settings, cheats, camera and speed, loads the mission from the verified bytes, places Blupi, and
+    then <code>ReplayBatch()</code> runs up to 600 ticks per frame with drawing suppressed and sound
+    muted until the log is consumed. A galaxy mission's log names the galaxy's world file, so Continue
+    returns into that galaxy.
+  </p>
+  <p>
+    <strong>Self-test.</strong> With <code>GALAXY_RESUME_SELFTEST=&lt;ticks&gt;</code> the game, at that tick of
+    a mission, records a signature of its state (Blupi, counters, objects, a hash of every block,
+    clocks, camera, cheat input, debug overlay, the Hide trail), re-parses its own log, resumes from
+    it, and prints <code>RESUME SELFTEST equal</code> or <code>RESUME SELFTEST different: &lt;parts&gt;</code>
+    (exit code 1). The autoplay scripts use it to prove a replay rebuilds the same game.
+  </p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>Refused, and <code>resume.txt</code> deleted, when: the checksum footer is missing or wrong
+      (truncated or damaged), the header is not <code>GALAXY_RESUME 7</code> (every older version is
+      refused), the build identity differs from the running build, any field is out of range, or text
+      follows the footer.</li>
+    <li>Refused at Continue when the world file at the recorded path is missing, unreadable, does not
+      load, or its bytes hash differently: an edited or updated world is never replayed into.</li>
+    <li>Bounds: at most 10 000 000 ticks, 256 keys and 32 touches per tick, a 128 MiB file, mission
+      1-999, game speed 0, 1, 2, 4 or 8.</li>
+    <li>Determinism is the contract: no wall-clock time, unseeded randomness or frame-rate dependence
+      in the Play path, or old logs replay into a different game.</li>
+    <li>Editor play-tests and main-menu demos never record or touch the resume file; a demo leaves it
+      byte for byte as it was.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyAutoplay</code> (<code>tools/VerifyAutoplay.cpp</code>) also holds the resume checks:
+      run-length merging, a version-7 round trip of world identity, compass, debug, cheat lock and every
+      raw input, ordered cheat letters, the recorded touch capability, refusal of version 6 and version
+      1 even with a valid checksum, of a changed world hash or path, of a foreign build, of every
+      truncation, of a damaged checksum and trailing text, of zero-length and unbounded runs and
+      out-of-range input, FNV-1a against known test vectors, and file hashing across buffer boundaries.</li>
+    <li><code>VerifyDemoReplay</code>: a demo is not accepted as a resume file and a resume file is not accepted as a demo.</li>
+    <li>Live: <code>GALAXY_RESUME_SELFTEST</code> during autoplay runs (see <a href="Autoplay.html">Autoplay</a>).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../save-system.html">Save Data &amp; Resume</a></li>
+    <li><a href="SaveData.html">SaveData</a>, <a href="DemoReplay.html">DemoReplay</a>, <a href="Autoplay.html">Autoplay</a></li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a></li>
+    <li><a href="../game-loop.html">Game Loop</a> (the fixed tick the replay depends on)</li>
+    <li><a href="../development/testing.html">Testing</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/SaveData.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; SaveData</span>
+    </a>
+    <a class="next" href="../classes/DemoReplay.html">
+      <span class="label">Next</span>
+      <span class="title">DemoReplay &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Development — Galaxy Eggbert Docs</title>
+<meta name="description" content="How to contribute to Galaxy Eggbert: branches, the fidelity rules, repository boundaries, the audit ledgers, upstream bugs and commit messages.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,36 +22,203 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
-  <a href="index.html" class="active">Development</a>
+  <a href="../development/index.html" class="active">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Development</div>
-  <h1>Development Guide</h1>
-  <p class="subtitle">Contributing to Galaxy Eggbert — direction rules, style, debugging, and known issues.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> Development</div>
+  <h1>Development</h1>
+  <p class="subtitle">How to contribute: branches, the project's rules, where findings are recorded, and how commits are written (as of 2026-11-10).</p>
 
   <div class="card-grid">
     <a class="card" href="coding-style.html">
       <h3>Coding Style</h3>
-      <p>Naming conventions, the no-#ifdef rule, and the CNA + cna-engine direction lock.</p>
+      <p>C++23 conventions as they exist: namespaces, naming, headers, comments that cite the original, generated files.</p>
+    </a>
+    <a class="card" href="testing.html">
+      <h3>Testing &amp; QA</h3>
+      <p>ctest, golden frames and trace, autoplay playthroughs, demo replays, live QA scripts, Python world checkers, CI.</p>
     </a>
     <a class="card" href="debugging.html">
       <h3>Debugging</h3>
-      <p>The backbuffer-sampling self-check, GDB, and common problems.</p>
+      <p>The <code>debug</code> panel, command-line flags, diagnostic environment variables, headless runs, logs.</p>
     </a>
     <a class="card" href="extending-the-game.html">
       <h3>Extending the Game</h3>
-      <p>Where to add block types and worlds; what requires approval first.</p>
+      <p>Changing a block or object behaviour, a sound, a model, a world or the editor, and what to re-run.</p>
     </a>
     <a class="card" href="known-issues.html">
-      <h3>Known Issues &amp; Roadmap</h3>
-      <p>What's not implemented, and the E3D-MIG task list from plan.md.</p>
+      <h3>Known Issues &amp; Open Work</h3>
+      <p>What waits on the owner, what cannot be verified here, what was decided and kept.</p>
+    </a>
+    <a class="card" href="../tutorials/index.html">
+      <h3>Tutorials</h3>
+      <p>Step-by-step: building, authoring a world, changing a behaviour through the registries.</p>
+    </a>
+  </div>
+
+  <h2>Branches and workflow</h2>
+  <ul>
+    <li><code>develop</code> is the working branch; <code>master</code> is the main branch. CI
+      (<code>.github/workflows/cna-ci.yml</code>) builds and tests on pushes and pull requests to either;
+      changes that touch only <code>web/</code> (this website) are ignored by it.</li>
+    <li>One discrete task per commit, with the checks that apply run first
+      (<a href="testing.html">Testing &amp; QA</a>, "Which checks for which change"). Stage by path, so
+      unrelated working-tree changes stay out of your commit.</li>
+    <li>A fix for a reproduced defect comes with a regression test where one is possible. Do not
+      restructure a working system "while you are there".</li>
+    <li>Before changing gameplay, read what the original does (the sibling repository
+      <code>mobile-eggbert</code>, mostly <code>Decor.cpp</code>) and search the ledgers below: the same
+      difference may already have been analysed.</li>
+    <li>A change that alters the verified state, a supported build, a known limitation or the open work
+      is reflected in <code>CURRENT.md</code>, the project's status document. <code>plan.md</code>,
+      <code>NEXT.md</code> and <code>handoff.md</code> are historical or working logs.</li>
+  </ul>
+
+  <h2>The rules</h2>
+  <p>These are the project owner's rules (from <code>CURRENT.md</code>, <code>AGENTS.md</code> and
+  <code>docs/handbook/01-overview.md</code>). Most defects in the history came from breaking one of them.</p>
+  <ol>
+    <li><strong>Every gameplay feature traces to confirmed Mobile Eggbert behaviour.</strong> Where a 2D
+      rule has no unique 3D reading, pick a small reading and record it as an intentional 3D adaptation
+      (<code>plans/audit/mechanics_3d_decisions.md</code>, rows <code>M3D-NNNN</code>).</li>
+    <li><strong>The original is a read-only reference.</strong> Its C++ source is the authority for
+      numbers and timing. Do not copy its code, tables, enum values or byte layouts without approval;
+      a standing approval (2026-10-25) covers <em>small</em> data tables needed for fidelity, with the
+      source cited in a comment.</li>
+    <li><strong>Reuse approved media by their existing paths</strong> (<code>Content/</code>). A new copied
+      asset set needs approval.</li>
+    <li><strong>Never renumber IDs</strong>: <code>Def::ObjectType</code>, block (icon) numbers and sound
+      channels are stored in world files and encode reference data.</li>
+    <li><strong>Worlds are hand-authored true 3D designs.</strong> The original's 2D maps give identity,
+      theme, mechanics and difficulty, nothing else: no conversion, extrusion, tracing or side-view
+      "2.5D" (tried and rejected on 2026-10-25).</li>
+    <li><strong>Models and animations come from the original Ray Dream sources</strong> whenever they can
+      be recovered; effects (explosions, sparks, glows) may stay billboards.</li>
+    <li><strong>The in-game 3D world editor is the one approved exception</strong>: its UX may be invented,
+      but it must not add gameplay.</li>
+  </ol>
+
+  <h2>Repository boundaries</h2>
+  <ul>
+    <li>The sibling repositories (<code>cna</code>, <code>cna-engine</code>, <code>easy-gl</code>,
+      <code>sharp-runtime</code>, <code>meta-gl</code>, <code>mobile-eggbert</code>) are not modified from
+      here unless a task is explicitly scoped to them. A defect found there is written down as an
+      upstream bug (below); a bug in cna-engine that blocks the game is fixed in cna-engine, with a test,
+      rather than worked around here.</li>
+    <li><code>InteractionSystem</code> stays free of controller, camera and graphics dependencies; it
+      reports events and requests (<a href="../classes/InteractionSystem.html">InteractionSystem</a>).</li>
+    <li>The engine-independent model (<code>include/GalaxyEggbert/</code>,
+      <code>src/GalaxyEggbert/Worlds/</code>) has no CNA or cna-engine includes.</li>
+    <li>No backend-specific branches in game logic. Reuse existing engine-independent code and its tests
+      before re-deriving math or reference behaviour (<code>missing.md</code> records cases where that
+      was missed).</li>
+  </ul>
+
+  <h2>Ledgers: <code>plans/audit/</code></h2>
+  <p>The fidelity audit (<code>plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md</code>) compares Galaxy with the
+  original row by row. Its tables are the project's memory of what was found and why: read them before
+  re-deriving a difference, add to them when you find one. Cite an id in code comments and commit
+  subjects when it helps the next reader.</p>
+  <table>
+    <tr><th>Ledger</th><th>Id</th><th>What it records</th></tr>
+    <tr><td><code>owner_reports.md</code></td><td><code>OR-NNNN</code></td><td>Defects and requests as the owner reported them, each with analysis, fix and evidence (renumbered once, on 2026-11-04; see its header)</td></tr>
+    <tr><td><code>behavior_differences.md</code></td><td><code>BD-NNNN</code></td><td>One divergence from the original each: cause, reference evidence (file and line), reproduction, fix, validation</td></tr>
+    <tr><td><code>mechanics_3d_decisions.md</code></td><td><code>M3D-NNNN</code></td><td>Intentional 3D adaptations where a 2D rule has no unique reading</td></tr>
+    <tr><td><code>editor_parity.md</code></td><td><code>ED-NNNN</code></td><td>The original editors' behaviour against Galaxy's editor</td></tr>
+    <tr><td><code>world_lessons.csv</code> (+ <code>.notes.csv</code>)</td><td><code>LV-NNNN</code></td><td>One row per world: the original's lesson, the 3D reading, status (generated by <code>tools/audit/world_lessons.py</code>)</td></tr>
+    <tr><td><code>manual_review.md</code></td><td><code>MR-NNNN</code></td><td>Decisions only the owner can settle, with the answers</td></tr>
+    <tr><td><code>owner_questions.md</code></td><td><code>Q-NNN</code></td><td>Open and answered questions for the owner</td></tr>
+  </table>
+  <p>Other tables there include <code>gameplay_use_cases.csv</code>, <code>render_representation.csv</code>,
+  <code>asset_sources.csv</code>, <code>test_coverage.csv</code>, <code>target_reach.md</code> and
+  <code>release_audit.md</code>. Status vocabulary: <code>UNREVIEWED</code>, <code>CONFIRMED_MATCH</code>,
+  <code>INTENTIONAL_3D_ADAPTATION</code>, <code>REPRODUCED_DEFECT</code>, <code>FIXED_AND_VERIFIED</code>,
+  <code>BLOCKED</code>, <code>NOT_APPLICABLE</code>; only evidence moves a row. The generators in
+  <code>tools/audit/</code> have a <code>--check</code> mode that reports a stale table. Older code
+  comments also cite task ids of <code>plan.md</code> (<code>E3D-MIG-</code>, <code>BB3D-</code>,
+  <code>INFRA-</code>, <code>TEST-</code>, <code>EDITOR-</code>...).</p>
+
+  <h2>Bugs in sibling repositories: <code>upstream_bugs.md</code></h2>
+  <p>A defect found in CNA, cna-engine, easy-gl, sharp-runtime or a data repository goes at the end of
+  <code>upstream_bugs.md</code> as the next <code>UB-NNN</code>, in English: repository, file and line,
+  the date and how it was found; the problem, a minimal reproduction and the suggested fix; the
+  workaround used here, if any; and the status. When it is fixed upstream, the entry stays, the fixing
+  commit is added, and the workaround is removed only after re-verifying. As of 2026-11-10 the file holds
+  UB-001 to UB-010, all marked fixed upstream (UB-005 in cna-engine, the others in CNA).</p>
+  <p>CI checks out the siblings at pinned revisions. After verifying a build against newer siblings,
+  <code>python3 tools/ci_pin_siblings.py</code> updates the pins (<code>--check</code> reports drift
+  without writing).</p>
+
+  <h2>Commit messages</h2>
+  <p>The history uses conventional subjects, <code>type(scope): subject</code>, in English, usually under
+  about 95 characters, with a body for anything non-obvious. Types by frequency (2026-11-10):
+  <code>docs</code>, <code>feat</code>, <code>fix</code>, <code>test</code>, then far fewer
+  <code>refactor</code>, <code>tools</code>, <code>build</code>, <code>perf</code>, <code>ci</code>,
+  <code>chore</code>. Common scopes: <code>worlds</code>, <code>render</code>, <code>gameplay</code>,
+  <code>editor</code>, <code>terrain</code>, <code>camera</code>, <code>audio</code>, <code>blupi</code>,
+  <code>qa</code>, <code>cheats</code>, <code>golden</code>, <code>audit</code>. Some recent commits use a
+  plain <code>Area: subject</code> form instead (<code>Android: own package id, installs beside
+  mobile-eggbert</code>).</p>
+  <p>Put the ledger id in the subject when the change closes or advances a row. Real examples:</p>
+  <pre><code>fix(cheats): BD-0081 match reference ghost behavior
+feat(worlds): LV-0078 world 199 rebuilt as a journey of twelve places (A to L)
+perf(terrain): a crumbling clay bridge patches the model cells instead of rebuilding the world (OR-0074)
+test(golden): re-baselined after the ball cubes' tops (6 px at a treasure door's plate edge)</code></pre>
+  <p>The body says what the original does, what Galaxy did before, what changed, and how it was verified
+  (ctest result, golden frames and trace, which playthroughs). Re-baselined golden files are committed on
+  their own with the reason. Read <code>git log --oneline -30</code> before writing yours.</p>
+
+  <div class="note"><strong>Where to read more</strong> The repository's own handbook,
+  <code>docs/handbook/</code> (chapters 01-08), was checked against the tree on 2026-11-07;
+  <code>CURRENT.md</code> is newer and wins where they differ.</div>
+
+  <div class="page-nav">
+    <a class="prev" href="../internals/collision.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Collision</span>
+    </a>
+    <a class="next" href="../development/coding-style.html">
+      <span class="label">Next</span>
+      <span class="title">Coding Style &#8594;</span>
     </a>
   </div>
 </main>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controls — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's keyboard, mouse, gamepad, touch-screen and accelerometer controls, the function keys and the menu controls.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,69 +24,183 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html" class="active">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Controls</div>
-  <h1>Controls</h1>
-  <p class="subtitle">Everything GalaxyEggbertCNA currently reads from the keyboard.</p>
 
-  <h2>Movement</h2>
-  <table>
-    <tr><th>Key</th><th>Action</th></tr>
-    <tr><td>↑ / ↓ Arrow</td><td>Move along Z</td></tr>
-    <tr><td>← / → Arrow</td><td>Move along X</td></tr>
-    <tr><td>Space</td><td>Jump (only when <code>GEBlupiController</code> is grounded)</td></tr>
-  </table>
+<main id="content">
+  <h1>Controls</h1>
+  <p class="subtitle">Keyboard, mouse, gamepad, touch screen and accelerometer, as the code reads them on 2026-11-10.</p>
+
   <p>
-    Read each frame via CNA's <code>Input::Keyboard::GetState()</code> in
-    <code>GalaxyEggbertCnaGame::Update()</code>, then passed into
-    <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code>.
+    Press <strong>F1</strong> at any time for the controls panel: black text on a translucent white panel over the
+    frozen screen, closed with F1, Esc or its [Close] button. The main menu's <strong>Help</strong> button opens the
+    same panel. What the actions do is explained on <a href="gameplay.html">Gameplay</a>.
   </p>
 
-  <div class="nv">
-    <strong>That's all there is</strong>
-    There is no pause, no menu, no settings screen, no gamepad support, and no touch input in
-    <code>GalaxyEggbertCNA</code> today. <code>GalaxyEggbertSimple3D</code> (the reference target)
-    has a richer control scheme (rotation, strafing, phase-transition keys) — see its source under
-    <code>src/GalaxyEggbertSimple3D/</code> if you need that as a reference, but it is not yet
-    ported to CNA.
-  </div>
+  <h2>Keyboard in play</h2>
+  <table>
+    <tr><th>Key</th><th>Action</th></tr>
+    <tr><td><code>W</code> / <code>Up</code></td><td>Walk forward</td></tr>
+    <tr><td><code>A</code> <code>D</code> / <code>Left</code> <code>Right</code></td><td>Turn</td></tr>
+    <tr><td><code>S</code> / <code>Down</code></td><td>Turn around, then walk the new way</td></tr>
+    <tr><td><code>X</code> / <code>Right Ctrl</code></td><td>Back up, keeping the facing (on foot or in a vehicle)</td></tr>
+    <tr><td><code>Left Ctrl</code></td><td>Jump; helicopter up</td></tr>
+    <tr><td><code>Space</code></td><td>Action: take, use, enter or leave a vehicle, place dynamite, flip a switch</td></tr>
+    <tr><td><code>Left Shift</code></td><td>Crouch; dive; helicopter down</td></tr>
+    <tr><td><code>Left Shift</code> + <code>S</code> / <code>Down</code></td><td>Pull the crate in front of him</td></tr>
+    <tr><td><code>Right Shift</code></td><td>Look up; helicopter up</td></tr>
+    <tr><td><code>F</code></td><td>Fire glue in the tank or helicopter (<code>Left Ctrl</code> also fires in the tank)</td></tr>
+    <tr><td><code>Esc</code></td><td>Pause / continue</td></tr>
+    <tr><td><code>Enter</code></td><td>Play in the main menu; Continue in Resume and Pause; return from Win and Lost</td></tr>
+  </table>
+  <p>WASD and the arrows are combined per direction, so holding both is not faster. Since the letters are also typed
+    <a href="cheats.html">cheat words</a>, letters that start a cheat word stop moving Blupi until they are released.</p>
+
+  <h2>Function keys</h2>
+  <table>
+    <tr><th>Key</th><th>Action</th></tr>
+    <tr><td><code>F1</code></td><td>Controls help; it freezes the current screen</td></tr>
+    <tr><td><code>F3</code></td><td>First / third person (third person is the default)</td></tr>
+    <tr><td><code>F5</code> / <code>F6</code></td><td>Normal / fast (2&times;) game speed</td></tr>
+    <tr><td><code>Tab</code></td><td>Slow motion in steps: 0.5, 0.25, 0.125, then normal again</td></tr>
+    <tr><td><code>F7</code> / <code>F8</code></td><td>4&times; / 8&times; speed, only after the <code>quick</code> cheat</td></tr>
+    <tr><td><code>F11</code></td><td>Full screen / window, remembered as <code>fullscreen=0/1</code> in <code>savedata.txt</code></td></tr>
+    <tr><td><code>F12</code></td><td>The <a href="cheats.html">cheat menu</a> (builds with cheats enabled)</td></tr>
+  </table>
+  <p>The function keys and Tab are left out of a demo recording, so they never end up in a replay.</p>
+
+  <h2>Mouse</h2>
+  <ul>
+    <li>Left click presses menu, Pause, Setup and editor buttons.</li>
+    <li>In play, hold the left button and drag to look around Blupi without turning him; walking brings the camera
+      back behind him.</li>
+    <li>The on-screen play buttons take clicks only on a device with a touch screen; elsewhere a click there is camera look.</li>
+    <li>During a main-menu demo any mouse button or the wheel stops it; moving the mouse does not.</li>
+  </ul>
+
+  <h2>Gamepad</h2>
+  <p>The first connected gamepad in XNA's slots 1-4 controls play. Mobile Eggbert has no gamepad support, so this
+    mapping is Galaxy Eggbert's own, chosen to read like the keyboard (<code>src/GalaxyEggbert/Game/GamepadInput.hpp</code>:
+    each button stands for a key).</p>
+  <table>
+    <tr><th>Control (Xbox names)</th><th>Action</th><th>Stands for</th></tr>
+    <tr><td>Left stick / D-pad</td><td>Walk and turn; Down turns around, then walks</td><td>arrows</td></tr>
+    <tr><td>A</td><td>Jump, helicopter up; Play, Continue and return in menus</td><td><code>Left Ctrl</code> + <code>Enter</code></td></tr>
+    <tr><td>B or X</td><td>Action</td><td><code>Space</code></td></tr>
+    <tr><td>RT</td><td>Fire glue (tank shot, helicopter drop)</td><td><code>F</code></td></tr>
+    <tr><td>RB</td><td>Back up</td><td><code>Right Ctrl</code></td></tr>
+    <tr><td>LB</td><td>Crouch, dive; LB + Down pulls a crate</td><td><code>Left Shift</code></td></tr>
+    <tr><td>Y</td><td>Look up</td><td><code>Right Shift</code></td></tr>
+    <tr><td>Start or Back</td><td>Pause / continue</td><td><code>Esc</code></td></tr>
+  </table>
+  <p>The stick counts once it is pushed past half way. On the main menu Start or Back, like Esc, opens the goodbye
+    screen, after which any new press closes the game. A plugged-in gamepad does not disable the mouse. Typed cheats
+    and F1 need a keyboard.</p>
+  <div class="warn"><strong>Not tried on hardware.</strong> The mapping was verified on 2026-11-08 with an SDL virtual
+    gamepad under Xvfb; no physical gamepad has been tested.</div>
+
+  <h2>Touch screen</h2>
+  <p>Play's on-screen controls appear only when CNA reports a touch screen, including on devices that also have a
+    keyboard. They take several fingers at once (stick and Jump together, for example):</p>
+  <ul>
+    <li>a <strong>stick</strong> in one bottom corner, with a <strong>back-up</strong> button over it;</li>
+    <li><strong>Jump</strong> and <strong>Action</strong> in the other corner (the Setup's "Jump button on the right",
+      on by default, chooses the side), and a <strong>crouch</strong> button, the original's PlayDown;</li>
+    <li>a <strong>Pause</strong> button;</li>
+    <li>a <strong>Fire</strong> button while driving the tank or the helicopter; held, it repeats at the original's rate.</li>
+  </ul>
+  <p>Touch Jump also climbs the helicopter. In menus and on the editor's screens a touch is a click; a screen keyboard
+    (<code>ScreenKeyboard.hpp</code>) names a galaxy or a demo without a keyboard.</p>
+
+  <h3>Accelerometer (Android)</h3>
+  <p>The Setup's <strong>Accelerometer</strong> toggle (off by default) steers Blupi by tilting the device, as in the
+    original; its <strong>Sensitivity</strong> slider (50 by default) appears while it is on. Since 2026-11-09, once the
+    sensor delivers readings the stick gives way to a <strong>Forward</strong> and a <strong>Back</strong> button in
+    its corner, and the tilt turns him. A dead zone follows the sensitivity, and nothing happens until the device has
+    been held level once. <code>GALAXY_ACCEL_PAD=1</code> shows the two buttons on a desktop without a sensor.</p>
+  <div class="warn"><strong>Not verified on a device.</strong> Touch input was checked with direct touch events under
+    Xvfb only. The accelerometer has not been tried on hardware here: a first report from a phone said the tilt did not
+    react, and it has not been reproduced yet.</div>
+
+  <h2>Menus and other screens</h2>
+  <ul>
+    <li><strong>Main menu:</strong> click the buttons; Enter or A plays; Esc (or Start / Back) opens the goodbye screen.</li>
+    <li><strong>Resume:</strong> Enter or A continues the interrupted mission, Esc goes to the main menu.</li>
+    <li><strong>Pause:</strong> Esc or Enter continues; the buttons are Home, Back, Setup, Restart, Continue, Record and Original.</li>
+    <li><strong>Setup:</strong> Esc returns to where it was opened from.</li>
+    <li><strong>Win / Lost:</strong> Space, Enter, A or the return button.</li>
+    <li><strong>Demo positions, galaxy screen and world screen</strong> (since 2026-11-10, <code>FocusNavigator.hpp</code>):
+      the arrows or the D-pad choose a button, which is drawn lit; Enter or A presses it; the mouse or a touch ends the
+      choice. B leaves the demo positions opened from Pause.</li>
+  </ul>
+
+  <h2>Vehicle fire in detail</h2>
+  <p>Fire is <code>F</code>, gamepad RT or the touch Fire button; in the tank <code>Left Ctrl</code> fires too, while
+    in the helicopter it climbs. The tank shoots along its exact heading, at any angle; the helicopter drops glue
+    straight down, only while airborne and off a lift. Both need ammunition (the green ammunition pack gives ten
+    shots), and holding Fire repeats at the original's cooldown. Getting in and out stays on Action.</p>
+
+  <h2>3D world editor</h2>
+  <p>The editor has its own controls: W/A/S/D fly, Ctrl rises, Shift or Z descends, Space places, the mouse aims and
+    the icon palette chooses what to place; the gamepad (sticks fly and look, A places, X removes) and touch (Move pad,
+    Up/Down, Tools) cover a whole editing session without a keyboard. The full list is on
+    <a href="editor.html">3D World Editor</a>.</p>
+
+  <h2>In the code</h2>
+  <table>
+    <tr><th>File</th><th>What it holds</th></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/ControlInput.hpp</code></td><td>WASD/arrow directions, the tank's Ctrl-to-fire mapping, the F1 help state.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/GamepadInput.hpp</code></td><td>The gamepad-to-keys mapping.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/InputPad.cpp</code></td><td>Touch controls, menu and Setup screens, the help panel's text, the cheat parser (<a href="classes/InputPad.html">InputPad</a>).</td></tr>
+    <tr><td><code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code></td><td>Function keys, game speed, play input merged per tick.</td></tr>
+  </table>
+  <p><code>VerifyGEInputPad</code> (a CTest case) covers the touch layout and the cheat parser. How input flows through a
+    tick is on <a href="input.html">Input</a>.</p>
 
   <div class="page-nav">
-    <a href="gameplay.html">
+    <a class="prev" href="gameplay.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Gameplay</span>
     </a>
     <a class="next" href="levels.html">
       <span class="label">Next</span>
-      <span class="title">Levels &amp; Worlds &#8594;</span>
+      <span class="title">Campaign &amp; Worlds &#8594;</span>
     </a>
   </div>
 </main>

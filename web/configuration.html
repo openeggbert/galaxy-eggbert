@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuration — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert's CMake options and cache variables, every environment variable the game reads, and the player settings in savedata.txt with the Setup screen that edits them.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,67 +24,228 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html" class="active">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Configuration</div>
-  <h1>Configuration</h1>
-  <p class="subtitle">Build-time CMake options — there is no runtime configuration file.</p>
 
-  <h2>Build-Time CMake Options</h2>
+<main id="content">
+  <h1>Configuration</h1>
+  <p class="subtitle">Build options, the environment variables the game reads, and the player's settings in savedata.txt.</p>
+
+  <p>
+    Three layers configure the game: CMake options when you build it, environment variables when you
+    start it (mostly for testing and diagnostics), and the player's own settings, which the Setup
+    screen edits and <code>savedata.txt</code> keeps. Names below are checked against
+    <code>CMakeLists.txt</code> and <code>src/</code> as of 2026-11-10.
+  </p>
+
+  <h2>CMake options</h2>
+  <h3>The game's own</h3>
   <table>
-    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>OFF</code></td><td>Build the <code>GalaxyEggbertCNA</code> target (opt-in)</td></tr>
-    <tr><td><code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code></td><td><code>ON</code></td><td>Build the <code>GalaxyEggbertSimple3D</code> reference target</td></tr>
-    <tr><td><code>CNA_HOME</code></td><td><code>../cna</code></td><td>Path to the sibling CNA repository</td></tr>
-    <tr><td><code>CNA_ENGINE_HOME</code></td><td><code>../cna-engine</code></td><td>Path to the sibling cna-engine repository (replaced <code>EASY3D_HOME</code> / <code>../easy-3d</code> on 2026-10-20)</td></tr>
-    <tr><td><code>MOBILE_EGGBERT_HOME</code></td><td><code>../mobile-eggbert</code></td><td>Path to the sibling mobile-eggbert repository (asset source)</td></tr>
-    <tr><td><code>BUILD_TESTING</code></td><td><code>ON</code></td><td>Build GoogleTest unit tests for the Worlds data model</td></tr>
-    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td>(none)</td><td>e.g. <code>cmake/toolchains/mingw-w64.cmake</code> for Windows cross-compilation</td></tr>
+    <tr><th>Option</th><th>Default</th><th>Effect</th></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td>ON</td><td>Builds the game (<code>GalaxyEggbertCNA</code>) and every verifier that links CNA. When OFF, CNA and cna-engine are not needed and only the engine-independent tools and tests are configured (not a configuration the project exercises regularly).</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_ENABLE_CHEATS</code></td><td>ON</td><td>Becomes the compile definition <code>GALAXY_EGGBERT_ENABLE_CHEATS=0/1</code> on the game's update and draw sources, <code>InputPad.cpp</code> and <code>VerifyGEInputPad.cpp</code>. OFF removes typed cheat words (including <code>help</code> and <code>compass</code>), F12, the hidden cheat gesture and menu (<a href="cheats.html">Cheats &amp; Diagnostics</a>).</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_ENABLE_LINUX_BUNDLE</code></td><td>ON</td><td>Defines the install rules and CPack's <code>package</code> target for the Linux <code>.tar.gz</code>. Exists only on Linux (not Emscripten, Android or Apple).</td></tr>
+    <tr><td><code>CNA_HOME</code></td><td>empty = <code>../cna</code></td><td>Path to the CNA source checkout. Configure fails if it has no <code>CMakeLists.txt</code>.</td></tr>
+    <tr><td><code>CNA_ENGINE_HOME</code></td><td>empty = <code>../cna-engine</code></td><td>Path to the cna-engine checkout; same check.</td></tr>
   </table>
 
-  <h2>Runtime Configuration</h2>
+  <h3>CNA options the game gives a default</h3>
+  <table>
+    <tr><th>Option</th><th>Default here</th><th>Effect</th></tr>
+    <tr><td><code>CNA_GRAPHICS_RENDERER</code></td><td><code>OPENGLES3</code> native, <code>WEBGL2</code> under Emscripten</td><td>CNA's renderer identity. Set before CNA is added and without forcing, so a command-line value or an existing tree's value is kept. Valid names: <a href="platform-support.html">Platform Support</a>.</td></tr>
+    <tr><td><code>CNA_USE_CCACHE</code></td><td>OFF</td><td>Lets CNA use ccache for itself and sharp-runtime. To cache the whole build, pass <code>-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache</code> instead.</td></tr>
+  </table>
+
+  <h3>Standard CMake variables that matter here</h3>
+  <table>
+    <tr><th>Variable</th><th>Use</th></tr>
+    <tr><td><code>CMAKE_BUILD_TYPE</code></td><td><code>Release</code> for playing and packaging.</td></tr>
+    <tr><td><code>BUILD_TESTING</code></td><td>ON by default (<code>include(CTest)</code>). Registers the tests; on desktop it also builds <code>GalaxyEggbertWorldsTests</code> and fetches GoogleTest. The web build turns it off.</td></tr>
+    <tr><td><code>FETCHCONTENT_SOURCE_DIR_GOOGLETEST</code></td><td>Path to a local GoogleTest checkout, used instead of downloading v1.14.0 from GitHub.</td></tr>
+    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td><code>cmake/toolchains/mingw-w64.cmake</code> for the Windows cross-build; it reads <code>MINGW_TRIPLET</code> (default <code>x86_64-w64-mingw32</code>) and the optional <code>CNA_WINDOWS_DEPENDENCIES_ROOT</code>.</td></tr>
+  </table>
+
+  <h3>Fixed by the game</h3>
   <p>
-    There is no configuration file, no settings screen, and no persisted preferences in
-    <code>GalaxyEggbertCNA</code> today. The window title ("Galaxy Eggbert (CNA)"), default world
-    (<code>worlds3d/world001.vwr</code>), and texture path (<code>Content/icons/object-m.png</code>)
-    are hard-coded in <code>GalaxyEggbertCnaGame::LoadContent()</code>.
+    The game forces these OFF so that only the libraries are built: <code>CNA_BUILD_TESTS</code>,
+    <code>CNA_BUILD_EXAMPLES</code>, <code>CNA_SHARED_LIBRARY</code> (CNA is static: cna-engine links
+    its static modules, and a shared CNA would load twice), and cna-engine's
+    <code>CNA_ENGINE_BUILD_TESTS</code>, <code>CNA_ENGINE_BUILD_EXAMPLES</code>,
+    <code>CNA_ENGINE_WITH_EXTENDED</code>, <code>CNA_ENGINE_WITH_ENHANCED_GRAPHICS</code>,
+    <code>CNA_ENGINE_INSTALL</code>, <code>CNA_ENGINE_PILOT_PROBES</code> and
+    <code>CNA_ENGINE_WARNINGS_AS_ERRORS</code>. CNA itself turns off sharp-runtime's tests.
+  </p>
+
+  <h3>Where CNA finds its own dependencies</h3>
+  <p>
+    CNA looks for <code>sharp-runtime</code> and <code>easy-gl</code> next to itself; its cache
+    variables <code>CNA_SHARP_RUNTIME_ROOT</code> and <code>CNA_EASYGL_ROOT</code> point elsewhere.
+    easy-gl always adds <code>../meta-gl</code> beside itself. For Android, Gradle passes
+    <code>CNA_HOME</code> / <code>CNA_ENGINE_HOME</code> from <code>cna.home</code> /
+    <code>cna.engine.home</code> in <code>android/local.properties</code>, else from the environment
+    variables of the same names, else the siblings (<a href="build.html">Build Guide</a>).
+  </p>
+
+  <h2>Environment variables</h2>
+  <p>
+    Every variable below is read with <code>std::getenv</code> somewhere in <code>src/</code>. None is
+    needed to play; most exist for tests, comparisons and measurements.
+  </p>
+  <h3>Files and setting overrides</h3>
+  <table>
+    <tr><th>Variable</th><th>Values</th><th>Effect</th></tr>
+    <tr><td><code>GALAXY_USER_DIR</code></td><td>a folder</td><td>The player's folder on the desktop, unless <code>--user DIR</code> is given (<code>main.cpp</code>). The test scripts point it at their run folder.</td></tr>
+    <tr><td><code>GALAXY_EFFECTS</code></td><td><code>0</code>-<code>4</code> or <code>off</code>, <code>low</code>, <code>medium</code>, <code>high</code>, <code>ultra</code></td><td>Overrides the Setup's 3D effects level for this run (golden frames per level use it).</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF</code></td><td><code>0</code> or <code>1</code></td><td>Overrides the Setup's 3D terrain: <code>0</code> flat cubes, any other value the reliefs.</td></tr>
+    <tr><td><code>GALAXY_TEXTURES</code></td><td><code>1</code>/<code>1x</code>, <code>2</code>/<code>2x</code>, anything else = auto</td><td>Overrides the Setup's Textures (<code>TextureScale.cpp</code>). Desktop only; the web and Android always use 1x.</td></tr>
+  </table>
+
+  <h3>Diagnostics</h3>
+  <table>
+    <tr><th>Variable</th><th>Effect</th></tr>
+    <tr><td><code>GALAXY_PERF=1</code></td><td>Prints the average draw time, model draws, triangles and culled models every 120 frames, and how long terrain patches and rebuilds take.</td></tr>
+    <tr><td><code>GALAXY_MODEL_CULL=0</code></td><td>Draws object models even when they are out of view (no culling), to compare.</td></tr>
+    <tr><td><code>GALAXY_EFFECTS_DEBUG</code></td><td><code>shadow</code> or <code>occlusion</code>: the terrain drawn as that factor alone, in grey. Ultra only: <code>gi</code> (the light from around, halved) and <code>sprites</code> (the light on sprites and particles).</td></tr>
+    <tr><td><code>GALAXY_ULTRA_DEBUG</code></td><td>A number 1-9 that shows one intermediate of Ultra's final pass instead of the picture (no grade, no bloom, fixed exposure, the scene before tone mapping, the exposure, occlusion channels, reflection strength, the fog); see <code>UltraFinish.cpp</code>.</td></tr>
+    <tr><td><code>GALAXY_RELIEF_GI=0</code></td><td>Ultra: the terrain reliefs without the baked light from around, to compare.</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF_DIR</code></td><td>Folder of the relief meshes (default <code>avatars3d/terrain</code>).</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF_RADIUS</code></td><td>Distance in blocks around the camera's target within which reliefs are shown (default 8).</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF_OVERHANG=1</code></td><td>Keeps the reliefs' overhangs into open air, to compare.</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF_TIMING</code></td><td>Set to anything: prints the chunks, triangles and milliseconds of a world's first relief build.</td></tr>
+    <tr><td><code>GALAXY_INTERP_TRACE=FILE</code></td><td>Writes one line per frame in play: the step, the interpolation fraction, the camera, the shake and the moved objects (frame rates above 60).</td></tr>
+    <tr><td><code>GALAXY_ACCEL_PAD=1</code></td><td>Shows the accelerometer layout of the on-screen pad without a sensor, to look at it on a desktop.</td></tr>
+  </table>
+
+  <h3>QA runs</h3>
+  <table>
+    <tr><th>Variable</th><th>Effect</th></tr>
+    <tr><td><code>AUTOPLAY_REALTIME=1</code></td><td>With <code>--autoplay</code>: keep real 60 Hz pacing instead of running as fast as possible, to watch or screenshot a run.</td></tr>
+    <tr><td><code>AUTOPLAY_SHOTS=N</code></td><td>With <code>--autoplay</code>: save the frame every <code>N</code> ticks into <code>autoplay_shots/</code> (tick-numbered PNGs).</td></tr>
+    <tr><td><code>GALAXY_RESUME_SELFTEST=N</code></td><td>At tick <code>N</code> of a mission, restore it from its own resume log, replay to the same tick and compare; prints <code>RESUME SELFTEST equal</code> or <code>different: ...</code> and exits with 1 on a difference.</td></tr>
+  </table>
+  <p>
+    Read by the libraries, not the game: <code>XDG_DATA_HOME</code>, <code>LOCALAPPDATA</code> and
+    <code>HOME</code> decide CNA's per-user folder (<a href="running.html">Running the Game</a>);
+    <code>SDL_AUDIODRIVER</code> and <code>SDL_VIDEODRIVER</code> are SDL's. The scripts in
+    <code>tools/</code> have variables of their own (<a href="development/testing.html">Testing</a>).
+  </p>
+
+  <h2>Player settings</h2>
+  <h3>The Setup screen</h3>
+  <p>
+    Open it from the main menu's <strong>Setup</strong> button or from <strong>Setup</strong> in the
+    pause menu; <strong>Return</strong> or Esc leaves it. Every change is saved at once (a slider when
+    you let it go) and applies at once, except Textures, which applies at the next start. From top to
+    bottom (<code>InputPad.cpp</code>):
+  </p>
+  <table>
+    <tr><th>Left column</th><th>Right column</th></tr>
+    <tr><td>Frame rate: 60 / 120 / 144 / 240 fps</td><td>Textures: Auto / 1x / 2x (next start)</td></tr>
+    <tr><td>Sound effects (on/off), then the <em>Sound effects</em> and <em>Music</em> volume sliders</td><td></td></tr>
+    <tr><td>Jump button on the right</td><td>Player A/B/C : Erase progress (main menu only)</td></tr>
+    <tr><td>Automatic zoom on action</td><td>3D terrain</td></tr>
+    <tr><td>Accelerometer, with a <em>Sensitivity</em> slider while it is on</td><td>3D effects: Off / Low / Medium / High / Ultra</td></tr>
+  </table>
+  <p>
+    The volume sliders, 3D terrain, 3D effects, frame rate and textures are Galaxy Eggbert additions;
+    the rest is the original's Setup. <strong>Erase progress</strong> works as the original's: it resets
+    the whole file to its defaults, every setting and all three players' progress. What the effect
+    levels draw: <a href="graphics.html">3D Effects &amp; Graphics</a>.
+  </p>
+
+  <h3>savedata.txt keys</h3>
+  <p>
+    A plain <code>key=value</code> text file in the player's folder
+    (<code>src/GalaxyEggbert/Game/SaveData.cpp</code>). Unknown keys are ignored and out-of-range values
+    are clamped or fall back to the default.
+  </p>
+  <table>
+    <tr><th>Key</th><th>Values (default)</th><th>Set by</th></tr>
+    <tr><td><code>soundEnabled</code></td><td>0/1 (1)</td><td>Sound effects toggle; off silences the music too</td></tr>
+    <tr><td><code>effectsVolume</code></td><td>0-100 (100)</td><td>Sound effects slider; 100 is the original's loudness</td></tr>
+    <tr><td><code>musicVolume</code></td><td>0-100 (100)</td><td>Music slider (the music plays at half volume at most, scaled by it)</td></tr>
+    <tr><td><code>jumpRight</code></td><td>0/1 (1)</td><td>Jump button on the right (the on-screen pad's layout)</td></tr>
+    <tr><td><code>autoZoom</code></td><td>0/1 (1)</td><td>Automatic zoom: the view eases in while Blupi walks</td></tr>
+    <tr><td><code>accelActive</code></td><td>0/1 (0)</td><td>Accelerometer</td></tr>
+    <tr><td><code>accelSensitivity</code></td><td>0-100 (50)</td><td>Sensitivity slider</td></tr>
+    <tr><td><code>terrainRelief</code></td><td>0/1 (0)</td><td>3D terrain</td></tr>
+    <tr><td><code>effectsLevel</code></td><td>0-4 (0 = Off)</td><td>3D effects; an old <code>effects3d=1</code> line reads as High</td></tr>
+    <tr><td><code>frameRate</code></td><td>60, 120, 144, 240 (60)</td><td>Frame rate; the simulation always steps 60 times a second</td></tr>
+    <tr><td><code>textureScale</code></td><td>0 auto, 1, 2 (0)</td><td>Textures</td></tr>
+    <tr><td><code>fullscreen</code></td><td>0/1 (0)</td><td>F11 or the main menu's Fullscreen / Window button, not the Setup</td></tr>
+    <tr><td><code>selectedGamer</code></td><td>0-2 (0)</td><td>The player chosen in the main menu (A, B, C)</td></tr>
+    <tr><td><code>gamerN.lives</code>, <code>.missionNumber</code>, <code>.lastWorld</code>, <code>.hasProgress</code>, <code>.doorsUnlocked</code></td><td>per player 0-2</td><td>Campaign progress; <code>doorsUnlocked</code> is 200 digits, one per mission door</td></tr>
+    <tr><td><code>galaxyN.*</code></td><td>same fields</td><td>Progress in that player's own galaxy, written only once there is some</td></tr>
+  </table>
+<pre><code>soundEnabled=1
+jumpRight=1
+autoZoom=1
+accelActive=0
+effectsVolume=100
+musicVolume=100
+accelSensitivity=50
+fullscreen=0
+terrainRelief=0
+effectsLevel=0
+frameRate=60
+textureScale=0
+selectedGamer=0
+gamer0.lives=3
+gamer0.missionNumber=0
+gamer0.lastWorld=1
+gamer0.hasProgress=0
+gamer0.doorsUnlocked=0000...   (200 digits)
+...</code></pre>
+  <p>
+    The other player files (<code>resume.txt</code>, <code>demos/</code>, <code>customworlds/</code>)
+    and how progress is checkpointed: <a href="save-system.html">Save Data &amp; Resume</a> and
+    <a href="classes/SaveData.html">SaveData</a>.
   </p>
 
   <div class="page-nav">
-    <a href="save-system.html">
+    <a class="prev" href="save-system.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Save System</span>
+      <span class="title">&#8592; Save Data &amp; Resume</span>
     </a>
-    <a class="next" href="platform-support.html">
+    <a class="next" href="assets.html">
       <span class="label">Next</span>
-      <span class="title">Platform Support &#8594;</span>
+      <span class="title">Assets &amp; Tools &#8594;</span>
     </a>
   </div>
 </main>

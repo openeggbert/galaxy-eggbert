@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockDefinitionRegistry — Galaxy Eggbert Docs</title>
+<meta name="description" content="BlockDefinitionRegistry, the single table of what every block type 0-440 is: render mode, collision mask, animation, hazard and role flags, exported to tools/data/blocks.csv.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> BlockDefinitionRegistry</div>
+  <h1>BlockDefinitionRegistry</h1>
+  <p class="subtitle">One <code>BlockDefinition</code> per block type 0-440: how it is drawn, which quarter-cells are solid, how it animates, and what role it plays in the game.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/BlockDefinitionRegistry.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/BlockDefinitionRegistry.cpp</code></td></tr>
+    <tr><th>Data it reads</th><td><code>src/GalaxyEggbert/Game/DecorQuartTable.hpp</code> (the original's quarter-cell solidity table), <code>include/GalaxyEggbert/BlockTypes.hpp</code> (icon names)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert</code></td></tr>
+    <tr><th>CSV export</th><td><code>tools/DumpBlockDefinitions.cpp</code> &rarr; <code>tools/data/blocks.csv</code></td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    A <a href="Block.html">Block</a>'s type is just a tile number from <code>object-m.png</code>.
+    The registry says what that number means, in one place. The terrain renderer, Blupi's collision,
+    the interaction system, the editor palette, the clipboard, the legacy saw upgrade, the 3D effects
+    and the Python world checkers all read it; none of them keeps its own list of icons. If you change
+    what a block does, change its entry here and let the consumers follow (see
+    <a href="../tutorials/first-object.html">Tutorial: changing a block or object behaviour</a>).
+    The structure contains no CNA or cna-engine types.
+  </p>
+  <p>Its sibling for MoveObjects is the <a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>.</p>
+
+  <h2><code>BlockDefinition</code> fields</h2>
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+    <tr><td><code>type</code></td><td><code>uint16_t</code></td><td>The icon number itself.</td></tr>
+    <tr><td><code>textureSource</code>, <code>textureIcon</code></td><td><code>BlockTextureSource</code>, <code>uint16_t</code></td><td><code>None</code> for air, otherwise <code>ObjectM</code> and the icon's own number.</td></tr>
+    <tr><td><code>renderMode</code></td><td><code>BlockRenderMode</code></td><td>Mesh shape (below).</td></tr>
+    <tr><td><code>animation</code></td><td><code>BlockAnimationDefinition</code></td><td><code>baseIcon</code>, up to 100 <code>frames</code> (-1 = not drawn), <code>frameCount</code>, <code>divisor</code> (20 Hz ticks per frame), <code>IsAnimated()</code>.</td></tr>
+    <tr><td><code>collisionMask</code></td><td><code>uint16_t</code></td><td>Quarter-cell solidity (below).</td></tr>
+    <tr><td><code>alphaBlend</code></td><td><code>bool</code></td><td>Drawn in the transparent pass (teleporter tips, the thin bar, hub signs, cross billboards).</td></tr>
+    <tr><td><code>doubleSidedCutout</code></td><td><code>bool</code></td><td>Open marker cubes (icons 30, 31) whose inner faces show.</td></tr>
+    <tr><td><code>mobileTransparent</code></td><td><code>bool</code></td><td>The original's "empty mask" property, kept as the original decides it.</td></tr>
+    <tr><td><code>water</code>, <code>spring</code>, <code>temporary</code>, <code>bridge</code>, <code>switchBlock</code></td><td><code>bool</code></td><td>Role flags used by Blupi's controller and the interaction system.</td></tr>
+    <tr><td><code>grassTop</code></td><td><code>bool</code></td><td>Icons 107-109 get the separate grass overlay.</td></tr>
+    <tr><td><code>teleporterTip</code></td><td><code>bool</code></td><td>Icons 330-333.</td></tr>
+    <tr><td><code>decor</code></td><td><code>bool</code></td><td>Passable scenery: empty mask and no role at all, plus the standalone saw blade (which kills by its own disk test). Neither floor nor ceiling for Blupi.</td></tr>
+    <tr><td><code>hazard</code></td><td><code>BlockHazardKind</code></td><td><code>None</code>, <code>Lava</code>, <code>Spike</code>, <code>Crusher</code>, <code>Saw</code>, <code>Blitz</code>, <code>Drip</code>, <code>Fan</code>.</td></tr>
+    <tr><td><code>fanDirection</code></td><td><code>BlockFanDirection</code></td><td><code>NegativeX</code>, <code>PositiveX</code>, <code>NegativeZ</code>, <code>PositiveZ</code> for the four fan bases.</td></tr>
+    <tr><td><code>doorKeyType</code></td><td><code>int8_t</code></td><td>Key object type (49, 50, 51) that opens this door, or -1.</td></tr>
+    <tr><td><code>teleporterIndex</code></td><td><code>int8_t</code></td><td>1-4 for the teleporters, or -1.</td></tr>
+    <tr><td><code>worldSelectIndex</code></td><td><code>int16_t</code></td><td>Hub sign index as the original's <code>Decor::IsWorld()</code> reads it: 1-14, 199 for the return sign, -1 otherwise.</td></tr>
+  </table>
+
+  <h3>Render modes</h3>
+  <table>
+    <tr><th><code>BlockRenderMode</code></th><th>Shape</th></tr>
+    <tr><td><code>Air</code></td><td>Nothing (icon 0, and unsupported types).</td></tr>
+    <tr><td><code>UniformCube</code></td><td>The default: a cube with the same tile on every face.</td></tr>
+    <tr><td><code>DirectionalCube</code></td><td>A cube whose faces use different tiles (<code>DirectionalCubeTiles</code>).</td></tr>
+    <tr><td><code>InnerPillarBox</code></td><td>A narrower box inside the cell (icons 76, 182, 183, 384, 385).</td></tr>
+    <tr><td><code>ThinBar</code></td><td>Icon 202.</td></tr>
+    <tr><td><code>InnerFlatPlate</code></td><td>A vertical plate through the cell, turnable by a plate-rotation record (grates, signs, many decorations).</td></tr>
+    <tr><td><code>TripleCrossBillboard</code></td><td>Three crossed quads for small sprite parts (53-60, 63, 64).</td></tr>
+    <tr><td><code>SawBlade</code></td><td>The saw (378) and the stopped saw (379).</td></tr>
+  </table>
+  <p>Many of these tiles are drawn as original 3D models instead when a model exists (<code>BlockModels.hpp</code>, <a href="../rendering.html">Rendering</a>); the render mode is the fallback and the geometry the editor and occlusion code reason about.</p>
+
+  <h3>Collision masks</h3>
+  <p>
+    The original 2D game describes every tile by a 4 &times; 4 grid of quarter-cells
+    (<code>Tables::table_decor_quart</code>, transcribed verbatim into <code>DecorQuartTable.hpp</code>).
+    The registry packs that grid into 16 bits: bit <code>row * 4 + col</code>, row 0 at the top,
+    1 = solid. In 3D the mask is extruded through the Z axis. <code>0xFFFF</code> is a full block,
+    <code>0</code> is passable.
+  </p>
+  <p>Two lists adjust the original's masks for 3D:</p>
+  <ul>
+    <li><code>kSolidIn3DDecor</code> (12 icons: 49, 50, 51, 76, 77, 199, 200, 201, 235, 236, 300, 398) are decorations Blupi walks in front of in 2D but that would stand in his way in 3D (columns, posts, girder, machine pieces, trestle, slime column, balustrade). Their mask is forced to <code>0xFFFF</code>. Secret passages stay passable.</li>
+    <li><code>kSolidBigDecorIcons</code> (35 <code>explo.png</code> icons: palms, trees, plants, houses, machines, toys, palace pieces, the Blupi statue, the green columns and vase) mark which <em>BigDecor</em> pictures are solid. <code>IsSolidBigDecorIcon(icon)</code> tests membership. Their shape comes from the measured 3D model; without one, a column <code>kSolidBigDecorHeight = 2</code> cells high over the anchor. See <a href="../internals/collision.html">Collision</a>.</li>
+  </ul>
+
+  <h3>Animation</h3>
+  <p>
+    Lava, spike trap, crusher, saw, both waters, the four fans, the vanishing saucer (<code>Temp</code>),
+    the marine plant, the lightning (<code>Blitz</code>) and the slime drip have frame tables copied
+    from the original. Any non-base frame stored in a world (for example lava 69-72) resolves through
+    its family's base definition. <code>ResolveAnimationIconAt()</code> adds a per-cell phase offset
+    (13 x + 7 row + 11 z for lava, spike, drip, saw and the first water; a different offset and pace
+    for the second water) so neighbouring cells do not animate in lockstep, and makes the spike trap
+    snap while Blupi is not focused. The lightning uses a fixed shuffle instead of the original's
+    random frame, so runs stay reproducible.
+  </p>
+
+  <h2>Public API</h2>
+  <p>Verified in <code>BlockDefinitionRegistry.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Description</th></tr>
+    <tr><td><code>MaxObjectMIcon = 440</code>, <code>DefinitionCount = 441</code></td><td>The supported range.</td></tr>
+    <tr><td><code>static const BlockDefinitionRegistry&amp; Instance()</code></td><td>The one immutable table, built on first use.</td></tr>
+    <tr><td><code>Get(type)</code></td><td>The definition; types above 440 get an <code>Air</code>-rendered "unsupported" definition.</td></tr>
+    <tr><td><code>IsSupported(type)</code></td><td><code>type &lt;= 440</code>.</td></tr>
+    <tr><td><code>ResolveAnimationIcon(type, rawTick)</code></td><td>The icon to draw at a 20 Hz tick.</td></tr>
+    <tr><td><code>ResolveAnimationIconAt(type, rawTick, x, y, z, blupiFocused = true)</code></td><td>The same with the per-cell offset.</td></tr>
+    <tr><td><code>GetBlockDefinition(type)</code>, <code>IsSupportedBlockType(type)</code>, <code>ResolveBlockAnimationIcon(...)</code>, <code>ResolveBlockAnimationIconAt(...)</code></td><td>Free inline shortcuts to <code>Instance()</code>.</td></tr>
+    <tr><td><code>kSolidIn3DDecor</code>, <code>kSolidBigDecorIcons</code>, <code>kSolidBigDecorHeight</code>, <code>IsSolidBigDecorIcon()</code></td><td>The 3D solidity lists described above.</td></tr>
+  </table>
+
+  <h2>Usage</h2>
+  <p>Blupi's collision reads the mask bit of the quarter-cell a point falls in (<code>BlupiController::IsPointSolid</code>):</p>
+  <pre><code>const int col = std::clamp(static_cast&lt;int&gt;(fracX * 4.0f), 0, 3);
+const int row = std::clamp(static_cast&lt;int&gt;((1.0f - fracY) * 4.0f), 0, 3); // real row 0 = TOP
+const std::uint16_t bit = static_cast&lt;std::uint16_t&gt;(1u &lt;&lt; static_cast&lt;unsigned&gt;(row * 4 + col));
+return (GalaxyEggbert::GetBlockDefinition(blockType).collisionMask &amp; bit) != 0;</code></pre>
+  <p>The legacy saw-floor upgrade picks a floor material only among full, still, harmless blocks (<code>LegacySawFloors.hpp</code>):</p>
+  <pre><code>const auto&amp; d = GetBlockDefinition(other);
+if (!other || d.collisionMask != 0xFFFF || d.animation.IsAnimated() || d.hazard != BlockHazardKind::None) continue;</code></pre>
+
+  <h2>CSV export: <code>tools/data/blocks.csv</code></h2>
+  <p>
+    The Python world tools cannot link C++, so <code>DumpBlockDefinitions</code> writes the registry as
+    CSV, one row per icon 0-440 (442 lines with the header):
+  </p>
+  <pre><code>icon,render,collision_mask,solid,water,teleporter,fan,spring,bridge,door_key,hazard,world_select,hub_door,animated
+68,1,0,1,0,0,0,0,0,-1,1,-1,0,1
+378,7,0,0,0,0,0,0,0,-1,4,-1,0,1</code></pre>
+  <p>
+    <code>render</code> and <code>hazard</code> are the enum values; <code>solid</code> is standing-surface
+    solidity as the controller decides it without sub-cell precision (any block except air,
+    teleporters, fans, water and decor); <code>hub_door</code> is 1 for the hub door, 2 for the gold
+    door. It is read by <code>tools/levelcheck.py</code>, <code>tools/flightcheck.py</code> and
+    <code>tools/watercheck.py</code>.
+  </p>
+  <pre><code>DumpBlockDefinitions &gt; tools/data/blocks.csv            # regenerate
+DumpBlockDefinitions --check tools/data/blocks.csv      # PASS/FAIL, used by ctest</code></pre>
+  <div class="warn"><strong>Generated file.</strong> Never edit <code>blocks.csv</code> by hand. The
+    ctest <code>VerifyBlockDefinitionsCsv</code> runs the <code>--check</code> form and fails when the
+    committed file no longer matches the C++ table; regenerate it after any registry change.</div>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tools/VerifyDefinitionRegistries.cpp</code> (ctest, built with the CNA target): every icon keeps its id, render modes match the expected classification, cross billboards are alpha-blended, every mask equals the original table except the solid-in-3D list, <code>mobileTransparent</code> and hazards agree with <code>BlockTypes</code>, icon 441 is unsupported, the saw/stopped-saw animations; and the same for the object registry.</li>
+    <li><code>VerifyBlockDefinitionsCsv</code> (the CSV gate above).</li>
+    <li><code>tools/VerifyTerrainAnimDivisor.cpp</code>: animation divisors per tile.</li>
+    <li>Consumers' tests exercise it too: <code>VerifyBlupiMovement</code> (collision), <code>VerifyTileFaces</code>, <code>VerifySceneEffects</code>, <code>VerifyUltra</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>, <a href="Block.html">Block</a></li>
+    <li><a href="../internals/collision.html">Collision</a>, <a href="TerrainRenderer.html">TerrainRenderer</a>, <a href="TileAtlas.html">TileAtlas</a></li>
+    <li><a href="../assets.html">Assets &amp; Tools</a>, <a href="../development/extending-the-game.html">Extending the Game</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/VoxelConfig.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; VoxelConfig</span>
+    </a>
+    <a class="next" href="../classes/MoveObjectRecord.html">
+      <span class="label">Next</span>
+      <span class="title">MoveObjectRecord &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

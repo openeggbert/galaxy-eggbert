@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TerrainRenderer — Galaxy Eggbert Docs</title>
+<meta name="description" content="TerrainRenderer builds, patches and draws the terrain meshes of a Galaxy Eggbert world: opaque, cut-out, blended, grass, animated, water and lava meshes and the near terrain reliefs.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> TerrainRenderer</div>
+  <h1>TerrainRenderer</h1>
+  <p class="subtitle">Turns a loaded world into terrain meshes, keeps the animated ones current, builds reliefs near the camera and draws them in the right passes.</p>
+
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/TerrainRenderer.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Game/TerrainRenderer.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Former name</th><td><code>GETerrainRenderer</code> (the <code>GE</code> prefixes were dropped from game components)</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    One <code>TerrainRenderer</code> is built per loaded world (and rebuilt when the world changes in a way it cannot patch).
+    The constructor walks every cell of the <a href="World.html">World</a> and sorts it into a mesh by what its
+    <a href="BlockDefinitionRegistry.html">block definition</a> and its tile's texels call for: the static opaque mesh,
+    the cut-out mesh (alpha-tested sprites), the static blended mesh (faint tiles), the grass-top overlay, the animated
+    and water cells (rebuilt when the animation phase changes), and the lava, lightning and wind cells (each frame of their
+    cycle built once and cached). Cells drawn as 3D models are left out and listed by <code>ModelCells()</code>.
+    The meshes are uploaded as <code>GpuMeshParts</code>, split when one buffer would be too big (<code>MeshParts.hpp</code>).
+  </p>
+  <p>
+    The class holds GPU resources and needs a <code>GraphicsDevice</code>, so it is not unit-tested itself; the pure parts it
+    relies on are (see Tests).
+  </p>
+
+  <h2>Collaborators</h2>
+  <ul>
+    <li><a href="World.html">World</a> (input) and <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> (render mode, texture icon, animation, water).</li>
+    <li><a href="TileAtlas.html">TileAtlas</a> (UVs on the padded terrain sheet) and <code>TileCoverage</code> (opaque, cut-out or translucent per icon).</li>
+    <li>Geometry helpers: <code>DirectionalCubeTiles</code>, <code>InnerPillarBoxTiles</code>, <code>ThinBarTiles</code>, <code>InnerFlatPlateTiles</code>, <code>BrickEdges</code>, <code>WaterSurface</code>, <code>LavaSurface</code>, <code>BoltMesh</code>, <code>TerrainModelCells</code>.</li>
+    <li><code>TerrainReliefTable</code> (<code>TerrainRelief.hpp</code>) for the reliefs; <code>TerrainGiSettings</code> (<code>TerrainGi.hpp</code>) for Ultra's baked light.</li>
+    <li><a href="WorldRenderer.html">WorldRenderer</a> draws it each frame and passes the effects' shaders as a <code>TerrainShading</code>.</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> creates it, calls <code>Update()</code> each tick and patches or rebuilds it in <code>RefreshTerrainMeshIfChanged()</code>.</li>
+  </ul>
+
+  <h2>Public API</h2>
+  <table>
+    <tr><th>Member</th><th>What it does</th></tr>
+    <tr><td><code>TerrainRenderer(device, world, tileAtlas, tileCoverage = {}, drawSecret = false, modelDrawnIcons = {}, reliefs = nullptr, ambientOcclusion = false, globalIllumination = nullptr)</code></td><td>Builds every mesh. <code>drawSecret</code> draws the flight barrier 214 (ShowSecret); <code>modelDrawnIcons</code> are still icons the caller draws as models; <code>reliefs</code> must outlive the renderer; the last two bake ambient occlusion or Ultra's GI into the vertex colour.</td></tr>
+    <tr><td><code>AmbientOcclusion()</code>, <code>GlobalIllumination()</code></td><td>Whether the meshes were built with those bakes.</td></tr>
+    <tr><td><code>Update(device, animPhase, blupiFocused = true)</code></td><td>Rebuilds the animated and water meshes and picks the lava, lightning and wind frame for the phase; a no-op when the phase is unchanged.</td></tr>
+    <tr><td><code>UpdateRelief(device, focus, radius, maxBuilds = 2)</code></td><td>Builds reliefs for the chunks within <code>radius</code> of <code>focus</code> (nearest first, on worker threads) and releases far ones.</td></tr>
+    <tr><td><code>AdoptReliefs(previous)</code></td><td>Takes over a previous renderer's reliefs for chunks whose cells did not change.</td></tr>
+    <tr><td><code>SetReliefOverhangs(keep)</code></td><td>Keep reliefs' overhangs into the air (for comparison).</td></tr>
+    <tr><td><code>ReliefChunkCount()</code>, <code>ReliefChunksShown()</code>, <code>ReliefPrimitiveCount()</code></td><td>Relief statistics.</td></tr>
+    <tr><td><code>kReliefChunkCells</code> = 8, <code>kReliefRelease</code> = 4.0, <code>kReliefBuildsInFlight</code> = 2</td><td>Chunk edge in cells, release distance beyond the radius, worker builds at a time.</td></tr>
+    <tr><td><code>DrawOpaque(device, effect, shading = nullptr)</code></td><td>Lava, the static mesh, reliefs or far cubes, the cut-outs; writes depth.</td></tr>
+    <tr><td><code>DrawTransparent(device, effect, shading = nullptr)</code></td><td>Blended static tiles, animated tiles, lightning, wind and water; depth read only. Must come after everything opaque.</td></tr>
+    <tr><td><code>Draw(device, effect)</code></td><td>Both halves in a row, for a caller with nothing to draw in between.</td></tr>
+    <tr><td><code>DrawGrass(device, grassEffect)</code></td><td>The icon-107 grass tops with their own texture and effect.</td></tr>
+    <tr><td><code>DrawShadowCasters(device, solid, cutout)</code>, <code>DrawGeometryPass(device, colored, plain, cutout)</code>, <code>DrawWater(device, effect)</code></td><td>The effects' shadow map, Ultra's geometry pass and its water mirror.</td></tr>
+    <tr><td><code>LavaCells()</code>, <code>BlitzCells()</code>, <code>BlitzShown()</code></td><td>Where lava and lightning are, and whether the lightning strikes now (point lights, the zap sound).</td></tr>
+    <tr><td><code>SetModelDrawnBases(bases)</code>, <code>SetSawModelBases(bases)</code></td><td>Animated tiles the caller draws as models (fans, saws); the next <code>Update()</code> leaves them out.</td></tr>
+    <tr><td><code>ModelCells()</code>, <code>PatchModelCells(world, changes, icons, drawSecret, coverage)</code></td><td>The cells drawn as models; apply journal changes that only touch them (false: rebuild instead).</td></tr>
+    <tr><td><code>BlockCount()</code>, <code>RaggedBrickCount()</code>, <code>AnimatedBlockCount()</code>, <code>WaterBlockCount()</code>, <code>VertexCount()</code>, <code>PrimitiveCount()</code></td><td>Statistics printed at load.</td></tr>
+    <tr><td><code>CentroidX()</code>, <code>CentroidY()</code>, <code>CentroidZ()</code></td><td>Centre of all non-air blocks, a fallback camera target.</td></tr>
+  </table>
+  <p><code>TerrainShading</code> (same header) carries the effects' replacement shaders: <code>occluded</code>, <code>lit</code>, <code>cutout</code>, <code>lava</code>, <code>water</code> and Ultra's <code>reliefGi</code> callback; a null member keeps the stock effect.</p>
+
+  <h2>How it is used</h2>
+  <p>Built at load (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameLoad.cpp</code>):</p>
+  <pre><code>terrainRenderer_ = std::make_unique&lt;TerrainRenderer&gt;(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
+                                                     terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
+                                                     TerrainOcclusionWanted(), TerrainGiWanted());
+...
+terrainRevision_ = worldRuntime_.GetWorld().blockRevision();</code></pre>
+  <p>After a tick changed blocks, the cheap path is tried first:</p>
+  <pre><code>const auto changes = world.blockChangesSince(terrainRevision_);
+if (TerrainDrawSecret() == terrainDrawSecret_ &amp;&amp;
+    terrainRenderer_-&gt;PatchModelCells(world, changes, StillModelIcons(), terrainDrawSecret_, tileCoverage_))
+{
+    terrainRevision_ = world.blockRevision();
+    return;
+}
+... // otherwise build a new TerrainRenderer and call rebuilt-&gt;AdoptReliefs(*terrainRenderer_)</code></pre>
+  <ul>
+    <li>Draw order matters: <code>DrawOpaque()</code> before the models, <code>DrawTransparent()</code> after them, or water does not cover what lies in it (OR-0052).</li>
+    <li>Reliefs are off unless the Setup's "3D terrain" is on (or <code>GALAXY_TERRAIN_RELIEF=1</code>); without <code>UpdateRelief()</code> every chunk stays textured cubes.</li>
+    <li>Brick edge pieces 262, 263 and 283 are drawn ragged only at a wall's open end (<code>AppendRaggedBrick</code>); the count is <code>RaggedBrickCount()</code>.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyTileFaces</code> (<code>tools/VerifyTileFaces.cpp</code>): directional-cube faces, water exterior faces, the padded atlas, and that incremental model-cell patching (<code>PatchTerrainModelCells</code>, behind <code>PatchModelCells</code>) equals a full scan.</li>
+    <li><code>VerifyTileCoverage</code>: tile classification of <code>object-m.png</code> and when a brick edge piece is ragged (<code>BrickEdges::ShapeFor</code>).</li>
+    <li><code>VerifyTerrainLighting</code>, <code>VerifyTerrainAnimDivisor</code>: face brightness and the per-type animation pace.</li>
+    <li><code>VerifySceneEffects</code>, <code>VerifyUltra</code>: the occlusion and GI bakes' rules.</li>
+    <li>The drawn result: golden frames (<code>tools/verify_golden_frames.sh</code>) and <code>tools/verify_lava_depth.py</code>, manual, with a display.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../rendering.html">Rendering</a> &mdash; where the terrain sits in the frame.</li>
+    <li><a href="WorldRenderer.html">WorldRenderer</a>, <a href="TileAtlas.html">TileAtlas</a>, <a href="World.html">World</a>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/Autoplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Autoplay</span>
+    </a>
+    <a class="next" href="../classes/TileAtlas.html">
+      <span class="label">Next</span>
+      <span class="title">TileAtlas &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

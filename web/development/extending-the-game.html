@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Extending the Game — Galaxy Eggbert Docs</title>
+<meta name="description" content="How to add or change a block behaviour, an object behaviour, a sound, a model, a world or an editor feature in Galaxy Eggbert, and what to re-run afterwards.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,57 +14,182 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
-  <a href="index.html">Development</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html" class="active">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Extending the Game</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Development</a> <span>/</span> Extending the Game</div>
   <h1>Extending the Game</h1>
-  <p class="subtitle">What you can safely add today, and what requires an approval or design decision first.</p>
+  <p class="subtitle">Where each kind of change goes, which source of truth it starts from, and what to re-run afterwards.</p>
 
-  <h2>Safe to Add Today</h2>
+  <div class="warn"><strong>Fidelity first</strong> Galaxy Eggbert is a faithful remake. A gameplay change
+  must trace to what Mobile Eggbert does (its <code>Decor.cpp</code> is the authority for numbers and timing),
+  or be recorded as a small, deliberate 3D adaptation (<code>M3D-NNNN</code>) or an owner decision
+  (<code>OR-</code>, <code>MR-</code>, <code>Q-</code>). New media need approval. "It seems plausible" is not
+  a reason. Read the ledgers in <code>plans/audit/</code> before you start: the question may already be
+  answered.</div>
+
+  <h2>A block behaviour: the registry first</h2>
+  <p>A block's type number is its icon in <code>Content/icons/object-m.png</code> (0-440). Everything the game
+  knows about a type (render mode, collision mask, animation frames and divisor, hazard kind, water, spring,
+  bridge, switch, door key, teleporter, world-sign index, passable <code>decor</code>) is one
+  <code>BlockDefinition</code> in <code>src/GalaxyEggbert/BlockDefinitionRegistry.cpp</code> (header
+  <code>include/GalaxyEggbert/BlockDefinitionRegistry.hpp</code>). The collision mask is derived from the
+  original's quarter-cell table; deliberate 3D exceptions are named lists in the header, such as
+  <code>kSolidIn3DDecor</code> and <code>kSolidBigDecorIcons</code>.</p>
+  <ol>
+    <li>Change the registry entry (or its named list). Do not add a parallel <code>switch</code> on icon
+      numbers in a consumer.</li>
+    <li>The consumers follow by themselves: <code>BlupiController</code> (collision, standing),
+      <code>InteractionSystem</code> (hazards and tile reactions), <code>TerrainRenderer</code> and its helpers
+      (render mode, cut-outs, animation), the editor (palette, validation).</li>
+    <li>Update the expectations in <code>tools/VerifyDefinitionRegistries.cpp</code>, add a movement or
+      interaction test for the new behaviour, and refresh <code>tools/data/blocks.csv</code>, which the Python
+      checkers read (<code>VerifyBlockDefinitionsCsv</code> fails while it is stale).</li>
+    <li>Re-run the world checks: a tile that becomes solid or passable can open or close a route.</li>
+  </ol>
+  <p>A worked example is the tutorial <a href="../tutorials/first-object.html">A Block or Object
+  Behaviour</a>.</p>
+
+  <h2>An object behaviour</h2>
+  <p>Moving and interactive objects are the original's <code>Def::ObjectType</code> values (0-203,
+  <code>include/GalaxyEggbert/Def/ObjectType.hpp</code>). Their per-type facts live in
+  <code>src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp</code>: render mode and texture sheet, placement
+  and semantic kind, patrol timing, and declarative capability flags (<code>dynamiteDestructible</code>,
+  <code>genericContactHazard</code>, <code>balloonPoppableHazard</code>, <code>standardPickupTouch</code>,
+  <code>smallEnemy</code>, <code>levelExit</code>...).</p>
   <ul>
-    <li><strong>New block types</strong> — see <a href="../tutorials/modifying-levels.html">Adding a Block Type</a>.</li>
-    <li><strong>New hand-authored <code>.vwr</code> worlds</strong> — see <a href="../tutorials/first-object.html">Authoring a New .vwr World</a>.</li>
-    <li><strong>Bug fixes to <code>GalaxyEggbertSimple3D</code></strong> and faithful-remake gameplay parity work on it — explicitly allowed by the direction lock.</li>
+    <li>If the change is "type X is treated like these others", flip a flag in the registry and update its
+      expectation in <code>VerifyDefinitionRegistries</code>.</li>
+    <li>If the type has a state machine of its own (lifts, crates, vehicles, the big creature), the logic lives
+      in <code>InteractionSystem</code> or <code>BlupiController</code>. <code>InteractionSystem</code> reports
+      what happened as events (<code>EventsThisFrame()</code>) and the host applies what needs the controller,
+      camera or HUD; keep it free of those dependencies.</li>
+    <li>Animation frames per type and phase are <code>GetObjIcon</code> in
+      <code>src/GalaxyEggbert/Game/ObjectIcons.cpp</code>, locked by <code>VerifyGetObjIcon</code> and
+      cross-checked by <code>VerifyObjIconAgainstReferenceDoc</code>.</li>
+    <li>Creature patrol timing is the original's per type (BD-0016); the same table drives
+      <code>CREATURE_TIMING</code> in <code>tools/worldkit.py</code>, so change both or neither.</li>
   </ul>
 
-  <h2>Requires a Design Decision First</h2>
-  <ul>
-    <li><strong>Billboard/object rendering</strong> — the open "billboard vs. textured cube" rendering-mode question for objects (see <a href="../gameplay.html">Gameplay</a> and <code>mobile-eggbert-reference/09-open-questions.md</code>). The former technical blocker — easy-3d's <code>BillboardBatch</code> had no vertex builder or CNA renderer adapter (E3D-MIG-061/062) — is gone: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and drawn as a <code>GpuMesh</code>.</li>
-    <li><strong>Save format</strong> — whether to reuse mobile-eggbert's exact byte layout is an open question, not a default.</li>
-    <li><strong>Chunk-radius streaming</strong> — scheduled (E3D-MIG-057) but not yet implemented.</li>
-  </ul>
+  <h2>A sound</h2>
+  <p>The game plays the original's 93 sound channels (<code>Content/sounds/sound000.wav</code> to
+  <code>sound092.wav</code>, <code>Def::SoundChannel</code>) with the original's per-channel volume and pitch
+  table (<code>kVolumePitch</code> in <code>src/GalaxyEggbert/Game/Sound.cpp</code>). There are no new sound
+  files: "adding a sound" means playing an existing channel at a moment where the original plays it, with
+  <code>Sound::Play</code> or, positioned in the world, <code>Sound::PlayAt</code>. An example from the
+  history: <code>feat(audio): the lightning's zap (channel 69) under its emitter, as Decor::BlitzActif</code>,
+  which plays channel 69 at each lightning emitter on the cycle ticks the original uses. Music tracks are
+  rendered from the original's MIDI by <code>tools/music/render_music.py</code>; a world's track is stored in
+  its header. See <a href="../audio.html">Audio &amp; Music</a>.</p>
 
-  <h2>Requires Explicit User Approval</h2>
+  <h2>A model: through the converters, never by hand</h2>
+  <p>Blupi, his vehicles, the objects and the terrain reliefs are converted from the original Ray Dream scenes
+  (the sibling data repository <code>speedyblupi-data</code>) and are generated files.</p>
   <ul>
-    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../cna-engine</code> (which replaced <code>../easy-3d</code> on 2026-10-20).</li>
-    <li>Copying mobile-eggbert code or data (Tables.cpp arrays, Decor.cpp logic, GameData.cpp byte layout) into galaxy-eggbert, even as "just data."</li>
-    <li>Adding new engine-layer investment to <code>GalaxyEggbertSimple3D</code> beyond bug fixes/parity work.</li>
-    <li>Adding MeshCraft, Mesh World, Nova3D, further Simple3D features, or Lua to the active (CNA) path.</li>
+    <li>An object: add a line to <code>tools/rd4_to_gltf/objects.txt</code> (name, sprite sheet, icon range,
+      scene files, options), build with <code>tools/rd4_to_gltf/build_object_library.py</code>, export with
+      <code>export_objects.py</code> (it runs CNA's own avatar converter, so it needs the CNA checkout). The
+      result is <code>avatars3d/objects/&lt;name&gt;_&lt;scene&gt;/</code> with an <code>icons.txt</code> saying which
+      sprite icon each pose replaces; icons not listed stay billboards. The exact commands are in
+      <code>avatars3d/objects/README.md</code>.</li>
+    <li>Blupi: <code>match_icons.py</code> and <code>build_clip_library.py</code> build a clip per
+      <code>BlupiController::AnimState</code>; commands in <code>avatars3d/blupi/README.md</code>. Rebuilding him
+      is expensive; compare clip by clip before replacing anything.</li>
+    <li>Terrain reliefs: <code>tools/terrain_relief/</code> (<code>tiles.txt</code>, <code>build_relief.py</code>),
+      commands in <code>avatars3d/terrain/README.md</code>.</li>
   </ul>
+  <p>Check the match against the sprites (each model's comparison sheet, <code>tools/model_parity.py</code>),
+  run <code>VerifyObjectModelTable</code>, refresh <code>plans/inventory/assets.md</code> with
+  <code>python3 tools/asset_inventory.py</code>, and look at it live (<code>world998</code>, the gallery, shows
+  every object). See <a href="../assets.html">Assets &amp; Tools</a>.</p>
 
-  <h2>Never Do</h2>
-  <ul>
-    <li>Invent gameplay mechanics that don't exist in mobile-eggbert (coins, time bonuses, coyote time, wall/double jump, combo multipliers, etc.) — see the Faithful-Remake rule in <a href="../gameplay.html">Gameplay</a>.</li>
-    <li>Add <code>#ifdef</code> engine guards to work around a backend gap — fix the backend instead.</li>
-    <li>Mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation — new CNA code goes in <code>src/GalaxyEggbertCNA/</code>.</li>
-  </ul>
+  <h2>A world</h2>
+  <p>Campaign worlds are Python generators in <code>tools/worlds/</code>; the <code>.vwr</code> files in
+  <code>worlds3d/</code> are their committed output. Change the script, never the file. The full walk-through is
+  the tutorial <a href="../tutorials/modifying-levels.html">Authoring a World</a>. A <em>new</em> numbered
+  campaign world beyond the 78 is not a routine task: the hubs, <code>HubDoors</code>,
+  <code>campaigncheck.py</code> and the autoplay chains encode the original's structure. Players' own worlds
+  are made in the <a href="../editor.html">3D World Editor</a>.</p>
+
+  <h2>An editor feature: UX only</h2>
+  <p>The editor (<code>src/GalaxyEggbert/Editor/</code>, namespace <code>GalaxyEggbert::Editor</code>) is the one
+  place where new UX may be invented. It must not add gameplay: it places the game's existing blocks and
+  objects, applies the original's creature timing, and validates through the same registries. Its palette
+  follows the Eggbert 2 editor's order where the original specifies one; parity findings are
+  <code>ED-NNNN</code> rows in <code>plans/audit/editor_parity.md</code>. Keep editor logic testable without a
+  window and extend <code>VerifyGEWorldEditor</code>, <code>VerifyGEEditorPalette</code>,
+  <code>VerifyGEEditorStorage</code>, <code>VerifyGEEditorObjects</code> or <code>VerifyGEEditorDevices</code>;
+  for flows that need the screen, add or replay a step file in <code>tools/qa_steps/</code>.</p>
+
+  <h2>What to re-run afterwards</h2>
+  <table>
+    <tr><th>You changed</th><th>Re-run</th></tr>
+    <tr><td>a block or object behaviour</td><td>ctest (registries, CSV, movement and interaction verifiers), golden trace, the affected missions' autoplay scripts, <code>tools/verify_demos.sh</code></td></tr>
+    <tr><td>anything in the simulation</td><td>the playthroughs and the demo replays. If the shipped demos no longer replay as recorded, bump <code>kDemoSimulationRevision</code> in <code>DemoReplay.hpp</code> and record them again (<code>tools/record_demo.sh</code>)</td></tr>
+    <tr><td>a sound cue</td><td>ctest (<code>VerifyBlupiMovement</code> checks one-shot sound cues), a live listen with <code>QA_SOUND=1</code></td></tr>
+    <tr><td>a model</td><td><code>VerifyObjectModelTable</code>, the parity sheet, golden frames if a model in <code>world999</code> changed</td></tr>
+    <tr><td>a world</td><td>the generator, the Python checkers, <code>VerifyShippedWorlds</code>, the world's playthrough</td></tr>
+    <tr><td>the editor</td><td>the editor verifiers and the relevant <code>tools/qa_steps/editor_*.txt</code></td></tr>
+  </table>
+  <p>Details for each check: <a href="testing.html">Testing &amp; QA</a>. Record what you found in the ledger
+  row it belongs to, and update <code>CURRENT.md</code> when the verified state or a limitation changes.</p>
 
   <div class="page-nav">
-    <a href="debugging.html">← Debugging</a>
-    <a href="known-issues.html">Known Issues →</a>
+    <a class="prev" href="../development/debugging.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Debugging</span>
+    </a>
+    <a class="next" href="../development/known-issues.html">
+      <span class="label">Next</span>
+      <span class="title">Known Issues &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

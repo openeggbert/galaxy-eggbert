@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Galaxy Eggbert Documentation</title>
+<meta name="description" content="Documentation of Galaxy Eggbert, a faithful 3D remake of Speedy Blupi built in C++ on the CNA engine.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -24,11 +25,15 @@
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
 
-  <div class="nav-section">Gameplay</div>
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
 
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
@@ -36,10 +41,11 @@
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
 
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
@@ -51,6 +57,7 @@
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
@@ -58,110 +65,144 @@
 
 <main id="content">
   <h1>Galaxy Eggbert Documentation</h1>
-  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · CNA · cna-engine · CMake</p>
-
-  <div class="warn">
-    <strong>This documentation was rewritten 2026-07-04</strong>
-    It now describes the <strong>current long-term direction: Direct CNA + small helpers beside it</strong>
-    (<code>GalaxyEggbertCNA</code>), per the project's "Current Direction Lock" (see
-    <a href="architecture.html">Architecture</a>). The previous documentation described an
-    Urho3D-based architecture (<code>GalaxyEggbertApp</code>, <code>Blupi</code>, <code>Decor</code>, …)
-    that no longer exists in the source tree. The older, currently-playable
-    <code>GalaxyEggbertSimple3D</code> target (built on Simple3D/U3D) still exists as a reference
-    implementation and is mentioned where relevant, but is not the subject of this rewrite.
-    <br><strong>Updated 2026-10-20:</strong> the helper library easy-3d (namespace <code>Easy3D</code>)
-    was removed and replaced by the strict modules of <strong>cna-engine</strong>
-    (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>) — see
-    <a href="engine-integration.html">Engine Integration</a>.
-  </div>
+  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em>: C++23 · CNA · cna-engine · CMake</p>
 
   <h2>What is Galaxy Eggbert?</h2>
   <p>
-    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013,
-    itself later ported to C++ as <strong>mobile-eggbert</strong>.
-    Galaxy Eggbert's long-term target, <code>GalaxyEggbertCNA</code>, is built <strong>directly on CNA</strong>
-    (an XNA-compatible, SDL3-based C++ game framework) with the strict modules of <strong>cna-engine</strong>
-    as small helpers beside it (camera, mesh builder for cubes/plates/billboards, GPU meshes, texture
-    regions; XNA 4.0 types only) — they do not hide CNA, and game code calls CNA directly. Until
-    2026-10-20 that helper was easy-3d.
+    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, a platform game by Daniel Roux and
+    EPSITEC that came out for Windows Phone (XNA) in 2013 and was later ported to C++ as
+    <strong>Mobile Eggbert</strong>. In Galaxy Eggbert, Blupi walks, jumps, swims and drives
+    through hand-built 3D worlds. He collects treasure chests, eggs and keys, avoids mines,
+    lava, saws and enemies, and reaches the exit. The rules, timings, sounds and pictures follow
+    the original. The worlds themselves are new true-3D designs, and Blupi and the objects are
+    3D models converted from the Ray Dream scenes the original's sprites were rendered from.
   </p>
   <p>
-    <code>GalaxyEggbertCNA</code> is real, buildable code today (opt-in via CMake), not a future plan:
-    it opens a window, loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world, renders
-    textured animated terrain across all Y layers, and moves an invisible collision-only Blupi
-    placeholder through it with gravity and step-up traversal. It does <strong>not</strong> yet render
-    Blupi's sprite, objects/pickups, a HUD, or play sound — see the status table below.
+    The game is written in C++ and is built directly on <strong>CNA</strong>, a C++
+    reimplementation of the XNA 4.0 API. Two strict modules of <strong>cna-engine</strong> sit
+    beside it as helpers (camera, mesh building, GPU meshes, texture regions). The only game
+    target is <code>GalaxyEggbertCNA</code>, and its executable is called
+    <code>GalaxyEggbert</code>.
   </p>
+
+  <div class="note">
+    <strong>State as of 2026-11-10</strong>
+    The game is complete and playable. All 78 campaign worlds are built, and every mission has
+    a scripted playthrough that plays it to the end. The desktop (Linux) and
+    WebGL 2 builds pass every automated check. A public release is waiting only on the
+    maintainer's decision. The status source is <code>CURRENT.md</code> in the
+    repository; <a href="development/known-issues.html">Known Issues</a> summarises what is
+    still open.
+  </div>
 
   <h2>Quick Navigation</h2>
   <div class="card-grid">
     <a class="card" href="getting-started.html">
       <h3>&#128640; Getting Started</h3>
-      <p>Prerequisites and first build steps for GalaxyEggbertCNA.</p>
+      <p>Prerequisites, sibling repositories and the shortest path to a running game.</p>
     </a>
     <a class="card" href="build.html">
       <h3>&#128295; Build Guide</h3>
-      <p>CMake options, the CNA/cna-engine/mobile-eggbert sibling repo layout.</p>
+      <p>Linux desktop, the Linux runtime bundle, WebGL 2, Android and Windows.</p>
+    </a>
+    <a class="card" href="gameplay.html">
+      <h3>&#127918; Gameplay</h3>
+      <p>Objectives, hazards, enemies, pickups, vehicles, swimming, crates and hubs.</p>
+    </a>
+    <a class="card" href="controls.html">
+      <h3>&#127918; Controls</h3>
+      <p>Keyboard, mouse, gamepad and touch screen.</p>
+    </a>
+    <a class="card" href="levels.html">
+      <h3>&#127758; Campaign &amp; Worlds</h3>
+      <p>The main hub, twelve theme worlds, 64 missions and the bonus world.</p>
+    </a>
+    <a class="card" href="editor.html">
+      <h3>&#9935; 3D World Editor</h3>
+      <p>Build your own worlds in the game, play-test them and share them.</p>
+    </a>
+    <a class="card" href="galaxy.html">
+      <h3>&#127756; Your Own Galaxy</h3>
+      <p>Every player can build a whole world system of hubs and missions.</p>
+    </a>
+    <a class="card" href="demos.html">
+      <h3>&#127909; Demos &amp; Recordings</h3>
+      <p>The main menu's demos, and recording, exporting and importing your own.</p>
+    </a>
+    <a class="card" href="graphics.html">
+      <h3>&#10024; 3D Effects &amp; Graphics</h3>
+      <p>Effect levels from Off to Ultra, frame rate, textures and display settings.</p>
     </a>
     <a class="card" href="architecture.html">
       <h3>&#127963; Architecture</h3>
-      <p>The Direction Lock, layering, and how CNA/cna-engine/mobile-eggbert relate.</p>
-    </a>
-    <a class="card" href="gameplay.html">
-      <h3>&#127918; Gameplay Status</h3>
-      <p>What actually works today vs. what's planned, faithfully to mobile-eggbert.</p>
-    </a>
-    <a class="card" href="levels.html">
-      <h3>&#127758; Worlds &amp; the .vwr Format</h3>
-      <p>The genuinely-3D voxel world format and how it differs from mobile-eggbert's flat levels.</p>
+      <p>The layers, the registries, the event boundary and the render seam.</p>
     </a>
     <a class="card" href="classes/index.html">
       <h3>&#128196; Class Reference</h3>
-      <p>GEWorldRuntime, GETerrainRenderer, GEBlupiController, GETileAtlas, and the Worlds data model.</p>
+      <p>World, BlupiController, InteractionSystem, WorldRenderer, WorldEditor and more.</p>
     </a>
-    <a class="card" href="tutorials/index.html">
-      <h3>&#128214; Tutorials</h3>
-      <p>Building GalaxyEggbertCNA and exploring the world/terrain pipeline.</p>
-    </a>
-    <a class="card" href="development/known-issues.html">
-      <h3>&#128679; Known Issues</h3>
-      <p>What's not implemented yet, and the E3D-MIG task roadmap.</p>
+    <a class="card" href="development/testing.html">
+      <h3>&#9989; Testing &amp; QA</h3>
+      <p>ctest, golden frames, autoplay playthroughs and the world checkers.</p>
     </a>
   </div>
+
+  <h2>What the game has today</h2>
+  <table>
+    <tr><th>Area</th><th>Status</th><th>Details</th></tr>
+    <tr><td>Campaign</td><td><span class="badge badge-done">Done</span></td>
+        <td>Main hub, twelve theme hubs, 64 missions and bonus world 199. Hubs unlock missions as in the original. <a href="levels.html">Campaign &amp; Worlds</a></td></tr>
+    <tr><td>Blupi and objects in 3D</td><td><span class="badge badge-done">Done</span></td>
+        <td>Converted from the original Ray Dream scenes, with a clip for every animation state. Effects stay sprites. <a href="assets.html">Assets</a></td></tr>
+    <tr><td>Gameplay</td><td><span class="badge badge-done">Done</span></td>
+        <td>Hazards, enemies, pickups, vehicles, swimming, crates, lifts, doors, switches, bridges, teleporters. <a href="gameplay.html">Gameplay</a></td></tr>
+    <tr><td>HUD, menus, sound, music</td><td><span class="badge badge-done">Done</span></td>
+        <td>The original's 640&times;480 menus scaled to the window, 93 sound channels, ten music tracks.</td></tr>
+    <tr><td>Saving</td><td><span class="badge badge-done">Done</span></td>
+        <td>Three players, progress, settings, and resuming an interrupted mission at the moment it stopped. <a href="save-system.html">Save Data &amp; Resume</a></td></tr>
+    <tr><td>In-game 3D editor</td><td><span class="badge badge-done">Done</span></td>
+        <td>Ten world slots per player, undo/redo, box fill, copy/paste, play-test, keyboard, touch and gamepad. <a href="editor.html">Editor</a></td></tr>
+    <tr><td>Player galaxies</td><td><span class="badge badge-done">Done</span></td>
+        <td>Every player can build a galaxy of hubs and missions, with its own progress, and export or import it. <a href="galaxy.html">Galaxy</a></td></tr>
+    <tr><td>Demos</td><td><span class="badge badge-done">Done</span></td>
+        <td>Main-menu demos, recording, export and import. <a href="demos.html">Demos</a></td></tr>
+    <tr><td>3D effects</td><td><span class="badge badge-done">Done</span></td>
+        <td>Off, Low, Medium, High and Ultra, from fog and particles up to HDR, shadows, reflections and voxel GI. <a href="graphics.html">Graphics</a></td></tr>
+    <tr><td>2x textures</td><td><span class="badge badge-wip">In progress</span></td>
+        <td>Supported by the code. The re-rendered 2x sheets are not committed yet, so the game uses 1x.</td></tr>
+  </table>
+
+  <h2>Platforms</h2>
+  <table>
+    <tr><th>Platform</th><th>Status</th></tr>
+    <tr><td>Linux desktop (OpenGL)</td><td><span class="badge badge-done">Verified</span> builds, tests and plays; a relocatable <code>.tar.gz</code> runtime bundle</td></tr>
+    <tr><td>Web (Emscripten, WebGL 2)</td><td><span class="badge badge-done">Verified</span> manually in headless Chrome; not part of CI</td></tr>
+    <tr><td>Android</td><td><span class="badge badge-wip">Partial</span> the APK builds and runs in the emulator, and a release APK reached the title screen on a phone; not played on a device yet</td></tr>
+    <tr><td>Windows</td><td><span class="badge badge-planned">Not verified</span> the current <code>SDLGPU</code> renderer configuration has had no fresh build and live run</td></tr>
+  </table>
+  <p>Details: <a href="platform-support.html">Platform Support</a>.</p>
 
   <h2>Technology Stack</h2>
   <table>
     <tr><th>Component</th><th>Technology</th></tr>
-    <tr><td>Language</td><td>C++ (CMake ≥ 3.21)</td></tr>
-    <tr><td>Game framework</td><td><strong>CNA</strong> — XNA-compatible, SDL3-based C++ framework (<code>../CNA</code>)</td></tr>
-    <tr><td>Helper library</td><td><strong>cna-engine</strong> strict modules (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>) — camera, mesh builder, GPU meshes, texture regions (<code>../cna-engine</code>; easy-3d until 2026-10-20)</td></tr>
-    <tr><td>Reference implementation</td><td><code>GalaxyEggbertSimple3D</code> — built on Simple3D/U3D, the currently-playable target</td></tr>
-    <tr><td>Reference game</td><td><code>mobile-eggbert</code> — read-only C++ port of the original Speedy Blupi; source of assets and behavioral truth</td></tr>
-    <tr><td>Testing</td><td>GoogleTest (world/voxel data model)</td></tr>
-    <tr><td>Graphics backend (CNA, Linux default)</td><td>EasyGL (OpenGL); SDL Renderer elsewhere</td></tr>
+    <tr><td>Language and build</td><td>C++23, CMake &ge; 3.23 (the game itself declares 3.21; CNA's dependencies need 3.23)</td></tr>
+    <tr><td>Engine</td><td><strong>CNA</strong>: the XNA 4.0 API in C++ on SDL3 and SDL3_mixer, with several graphics back ends chosen by <code>CNA_GRAPHICS_RENDERER</code></td></tr>
+    <tr><td>Helpers</td><td><strong>cna-engine</strong> strict modules <code>CnaEngine::Core</code> and <code>CnaEngine::Graphics</code> (until 2026-10-20 the helper library easy-3d)</td></tr>
+    <tr><td>Reference game</td><td><strong>Mobile Eggbert</strong>, the read-only C++ port of Speedy Blupi and the authority for gameplay and assets</td></tr>
+    <tr><td>Tests</td><td>GoogleTest and the <code>Verify*</code> executables in <code>ctest</code>, golden frames, scripted playthroughs</td></tr>
+    <tr><td>Tools</td><td>Python world generators and checkers, Ray Dream &rarr; model converters</td></tr>
+    <tr><td>Licence</td><td>The game: GNU GPL v3. This website: MIT.</td></tr>
   </table>
 
-  <h2>GalaxyEggbertCNA Status (2026-07-04)</h2>
-  <table>
-    <tr><th>Feature</th><th>Status</th></tr>
-    <tr><td>CMake build (<code>GALAXY_EGGBERT_BUILD_CNA=ON</code>)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Load a genuinely 3D, hand-authored <code>.vwr</code> world</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Textured terrain rendering (one cube per non-air block)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp, 6 fps)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Invisible collision-only Blupi movement (gravity, step-up, jump)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Blupi rendered as a sprite/billboard</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Real gameplay (hazards, enemies, pickups, exit, save/load)</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Chunk-radius world streaming / face culling</td><td><span class="badge badge-planned">Planned</span></td></tr>
-  </table>
-  <p>Full task-by-task roadmap: <a href="development/known-issues.html">Known Issues</a>.</p>
-
-  <h2>How to Open This Documentation</h2>
+  <h2>About this site</h2>
   <p>
-    This is a static website — no server required. Open <code>index.html</code> directly in any modern browser.
-    All links use relative paths, so the site works from any local directory or when hosted on GitHub Pages.
+    The site is plain static HTML in the <code>web/</code> directory of the
+    <code>galaxy-eggbert</code> repository. <code>.github/workflows/pages.yml</code> deploys it
+    to GitHub Pages whenever <code>web/</code> changes on <code>develop</code>. The sidebar,
+    the previous/next links and the search index are generated by
+    <code>web/tools/update_site.py</code>; run it after adding or renaming a page. The pages
+    describe the state of 2026-11-10. For anything newer, <code>CURRENT.md</code> and
+    <code>docs/handbook/</code> in the repository are the authority.
   </p>
 
   <div class="page-nav">

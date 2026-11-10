@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Module Index — Galaxy Eggbert Docs</title>
+<title>Modules — Galaxy Eggbert Docs</title>
+<meta name="description" content="The source modules of Galaxy Eggbert: the engine-independent world model, the game simulation, rendering and effects, UI and input, persistence, the editor, the host and the tools.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,106 +24,210 @@
   <a href="../build.html">Build Guide</a>
   <a href="../running.html">Running the Game</a>
   <a href="../platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="../gameplay.html">Gameplay</a>
   <a href="../controls.html">Controls</a>
-  <a href="../levels.html">Levels &amp; Worlds</a>
-  <a href="../assets.html">Assets</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="../architecture.html">Architecture</a>
   <a href="../project-structure.html">Project Structure</a>
   <a href="../engine-integration.html">Engine Integration</a>
   <a href="../game-loop.html">Game Loop</a>
   <a href="../rendering.html">Rendering</a>
-  <a href="../audio.html">Audio</a>
+  <a href="../audio.html">Audio &amp; Music</a>
   <a href="../input.html">Input</a>
-  <a href="../save-system.html">Save System</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
   <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
-  <a href="index.html" class="active">Modules</a>
+  <a href="../modules/index.html" class="active">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
   <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
   <a href="../development/debugging.html">Debugging</a>
   <a href="../development/extending-the-game.html">Extending the Game</a>
   <a href="../development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Modules</div>
-  <h1>Module Index</h1>
-  <p class="subtitle">Major code modules in GalaxyEggbertCNA and the shared Worlds data model.</p>
 
-  <div class="card-grid">
-    <a class="card" href="../classes/GalaxyEggbertCnaGame.html">
-      <h3>Application</h3>
-      <p><code>GalaxyEggbertCnaGame</code> — CNA Game subclass, LoadContent/Update/Draw</p>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> Modules</div>
+  <h1>Modules</h1>
+  <p class="subtitle">The source tree grouped by what each part is responsible for (as of 2026-11-10).</p>
+
+  <p>
+    The code has about 66 000 lines: 178 source files under <code>src/</code> and 31 headers under
+    <code>include/</code>. It is layered: an engine-independent world model at the bottom, the game
+    and the editor above it, and a thin CNA application host on top
+    (<a href="../architecture.html">Architecture</a>). The groups below are a reading aid, not
+    separate libraries. Most of them live in the same directory, <code>src/GalaxyEggbert/Game/</code>
+    (namespace <code>GalaxyEggbert::Game</code>).
+  </p>
+
+  <table>
+    <tr><th>Module</th><th>Where</th><th>Depends on CNA?</th></tr>
+    <tr><td><a href="#model">World data model</a></td><td><code>include/GalaxyEggbert/</code>, <code>src/GalaxyEggbert/Worlds/</code>, <code>src/GalaxyEggbert/*.cpp</code></td><td>No (enforced)</td></tr>
+    <tr><td><a href="#simulation">Game simulation</a></td><td><code>src/GalaxyEggbert/Game/</code></td><td>Mostly no</td></tr>
+    <tr><td><a href="#rendering">Rendering</a></td><td><code>src/GalaxyEggbert/Game/</code></td><td>Yes (pure helpers excepted)</td></tr>
+    <tr><td><a href="#effects">3D effects</a></td><td><code>src/GalaxyEggbert/Game/</code></td><td>Yes (the <code>*Logic.hpp</code> parts no)</td></tr>
+    <tr><td><a href="#ui">UI, input and audio</a></td><td><code>src/GalaxyEggbert/Game/</code></td><td>Yes</td></tr>
+    <tr><td><a href="#persistence">Persistence and replay</a></td><td><code>src/GalaxyEggbert/Game/</code></td><td>Mostly no</td></tr>
+    <tr><td><a href="#editor">Editor</a></td><td><code>src/GalaxyEggbert/Editor/</code></td><td>Partly</td></tr>
+    <tr><td><a href="#host">Application host</a></td><td><code>src/GalaxyEggbertCNA/</code></td><td>Yes</td></tr>
+    <tr><td><a href="#tools">Tools and tests</a></td><td><code>tools/</code>, <code>tests/</code></td><td>Some <code>Verify*</code> tools link the game</td></tr>
+  </table>
+
+  <h2 id="model">World data model</h2>
+  <p>
+    The voxel world and the original's data, with no CNA or cna-engine include, so it can be unit-tested
+    without a window. Namespaces <code>GalaxyEggbert::Worlds</code> and <code>GalaxyEggbert</code>.
+  </p>
+  <table>
+    <tr><th>Part</th><th>Files</th><th>What it holds</th></tr>
+    <tr><td>Voxel container</td><td><code>Worlds/World</code>, <code>Chunk</code>, <code>Block</code>, <code>BlockMetadata</code>, <code>VoxelConfig</code>, <code>BitPacking</code>, <code>BinaryIO</code>, <code>GridRaycast.hpp</code></td>
+        <td>A 100&times;100&times;100 grid in 10&times;10&times;10 chunks with palettes, bit packing, sparse metadata and a change journal; <code>.vwr</code> load and save. See <a href="../classes/World.html">World</a>.</td></tr>
+    <tr><td>The original's enums</td><td><code>Def/*.hpp</code> (<code>ObjectType</code>, <code>BlupiAction</code>, <code>SoundChannel</code>, <code>SpriteChannel</code>, <code>GamePhase</code>, <code>GameSpeed</code>, &hellip;)</td>
+        <td>Numbers that are stored in world files and must never change.</td></tr>
+    <tr><td>Block facts</td><td><code>BlockTypes.hpp</code>, <code>BlockDefinitionRegistry</code>, <code>UnverifiedRenderMapping.hpp</code></td>
+        <td>One definition per block icon 0-440: render mode, collision, animation, role flags. See <a href="../classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>.</td></tr>
+    <tr><td>Records</td><td><code>MoveObjectRecord</code>, <code>BigDecorRecord</code>, <code>HintZoneRecord</code>, <code>PlayerStart.hpp</code></td>
+        <td>Codecs for the sparse metadata stored in a world. See <a href="../classes/MoveObjectRecord.html">MoveObjectRecord</a>.</td></tr>
+    <tr><td>Hubs</td><td><code>HubDoors</code></td><td>Mission doors, gold doors, world signs and arrivals. See <a href="../classes/HubDoors.html">HubDoors</a>.</td></tr>
+    <tr><td>Constants</td><td><code>GameConstants.hpp</code></td><td>Grid size, the original's 640&times;480 logical screen, sprite cell size.</td></tr>
+  </table>
+
+  <h2 id="simulation">Game simulation</h2>
+  <p>
+    The rules of play. These parts run on the fixed 1/60 s tick, are deterministic, and mostly see only
+    the <code>World</code> and plain numbers, which is what lets the <code>Verify*</code> tools drive them
+    headless.
+  </p>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>Blupi's movement and collision</td><td><a href="../classes/BlupiController.html"><code>BlupiController</code></a>, <code>SolidBox.hpp</code>, <code>CratePush.hpp</code>, <code>BarRows.hpp</code></td></tr>
+    <tr><td>Objects, enemies, hazards, pickups</td><td><a href="../classes/InteractionSystem.html"><code>InteractionSystem</code></a>, <code>EnemyBlupi.hpp</code>, <code>TankShot.hpp</code>, <code>ReusablePickup.hpp</code>, <code>FanGeometry.hpp</code>, <code>LavaHeight.hpp</code>, <code>LavaSurfaceData.hpp</code>, <code>DecorQuartTable.hpp</code></td></tr>
+    <tr><td>World state at run time</td><td><a href="../classes/WorldRuntime.html"><code>WorldRuntime</code></a>, <code>LegacySawFloors.hpp</code>, <code>PlateRotationMetadata</code>, <code>ObjectVerticalPlacement.hpp</code></td></tr>
+    <tr><td>Object facts and pictures</td><td><a href="../classes/ObjectDefinitionRegistry.html"><code>ObjectDefinitionRegistry</code></a>, <code>ObjectIcons</code> (<code>GetObjIcon</code>)</td></tr>
+    <tr><td>Hints</td><td><code>TrainingHints</code> (the original's training hints), <code>ObjectiveHint.hpp</code> (the compass aid)</td></tr>
+    <tr><td>Camera</td><td><code>ChaseCameraYaw</code>, <code>CameraShake</code></td></tr>
+  </table>
+
+  <h2 id="rendering">Rendering</h2>
+  <p>
+    The host reads the simulation into a <code>SceneFrame</code> draw list, and
+    <a href="../classes/WorldRenderer.html"><code>WorldRenderer</code></a> draws it. Details:
+    <a href="../rendering.html">Rendering</a>.
+  </p>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>Frame and draw list</td><td><code>SceneFrame.hpp</code>, <code>WorldRenderer</code></td></tr>
+    <tr><td>Terrain</td><td><a href="../classes/TerrainRenderer.html"><code>TerrainRenderer</code></a>, <a href="../classes/TileAtlas.html"><code>TileAtlas</code></a>, <code>TileCoverage.hpp</code>, <code>TerrainLighting.hpp</code>, <code>TerrainModelCells.hpp</code>, <code>TerrainAnimDivisor</code>, <code>TerrainOcclusion.hpp</code> (face culling), <code>BrickEdges.hpp</code>, <code>MeshParts.hpp</code>, <code>SwatchUv</code></td></tr>
+    <tr><td>Block render modes</td><td><code>DirectionalCubeTiles</code>, <code>InnerPillarBoxTiles</code>, <code>ThinBarTiles</code>, <code>InnerFlatPlateTiles</code>, <code>BlockModels.hpp</code>, <code>LiftVisual.hpp</code></td></tr>
+    <tr><td>Terrain relief</td><td><code>TerrainRelief</code> (the Ray Dream relief of each tile near the camera)</td></tr>
+    <tr><td>Models</td><td><code>ObjectModelTable</code>, <code>ModelSubdivision.hpp</code>, <code>ProceduralMaterial.hpp</code>, <code>CharredBlupi.hpp</code>, <code>BoltMesh.hpp</code>, <code>BoltPaths.hpp</code>, <code>GlueStrands.hpp</code></td></tr>
+    <tr><td>Surfaces</td><td><code>WaterSurface.hpp</code>, <code>WaterWaves.hpp</code>, <code>LavaSurface.hpp</code></td></tr>
+    <tr><td>Textures and sprites</td><td><code>TextureScale</code> (1x/2x sheets), <code>TexturedMesh.hpp</code>, <code>QuadBatch</code></td></tr>
+  </table>
+
+  <h2 id="effects">3D effects</h2>
+  <p>
+    The Setup's effect levels Off, Low, Medium, High and Ultra. They change presentation only, and the
+    simulation is identical at every level (<a href="../graphics.html">3D Effects &amp; Graphics</a>).
+  </p>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>Fog, soft shadows, particles</td><td><code>WorldEffects.cpp</code>, <code>EffectParticles</code>, <code>SceneEffectsLogic.hpp</code></td></tr>
+    <tr><td>Shaders and shadow maps</td><td><code>SceneShaders</code>, <code>SurfaceShaders</code> (water, lava)</td></tr>
+    <tr><td>Post-processing</td><td><code>PostProcess</code> (the glow and the finish)</td></tr>
+    <tr><td>Ultra</td><td><code>UltraFinish</code> (HDR, tonemapping, TAA, depth of field, motion blur), <code>UltraLogic.hpp</code>, <code>UltraAssets.hpp</code>, <code>TerrainGi.hpp</code> (voxel GI), <code>TerrainMaps.hpp</code></td></tr>
+  </table>
+
+  <h2 id="ui">UI, input and audio</h2>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>HUD</td><td><a href="../classes/Hud.html"><code>Hud</code></a>, <code>TextMetrics.hpp</code>, <code>DebugOverlay.hpp</code></td></tr>
+    <tr><td>Menus, on-screen pad, typed cheats</td><td><a href="../classes/InputPad.html"><code>InputPad</code></a>, <code>CheatConfig.hpp</code></td></tr>
+    <tr><td>Devices</td><td><code>ControlInput.hpp</code>, <code>GamepadInput.hpp</code></td></tr>
+    <tr><td>Sound</td><td><a href="../classes/Sound.html"><code>Sound</code></a></td></tr>
+  </table>
+
+  <h2 id="persistence">Persistence and replay</h2>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>Settings and progress</td><td><a href="../classes/SaveData.html"><code>SaveData</code></a>, <code>UserFolder</code></td></tr>
+    <tr><td>Resuming an interrupted mission</td><td><a href="../classes/ResumeLog.html"><code>ResumeLog</code></a></td></tr>
+    <tr><td>Demos and recordings</td><td><a href="../classes/DemoReplay.html"><code>DemoReplay</code></a>, <code>FreeFileName.hpp</code></td></tr>
+    <tr><td>Scripted playthroughs (QA)</td><td><a href="../classes/Autoplay.html"><code>Autoplay</code></a></td></tr>
+  </table>
+  <p>See <a href="../save-system.html">Save Data &amp; Resume</a>.</p>
+
+  <h2 id="editor">Editor</h2>
+  <p>
+    The in-game 3D world editor, namespace <code>GalaxyEggbert::Editor</code>
+    (<a href="../editor.html">3D World Editor</a>).
+  </p>
+  <table>
+    <tr><th>Part</th><th>Files</th></tr>
+    <tr><td>Editing session</td><td><a href="../classes/WorldEditor.html"><code>WorldEditor</code></a> (<code>WorldEditor.cpp</code>, <code>WorldEditorUpdate.cpp</code>), <code>EditCommandStack</code>, <code>Clipboard</code>, <code>BoxRegion</code>, <code>VoxelRaycast</code>, <code>AutoTile.hpp</code>, <code>EditorVariants.hpp</code>, <code>ObjectPlacement.hpp</code>, <code>PlayerStartColor.hpp</code>, <code>EditorCommandKeys.hpp</code></td></tr>
+    <tr><td>Palette</td><td><code>EditorPalette</code>, <code>EditorPaletteInput</code>, <code>EditorPaletteLayout</code>, <code>EditorPaletteRenderer</code>, <code>PaletteCategories</code></td></tr>
+    <tr><td>Drawing aids</td><td><code>EditorHighlightRenderer</code>, <code>ObjectPathRenderer</code>, <code>ObjectPathMarkers.hpp</code></td></tr>
+    <tr><td>Touch and gamepad</td><td><code>EditorDeviceControls</code></td></tr>
+    <tr><td>Screens and storage</td><td><code>EditorBrowserScreen</code> (world slots), <code>GalaxyBrowserScreen</code> (the player's galaxy), <a href="../classes/CustomWorldStorage.html"><code>CustomWorldStorage</code></a>, <code>PlatformFiles</code></td></tr>
+  </table>
+
+  <h2 id="host">Application host</h2>
+  <p>
+    <code>src/GalaxyEggbertCNA/</code> holds the XNA <code>Game</code> subclass
+    <a href="../classes/GalaxyEggbertGame.html"><code>GalaxyEggbertGame</code></a> and everything
+    platform-specific. It is split by concern:
+  </p>
+  <table>
+    <tr><th>File</th><th>Concern</th></tr>
+    <tr><td><code>main.cpp</code></td><td>Command-line flags, the user folder, <code>Run()</code></td></tr>
+    <tr><td><code>GalaxyEggbertGame.cpp</code></td><td>Construction, input capture, music and vehicle sounds, voyages, cheats, full screen, focus loss and exit</td></tr>
+    <tr><td><code>GalaxyEggbertGameLoad.cpp</code></td><td><code>LoadContent()</code> and building a world's presentation (terrain, models, reliefs)</td></tr>
+    <tr><td><code>GalaxyEggbertGameUpdate.cpp</code></td><td><code>Update()</code> and the simulation tick <code>UpdateTick()</code></td></tr>
+    <tr><td><code>GalaxyEggbertGameMissions.cpp</code></td><td>Autoplay steps, loading worlds (campaign, editor, galaxy, title scene), hub doors and phases</td></tr>
+    <tr><td><code>GalaxyEggbertGameScene.cpp</code></td><td>Reading the simulation into the <code>SceneFrame</code></td></tr>
+    <tr><td><code>GalaxyEggbertGameDraw.cpp</code></td><td>The frame: world, HUD, menus, editor, captures</td></tr>
+    <tr><td><code>GalaxyEggbertGameDemo.cpp</code></td><td>The resume log, the main-menu demos and the player's recordings</td></tr>
+    <tr><td><code>GameHelpers.hpp</code>, <code>GameInternal.hpp</code></td><td>Helpers shared by the files above</td></tr>
+    <tr><td><code>AndroidAssets.cpp</code></td><td>Copying the assets to internal storage on Android</td></tr>
+  </table>
+
+  <h2 id="tools">Tools and tests</h2>
+  <ul>
+    <li><code>tests/GalaxyEggbert/</code>: GoogleTest unit tests of the world model and records.</li>
+    <li><code>tools/Verify*.cpp</code>: headless verification executables run by <code>ctest</code>.</li>
+    <li><code>tools/worlds/</code>: one Python generator per campaign world plus shared kits.</li>
+    <li><code>tools/autoplay/</code>: scripted playthroughs; <code>tools/*.sh</code>: QA scripts.</li>
+    <li><code>tools/rd4_to_gltf/</code>, <code>tools/terrain_relief/</code>, <code>tools/music/</code> and others: asset converters.</li>
+  </ul>
+  <p>See <a href="../development/testing.html">Testing &amp; QA</a> and <a href="../assets.html">Assets &amp; Tools</a>.</p>
+
+  <div class="page-nav">
+    <a class="prev" href="../assets.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Assets &amp; Tools</span>
     </a>
-    <a class="card" href="../classes/GEWorldRuntime.html">
-      <h3>World Runtime</h3>
-      <p><code>GEWorldRuntime</code> — loads .vwr/.txt, drives tile animation</p>
-    </a>
-    <a class="card" href="../classes/GETerrainRenderer.html">
-      <h3>Terrain Renderer</h3>
-      <p><code>GETerrainRenderer</code> — builds static + animated cube meshes</p>
-    </a>
-    <a class="card" href="../classes/GETileAtlas.html">
-      <h3>Tile Atlas</h3>
-      <p><code>GETileAtlas</code> — block type → UV rect mapping</p>
-    </a>
-    <a class="card" href="../classes/GEBlupiController.html">
-      <h3>Player Controller</h3>
-      <p><code>GEBlupiController</code> — invisible collision-only movement</p>
-    </a>
-    <a class="card" href="../classes/World.html">
-      <h3>World Data</h3>
-      <p>Voxel world: 100³ blocks, chunk-based storage</p>
-    </a>
-    <a class="card" href="../classes/Chunk.html">
-      <h3>Chunk</h3>
-      <p>Palette-compressed 10³ voxel container</p>
-    </a>
-    <a class="card" href="../classes/CubeMesh.html">
-      <h3>CnaEngine::Graphics::MeshBuilder</h3>
-      <p>CPU-side builder for boxes, plates and billboards (replaced Easy3D::CubeMesh)</p>
-    </a>
-    <a class="card" href="../classes/CubeMeshRenderer.html">
-      <h3>CnaEngine::Graphics::GpuMesh</h3>
-      <p>Uploads and draws built meshes via CNA (replaced Easy3D::CubeMeshRenderer)</p>
-    </a>
-    <a class="card" href="../rendering.html">
-      <h3>Rendering</h3>
-      <p>Cube-per-block terrain, animated tiles, billboards</p>
-    </a>
-    <a class="card" href="../input.html">
-      <h3>Input</h3>
-      <p>Arrow keys + Space, polled via CNA Keyboard</p>
-    </a>
-    <a class="card" href="../internals/vwr-format.html">
-      <h3>World File (.vwr)</h3>
-      <p>Binary voxel format: header, chunk table, palette</p>
-    </a>
-    <a class="card" href="../levels.html">
-      <h3>Level Loading</h3>
-      <p>.vwr (default) and mobile-eggbert .txt (secondary) loading</p>
+    <a class="next" href="../classes/index.html">
+      <span class="label">Next</span>
+      <span class="title">Classes &#8594;</span>
     </a>
   </div>
-
-  <h2>Module Responsibilities</h2>
-  <table>
-    <tr><th>Module</th><th>Files</th><th>Notes</th></tr>
-    <tr><td>Application lifecycle</td><td><code>main.cpp</code>, <code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>Entry point; owns all CNA-side subsystems</td></tr>
-    <tr><td>World loading &amp; animation</td><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>.vwr default, .txt secondary; 6 fps anim phase</td></tr>
-    <tr><td>Terrain rendering</td><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>One cube per non-air block, static + animated split</td></tr>
-    <tr><td>Texture mapping</td><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → <code>CnaEngine::Graphics::UvRect</code> via <code>BlockTypes::tileUV()</code></td></tr>
-    <tr><td>Player movement</td><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Engine-agnostic; collision-only, no rendering</td></tr>
-    <tr><td>Voxel data model</td><td><code>include/GalaxyEggbert/Worlds/*.hpp</code>, <code>src/GalaxyEggbert/Worlds/*.cpp</code></td><td>Engine-agnostic; shared with Simple3D; unit tested</td></tr>
-    <tr><td>Game definitions</td><td><code>include/GalaxyEggbert/def/</code></td><td>All enums: GamePhase, ObjectType, SoundChannel, etc.</td></tr>
-    <tr><td>Mesh building &amp; drawing (cna-engine)</td><td><code>../cna-engine</code> (<code>CnaEngine::Graphics</code>): <code>MeshBuilder</code>, <code>GpuMesh</code>, <code>Camera</code>, <code>UvRect</code>; game helpers in <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code></td><td>Generic helpers beside CNA, no Eggbert-specific knowledge; replaced easy-3d on 2026-10-20</td></tr>
-  </table>
 </main>
 </div>
 <script src="../assets/script.js"></script>

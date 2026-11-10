@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Save System — Galaxy Eggbert Docs</title>
+<title>Save Data &amp; Resume — Galaxy Eggbert Docs</title>
+<meta name="description" content="Where Galaxy Eggbert keeps the player's files, the savedata.txt format with settings and three players' progress, mission resume by deterministic input replay (resume.txt v7), galaxies, demos, custom worlds, and the web and Android storage.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,65 +24,249 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html" class="active">Save System</a>
+  <a href="save-system.html" class="active">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Save System</div>
-  <h1>Save System</h1>
-  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA; an open design question for CNA specifically.</p>
+  <h1>Save Data &amp; Resume</h1>
+  <p class="subtitle">Settings and three players' progress in savedata.txt, an interrupted mission in resume.txt, and the player's worlds and recordings beside them (as of 2026-11-10).</p>
 
-  <div class="warn">
-    <strong>Not implemented, and not fully decided</strong>
-    <code>GalaxyEggbertCNA</code> has no save/load code at all — there is no lives count, no world
-    progress, and nothing to persist yet since there's no real gameplay. Even for
-    <code>GalaxyEggbertSimple3D</code> (which does implement save/load), whether to reuse
-    mobile-eggbert's exact byte-level save format for cross-compatibility is documented in
-    <code>CLAUDE.md</code> as an open question, not a default — see <code>easy3d.md</code> §12 Q7.
-  </div>
+  <h2>The player's folder</h2>
+  <p>Since 2026-11-10 every file the player creates lives in one folder, chosen by the host at start
+  (<code>ChooseUserFolder()</code> in <code>src/GalaxyEggbertCNA/main.cpp</code>) and handed to
+  <code>src/GalaxyEggbert/Game/UserFolder.hpp</code>, which the save, resume, demo and editor code ask for paths.</p>
+  <table>
+    <tr><th>Where the game runs</th><th>Folder</th></tr>
+    <tr><td>Linux desktop</td><td><code>$XDG_DATA_HOME/Galaxy Eggbert</code>, else <code>~/.local/share/Galaxy Eggbert</code> (CNA's <code>StorageDevice</code> root)</td></tr>
+    <tr><td>Windows desktop</td><td><code>%LOCALAPPDATA%\Galaxy Eggbert</code> (implemented; the Windows build is not verified)</td></tr>
+    <tr><td>Any desktop, chosen</td><td><code>--user DIR</code> on the command line, or the <code>GALAXY_USER_DIR</code> environment variable (the test scripts point it at their run folder)</td></tr>
+    <tr><td>Web</td><td><code>/save</code>, stored in the browser's IndexedDB</td></tr>
+    <tr><td>Android</td><td>the app's internal storage, which is also its working folder</td></tr>
+  </table>
+  <p>If no per-user folder can be found or created, the game says so on the console and keeps the files in the working
+  folder. On the first start with an empty user folder, a <code>savedata.txt</code>, <code>resume.txt</code>,
+  <code>demos/</code> and <code>customworlds/</code> left in the working folder by an earlier build are <em>copied</em> over
+  (<code>CopyOldUserFiles()</code>); nothing is moved or overwritten.</p>
+<pre><code>&lt;player's folder&gt;/
+├── savedata.txt                 settings and progress (SaveData)
+├── resume.txt                   an interrupted mission (ResumeLog), only while there is one
+├── demos/
+│   ├── demo001.gdemo ...        the player's recordings for the ten demo positions
+│   └── shared/                  exported recordings
+└── customworlds/
+    ├── gamer0/ gamer1/ gamer2/  each player's editor worlds
+    │   ├── custom_001.vwr ... custom_010.vwr (+ .png thumbnails)
+    │   ├── backups/
+    │   └── galaxy/              the player's own galaxy (worldNNN.vwr, name.txt, backups/)
+    ├── shared/                  exported worlds and .galaxy packs
+    └── campaign-backups/, campaign-edits/, campaign-originals/   shipped worlds edited in play</code></pre>
 
-  <h2>What mobile-eggbert's Format Looks Like (reference only)</h2>
-  <p>
-    mobile-eggbert's save data (<code>GameData.cpp</code>) is a flat binary layout covering per-slot
-    lives, last-world-reached, and door-open flags across 3 gamer slots. It is listed in
-    <code>CLAUDE.md</code>'s reuse table as <strong>reference only</strong> — reusing its exact byte
-    layout for save compatibility requires explicit user approval, it is not assumed.
-  </p>
+  <h2>savedata.txt</h2>
+  <p><code>SaveData</code> (<code>src/GalaxyEggbert/Game/SaveData.hpp</code>, <code>.cpp</code>) is engine-independent. The
+  file is plain <code>key=value</code> lines, read once when the game is constructed; a missing file or an unknown key
+  leaves the defaults. It is deliberately not the original's 640-byte binary <code>GameData</code> block, but it keeps the
+  same contents: global settings plus three players. It is written when a setting changes, when a player is selected, and
+  at the original's checkpoints (a mission lost or its exit reached), never during a resume replay or a demo. What
+  <code>SaveData::Write()</code> produces:</p>
+<pre><code>soundEnabled=1
+jumpRight=1
+autoZoom=1
+accelActive=0
+effectsVolume=100
+musicVolume=100
+accelSensitivity=50
+fullscreen=0
+terrainRelief=0
+effectsLevel=0
+frameRate=60
+textureScale=0
+selectedGamer=0
+gamer0.lives=3
+gamer0.missionNumber=0
+gamer0.lastWorld=1
+gamer0.hasProgress=0
+gamer0.doorsUnlocked=0000000000...   (200 characters, one per mission number)
+gamer1.lives=3
+...
+gamer2.doorsUnlocked=0000000000...</code></pre>
 
-  <h2>Roadmap</h2>
-  <p>
-    Per <code>plan.md</code>'s E3D-MIG-100…107 gameplay-porting tasks, save/load is sequenced after
-    core gameplay (pickups, hazards, enemy stomp, exit gate) is ported — with an explicit decision
-    point on save-format reuse before implementation begins.
-  </p>
+  <h3>Settings</h3>
+  <table>
+    <tr><th>Key</th><th>Values (default)</th><th>Meaning</th></tr>
+    <tr><td><code>soundEnabled</code></td><td>0/1 (1)</td><td>sound on or off</td></tr>
+    <tr><td><code>jumpRight</code></td><td>0/1 (1)</td><td>the on-screen pad's Jump on the right</td></tr>
+    <tr><td><code>autoZoom</code></td><td>0/1 (1)</td><td>the original's automatic zoom while walking</td></tr>
+    <tr><td><code>accelActive</code>, <code>accelSensitivity</code></td><td>0/1 (0); 0-100 (50)</td><td>accelerometer steering</td></tr>
+    <tr><td><code>effectsVolume</code>, <code>musicVolume</code></td><td>0-100 (100)</td><td>Galaxy's two volume sliders</td></tr>
+    <tr><td><code>fullscreen</code></td><td>0/1 (0)</td><td>full screen (desktop); the first run is windowed</td></tr>
+    <tr><td><code>terrainRelief</code></td><td>0/1 (0)</td><td>the Setup's "3D terrain"</td></tr>
+    <tr><td><code>effectsLevel</code></td><td>0-4 (0)</td><td>3D effects Off, Low, Medium, High, Ultra (an old <code>effects3d=1</code> reads as High)</td></tr>
+    <tr><td><code>frameRate</code></td><td>60, 120, 144, 240 (60)</td><td>frames drawn per second (<a href="game-loop.html">Game Loop</a>)</td></tr>
+    <tr><td><code>textureScale</code></td><td>0 auto, 1, 2 (0)</td><td>1x or 2x sprite sheets, at the next start</td></tr>
+    <tr><td><code>selectedGamer</code></td><td>0-2 (0)</td><td>the player selected in the menu</td></tr>
+  </table>
+  <p>Environment variables can override some of these for one run; see <a href="configuration.html">Configuration</a>.</p>
+
+  <h3>Per-player progress</h3>
+  <p>There are three players (<code>SaveData::kGamerCount = 3</code>), shown as A, B and C in the menu. Each has a
+  <code>GamerSlot</code>:</p>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>lives</code></td><td>lives at the last checkpoint (3 for a new player)</td></tr>
+    <tr><td><code>missionNumber</code></td><td>the mission of the last checkpoint, where Continue starts when there is no resume log</td></tr>
+    <tr><td><code>lastWorld</code></td><td>the world last played; the main hub places Blupi beside its sign</td></tr>
+    <tr><td><code>hasProgress</code></td><td>whether there is a checkpoint at all</td></tr>
+    <tr><td><code>doorsUnlocked</code></td><td>200 flags indexed by mission number, as the original's door array: opened mission bars (0-179, the menu's "secondary gates") and the main hub's gold bars (180-199, "main gates"); <a href="classes/HubDoors.html">HubDoors</a> reads them</td></tr>
+  </table>
+  <p>Each player's own galaxy has a second slot with the same fields, saved as <code>galaxy0.lives=</code> ... and written
+  only once that player has galaxy progress, so a file from before galaxies existed stays as it was. While a galaxy is
+  played, the progress accessors read and write that slot; the mode itself is not saved.</p>
+
+  <h2>Mission resume: resume.txt</h2>
+  <p>An interrupted mission continues from the exact moment it stopped. The original saved the moment's state; Galaxy
+  saves the mission's start plus every tick's input and replays it (<a href="classes/ResumeLog.html">ResumeLog</a>,
+  <code>src/GalaxyEggbert/Game/ResumeLog.hpp</code>; host code in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code>).
+  This works because the simulation is deterministic (<a href="game-loop.html">Game Loop</a>).</p>
+  <ol>
+    <li><strong>Mission start.</strong> When a mission begins in Play, <code>StartResumeLog()</code> records the start: the
+      build identity, the world's path and the FNV-1a hash of its exact bytes, mission number, lives, game speed, the
+      random seed, Blupi's position and heading, the cheat state (quick, opendoors, showsecret, compass, debug, the
+      fairplay/honest lock), the camera mode, and the whole <code>savedata.txt</code> text as it was.</li>
+    <li><strong>Every tick.</strong> The tick's input record (<a href="input.html">Input</a>) is appended; identical
+      consecutive records are stored once with a count.</li>
+    <li><strong>Losing focus.</strong> When the window or app is deactivated during Play, the log is written to
+      <code>resume.txt.tmp</code> and renamed to <code>resume.txt</code>.</li>
+    <li><strong>Deleted</strong> on a clean exit, when the mission's exit is reached, and when the file is refused. Demos
+      never write or delete it; editor play-tests do not record one.</li>
+    <li><strong>Next start.</strong> After the loading screen the game parses <code>resume.txt</code>. If it is valid, or if
+      the player has a checkpoint, the Resume screen asks Continue or menu.</li>
+    <li><strong>Continue.</strong> <code>BeginResume()</code> reads the world file again and checks its path and hash, restores
+      the recorded settings, cheats and seed, loads the mission, places Blupi, and <code>ReplayBatch()</code> replays up to 600
+      ticks per update with drawing off and sound muted until the recorded moment is reached. A mission of the player's
+      galaxy continues inside that galaxy.</li>
+    <li><strong>Fallback.</strong> If the file is missing, damaged, of another format version or another build, or the world
+      changed, the game starts the checkpoint mission instead, with the saved lives.</li>
+  </ol>
+
+  <h3>Format version 7</h3>
+  <p>Text, classic locale, floats written with enough digits to read back exactly. Field by field, as
+  <code>Serialize()</code> and <code>WriteBody()</code> write it:</p>
+<pre><code>GALAXY_RESUME 7
+"&lt;build identity&gt;"
+"&lt;world path&gt;" &lt;world hash&gt;
+&lt;mission&gt; &lt;lives&gt; &lt;speed&gt; &lt;seed&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt; &lt;yaw&gt; &lt;quick&gt; &lt;openDoors&gt; &lt;showSecret&gt; &lt;compass&gt; &lt;cheatsLocked&gt; &lt;debug&gt; &lt;cameraMode&gt;
+"&lt;savedata.txt at the start&gt;"
+&lt;run count&gt; &lt;tick count&gt;
+&lt;count&gt; &lt;key count&gt; &lt;keys...&gt; &lt;mouseX&gt; &lt;mouseY&gt; &lt;wheel&gt; &lt;buttons&gt; &lt;viewportW&gt; &lt;viewportH&gt; &lt;touch count&gt; &lt;id x y state&gt;... &lt;touchControls&gt; &lt;accelValid&gt; &lt;accelReset&gt; &lt;accelY&gt; &lt;cheatLetter&gt;
+...                                    (one line per run)
+END &lt;FNV-1a 64 of everything above&gt;</code></pre>
+  <ul>
+    <li>Parsing is all or nothing: the checksum footer must be complete and match, every field is range-checked, keys
+      must be sorted, the tick total must add up; at most 10 000 000 ticks and 128 MB.</li>
+    <li>The <strong>build identity</strong> is the compile date and time plus, on desktops, an FNV-1a hash of the running
+      executable (read on Linux, implemented for Windows and macOS). Android and the web use the compile date and time only.
+      A different build refuses the file, because only an identical binary is sure to replay it identically.</li>
+    <li>Version 7 (2026-11-08) added ordered typed letters, touch capability, the compass and the cheat lock; older
+      versions are refused and fall back to the checkpoint.</li>
+    <li>The demo files reuse this body (<code>WriteBody()</code>, <code>ReadBody()</code>) under their own header; see below.</li>
+  </ul>
+  <div class="tip"><strong>Checking replay equality.</strong> <code>GALAXY_RESUME_SELFTEST=N</code> makes the game, after N
+  recorded ticks, rebuild the mission from its own log and compare Blupi, counters, objects and world state with the live
+  game, printing <code>RESUME SELFTEST equal</code> or the parts that differ. The autoplay checks use it.</div>
+
+  <h2>Galaxies</h2>
+  <p>Each player's galaxy is a set of world files in <code>customworlds/gamerN/galaxy/</code>
+  (<code>world001.vwr</code> for its main hub, <code>world010.vwr</code> ... for world hubs, their missions, and
+  <code>world199.vwr</code>), with <code>name.txt</code> and a <code>backups/</code> folder for deleted places. Its progress is
+  the <code>galaxyN.*</code> slot in <code>savedata.txt</code>. Importing another galaxy resets that progress. An export is a
+  single <code>.galaxy</code> pack in <code>customworlds/shared/</code> (a download on the web). See
+  <a href="galaxy.html">Your Own Galaxy</a>.</p>
+
+  <h2>Demos and recordings</h2>
+  <ul>
+    <li>The shipped demos are <code>Content/demos/demo001.gdemo</code> ... <code>demo010.gdemo</code>, read-only game data.</li>
+    <li>A player's recording for a demo position is <code>demos/demoNNN.gdemo</code> in the player's folder; the ten positions
+      are shared by all players. Exports go to <code>demos/shared/</code>.</li>
+    <li>A <code>.gdemo</code> starts with a <code>GALAXY_DEMO</code> header and format version, the simulation revision it was
+      recorded with, its title, the recording build (for information only) and an end-state signature, followed by a
+      resume-log body and the same checksum footer. Unlike <code>resume.txt</code> it is not tied to one build: it is skipped
+      when its format, its simulation revision or its world's hash differs.</li>
+  </ul>
+  <p>See <a href="demos.html">Demos &amp; Recordings</a> and <a href="classes/DemoReplay.html">DemoReplay</a>.</p>
+
+  <h2>Custom worlds</h2>
+  <p><a href="classes/CustomWorldStorage.html">CustomWorldStorage</a> gives each player ten slots,
+  <code>customworlds/gamerN/custom_001.vwr</code> to <code>custom_010.vwr</code>, each with a <code>.png</code> thumbnail. The first
+  save after opening a world keeps up to three earlier versions in <code>backups/</code> (<code>custom_003.1.vwr</code> the newest),
+  and a deleted slot goes there too. Other <code>.vwr</code> files found in the folder are listed and never deleted.</p>
+  <p>A shipped world edited in play with the <code>xnjttjpo</code> cheat is handled per platform: the desktop rewrites the
+  file in <code>worlds3d/</code> and keeps earlier versions in <code>customworlds/campaign-backups/</code> and the shipped one in
+  <code>customworlds/campaign-originals/</code>; the web keeps the edit in <code>/save/customworlds/campaign-edits/</code> and lays
+  it over the packed worlds at every start. Pause's Original button restores the shipped world. See
+  <a href="editor.html">3D World Editor</a>.</p>
+
+  <h2>Web and Android</h2>
+  <ul>
+    <li><strong>Web.</strong> <code>/save</code> is an Emscripten IDBFS file system (the build links <code>-lidbfs.js</code>);
+      CNA's storage start-up hook mounts it and persists it to IndexedDB. Exports become downloads and imports use the
+      browser's file picker (<code>src/GalaxyEggbert/Editor/PlatformFiles.hpp</code>). Verified on 2026-11-09 in headless
+      Chrome: a recording and an edited shipped world survived a page reload. Clearing the site's data in the browser deletes
+      the saves.</li>
+    <li><strong>Android.</strong> Before the game starts, <code>PrepareAndroidAssets()</code>
+      (<code>src/GalaxyEggbertCNA/AndroidAssets.cpp</code>) copies the APK's assets into internal storage and makes it the
+      working folder; the player's files are written beside them. The APK builds and runs in the emulator but has not been
+      played on a device.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyGESaveData</code>: the <code>savedata.txt</code> defaults and round trip, an invalid player number, the galaxy slots.</li>
+    <li><code>VerifyDemoReplay</code> and <code>VerifyAutoplay</code>: the shared log format and its checks.</li>
+    <li><code>VerifyGEEditorStorage</code>: slots, backups, sharing and galaxies.</li>
+    <li>Live: autoplay runs with <code>GALAXY_RESUME_SELFTEST</code>, and focus-loss, restart and Continue checks on the desktop
+      (<code>plans/audit/behavior_differences.md</code>, BD-0077).</li>
+  </ul>
+  <p>Related: <a href="classes/SaveData.html">SaveData</a>, <a href="classes/ResumeLog.html">ResumeLog</a>,
+  <a href="configuration.html">Configuration</a>.</p>
 
   <div class="page-nav">
-    <a href="input.html">
+    <a class="prev" href="input.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Input</span>
     </a>

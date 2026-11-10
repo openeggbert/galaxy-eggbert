@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Running the Game — Galaxy Eggbert Docs</title>
+<meta name="description" content="How to start Galaxy Eggbert on Linux, from the bundle, in a browser and on Android, every command-line flag, where the player's files are kept, and headless runs.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,97 +24,193 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html" class="active">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Running the Game</div>
   <h1>Running the Game</h1>
-  <p class="subtitle">What happens when you launch GalaxyEggbertCNA.</p>
+  <p class="subtitle">Starting each build, every command-line flag, where the player's files live, and headless runs.</p>
 
-  <h2>Launch</h2>
-  <pre><code>./build-cna/GalaxyEggbert</code></pre>
+  <h2>Desktop: run from the build directory</h2>
+<pre><code>cd build-cna-opengl3
+./GalaxyEggbert</code></pre>
   <p>
-    <code>src/GalaxyEggbertCNA/main.cpp</code> constructs a
-    <code>GalaxyEggbert::CNA::GalaxyEggbertCnaGame</code> (a subclass of
-    <code>Microsoft::Xna::Framework::Game</code>), calls <code>Run()</code>, then deletes it.
-    Window title: <strong>"Galaxy Eggbert (CNA)"</strong>.
+    The game reads its assets by paths relative to its working directory, and CNA resolves the model
+    folder (<code>avatars3d/</code>) against the executable's real location. After each build a
+    post-build step copies <code>Content/</code>, <code>worlds3d/</code>, <code>textures3d/</code> and
+    <code>avatars3d/</code> next to the executable, so the build directory is a complete run folder.
+    Starting it from anywhere else, or through a symbolic link to the executable, finds no assets.
+    (The project's QA scripts that run elsewhere use a hard link to the executable plus symlinked asset
+    folders for this reason.)
+  </p>
+  <p>
+    The window opens windowed on the first run; <strong>F11</strong> or the main menu's upper-left
+    <em>Fullscreen / Window</em> button switches, and the choice is remembered.
   </p>
 
-  <div class="warn">
-    <strong>Relative-path assumption</strong>
-    The loader uses relative paths (<code>"worlds3d/world001.vwr"</code>,
-    <code>"Content/icons/object-m.png"</code>) — the binary must be run from its own build
-    directory, where the post-build asset copy placed these files. This is a known, flagged
-    limitation (see <a href="development/known-issues.html">Known Issues</a>).
-  </div>
-
-  <h2>What Happens on Startup (<code>LoadContent()</code>)</h2>
-  <ol>
-    <li>Loads the default world: <code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code> — a genuinely 3D, hand-authored voxel world (2729 non-air blocks, Y range [0, 13]).</li>
-    <li>Builds a <code>GETerrainRenderer</code> from the loaded world and a <code>GETileAtlas</code>.</li>
-    <li>Loads <code>Content/icons/object-m.png</code> as a CNA <code>Texture2D</code> and creates a <code>BasicEffect</code> (textured, no vertex color).</li>
-    <li>Places <code>GEBlupiController</code> at spawn position <code>(0, 1, 0)</code>.</li>
-  </ol>
-
-  <h2>Per-Frame Update</h2>
-  <ol>
-    <li><code>worldRuntime_.Update(dt)</code> — advances the 6 fps tile animation phase.</li>
-    <li>Reads arrow keys + Space via <code>Keyboard::GetState()</code>.</li>
-    <li>Steps <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code> — grid collision, step-up traversal, gravity.</li>
-    <li>Updates a <code>CnaEngine::Graphics::Camera</code> to follow Blupi (<code>SetLookAt</code>; until 2026-10-20 an <code>Easy3D::Camera3D</code>).</li>
-  </ol>
-
-  <h2>Draw</h2>
+  <h2>Linux bundle</h2>
+<pre><code>tar -xzf GalaxyEggbert-linux-x86_64.tar.gz
+./GalaxyEggbert-linux-x86_64/run-galaxy-eggbert</code></pre>
   <p>
-    Clears the device to sky blue (<code>0.392, 0.584, 0.929, 1.0</code>), enables depth test,
-    sets the terrain effect's View/Projection from the camera, and draws the terrain via
-    <code>GETerrainRenderer::Draw()</code>. A one-shot self-check samples backbuffer pixels via
-    <code>GetBackBufferData()</code> to confirm terrain is actually visible (not a placeholder color).
+    <code>run-galaxy-eggbert</code> changes into the bundle's directory and runs
+    <code>GalaxyEggbert</code> with the arguments you gave it, so every flag below works through it.
+    Keep the executable next to <code>Content/</code>, <code>worlds3d/</code>, <code>textures3d/</code>
+    and <code>avatars3d/</code>. If a system library is missing, install your distribution's runtime
+    package for it (the bundle carries only SDL).
   </p>
 
-  <h2>Controls</h2>
-  <p>See <a href="controls.html">Controls</a> for the full key list — currently just arrow keys + Space.</p>
-
-  <h2>What You Will (and Won't) See</h2>
+  <h2>Web build</h2>
+<pre><code>emrun build-cna-webgl2/GalaxyEggbert.html
+# or any static HTTP server, for example:
+python3 -m http.server --directory build-cna-webgl2 8000
+# then open http://localhost:8000/GalaxyEggbert.html</code></pre>
   <ul>
-    <li><strong>You will see:</strong> real, textured, animated 3D terrain — a ground floor, a 10-step staircase, a raised platform, a walled room with a doorway, two pillars.</li>
-    <li><strong>You will not see:</strong> Blupi (the controller is invisible/collision-only), any objects or pickups, a HUD, or hear any sound.</li>
+    <li>Serve it over HTTP; opening the file as a <code>file:</code> URL does not work.</li>
+    <li>The browser may wait for a click or key press before it starts the sound.</li>
+    <li>The page has its own full-screen button.</li>
+    <li>Music is fetched from <code>Content/music/</code> beside the page when a world first plays a
+      track; publish that folder with the four <code>GalaxyEggbert.*</code> files.</li>
+    <li>Command-line flags do not apply. Saves, demos and the player's worlds are kept in the browser's
+      IndexedDB storage and survive a reload.</li>
+  </ul>
+
+  <h2>Android</h2>
+<pre><code>adb install android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n org.openeggbert.galaxyeggbert/org.openeggbert.speedyblupi.SpeedyBlupiActivity
+adb logcat -s SDL SDL/APP GalaxyEggbert</code></pre>
+  <p>
+    The first start copies the assets (about 125 MB) from the APK into the app's internal storage and
+    runs there; later starts copy again only when the assets changed. The game's and CNA's console
+    output appears in logcat under the tag <code>GalaxyEggbert</code>. An APK built for a single ABI
+    with <code>-Pandroid.injected.build.abi</code> is test-only: install it with
+    <code>adb install -t -r</code>. The app runs in landscape. Emulator notes are in
+    <code>ANDROID.md</code>; without hardware acceleration (KVM) the emulator is too slow to play.
+  </p>
+
+  <h2>Command-line flags</h2>
+  <p>
+    All parsed in <code>src/GalaxyEggbertCNA/main.cpp</code>, on the desktop builds. They are
+    development and QA tools; a player needs none of them. Unknown arguments are ignored.
+  </p>
+  <table>
+    <tr><th>Flag</th><th>What it does</th></tr>
+    <tr><td><code>--user DIR</code></td><td>Keep the player's files in <code>DIR</code> (made absolute against the working folder, created if missing) instead of the system's per-user folder. Takes precedence over <code>GALAXY_USER_DIR</code>. No copy from an earlier build is made. Desktop only.</td></tr>
+    <tr><td><code>--mission N</code></td><td>Skip the menus and start mission <code>N</code> in play, loading <code>worlds3d/worldNNN.vwr</code> (for example <code>12</code>, or <code>999</code> for the showcase world).</td></tr>
+    <tr><td><code>--galaxy</code></td><td>With <code>--mission N</code>: load world <code>N</code> of the selected player's own galaxy, with that galaxy's progress (<a href="galaxy.html">Your Own Galaxy</a>).</td></tr>
+    <tr><td><code>--spawn X,Y,Z[,YAW]</code></td><td>With <code>--mission</code>: put Blupi on the raw grid cell <code>X,Y,Z</code> (the coordinates of <code>.vwr</code> files and <code>tools/vwr_inspect.py</code>) instead of the world's start, facing <code>YAW</code> degrees (default 0). Ignored if fewer than three numbers parse.</td></tr>
+    <tr><td><code>--autoplay SCRIPT</code></td><td>With <code>--mission</code>: a QA script plays instead of the keyboard and mouse, one fixed 1/60 s step per update as fast as the machine runs (one frame in 30 drawn). Writes <code>autoplay_trace.txt</code> in the working folder and exits when the script ends: code 0 if it passed, 1 if not, 2 if the script could not be read.</td></tr>
+    <tr><td><code>--record-demo FILE</code></td><td>With <code>--mission</code> (and optionally <code>--autoplay</code>): record the mission from its start as a main-menu demo until Escape, the mission's end, the script's end, the tick limit or the window closing; write <code>FILE</code> and exit. F-keys and Tab are not recorded (<a href="demos.html">Demos &amp; Recordings</a>).</td></tr>
+    <tr><td><code>--demo-ticks N</code></td><td>With <code>--record-demo</code>: stop after <code>N</code> ticks (60 per second).</td></tr>
+    <tr><td><code>--demo-title TEXT</code></td><td>With <code>--record-demo</code>: the title stored in the demo.</td></tr>
+    <tr><td><code>--verify-demo FILE</code></td><td>Replay that demo at once, undrawn and silent, compare its end with the recorded one and exit: code 0 if equal, 1 if not.</td></tr>
+    <tr><td><code>--golden-capture</code></td><td>Load <code>world999</code>, run the fixed 60 Hz simulation and save <code>golden_frame_0060.png</code>, <code>golden_frame_0120.png</code> and <code>golden_frame_0180.png</code> into the working folder, then exit.</td></tr>
+    <tr><td><code>--golden-capture-trace</code></td><td>Load <code>world999</code>, turn Blupi west, drive him through a fixed input script for 150 ticks, write one line per tick to <code>golden_trace.txt</code> and exit.</td></tr>
+  </table>
+<pre><code>./GalaxyEggbert --mission 12
+./GalaxyEggbert --mission 999 --spawn 34,1,6,0
+./GalaxyEggbert --user ./qa-player --mission 11 --autoplay ../tools/autoplay/world011.txt</code></pre>
+  <div class="warn"><strong>Flags touch the player's files.</strong> Starting a mission discards an
+    interrupted mission's <code>resume.txt</code>, and winning or losing saves progress for the selected
+    player. For experiments, give the run its own folder with <code>--user DIR</code> or
+    <code>GALAXY_USER_DIR</code>, as the project's scripts do.</div>
+  <p>Environment variables that change a run (<code>GALAXY_EFFECTS</code>, <code>AUTOPLAY_SHOTS</code>,
+    ...) are listed on <a href="configuration.html">Configuration</a>.</p>
+
+  <h2>Where the player's files are</h2>
+  <p>
+    Since 2026-11-10 the player's own files are kept apart from the game
+    (<code>src/GalaxyEggbert/Game/UserFolder.hpp</code>): <code>savedata.txt</code> (settings and
+    progress), <code>resume.txt</code> (an interrupted mission), <code>demos/</code> (recordings) and
+    <code>customworlds/</code> (the editor's worlds and the player's galaxy). Format and behaviour:
+    <a href="save-system.html">Save Data &amp; Resume</a>.
+  </p>
+  <table>
+    <tr><th>Platform</th><th>Folder</th></tr>
+    <tr><td>Linux</td><td><code>$XDG_DATA_HOME/Galaxy Eggbert</code>, or <code>~/.local/share/Galaxy Eggbert</code> when <code>XDG_DATA_HOME</code> is not set</td></tr>
+    <tr><td>Windows</td><td><code>%LOCALAPPDATA%\Galaxy Eggbert</code> (an <code>XDG_DATA_HOME</code> variable, if set, wins here too)</td></tr>
+    <tr><td>Any desktop, chosen</td><td><code>--user DIR</code>, else the environment variable <code>GALAXY_USER_DIR</code></td></tr>
+    <tr><td>Web</td><td><code>/save</code> in the page's file system, kept in IndexedDB</td></tr>
+    <tr><td>Android</td><td>The app's private internal storage (its working folder, beside the copied assets); removed when the app is uninstalled</td></tr>
+  </table>
+  <ul>
+    <li>The desktop folder is CNA's per-user storage root for the name "Galaxy Eggbert"
+      (<code>StorageDevice::GetStorageRootEXT()</code>). The game prints the folder it uses at start.</li>
+    <li><strong>Moving from an older build.</strong> Builds before 2026-11-10 kept these files in the
+      working folder (the build directory). On the first start without <code>--user</code> or
+      <code>GALAXY_USER_DIR</code>, if the per-user folder has no <code>savedata.txt</code> and the
+      working folder has one, the game copies the four items over. Nothing is moved or overwritten.</li>
+    <li>If the per-user folder cannot be found or created, the game says so and keeps the files in the
+      working folder.</li>
+  </ul>
+
+  <h2>Headless runs</h2>
+  <p>
+    The game always needs a GL context. On a machine without a display, run it under Xvfb, silence the
+    audio and give it its own player folder:
+  </p>
+<pre><code>cd build-cna-opengl3
+GALAXY_USER_DIR=. SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11 \
+  xvfb-run -a -s "-screen 0 1280x720x24" ./GalaxyEggbert --golden-capture</code></pre>
+  <p>
+    <code>SDL_AUDIODRIVER</code> and <code>SDL_VIDEODRIVER</code> are SDL's own variables. The scripts
+    in <code>tools/</code> (<code>autoplay.sh</code>, <code>qa_live.sh</code>,
+    <code>record_demo.sh</code>, <code>verify_demos.sh</code>, <code>verify_golden_frames.sh</code>,
+    <code>verify_golden_trace.sh</code>) set all of this up; see
+    <a href="development/testing.html">Testing</a>.
+  </p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="controls.html">Controls</a> - keyboard, mouse, gamepad and touch.</li>
+    <li><a href="configuration.html">Configuration</a> - Setup settings and environment variables.</li>
+    <li><a href="platform-support.html">Platform Support</a> - what is verified where.</li>
+    <li><a href="development/debugging.html">Debugging</a> - diagnosing a run.</li>
   </ul>
 
   <div class="page-nav">
-    <a href="build.html">
+    <a class="prev" href="build.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Build Guide</span>
     </a>
-    <a class="next" href="gameplay.html">
+    <a class="next" href="platform-support.html">
       <span class="label">Next</span>
-      <span class="title">Gameplay &#8594;</span>
+      <span class="title">Platform Support &#8594;</span>
     </a>
   </div>
 </main>

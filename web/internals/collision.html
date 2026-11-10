@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Collision System — Galaxy Eggbert Docs</title>
+<title>Collision — Galaxy Eggbert Docs</title>
+<meta name="description" content="How BlupiController resolves Blupi's collision: quarter-cell masks, crates and solid BigDecor boxes, no step-up, jumps, ledges, swimming, penetration recovery, and the exact contact shapes of lava, saws and fans.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,89 +14,203 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
-  <a href="index.html">Internals</a>
+  <a href="../internals/index.html" class="active">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Collision System</div>
-  <h1>Collision System</h1>
-  <p class="subtitle">GEBlupiController: grid collision, 1-block step-up traversal, gravity.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Internals</a> <span>/</span> Collision</div>
+  <h1>Collision</h1>
+  <p class="subtitle">How Blupi meets the world: what is solid, how he moves through it, and the shapes of the things that kill him.</p>
 
-  <h2>Constants</h2>
-  <pre><code>kMoveSpeed = 5.5f;    // units/s
-kJumpSpeed = 12.0f;   // units/s
-kGravity   = 25.0f;   // units/s²
-kFallLimit = -10.0f;  // terminal fall velocity
-kStepLimit = 1.0f;    // max step-up height</code></pre>
-
-  <h2>Block Solidity</h2>
-  <pre><code>bool IsSolidAt(world, gx, gy, gz):
-    if out of [0, blocksPerAxis-1] on any axis: return false  // (or handled by caller clamping)
-    return !world.getBlock(gx, gy, gz).isAir()</code></pre>
-  <p>Grid coordinates are computed via <code>std::lround(pos + kWorldCenter)</code>, then clamped to <code>[0, blocksPerAxis - 1]</code>.</p>
-
-  <h2>GroundHeightAt(gx, gz)</h2>
-  <pre><code>int GroundHeightAt(world, gx, gz):
-    for y from top down to 0:
-        if IsSolidAt(world, gx, y, gz): return y + 1
-    return 0</code></pre>
-
-  <h2>TryMoveAxis (per-axis horizontal step)</h2>
-  <pre><code>bool TryMoveAxis(world, axisDelta):
-    targetGround = GroundHeightAt(world, targetGx, targetGz)
-    if targetGround - currentFeetY &lt;= kStepLimit:
-        apply the move
-        if grounded: lift Y onto targetGround   // 1-block step-up traversal
-        return true
-    return false   // blocked — step too high</code></pre>
-
-  <h2><code>Step(world, dx, dz, jumpPressed, dt)</code></h2>
-  <pre><code>Step(world, dx, dz, jumpPressed, dt):
-    TryMoveAxis(world, dx along X)
-    TryMoveAxis(world, dz along Z)
-
-    if onGround_ and jumpPressed:
-        velocityY_ = kJumpSpeed
-    velocityY_ -= kGravity * dt
-    velocityY_ = max(velocityY_, kFallLimit)
-    pos.y += velocityY_ * dt
-
-    groundY = GroundHeightAt(world, gx, gz)
-    if pos.y &lt;= groundY:
-        pos.y = groundY
-        velocityY_ = 0
-        onGround_ = true
-    else:
-        onGround_ = false</code></pre>
-
-  <h2>What's Not Implemented</h2>
-  <ul>
-    <li>No swimming, hazard, spring, or fan tile interaction — <code>BlockTypes</code> has predicate helpers for these but they aren't wired into <code>GEBlupiController</code>.</li>
-    <li>No object/enemy collision — there are no objects to collide with yet.</li>
-    <li>No AABB body — collision is a single point-column check per axis, not a swept box.</li>
-  </ul>
-
-  <h2>Verification</h2>
   <p>
-    <code>tools/VerifyBlupiMovement.cpp</code> links only <code>GEBlupiController.cpp</code> (no CNA
-    dependency) and scripts movement scenarios headlessly to verify collision behavior without a
-    live window.
+    All of Blupi's movement and collision is in <a href="../classes/BlupiController.html">BlupiController</a>
+    (<code>src/GalaxyEggbert/Game/BlupiController.{hpp,cpp}</code>). It is engine-independent: it sees the
+    <a href="../classes/World.html">World</a>, a list of crate cells, a list of <code>SolidBox</code>es and
+    plain flags the host computes (vanishing tiles passable this tick, at the water surface, in deep
+    water, pushing a crate...). That is why <code>tools/VerifyBlupiMovement.cpp</code> can test it without
+    a window. The rules copy the original game's (<code>Decor::TestPath()</code>,
+    <code>BlupiAdjust()</code>, the quarter-cell table) and adapt them to a third axis. Described as of
+    2026-11-10.
   </p>
 
+  <h2>Blupi's body</h2>
+  <table>
+    <tr><th>Constant</th><th>Value</th><th>Meaning</th></tr>
+    <tr><td>position</td><td>feet, render space</td><td>X/Z cell centres on integers; collision Y is bottom-anchored: cell <code>gy</code> owns <code>[gy, gy + 1)</code>, so standing on a block at grid Y = G puts his feet at G + 1.</td></tr>
+    <tr><td><code>kHeadHeight</code></td><td>49/64 block</td><td>His head: the top of the original's 60-pixel <code>BlupiRect</code>. He fits under a one-block ceiling.</td></tr>
+    <tr><td><code>kBodyHalfWidth</code></td><td>18/64 block</td><td>Half his width against walls, on X and Z alike, on foot and swimming. A vehicle keeps a single point.</td></tr>
+    <tr><td><code>kStepLimit</code></td><td>4/64 block</td><td>The only "step" he takes by walking (below).</td></tr>
+    <tr><td><code>kMoveSpeed</code></td><td>2.5 blocks/s</td><td>The original's 8 px per 20 Hz tick, with its four-tick ease-in.</td></tr>
+    <tr><td><code>kGravity</code>, <code>kFallLimit</code></td><td>25, &minus;12.5 blocks/s</td><td>Fastest fall = the original's 40 px a tick.</td></tr>
+  </table>
+
+  <h2>What is solid: <code>IsPointSolid()</code></h2>
+  <p>Every collision query reduces to "is this point solid?". The answer is decided in this order:</p>
+  <ol>
+    <li><strong>Crates and solid boxes.</strong> Inside a crate's unit cube or a <code>SolidBox</code>: solid (no sub-cell mask).</li>
+    <li><strong>Air and decor.</strong> Air, and any block whose registry entry has <code>decor</code> set (passable scenery, including the standalone saw blade): not solid, neither floor nor ceiling.</li>
+    <li><strong>Lava</strong> is solid up to its animated surface height (<code>LavaSurfaceHeight()</code>, below), so he can stand in it, and dies from the contact test.</li>
+    <li><strong>Special tiles:</strong> the vanishing saucer (<code>Temp</code>) is not solid during its passable ticks; door bars fill their whole cell; a fan is solid only where its base, motor, shaft and hub are (<code>FanBodySolid()</code>); the slime drip and the crusher hang in his own cell and are never solid; a teleporter's top is a floor only for feet coming from above; wind, water and hanging bars are not solid; the flight barrier (214) lets the helicopter and overcraft through.</li>
+    <li><strong>Quarter-cell mask.</strong> Otherwise, if sub-cell precision is asked for, the bit of the 4 &times; 4 <code>collisionMask</code> from the <a href="../classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> under the point (columns from X, rows from Y, row 0 at the top; the mask is extruded through Z). Without sub-cell precision any remaining block is solid.</li>
+  </ol>
+  <p>
+    The resolver asks for sub-cell precision horizontally but not vertically. Thin markers such as hub
+    signs therefore do not stop him when he walks, while thin hazard tiles (lava, crusher, saw,
+    lightning) are still ground to stand on, which the hazard checks rely on.
+  </p>
+
+  <h3>Crates and <code>SolidBox</code>es</h3>
+  <ul>
+    <li><strong>Crates</strong> (object type 12): every tick the host passes the crates' current centres to <code>SetCrateCells()</code>. Each is a solid unit cube where the crate actually is, also between two cells while it is pushed. He stands on crates and cannot walk through them.</li>
+    <li><strong>Solid BigDecor</strong>: <code>SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes())</code>, set whenever the world changes. A <code>SolidBox</code> (<code>src/GalaxyEggbert/Game/SolidBox.hpp</code>) is an axis-aligned box in raw grid coordinates. The game measures the BigDecor 3D models when it loads them, one box per half-block slice of height (a palm's trunk is thin, its crown wide); each box is turned by the cell's object-turn record. An icon in <code>kSolidBigDecorIcons</code> without a measured model is a 1 &times; 2 &times; 1 column over its anchor.</li>
+    <li>Other objects (enemies, pickups, lifts) are not obstacles; they are handled as contacts by <a href="object-lifecycle.html">InteractionSystem</a>. Lifts carry him through <code>RideLift()</code>.</li>
+  </ul>
+
+  <h2>Moving: one merged sweep</h2>
+  <p>
+    Each <code>Step()</code> computes the whole intended displacement (walk or swim along his facing,
+    gravity, wind) and resolves it once with <code>ResolveMove()</code>, the 3D equivalent of the
+    original's <code>Decor::TestPath()</code>. It marches toward the target and stops on whichever axis
+    meets something solid, reporting <code>blockedX</code>, <code>blockedY</code>, <code>blockedZ</code>
+    and <code>onGround</code>. One merged resolve treats a wall, a ceiling at a jump's apex and a
+    helicopter climbing into a roof the same way.
+  </p>
+
+  <h3>No step-up: he jumps</h3>
+  <div class="note"><strong>A one-block step stops Blupi.</strong> As in the original, he does not walk
+    up steps; he jumps onto them. Until 2026-10-25 the controller let him climb a whole block by
+    walking; that was removed. What remains is <code>kStepLimit</code>, a tolerance of 4 of a block's 64
+    pixels, so that seams between surfaces of almost equal height (a lift's top, a sub-cell floor)
+    cannot snag him. With his body's width only a real step at the leading face lifts him; a wall stays
+    a wall.</div>
+
+  <h3>Jumps and ceilings</h3>
+  <ul>
+    <li>Jump speeds follow the original's four magnitudes (<code>Decor::IsNormalJump()</code>): <code>kJumpSpeed</code> = 12 blocks/s with clear headroom, &times; 26/16 with the power-up, &times; 12/16 when the two cells over his head are not clear (<code>HasJumpHeadroom()</code>). Springs, the skateboard and the water exit have their own values.</li>
+    <li>A fast rise stopped by a ceiling is the "ouch" bump and a hurt landing; a slower one taps the ceiling with its sound.</li>
+  </ul>
+
+  <h3>Ledges</h3>
+  <p>
+    Standing still with his front foot over the void and the back one on the ground, he teeters for 16
+    ticks and then steps back 4 px a tick for 3 ticks; with the void behind him he steps forward instead.
+    The jeep, tank and skateboard roll on 5 px a tick for 10 ticks the way they face. Foot probes are
+    0.15 block either side of his middle. Walking off a ledge drops him once his whole box is past it.
+  </p>
+
+  <h3>Water</h3>
+  <p>
+    Water cells are never solid. The host decides the mode each tick: water in his cell with dry air
+    above is <em>surf</em> (floating with his feet 18/64 below the surface), water above too is
+    <em>swimming</em>. Swimming has no gravity: jump or Right Shift swims up, Left Shift down, easing
+    toward 5 px a tick; without input he drifts up slowly. Breath lasts 100 gauge steps of 0.25 s
+    (about 25 s) and refills when he surfaces. From the surface, a jump with open air above makes the
+    original's weak jump out of the water. A vehicle that enters water is wrecked first.
+  </p>
+
+  <h3>Wind</h3>
+  <p>Wind tiles at his middle push him sideways (110, 114, turned along Z by a plate-turn record) or up and down (118, 122), except on a lift, in the jeep, tank or skateboard, or while he is busy.</p>
+
+  <h2>Penetration recovery</h2>
+  <p>
+    After every move (in all modes but ghost) <code>RecoverFromPenetration()</code> checks his box, from
+    2/64 to 49/64 above his feet, and frees him if it overlaps something solid:
+  </p>
+  <ol>
+    <li><strong>Inside a <code>SolidBox</code></strong> (a BigDecor model caught his head while his feet stand on a floor): the nearest free position just outside the box along X or Z, at the same height, or on top of the solid floor if he is half buried. Never downward: a model never pushes him through a floor (the rare jeep-under-a-palm trap, fixed 2026-11-08).</li>
+    <li><strong>A floor top within the step tolerance</strong> above his feet (riding a lift up beside a ledge): he is set on that floor.</li>
+    <li><strong>Otherwise</strong> the original's <code>BlupiAdjust()</code>: up to 50 steps of 2 px down (freeing a head in a ceiling), then right, then left. If all fail the overlap is left as the original leaves it.</li>
+  </ol>
+  <p>
+    Placement uses the same machinery: <code>SettleOnGround()</code> runs the resolver with no motion, so
+    a mission start or a respawn stands on the ground before the first input tick, while a start in open
+    air still falls.
+  </p>
+
+  <h2>Hazard contact volumes</h2>
+  <p>Deadly tiles kill on contact with the shape the player sees, not with their voxel:</p>
+  <table>
+    <tr><th>Hazard</th><th>Test</th><th>Shape</th></tr>
+    <tr><td>Lava</td><td><code>BlupiController::IsTouchingLava()</code>, <code>LavaHeight.hpp</code></td><td>An animated height field generated from the original Amapi lava models (<code>LavaSurfaceData.hpp</code>, by <code>tools/a3d/lava_surface.py</code>; 5 frames). Five foot points (radius 11/64) are tested against the surface of their cell's current frame. The same field is the lava's collision and its drawn pool, so jumping or flying over a lava cell is safe and falling in kills only on reaching the surface.</td></tr>
+    <tr><td>Saw</td><td><code>BlupiController::IsTouchingSawBlade()</code></td><td>Only the visible upper half of the recovered disk (radius 0.466, thickness 0.20), its flat cut at the cell's bottom. The blade's axis is X or Z according to the cell's turn records. The test sweeps from the previous to the current feet height, so jumping onto the blade kills. A saw has no implied floor; a real block under it collides on its own.</td></tr>
+    <tr><td>Fan</td><td><code>FanGeometry.hpp</code>: <code>FanBodySolid()</code>, <code>FanRotorTouchesBody()</code>; <code>WorldRuntime::TryConsumeFan()</code></td><td>Bounds recovered from the fan model (<code>avatars3d/objects/fan_ventillo-h</code>). The base, motor, shaft and hub are solid and safe to land on; only the swept annulus of the four blades (height 0.225-0.401, radius 0.19-0.50 in the model's frame) is lethal, in all six directions including turned side fans. Touching the blades consumes the fan and its wind column.</td></tr>
+    <tr><td>Spike trap, lightning, drip, crusher</td><td>Host checks in <code>GalaxyEggbertGameUpdate.cpp</code></td><td>Cell-based, as in the original: the spike trap under his feet; the lightning in or under his cell on its active ticks (<code>WorldRuntime::IsBlitzActiveAtPhase()</code>); the drip in his cell; the crusher in his cell on its active ticks (<code>IsCrusherActiveAtPhase()</code>).</td></tr>
+  </table>
+  <p>
+    Invincibility (shield, Hide, the super-Blupi cheat), vehicle immunity and "focus" (he is not caught
+    while taking a pickup or teleporting) gate these checks as in the original. His last safe position
+    (<code>UpdateSafePosition()</code>, <code>GetValidX/Y/Z()</code>) is updated only off hazard tiles,
+    out of deep water and away from object paths; that is where he reappears after a death.
+  </p>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tools/VerifyBlupiMovement.cpp</code> (ctest <code>VerifyBlupiMovement</code>): first-tick placement on floors, ledges and crates; the staircase climbed by jumping from step to step (and not by walking); jump apex and ceilings; lava contact (standing in it, jumping over it); the saw disk (walking or jumping into it kills, beside it and on the block below it is safe); bars, Temp tiles, teleporters; crates; penetration recovery for foot, jeep, tank and helicopter head overlaps and a half-buried jeep.</li>
+    <li><code>tools/VerifyInteractionSystem.cpp</code>: fan body and rotor shapes, hazard timing functions.</li>
+    <li>The golden movement trace (<code>tests/golden/golden_trace.txt</code>, <code>--golden-capture-trace</code>) and the autoplay playthroughs catch any change of timing (<a href="../development/testing.html">Testing</a>).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../classes/BlupiController.html">BlupiController</a>, <a href="../classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>, <a href="../classes/WorldRuntime.html">WorldRuntime</a></li>
+    <li><a href="object-lifecycle.html">Object Lifecycle</a>, <a href="../gameplay.html">Gameplay</a>, <a href="../controls.html">Controls</a></li>
+  </ul>
+
   <div class="page-nav">
-    <a href="object-lifecycle.html">← Object Lifecycle</a>
-    <a href="index.html">Internals ↑</a>
+    <a class="prev" href="../internals/object-lifecycle.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Object Lifecycle</span>
+    </a>
+    <a class="next" href="../development/index.html">
+      <span class="label">Next</span>
+      <span class="title">Development &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

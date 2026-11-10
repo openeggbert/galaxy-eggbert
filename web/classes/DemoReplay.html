@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DemoReplay — Galaxy Eggbert Docs</title>
+<meta name="description" content="DemoReplay defines the .gdemo file of the main-menu demos and player recordings, its validation, sharing, and the idle timer and stop rules the host uses.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> DemoReplay</div>
+  <h1>DemoReplay</h1>
+  <p class="subtitle">The <code>.gdemo</code> format of the main-menu demos and the player's recordings: a resume log under its own header, with a simulation revision and its world's hash.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/DemoReplay.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/DemoReplay.cpp</code>; playing and recording in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code> (free functions, <code>DemoRecording</code>, <code>DemoLiveInput</code>, <code>DemoIdleTimer</code>)</td></tr>
+    <tr><th>Engine dependency</th><td>None. The host feeds it live input and plays the recording through the normal simulation.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    Speedy Blupi played recorded games in its main menu after a while without input. Galaxy Eggbert
+    does the same (BD-0115): the menu's Demo button, or 40 seconds without input in the settled main
+    menu, plays ten demo positions in turn, the first again after the last. A demo is drawn and heard
+    like play ("Demo" in the top-left corner) and any new key, button, wheel step or touch stops it;
+    moving the mouse does not. Players can record their own demo into any of the ten positions from
+    the Pause screen (BD-0116), name it, and export or import it as a file.
+  </p>
+  <p>
+    A demo holds the same data as a <a href="ResumeLog.html">resume log</a>: the start state, the seed and
+    the raw input of every 1/60 s tick. The difference is compatibility. A resume file is accepted only
+    by the identical build; a demo must survive new builds, so instead it names the
+    <em>simulation revision</em> it was recorded with and the hash of its world, plus a signature of the
+    end state so a changed simulation can be detected. A demo whose format, revision or world differs is
+    skipped, never replayed into a different game.
+  </p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><a href="ResumeLog.html">ResumeLog</a>: body (<code>WriteBody</code>/<code>ReadBody</code>), checksum footer and FNV-1a hashing.</li>
+    <li><code>UserFolder</code> for <code>demos/</code>, and <code>FreeFileName.hpp</code> for numbered export names.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: <code>StartDemo</code>, <code>StartDemoFile</code>, <code>ResolveDemoWorld</code>,
+      <code>DemoTick</code>, <code>UpdateDemo</code>, <code>EndOfDemo</code>, <code>StopDemo</code>, <code>UpdateDemoMenu</code>,
+      <code>StartPlayerRecording</code>, <code>FinishDemoRecording</code>, and the demo positions screen.</li>
+    <li><a href="InputPad.html">InputPad</a> draws the positions screen (<code>InputPad::DemoSlotInfo</code>).</li>
+    <li><a href="CustomWorldStorage.html">CustomWorldStorage</a>: a galaxy pack carries the player's recordings made in that galaxy.</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API declared in <code>src/GalaxyEggbert/Game/DemoReplay.hpp</code>.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td>Constants</td><td><code>kDemoFormatVersion = 1</code>, <code>kDemoSimulationRevision = 1</code>, <code>kDemoIdleSeconds = 40.0f</code>, <code>kDemoSlotCount = 10</code>, <code>kDemoMaxTicks</code> (10 minutes of ticks), <code>kDemoNameMax = 24</code></td><td>Format and revision numbers, idle delay, positions, length and name limits.</td></tr>
+    <tr><td><code>DemoRecording</code></td><td><code>struct DemoRecording { int simulationRevision; std::string title; ResumeLog log; std::vector&lt;std::pair&lt;std::string, std::uint64_t&gt;&gt; endSignature; std::string Serialize() const; }</code></td><td>One demo in memory.</td></tr>
+    <tr><td><code>ParseDemo</code></td><td><code>DemoLoadStatus ParseDemo(const std::string&amp; text, int expectedRevision, DemoRecording&amp; out)</code></td><td>Validates header, checksum, every field, normal game speed and length. Transactional.</td></tr>
+    <tr><td><code>DemoWorldStatus</code></td><td><code>DemoLoadStatus DemoWorldStatus(const DemoRecording&amp; demo, const std::string&amp; path, const std::optional&lt;std::string&gt;&amp; worldBytes)</code></td><td><code>Ok</code>, <code>WorldMissing</code> or <code>WorldChanged</code> for the file the host would load.</td></tr>
+    <tr><td><code>DemoLoadStatus</code></td><td><code>enum class DemoLoadStatus { Ok, Missing, Corrupt, IncompatibleFormat, IncompatibleRevision, WorldMissing, WorldChanged }</code></td><td>Why a demo can or cannot play; <code>DemoLoadStatusText()</code> gives the log text.</td></tr>
+    <tr><td><code>DemoPath</code>, <code>UserDemoPath</code>, <code>UserDemoDir</code>, <code>SharedDemoDir</code></td><td><code>std::string DemoPath(int number)</code> (and similar)</td><td><code>Content/demos/demoNNN.gdemo</code>; <code>demos/demoNNN.gdemo</code>; <code>demos</code>; <code>demos/shared</code> (the last three in the player's folder).</td></tr>
+    <tr><td><code>ExportDemo</code>, <code>ImportDemo</code></td><td><code>std::string ExportDemo(const std::string&amp; source, int gamer, int slot)</code><br><code>DemoLoadStatus ImportDemo(const std::string&amp; source, int slot)</code></td><td>Copy a position's demo into <code>demos/shared/</code> (never replacing a file), or a valid shared demo into a position.</td></tr>
+    <tr><td><code>DemoExportName</code>, <code>ListSharedDemos</code></td><td><code>std::string DemoExportName(int gamer, int slot, const std::string&amp; title = {})</code></td><td><code>A-demo-5.gdemo</code>, or <code>&lt;name&gt;.gdemo</code> for a named demo; the shared list is newest first.</td></tr>
+    <tr><td><code>SanitizeDemoName</code>, <code>RenameDemo</code>, <code>DemoTitle</code></td><td><code>bool RenameDemo(const std::string&amp; path, const std::string&amp; name)</code></td><td>Names: letters, digits, spaces, <code>-</code> and <code>'</code>, at most 24 characters.</td></tr>
+    <tr><td><code>HashDemoSignature</code>, <code>DemoSignatureDifferences</code></td><td><code>std::vector&lt;std::string&gt; DemoSignatureDifferences(expected, actual)</code></td><td>Hash the end-state signature; name the parts that differ.</td></tr>
+    <tr><td><code>DemoOrderAfter</code></td><td><code>std::vector&lt;int&gt; DemoOrderAfter(int current, int count)</code></td><td>The next demos to try, wrapping after the last.</td></tr>
+    <tr><td><code>DemoActivity</code>, <code>DemoNewPress</code>, <code>DemoInputHeld</code></td><td><code>bool DemoNewPress(const DemoLiveInput&amp; previous, const DemoLiveInput&amp; now) noexcept</code></td><td>Idle-timer reset, the stop rule (a new press only, not mouse movement, auto-repeat or a release), and the input latch after a demo.</td></tr>
+    <tr><td><code>DemoIdleTimer</code></td><td><code>bool Update(float elapsedSeconds, bool eligible, bool activity) noexcept</code></td><td>Counts idle time only while eligible; true once when 40 s are reached.</td></tr>
+  </table>
+
+  <h2>The <code>.gdemo</code> file</h2>
+  <p>Text, written by <code>DemoRecording::Serialize()</code>: a header, the end signature, then the
+  <a href="ResumeLog.html">resume-log body</a> and its <code>END &lt;FNV-1a&gt;</code> footer. The start of the
+  shipped <code>Content/demos/demo001.gdemo</code>:</p>
+  <pre><code>GALAXY_DEMO 1
+1
+"World 1: pillars, mine pits and lifts"
+"Nov  8 2026 19:35:31 fnv1a64=17098780557396544612"
+9
+"Blupi" 5723123326820972394
+"Hide trail" 14695981039346656037
+"blocks" 16646699624160265678
+...
+"worlds3d/world011.vwr" 17476187514555174857
+11 3 1 3279155381 14 10 10 -0 0 0 0 0 0 0 1
+"soundEnabled=1
+...</code></pre>
+  <p>
+    Line by line: magic and format version; simulation revision; title; the recording build (for
+    information only, never compared); the number of signature entries and each entry's name and hash;
+    then the world path and the FNV-1a hash of its bytes, the start record, the settings and the input
+    runs exactly as in a resume log. A demo must be at normal game speed, non-empty and at most ten
+    minutes long. The revision is checked last, so a damaged file is always reported as damaged.
+  </p>
+  <h3>Where demos live</h3>
+  <table>
+    <tr><th>File</th><th>What</th></tr>
+    <tr><td><code>Content/demos/demo001.gdemo</code> ... <code>demo010.gdemo</code></td><td>The shipped demos, one per position (missions 011, 074, 105, 023, 033, 055, 065, 081, 112, 123, as of 2026-11-10).</td></tr>
+    <tr><td><code>demos/demoNNN.gdemo</code> (player's folder; <code>/save/demos/</code> on the web)</td><td>The player's recording for position NNN; when present it plays instead of the shipped one ("Original" gives the shipped one back).</td></tr>
+    <tr><td><code>demos/shared/*.gdemo</code></td><td>Exports and files to import (on the web, an export is also downloaded and the file picker writes imports here).</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p>
+    <code>GalaxyEggbertGame::StartDemoFile()</code> checks everything before touching the player's state:
+    the file must parse, its world must be found (the campaign's file, or a galaxy world with the
+    recorded hash in any player's galaxy) and load. Only then does it set aside the player's profile,
+    settings and cheats, apply the recording's profile with the player's own sound, volumes and display
+    settings, and play. Each update feeds one recorded tick into the normal <code>UpdateTick()</code>
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code>):
+  </p>
+  <pre><code>const auto&amp; run = demo_.log.runs[demoRun_];
+const std::uint32_t count = run.count;
+tickInput_ = run.input;
+try
+{
+    UpdateTick();
+}
+catch (const std::exception&amp; error)
+{
+    // A failure inside the replayed game takes the player back to the menu, never further.
+    ...
+    StopDemo();
+    return false;
+}</code></pre>
+  <p>
+    At the end <code>EndOfDemo()</code> compares the end signature (a difference is only logged in the
+    menu) and starts the next position; <code>StopDemo()</code> restores the player's state. A player
+    recording (<code>StartPlayerRecording()</code>) restarts the current mission from its start at normal
+    speed, titled "Recorded by player A: mission 11" until renamed, and ends when Play or the mission is
+    left or after ten minutes. Developers record and check demos from the command line:
+    <code>--record-demo &lt;file&gt;</code> with <code>--mission N</code> (optionally <code>--autoplay</code>,
+    <code>--demo-ticks N</code>, <code>--demo-title</code>), and <code>--verify-demo &lt;file&gt;</code>, which
+    replays undrawn and prints <code>DEMO VERIFY &lt;file&gt;: equal</code> or <code>different: ...</code>. The
+    wrappers are <code>tools/record_demo.sh</code> and <code>tools/verify_demos.sh</code>.
+  </p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>While a demo plays the player's data is frozen: <code>savedata.txt</code> and <code>resume.txt</code>
+      are neither written nor deleted, and focus loss stops the demo.</li>
+    <li>The input that stops a demo never reaches the menu: input is ignored until nothing is held.</li>
+    <li>Demos run only from the settled main menu; never in Play, Pause, Setup, the editor or during a menu fade.</li>
+    <li>When a simulation change makes <code>tools/verify_demos.sh</code> report a shipped demo as
+      different, bump <code>kDemoSimulationRevision</code> and record the demos again; the old files are
+      then skipped as incompatible.</li>
+    <li>F-keys and Tab are left out of a recording; exports never overwrite (<code>A-demo-5-2.gdemo</code> ...).</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyDemoReplay</code> (<code>tools/VerifyDemoReplay.cpp</code>): header and round trip, refusal
+      of another revision or format, of truncated, damaged, trailing, empty, fast, over-long and invalid
+      demos, demo versus resume file, world status, paths, export/import and naming, signature
+      differences, the play order, the 40-second idle timer and the stop rules.</li>
+    <li><code>VerifyDemoFiles</code> (<code>VerifyDemoReplay --shipped</code>, from the repository root): ten
+      shipped demos, numbered without gaps, each parsing with the current revision, matching its world,
+      with a title and an end signature.</li>
+    <li><code>VerifyDemoReplays</code> (<code>tools/verify_demos.sh</code>): the game itself replays every
+      shipped demo undrawn and silent under Xvfb, compares the end state, and checks that the player's
+      <code>savedata.txt</code> and <code>resume.txt</code> are untouched. Registered only on native
+      non-Windows builds where <code>xvfb-run</code> is found.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../demos.html">Demos &amp; Recordings</a></li>
+    <li><a href="ResumeLog.html">ResumeLog</a>, <a href="SaveData.html">SaveData</a>, <a href="Autoplay.html">Autoplay</a></li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="CustomWorldStorage.html">CustomWorldStorage</a></li>
+    <li><a href="../galaxy.html">Your Own Galaxy</a>, <a href="../development/testing.html">Testing</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/ResumeLog.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; ResumeLog</span>
+    </a>
+    <a class="next" href="../classes/Autoplay.html">
+      <span class="label">Next</span>
+      <span class="title">Autoplay &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

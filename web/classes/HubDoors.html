@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HubDoors — Galaxy Eggbert Docs</title>
+<meta name="description" content="HubDoors, the engine-independent functions that find the hubs' doors, gold bars and signs in a 3D world, decide which open, and where Blupi arrives.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> HubDoors</div>
+  <h1>HubDoors</h1>
+  <p class="subtitle">The hubs' progression logic on a 3D world: which doors and gold bars open, which signs show "completed", and where Blupi stands when he arrives.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/HubDoors.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/HubDoors.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert</code> (free functions and small structs, no class)</td></tr>
+    <tr><th>Icons used</th><td><code>BlockTypes.hpp</code>: <code>HubDoor = 182</code>, <code>GoldDoor = 183</code>, <code>MissionSign1 = 174</code> (to 181), <code>WorldSelect1 = 158</code> / <code>WorldDone1 = 166</code> (worlds 1-8), <code>WorldSelect9 = 309</code> / <code>WorldDone9 = 310</code>, <code>WorldSelect10 = 411</code> / <code>WorldDone10 = 416</code> (worlds 10-14)</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    The campaign is organised as in the original: a main hub (mission 1) with a sign per world, world
+    hubs (missions 10, 20, ... 120) with a sign and a door per mission. The original game finds doors
+    and signs by scanning left and right along a row of its 2D map
+    (<code>Decor::SearchDoor()</code>, <code>SearchGold()</code>, <code>SearchWorld()</code>,
+    <code>AdaptDoors()</code>). <code>HubDoors</code> does the same on a 3D <a href="World.html">World</a>:
+    it looks along X and Z at the same height. It depends only on the world model, so it is unit-tested
+    without a window.
+  </p>
+  <p>Cells are raw grid coordinates (the world's own, not the render space).</p>
+
+  <h2>Public API</h2>
+  <p>Verified in <code>HubDoors.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Declaration</th><th>Description</th></tr>
+    <tr><td><code>struct HubCell { int x, y, z; }</code></td><td>A cell, with <code>==</code>.</td></tr>
+    <tr><td><code>struct HubArrival { HubCell cell; float yaw; }</code></td><td>Where Blupi starts and the yaw he faces (<code>BlupiController</code> convention: he moves along (sin yaw, &minus;cos yaw)).</td></tr>
+    <tr><td><code>struct MissionDoor { HubCell door; HubCell sign; }</code></td><td>A world hub's door and the mission sign it belongs to.</td></tr>
+    <tr><td><code>FindMissionDoors(world, sign)</code></td><td>For mission sign 1-8 (icons 174-181): every <code>HubDoor</code> one or two cells from one of that sign's cells along X or Z, at the same height.</td></tr>
+    <tr><td><code>FindGoldDoors(world)</code></td><td>All gold bars in the order the main hub opens them, one per completed world: lowest first, then from +X, then from +Z (the original scans from the map's bottom right).</td></tr>
+    <tr><td><code>FindWorldSigns(world, worldIndex)</code></td><td>The cells of world 1-14's sign, in either its normal or its completed icon.</td></tr>
+    <tr><td><code>CompletedWorldSignIcon(icon)</code></td><td>The completed version of a world sign icon, or the icon unchanged.</td></tr>
+    <tr><td><code>ArrivalBesideSign(world, sign)</code></td><td>The first free cell with a floor under it beside the sign (order &minus;X, +X, &minus;Z, +Z), facing the sign.</td></tr>
+    <tr><td><code>struct HubAdaptation { goldDoors; completedSigns; missionDoors; }</code></td><td>What to open or change.</td></tr>
+    <tr><td><code>AdaptHubDoors(world, mission, unlocked, cheatDoors)</code></td><td>Decides it. <code>unlocked(index)</code> reads the save's door table: in the main hub index 180 + world, in a world hub mission + sign. <code>cheatDoors</code> (the <code>opendoors</code> cheat) opens everything. Mission 1: one gold bar per completed world and the completed worlds' signs. A world hub (mission % 10 == 0): the doors of every unlocked mission, in sign order. Any other mission: nothing. Doors already opened are gone from the world, so a second call finds only those still shut.</td></tr>
+    <tr><td><code>ArrivalPastDoor(world, door, sign)</code></td><td>The free, floored cell beyond an opened door on the side away from its sign, facing the door.</td></tr>
+  </table>
+
+  <h2>How the game uses it</h2>
+  <p>
+    <code>GalaxyEggbertGame::LoadMission()</code> calls its own <code>AdaptHubDoors(missionNumber)</code>
+    wrapper right after building the world's presentation
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code>):
+  </p>
+  <pre><code>const auto adapted = GalaxyEggbert::AdaptHubDoors(
+    terrain, missionNumber, [this](int index) { return saveData_.IsMissionDoorUnlocked(index); },
+    cheatDoors_);
+for (const auto&amp; gold : adapted.goldDoors)
+    InteractionSystem::OpenDoor(worldRuntime_, gold.x, gold.y, gold.z, sound_);
+for (const auto&amp; sign : adapted.completedSigns)
+    terrain.setBlock(x, y, z, Worlds::Block::make(CompletedWorldSignIcon(terrain.getBlock(x, y, z).type())));
+for (const auto&amp; door : adapted.missionDoors)
+{
+    InteractionSystem::OpenDoor(worldRuntime_, door.door.x, door.door.y, door.door.z, sound_);
+    if (const auto past = GalaxyEggbert::ArrivalPastDoor(worldRuntime_.GetWorld(), door.door, door.sign))
+        arrival = past;
+}</code></pre>
+  <p>
+    Opened doors slide up as the hub appears. In a world hub Blupi then starts past the last door
+    opened; in the main hub he starts beside the sign of the world he last played
+    (<code>SaveData::GetLastWorld()</code>, <code>ArrivalBesideSign()</code>). The same function runs
+    again when the <code>opendoors</code> cheat is toggled. Details: <a href="../internals/world-loading.html">World Loading</a>.
+  </p>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tests/GalaxyEggbert/HubDoorsTests.cpp</code>: <code>MissionDoorsAreOneOrTwoCellsBesideTheirSign</code>, <code>GoldDoorsOpenLowestFirstThenFromPlusX</code>, <code>AdaptHubDoorsOpensWhatIsUnlockedAndEverythingWithTheCheat</code>, <code>WorldSignsAndTheirCompletedIcons</code>, <code>ArrivalsFaceTheSignOrTheDoor</code>.</li>
+    <li>The autoplay playthroughs of the hubs (<a href="../development/testing.html">Testing</a>) cover it end to end.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../levels.html">Campaign &amp; Worlds</a>, <a href="../internals/world-loading.html">World Loading</a></li>
+    <li><a href="SaveData.html">SaveData</a>, <a href="InteractionSystem.html">InteractionSystem</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/MoveObjectRecord.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; MoveObjectRecord</span>
+    </a>
+    <a class="next" href="../classes/GalaxyEggbertGame.html">
+      <span class="label">Next</span>
+      <span class="title">GalaxyEggbertGame &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Debugging — Galaxy Eggbert Docs</title>
+<meta name="description" content="Debugging Galaxy Eggbert: the debug and position cheats, command-line flags, diagnostic environment variables, headless runs, context-loss testing, logs and Doxygen.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,68 +14,172 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
-  <a href="index.html">Development</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html" class="active">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Debugging</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Development</a> <span>/</span> Debugging</div>
   <h1>Debugging</h1>
-  <p class="subtitle">Verifying terrain visibility, headless collision testing, and common problems.</p>
+  <p class="subtitle">In-game diagnostics, the flags and environment variables the code reads, and how to reproduce a problem headless (checked against the source on 2026-11-10).</p>
 
-  <h2>Terrain Visibility Self-Check</h2>
-  <p>
-    <code>GalaxyEggbertCnaGame::Draw()</code> includes a one-shot self-check: it samples a 5×5 grid
-    of on-screen pixels via <code>GetBackBufferData()</code> and counts how many show real terrain
-    color vs. the sky-blue clear color. A healthy run shows most sampled points with real terrain
-    color across many distinct colors — confirming actual texture sampling, not a placeholder or a
-    fully-blue (empty) screen.
-  </p>
-
-  <h2>Headless Collision Verification</h2>
-  <pre><code>cmake --build build-cna --target VerifyBlupiMovement
-./build-cna/VerifyBlupiMovement</code></pre>
-  <p>
-    <code>tools/VerifyBlupiMovement.cpp</code> links only <code>GEBlupiController.cpp</code> (no
-    CNA/cna-engine dependency) and scripts movement scenarios without a live window — the fastest way
-    to debug step-up/gravity/collision logic in isolation.
-  </p>
-
-  <h2>Worlds Data Model Tests</h2>
-  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
-cmake --build build-cna --target GalaxyEggbertWorldsTests
-ctest --test-dir build-cna --output-on-failure</code></pre>
-
-  <h2>Common Problems</h2>
+  <h2>In-game diagnostics</h2>
+  <p>Typed cheat words work in Play when the build has cheats enabled (the CMake option
+  <code>GALAXY_EGGBERT_ENABLE_CHEATS</code>, ON by default; OFF compiles out typed words, F12 and the hidden
+  cheat menu). The full list is on <a href="../cheats.html">Cheats &amp; Diagnostics</a>; these are the ones
+  that help when debugging:</p>
   <table>
-    <tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr>
-    <tr><td>Solid blue screen, no terrain</td><td>Binary not run from its build directory, so relative asset paths fail</td><td>Run from inside <code>build-cna/</code></td></tr>
-    <tr><td>Texture seams between tiles</td><td>Atlas pitch miscalculated (64 px vs. real 65 px pitch)</td><td>Check <code>GETileAtlas</code>'s grid registration — see the 2026-07-04 bug fix note on its class page</td></tr>
-    <tr><td>Invisible collision point falls through floor</td><td>World-center offset mismatch between renderer and controller</td><td>Both must use the same <code>kWorldCenterX/Z = 50</code></td></tr>
-    <tr><td>CMake link errors (duplicate symbols)</td><td>Before 2026-10-20: easy-3d configured before CNA. Now <code>CMakeLists.txt</code> adds CNA first and builds it statically (<code>CNA_SHARED_LIBRARY=OFF</code>) because cna-engine links CNA's static module libraries</td><td>Reconfigure from a clean build dir</td></tr>
-    <tr><td>Test suite fails to build</td><td>GoogleTest not fetched</td><td>Ensure network access during first CMake configure, or check <code>BUILD_TESTING=ON</code></td></tr>
+    <tr><th>Word or key</th><th>Effect</th></tr>
+    <tr><td><code>debug</code></td><td>Toggles the diagnostics panel (only in Play): simulation time and ticks, mission and sky region, lives, Blupi's raw position and cell, velocity in blocks/s, yaw, movement mode (ground or air, vehicle), animation state and icon, game speed, keys and touches held, gamepad and accelerometer state. Upper right on desktop, upper centre on touch layouts. Lines built by <code>src/GalaxyEggbert/Game/DebugOverlay.hpp</code></td></tr>
+    <tr><td><code>position</code></td><td>Shows Blupi's place (x, y, z) in the active cheats' list, with the world's X, Y and Z axes drawn as arrows that turn with the camera</td></tr>
+    <tr><td><code>fps</code></td><td>Shows the frames drawn per second in the cheats' list</td></tr>
+    <tr><td><code>ghost</code>, <code>megablupi</code>, <code>zoom</code></td><td>Walk through walls; invincibility; step the chase camera out</td></tr>
+    <tr><td><code>help</code> / <code>cheats</code>, F1</td><td>A paused overlay listing every cheat word; F1 shows the controls help</td></tr>
+    <tr><td>F5, F6, Tab</td><td>Normal and fast game speed; Tab steps slow motion 0.5, 0.25, 0.125 and back. F7/F8 (faster still) only after the <code>quick</code> cheat</td></tr>
+    <tr><td>F12</td><td>The cheat menu</td></tr>
+  </table>
+  <p><code>fairplay</code> turns the toggles off and locks cheat entry (typing it again unlocks);
+  <code>honest</code> locks every cheat until the game quits. If a debugging word does nothing, check for
+  those.</p>
+
+  <h2>Command-line flags</h2>
+  <p>Parsed in <code>src/GalaxyEggbertCNA/main.cpp</code>. Run the game from its build directory, where a
+  post-build step stages its assets.</p>
+  <table>
+    <tr><th>Flag</th><th>Effect</th></tr>
+    <tr><td><code>--mission N</code></td><td>Skip the menus and start mission N</td></tr>
+    <tr><td><code>--spawn x,y,z[,yaw]</code></td><td>With <code>--mission</code>: place Blupi at that raw grid position (yaw 0 faces -Z, 90 faces +X)</td></tr>
+    <tr><td><code>--autoplay &lt;script&gt;</code></td><td>Play the mission by a QA script, write <code>autoplay_trace.txt</code>, exit 0 when it passed (<a href="testing.html">Testing &amp; QA</a>)</td></tr>
+    <tr><td><code>--galaxy</code></td><td>With <code>--mission</code>: start from the selected player's own galaxy</td></tr>
+    <tr><td><code>--golden-capture</code>, <code>--golden-capture-trace</code></td><td>The deterministic captures behind <code>tests/golden/</code></td></tr>
+    <tr><td><code>--record-demo &lt;file&gt;</code>, <code>--demo-ticks N</code>, <code>--demo-title &lt;text&gt;</code>, <code>--verify-demo &lt;file&gt;</code></td><td>Record a main-menu demo; replay one and compare its end state (<code>tools/record_demo.sh</code>, <code>tools/verify_demos.sh</code>)</td></tr>
+    <tr><td><code>--user DIR</code></td><td>Keep the player's files (<code>savedata.txt</code>, <code>resume.txt</code>, <code>demos/</code>, <code>customworlds/</code>) in DIR instead of the system's per-user folder; <code>GALAXY_USER_DIR</code> does the same</td></tr>
+  </table>
+  <div class="tip"><strong>Use a scratch user folder</strong> Since 2026-11-10 a desktop build keeps the
+  player's files in the per-user data folder (<code>$XDG_DATA_HOME/Galaxy Eggbert</code> on Linux). When you
+  experiment with saves, resume or the editor, pass <code>--user</code> with a throwaway directory so your own
+  progress is not touched. The QA scripts already set <code>GALAXY_USER_DIR</code> to their run directory.</div>
+
+  <h2>Diagnostic environment variables</h2>
+  <p>Each of these is read by the code named; the effects and graphics settings themselves
+  (<code>GALAXY_EFFECTS</code>, <code>GALAXY_TEXTURES</code>) are on <a href="../configuration.html">Configuration</a>.</p>
+  <table>
+    <tr><th>Variable</th><th>Effect</th><th>Read in</th></tr>
+    <tr><td><code>GALAXY_PERF=1</code></td><td>Every 120 frames prints the mean draw time and the models drawn, their triangles and the models culled per frame; also prints how terrain changes were patched or rebuilt and how long it took</td><td><code>GalaxyEggbertGameDraw.cpp</code>, <code>GalaxyEggbertGameLoad.cpp</code></td></tr>
+    <tr><td><code>GALAXY_MODEL_CULL=0</code></td><td>Draws every object model, without the frustum test</td><td><code>GalaxyEggbertGame.cpp</code></td></tr>
+    <tr><td><code>GALAXY_EFFECTS_DEBUG=shadow|occlusion|gi|sprites</code></td><td>With the 3D effects on: draws the terrain as the sun's shadow factor or the ambient occlusion alone; <code>gi</code> and <code>sprites</code> (Ultra) show the light from around and the light the sprites take</td><td><code>SceneShaders.cpp</code></td></tr>
+    <tr><td><code>GALAXY_ULTRA_DEBUG=1..9</code></td><td>Ultra's final pass: 1 no grade, 2 no glow, 3 fixed exposure, 4 the scene as drawn, 5 the exposure, 6 ambient occlusion, 7 contact shadow, 8 reflection weight, 9 the light scattered by the air</td><td><code>UltraFinish.cpp</code></td></tr>
+    <tr><td><code>GALAXY_RELIEF_GI=0</code></td><td>Ultra without the global illumination on the terrain reliefs, to compare</td><td><code>WorldRenderer.cpp</code></td></tr>
+    <tr><td><code>GALAXY_INTERP_TRACE=&lt;file&gt;</code></td><td>In Play, writes one line per drawn frame to the file: the step, the interpolation alpha, the drawn eye position, camera shake and the moving objects drawn between steps (for frame rates above 60)</td><td><code>GalaxyEggbertGameDraw.cpp</code></td></tr>
+    <tr><td><code>GALAXY_RESUME_SELFTEST=&lt;ticks&gt;</code></td><td>At that tick of a mission, serializes the resume log, restores from it, and prints <code>RESUME SELFTEST equal</code> or <code>... different: &lt;fields&gt;</code> (exit code 1 when different)</td><td><code>GalaxyEggbertGameDemo.cpp</code></td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF=0|1</code></td><td>Overrides the Setup's 3D terrain reliefs; <code>_DIR</code> reads reliefs from another directory, <code>_RADIUS</code> sets the radius around the camera's target (default 8 blocks), <code>_OVERHANG=1</code> keeps overhangs into the air, <code>_TIMING</code> prints the first relief build's time</td><td><code>GalaxyEggbertGameLoad.cpp</code>, <code>GalaxyEggbertGameScene.cpp</code></td></tr>
+    <tr><td><code>GALAXY_ACCEL_PAD=1</code></td><td>Shows the accelerometer-steering pad without a sensor</td><td><code>GalaxyEggbertGameUpdate.cpp</code></td></tr>
+    <tr><td><code>AUTOPLAY_SHOTS=N</code>, <code>AUTOPLAY_REALTIME=1</code></td><td>With <code>--autoplay</code>: save a frame every N ticks into <code>autoplay_shots/</code>; pace at 60 Hz instead of as fast as possible</td><td><code>GalaxyEggbertGame.cpp</code></td></tr>
   </table>
 
-  <h2>GDB</h2>
-  <pre><code>cd build-cna
-gdb ./GalaxyEggbertCNA
-(gdb) run
-# On crash:
-(gdb) bt</code></pre>
+  <h2>Headless runs</h2>
+  <p>The game needs a GL context. Under Xvfb, keep it silent with the dummy audio driver, as the QA scripts
+  do:</p>
+  <pre><code>cd build-cna-opengl3
+SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11 xvfb-run -a -s "-screen 0 1280x720x24" \
+    ./GalaxyEggbert --user qa-user --mission 12 --spawn 48,1,68,0</code></pre>
+  <p>For anything you want to repeat, prefer the scripts: <code>tools/autoplay.sh</code> for gameplay and
+  <code>tools/qa_live.sh</code> for screenshots (<a href="testing.html">Testing &amp; QA</a>). Intermittent
+  loss of window focus or input has been seen under Xvfb; it has not been traced to a defect in this
+  code.</p>
+
+  <h2>Reproducing a gameplay bug</h2>
+  <ol>
+    <li>Start at the place: <code>--mission N --spawn x,y,z,yaw</code> (the <code>debug</code> panel's
+      <code>cell</code> line gives raw coordinates).</li>
+    <li>Write a short probe script (<code>tools/autoplay/probes/</code> holds examples) with
+      <code>trace N</code> to log every tick, <code>shots N</code> to save frames, and <code>mortal</code> to
+      keep going past a death; run it with <code>tools/autoplay.sh</code>. The run is deterministic, so it
+      reproduces the same way every time.</li>
+    <li>Compare with the original's code (<code>Decor.cpp</code> and friends in <code>mobile-eggbert</code>)
+      and search the ledgers before changing anything.</li>
+    <li>Turn the reproduction into a test that fails without the fix (usually in
+      <code>VerifyBlupiMovement</code> or <code>VerifyInteractionSystem</code>).</li>
+  </ol>
+
+  <h2>Context loss (F9)</h2>
+  <p>On native desktop builds, CNA's runtime maps F9 to a simulated GL context loss and recreation. Use it to
+  check that textures and meshes come back. The black distant floor seen after F9 was a CNA defect
+  (<code>upstream_bugs.md</code> UB-009: only the base mip level was restored), fixed in CNA; the game has no
+  workaround of its own.</p>
+
+  <h2>Logs</h2>
+  <ul>
+    <li>The game writes its messages to standard output, prefixed <code>GalaxyEggbertCNA:</code> (for example
+      the relief count and <code>3D effects:</code> lines when a shader or render target cannot be made).</li>
+    <li>The QA scripts keep the game's output as <code>game.log</code> in their run directory, next to
+      <code>autoplay_trace.txt</code>.</li>
+    <li>Android: <code>adb logcat -s SDL SDL/APP GalaxyEggbert</code> shows the game's and CNA's output
+      (<code>ANDROID.md</code>).</li>
+  </ul>
+
+  <h2>API documentation (Doxygen)</h2>
+  <p>When CMake finds Doxygen, it adds the target <code>GalaxyEggbertDocs</code>
+  (<code>cmake --build build-cna-opengl3 --target GalaxyEggbertDocs</code>), which runs Doxygen in the build
+  directory with a configured copy of the repository's <code>Doxyfile</code>. That file leaves
+  <code>INPUT</code> empty and <code>RECURSIVE = NO</code>, so as committed it does not point Doxygen at the
+  sources; the output has not been checked for this page. The headers' own comments (and the
+  <a href="../classes/index.html">Classes</a> pages) are the better reference.</p>
 
   <div class="page-nav">
-    <a href="coding-style.html">← Coding Style</a>
-    <a href="extending-the-game.html">Extending the Game →</a>
+    <a class="prev" href="../development/testing.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Testing &amp; QA</span>
+    </a>
+    <a class="next" href="../development/extending-the-game.html">
+      <span class="label">Next</span>
+      <span class="title">Extending the Game &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

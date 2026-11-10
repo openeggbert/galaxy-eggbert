@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hud — Galaxy Eggbert Docs</title>
+<meta name="description" content="Hud draws the in-game heads-up display (lives, keys, treasure counter, ammunition, gauges, hints, compass) in the original's 640x480 layout.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> Hud</div>
+  <h1>Hud</h1>
+  <p class="subtitle">The in-game heads-up display: a port of the original's bottom-of-screen information bar, drawn last over the 3D scene.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/Hud.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/Hud.cpp</code>; helpers <code>ObjectiveHint.hpp</code> (compass arrows) and <code>TextMetrics.hpp</code> (proportional font widths) in the same folder</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>CNA (<code>GraphicsDevice</code>, <code>Texture2D</code>, <code>BasicEffect</code>) and cna-engine's <code>GpuMesh</code></td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p><code>Hud</code> draws what the player sees on top of the world during Play: lives, held keys, the treasure counter,
+  glue shots, dynamite, decoys, the breath and power gauges, the training hint banner, the game-speed indicator, the
+  "fly to the HUD" animation of a picked-up item, and the optional compass. Its layout reproduces the original's
+  <code>Decor::DrawInfo</code> in the original's 640 x 480 reference space. The space is scaled uniformly by
+  <em>viewport height / 480</em> and centred horizontally, so the proportions are the same at any window size.</p>
+  <p>The HUD is drawn as textured quads through a <code>BasicEffect</code> with an orthographic pixel projection, not
+  through <code>SpriteBatch</code>. That keeps the draw order explicit: quads submitted last are drawn on top on every
+  renderer. Text uses <code>Content/icons/text.png</code> with the original's proportional glyph widths
+  (<code>TextMetrics</code>, since 2026-10-25).</p>
+  <p>The class has no gameplay state of its own: the host passes every value to <code>Draw</code> each frame.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li>Six sprite sheets from <code>Content/icons/</code>: <code>blupi.png</code>, <code>element.png</code>, <code>text.png</code>, <code>pad.png</code>, <code>jauge.png</code>, <code>button.png</code>, each in its 2x version when 2x textures are in use (<code>TextureScale.hpp</code>). If one is missing, the HUD disables itself.</li>
+    <li><code>TextMetrics</code> for text layout, <code>ObjectiveCompassArrows</code> (<code>ObjectiveHint.hpp</code>) for the compass.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: <code>LoadContent</code> in <code>GalaxyEggbertGameLoad.cpp</code>; <code>DrawUnderwaterTint</code> and <code>Draw</code> in <code>DrawOverlay</code> (<code>GalaxyEggbertGameDraw.cpp</code>). The values come from <a href="InteractionSystem.html">InteractionSystem</a> (lives, keys, treasures, ammunition, the pickup flight, the compass target) and <a href="BlupiController.html">BlupiController</a> (gauges, animation icon, facing).</li>
+    <li><code>Hud::ProjectWorldToHudSpace</code> is also used by the host (death and pickup animations) and by the editor (<code>WorldEditorUpdate.cpp</code>, to pick the object nearest the screen centre).</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>The complete public API of <code>Hud.hpp</code> is small; this is all of it.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>LoadContent</code></td><td><code>void LoadContent(GraphicsDevice&amp; device)</code></td><td>Loads the HUD's own texture instances and effects.</td></tr>
+    <tr><td><code>DrawUnderwaterTint</code></td><td><code>void DrawUnderwaterTint(GraphicsDevice&amp; device, int viewportW, int viewportH, float immersion)</code></td><td>A full-screen tint while the camera is under water; drawn after the world and before any HUD or menu quad.</td></tr>
+    <tr><td><code>Draw</code></td><td>see below</td><td>Draws the whole HUD. Call last, with depth testing off; restores the opaque blend state.</td></tr>
+    <tr><td><code>ProjectWorldToHudSpace</code></td><td><code>static bool ProjectWorldToHudSpace(Vector3 worldPos, const Matrix&amp; view, const Matrix&amp; projection, int viewportW, int viewportH, float&amp; outX, float&amp; outY)</code></td><td>Projects a 3D point into the 640 x 480 HUD space; returns false when it is behind the camera.</td></tr>
+  </table>
+  <pre><code>void Draw(GraphicsDevice&amp; device, int viewportW, int viewportH,
+          int lives, bool key1, bool key2, bool key3,
+          int treasures, int totalTreasures, bool showTreasureCounter,
+          int bullets, int dynamite, int perso,
+          bool waterGaugeVisible, int waterGaugeLevel,
+          bool powerGaugeVisible, int powerGaugeLevel,
+          std::string_view trainingHint,
+          const char* overlayMessage,
+          int animIcon, bool animIconUsesElementSheet,
+          bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
+          bool voyageIsBlupiChannel,
+          float voyageX, float voyageY,
+          GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f,
+          std::optional&lt;ObjectiveHint&gt; objective = std::nullopt,
+          bool rightTouchControls = false, float blupiYaw = 0);</code></pre>
+
+  <h3>What Draw shows</h3>
+  <p>Positions are in the 640 x 480 reference space, taken from the constants in <code>Hud.cpp</code>.</p>
+  <table>
+    <tr><th>Element</th><th>Drawn as</th><th>Shown when</th></tr>
+    <tr><td>Lives</td><td><code>blupi.png</code> icon 48 from (210, 417), 16 px apart</td><td>always in Play</td></tr>
+    <tr><td>Keys</td><td><code>element.png</code> icons 215, 222, 229 at x 520, 530, 540</td><td>while that key is held</td></tr>
+    <tr><td>Treasure counter</td><td><code>pad.png</code> panel (410, 445)-(510, 480) at 0.6 opacity, "N/M" centred at (460, 450)</td><td>not in hubs (the host hides it for mission 1 and multiples of 10)</td></tr>
+    <tr><td>Glue shots</td><td><code>element.png</code> icon 176 from (570, 442), 4 px apart</td><td>while any are held</td></tr>
+    <tr><td>Dynamite</td><td><code>element.png</code> icon 252 at (505, 414)</td><td>while <code>dynamite &gt; 0</code></td></tr>
+    <tr><td>Decoys</td><td><code>button.png</code> icon 108 at (0, 438) and "= N" at (32, 452)</td><td>while <code>perso &gt; 0</code></td></tr>
+    <tr><td>Breath gauge</td><td><code>jauge.png</code> at (90, 450), blue, red at 25 or below</td><td>while swimming</td></tr>
+    <tr><td>Power gauge</td><td><code>jauge.png</code> at (90, 428), yellow</td><td>during a timed state: shield, power, cloud, hide, invert, balloon, squash (one shared count)</td></tr>
+    <tr><td>Training hint</td><td>full-width <code>pad.png</code> banner (0, 0)-(640, 40), text centred and shrunk to fit</td><td>when the host passes a non-empty hint (<code>TrainingHints</code> or the world's hint zones)</td></tr>
+    <tr><td>Game speed</td><td>"0.5x", "0.25x", "0.125x" or "Nx" on a panel at the lower left</td><td>when the speed is not normal</td></tr>
+    <tr><td>Pickup flight</td><td>the item's icon at <code>voyageX</code>, <code>voyageY</code></td><td>while the original's "voyage" animation runs</td></tr>
+    <tr><td>Compass</td><td>three rows at the lower right: rounded straight-line distance, turn (<code>&lt;</code> <code>|</code> <code>&gt;</code>), height (<code>^</code> <code>-</code> <code>v</code>)</td><td>when the <code>compass</code> cheat is on; it moves left to clear the touch buttons</td></tr>
+    <tr><td>Animation indicator</td><td>Blupi's current sprite icon, bottom right</td><td>first person only (the host passes -1 in third person)</td></tr>
+  </table>
+  <p><code>overlayMessage</code> would draw one large centred message instead of the HUD. As of 2026-11-10 the host's
+  <code>PhaseOverlayMessage()</code> returns <code>nullptr</code> for every phase, because Pause, Win and Lost have real screens
+  drawn by <a href="InputPad.html">InputPad</a>.</p>
+
+  <h2>How it is used</h2>
+  <p>The host calls <code>Draw</code> from <code>GalaxyEggbertGame::DrawOverlay</code> only when the current phase has no
+  full screen of its own (Pause, Win, Lost, Setup, Resume, Wait, Init and Editor do), and after it has turned depth testing
+  off. An excerpt from <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp</code>:</p>
+  <pre><code>const int hudMission = worldRuntime_.GetMissionNumber();
+const bool showTreasureCounter = hudMission != 1 &amp;&amp; hudMission % 10 != 0;
+hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+          interaction_.Lives(),
+          interaction_.Key1Count() &gt; 0, interaction_.Key2Count() &gt; 0,
+          interaction_.Key3Count() &gt; 0,
+          interaction_.TreasuresCollected(), interaction_.TotalTreasures(), showTreasureCounter,
+          interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
+          blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
+          ...
+          cheatCompass_ &amp;&amp; GalaxyEggbert::Game::kCheatsEnabled
+              ? InteractionSystem::NearestObjective(
+                  worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) : std::nullopt,
+          tickInput_.touchControlsEnabled, blupi_.GetYaw());</code></pre>
+
+  <div class="note"><strong>Not drawn by Hud</strong> The on-screen touch pad, the list of active cheats in the top-left
+  corner (which also shows "Demo" while a demo plays and "REC" while the player records one), the <code>debug</code>
+  diagnostics panel (lines built by <code>DebugOverlayLines</code> in <code>DebugOverlay.hpp</code>), the F1 help and all menu
+  screens are drawn by <a href="InputPad.html">InputPad</a>.</div>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>Draw the HUD last in the frame, with depth testing disabled; it sets its own blend states and leaves
+    <code>Opaque</code> set.</li>
+    <li>Layout is in the 640 x 480 reference space only; never place HUD items in window pixels.</li>
+    <li>The HUD is presentation: it reads values and changes nothing in the simulation, so it cannot affect determinism,
+    golden traces or autoplay results.</li>
+    <li>The compass is the direct 3D distance to the nearest active chest, or, when none is left, to the nearest exit
+    (an object whose registry entry has <code>levelExit</code>); it is not a route length.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <p>There is no dedicated Hud verifier. Coverage comes from:</p>
+  <ul>
+    <li><code>VerifyInteractionSystem</code> (<code>tools/VerifyInteractionSystem.cpp</code>, links <code>Hud.cpp</code>):
+    checks <code>Hud::ProjectWorldToHudSpace</code>, the compass target (<code>NearestObjective</code>) and its arrows
+    (<code>ObjectiveCompassArrows</code>).</li>
+    <li>The golden frames in <code>tests/golden/</code> capture whole Play frames of world 999, HUD included
+    (<code>tools/verify_golden_frames.sh</code>; needs a display, not part of ctest).</li>
+    <li>The editor verifiers link <code>Hud.cpp</code> because the editor uses <code>ProjectWorldToHudSpace</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="InputPad.html">InputPad</a>: menus, touch pad, cheats list and help overlay</li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>, <a href="BlupiController.html">BlupiController</a>: where the HUD's values come from</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: the draw order</li>
+    <li><a href="../gameplay.html">Gameplay</a>, <a href="../cheats.html">Cheats &amp; Diagnostics</a></li>
+    <li><a href="../rendering.html">Rendering</a>, <a href="../game-loop.html">Game Loop</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/ObjectDefinitionRegistry.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; ObjectDefinitionRegistry</span>
+    </a>
+    <a class="next" href="../classes/InputPad.html">
+      <span class="label">Next</span>
+      <span class="title">InputPad &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

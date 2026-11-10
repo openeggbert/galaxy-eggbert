@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chunk — Galaxy Eggbert Docs</title>
+<meta name="description" content="Worlds::Chunk, a 10 x 10 x 10 block container with a local palette, adaptive bit packing, sparse per-block metadata and its own VCH1 serialization.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,112 +22,156 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
+  <a href="../classes/index.html" class="active">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Chunk</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> Chunk</div>
   <h1>Chunk</h1>
-  <p class="subtitle">10×10×10 palette-compressed voxel container. The storage unit inside World.</p>
+  <p class="subtitle">A 10 &times; 10 &times; 10 block cube stored as a local palette plus bit-packed palette indices, with optional sparse per-block metadata.</p>
 
-  <h2>Overview</h2>
-  <p>
-    <code>Chunk</code> (namespace <code>GalaxyEggbert::Worlds</code>) stores <code>Chunk::Volume</code>
-    (1000) block values in a compact palette + bit-packed index format. Engine-agnostic; no CNA,
-    cna-engine, or Urho3D headers.
-  </p>
-  <p>Header: <code>include/GalaxyEggbert/Worlds/Chunk.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/Chunk.cpp</code>.</p>
-
-  <h2>Constants</h2>
-  <pre><code>static constexpr int Size   = 10;    // blocks per axis
-static constexpr int Volume = 1000;  // Size³</code></pre>
-
-  <h2>Internal Storage Layout</h2>
-  <pre><code>private:
-    std::vector&lt;Block&gt;                       palette_;         // unique block values (≤256)
-    std::vector&lt;uint64_t&gt;                    packedIndices_;   // bit-packed palette indices
-    uint8_t                                  bitsPerBlock_;    // ceil(log2(palette_.size()))
-    bool                                     dirty_;           // set by setBlock
-    std::vector&lt;ChunkBlockMetadataRecord&gt;    extraMetadata_;   // sparse per-block metadata</code></pre>
-  <p>
-    When the palette has 1 entry (a <em>uniform chunk</em>), <code>packedIndices_</code> may be
-    empty. <code>extraMetadata_</code> stores sparse per-block metadata keyed by local linear
-    index plus a type discriminator and arbitrary payload bytes — it does not store a render mesh;
-    meshing is meant to be a runtime-only cache built by classes like <a href="GETerrainRenderer.html">GETerrainRenderer</a>.
-  </p>
-
-  <h2>API</h2>
-  <pre><code>class Chunk {
-public:
-    static Chunk createUniform(Block fillBlock);
-    static Chunk fromBlocks(const std::array&lt;Block, Volume&gt;&amp; blocks);
-
-    Block getBlock(uint8_t lx, uint8_t ly, uint8_t lz) const;
-    void  setBlock(uint8_t lx, uint8_t ly, uint8_t lz, Block block);
-
-    std::array&lt;Block, Volume&gt; unpackBlocks() const;
-
-    bool isEmpty()   const;   // all blocks == Air
-    bool isUniform() const;   // palette_.size() == 1
-    bool isDirty()   const;   // modified since last write()
-    void clearDirty();
-
-    void setExtraMetadata(size_t localIndex, ...);
-    void removeExtraMetadata(size_t localIndex);
-    void clearExtraMetadata();
-
-    void write(std::ostream&amp; os) const;
-    void read (std::istream&amp; is);
-};</code></pre>
-
-  <h2>Bit-packing Details</h2>
+  <h2>Location</h2>
   <table>
-    <tr><th>Palette size</th><th>Bits per block</th></tr>
-    <tr><td>1 (uniform)</td><td>0</td></tr>
-    <tr><td>2</td><td>1</td></tr>
-    <tr><td>3–4</td><td>2</td></tr>
-    <tr><td>5–8</td><td>3</td></tr>
-    <tr><td>9–16</td><td>4</td></tr>
-    <tr><td>17–32</td><td>5</td></tr>
-    <tr><td>33–64</td><td>6</td></tr>
-    <tr><td>65–128</td><td>7</td></tr>
-    <tr><td>129–256</td><td>8</td></tr>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/Worlds/Chunk.hpp</code> (also declares <code>ChunkBlockMetadataRecord</code>)</td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Worlds/Chunk.cpp</code></td></tr>
+    <tr><th>Bit packing</th><td><code>include/GalaxyEggbert/Worlds/BitPacking.hpp</code>, <code>src/GalaxyEggbert/Worlds/BitPacking.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Worlds</code></td></tr>
   </table>
+
+  <h2>Purpose</h2>
   <p>
-    See <a href="VoxelConfig.html">VoxelConfig</a> for <code>bitsNeededForPalette()</code> and
-    related bit-packing constants, and <code>BinaryIO.hpp</code>/<code>BitPacking.hpp</code> for
-    the low-level pack/unpack helpers.
+    A <a href="World.html">World</a> is 1000 chunks. A chunk does not store 1000 raw
+    16-bit blocks; it stores the distinct block values it contains (its <em>palette</em>, up to
+    256 entries) and, for each cell, the index of its value in that palette, packed with as few bits
+    as the palette size needs. Handcrafted worlds have few distinct blocks per 10&sup3; region, so
+    most chunks pack into 1-3 bits per cell. A chunk holds no mesh; meshes are runtime caches built
+    by the <a href="TerrainRenderer.html">TerrainRenderer</a>.
+  </p>
+  <p>
+    The chunk also owns the <em>sparse extra metadata</em> of its cells: a list of
+    <code>ChunkBlockMetadataRecord</code>s, each a local cell index, a 16-bit type and a byte payload.
+    This is where objects, BigDecor, tile turns, hint zones and player starts live in a saved world.
   </p>
 
-  <h2>Coordinate Mapping</h2>
+  <h2>Palette and adaptive bit packing</h2>
+  <ul>
+    <li>A new chunk is all air: palette <code>{Air}</code>, 1 bit per cell, 16 packed 64-bit words.</li>
+    <li><code>setBlock()</code> looks the value up in the palette and appends it if missing. When the palette grows past a power of two (2 &rarr; 3, 4 &rarr; 5, ... 128 &rarr; 129) every cell is re-packed at the wider width.</li>
+    <li>The width is <code>bitsNeededForPalette(n)</code>: 1 bit for 1-2 entries, 2 for 3-4, 3 for 5-8, ... 8 for 129-256.</li>
+    <li>Cell <code>i</code> occupies bits <code>[i * bits, (i + 1) * bits)</code> of a little-endian stream of <code>uint64_t</code> words; a value may straddle two words. The word count is <code>ceil(1000 * bits / 64)</code>.</li>
+    <li>The palette never shrinks during editing: a value that is no longer used stays in the palette (and is saved) until the chunk is rebuilt with <code>fromBlocks()</code>.</li>
+    <li>A 257th distinct value throws <code>std::runtime_error</code> ("Chunk palette is full"). The header comments say <code>std::out_of_range</code>; the code throws <code>runtime_error</code>.</li>
+  </ul>
+  <p>Local cell index, shared by packing and metadata:</p>
+  <pre><code>linearIndex(x, y, z) = x + y * 10 + z * 100      // 0..999</code></pre>
+
+  <h2>Public API</h2>
+  <p>Verified in <code>Chunk.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Description</th></tr>
+    <tr><td><code>Size = 10</code>, <code>Volume = 1000</code></td><td>From <a href="VoxelConfig.html">VoxelConfig</a>.</td></tr>
+    <tr><td><code>Chunk()</code></td><td>All-air, uniform, clean.</td></tr>
+    <tr><td><code>static createUniform(Block)</code></td><td>Every cell the same value; one-entry palette.</td></tr>
+    <tr><td><code>static fromBlocks(const std::array&lt;Block, Volume&gt;&amp;)</code></td><td>Builds a minimal palette from dense data.</td></tr>
+    <tr><td><code>getBlock(lx, ly, lz)</code> / <code>setBlock(lx, ly, lz, Block)</code></td><td>Local coordinates 0-9; <code>std::out_of_range</code> outside. <code>setBlock</code> marks the chunk dirty.</td></tr>
+    <tr><td><code>unpackBlocks()</code></td><td>All 1000 values in <code>linearIndex</code> order.</td></tr>
+    <tr><td><code>isEmpty()</code></td><td>All air <em>and</em> no extra metadata. <code>World::saveToFile()</code> skips empty chunks, so an object anchored in an otherwise empty chunk is still saved (a bug fixed on 2026-07-09).</td></tr>
+    <tr><td><code>isUniform()</code></td><td>Palette has one entry.</td></tr>
+    <tr><td><code>isDirty()</code> / <code>clearDirty()</code></td><td>Runtime-only flag set by every mutation; not saved.</td></tr>
+    <tr><td><code>palette()</code>, <code>packedIndices()</code>, <code>bitsPerBlock()</code></td><td>Read-only views of the storage.</td></tr>
+    <tr><td><code>extraMetadata()</code></td><td>The sparse records.</td></tr>
+    <tr><td><code>setExtraMetadata(localIndex, type, payload)</code></td><td>Add or replace (one record per cell and type). Payload over 65 535 bytes throws.</td></tr>
+    <tr><td><code>removeExtraMetadata(localIndex, type)</code></td><td>Returns <code>true</code> if removed.</td></tr>
+    <tr><td><code>clearExtraMetadata()</code></td><td>Drops all records.</td></tr>
+    <tr><td><code>static linearIndex(lx, ly, lz)</code></td><td>Public so <a href="World.html">World</a> can address a cell's metadata.</td></tr>
+    <tr><td><code>write(std::ostream&amp;)</code> / <code>static read(std::istream&amp;)</code></td><td>The <code>VCH1</code> chunk payload (always written as chunk version 2; version 1 is still readable).</td></tr>
+  </table>
+  <p><code>ChunkBlockMetadataRecord</code> has <code>localBlockIndex</code> (<code>uint32_t</code>), <code>metadataType</code> (<code>uint16_t</code>) and <code>payload</code> (<code>std::vector&lt;std::uint8_t&gt;</code>), and compares with <code>==</code>.</p>
+
+  <h2>Serialized form</h2>
   <p>
-    Local indices <code>lx, ly, lz ∈ [0, 9]</code>. Flat index: <code>lx + ly*10 + lz*100</code>.
-    World-to-local: <code>lx = worldX % 10</code>. Chunk coordinate: <code>cx = worldX / 10</code>.
+    A chunk payload is a 24-byte header (<code>VCH1</code>, version 2, chunk size, bits per block,
+    flags, palette count, block count, packed data size, metadata size), the palette as raw
+    <code>uint16_t</code> values, the packed words, and, when flag bit 0 is set, a <code>BMD1</code>
+    metadata section. <code>read()</code> validates every field (bits must match the palette size,
+    word count must match, no trailing bytes in the metadata section). Byte tables are on
+    <a href="../internals/vwr-format.html">The .vwr Format</a>.
   </p>
 
-  <h2>Serialization</h2>
-  <p>
-    <code>write()</code> emits the <code>VCH1</code> chunk payload described in
-    <a href="../internals/vwr-format.html">VWR Format</a>: version/chunkSize/bitsPerBlock/flags
-    header, palette entries, packed index data, and an optional sparse metadata section
-    (<code>BMD1</code> magic).
-  </p>
+  <h2>Usage</h2>
+  <p>Game code normally goes through <code>World</code>, which splits world coordinates into chunk and local ones:</p>
+  <pre><code>// src/GalaxyEggbert/Worlds/World.cpp, World::setBlock()
+auto&amp; target = chunk(chunkX, chunkY, chunkZ);
+const auto oldRaw = target.getBlock(localX, localY, localZ).rawValue();
+target.setBlock(localX, localY, localZ, blockValue);</code></pre>
+  <p>Direct use appears in the tests and in round-trips through a stream:</p>
+  <pre><code>Chunk chunk;
+chunk.setBlock(1, 2, 3, Block::make(10));
+std::ostringstream out(std::ios::binary);
+chunk.write(out);
+std::istringstream in(out.str(), std::ios::binary);
+Chunk copy = Chunk::read(in);</code></pre>
 
   <h2>Tests</h2>
-  <p>
-    Covered by <code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>: uniform create, palette
-    growth, bit-pack round-trip, isEmpty/isUniform, dirty flag, write/read round-trip.
-  </p>
+  <ul>
+    <li><code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>: default state, uniform chunks, boundary cells, the dirty flag, coordinate validation, <code>PaletteGrowthUpdatesBitWidth</code>, <code>FromBlocksRoundTripPreservesDenseData</code>, <code>AllAirChunkWithExtraMetadataIsNotEmpty</code>, metadata set/replace/remove, and serialization (version 2 header, metadata round-trip, reading a legacy version 1 payload, rejecting bad magic, palette count, bit width, metadata flag/size mismatch, bad <code>BMD1</code> magic, out-of-range metadata index).</li>
+    <li><code>tests/GalaxyEggbert/Worlds/BitPackingTests.cpp</code>: width boundaries, round-trips across word boundaries, argument validation.</li>
+    <li>Indirectly: every world test and <code>VerifyShippedWorlds</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="World.html">World</a>, <a href="Block.html">Block</a>, <a href="VoxelConfig.html">VoxelConfig</a></li>
+    <li><a href="../internals/vwr-format.html">The .vwr Format</a></li>
+  </ul>
 
   <div class="page-nav">
-    <a href="World.html">← World</a>
-    <a href="Block.html">Block →</a>
+    <a class="prev" href="../classes/World.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; World</span>
+    </a>
+    <a class="next" href="../classes/Block.html">
+      <span class="label">Next</span>
+      <span class="title">Block &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

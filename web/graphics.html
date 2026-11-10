@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Effects &amp; Graphics — Galaxy Eggbert Docs</title>
+<meta name="description" content="The Setup's graphics options: the 3D effects levels Off to Ultra and what each adds, the water, the frame rate, texture size, fullscreen, the saved settings and the environment overrides.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html" class="active">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>3D Effects &amp; Graphics</h1>
+  <p class="subtitle">Five levels of optional 3D effects, from the classic look to an HDR picture at the window's own resolution, plus frame rate, texture size and window settings.</p>
+
+  <p>
+    By default Galaxy Eggbert draws the classic look: the original's tiles and sprites on lit 3D cubes and models.
+    The Setup screen's graphics options add effects on top of that. They change only how the world is drawn,
+    never how it plays. This page describes the state as of 2026-11-10; for how the drawing is organised
+    (<code>SceneFrame</code>, <code>WorldRenderer</code>, the passes) see <a href="rendering.html">Rendering</a>.
+  </p>
+
+  <h2>The Setup's graphics options</h2>
+  <table>
+    <tr><th>Setup button</th><th>Choices</th><th>Saved as</th><th>Takes effect</th></tr>
+    <tr><td>3D effects</td><td>Off, Low, Medium, High, Ultra (each press steps to the next)</td><td><code>effectsLevel=0</code> .. <code>4</code></td><td>The next frame</td></tr>
+    <tr><td>Frame rate</td><td>60, 120, 144, 240 fps</td><td><code>frameRate=</code></td><td>At once</td></tr>
+    <tr><td>Textures</td><td>Auto, 1x, 2x</td><td><code>textureScale=0</code>, <code>1</code>, <code>2</code></td><td>The next start</td></tr>
+    <tr><td>3D terrain</td><td>On, off (the tiles' relief near the camera)</td><td><code>terrainRelief=</code></td><td>At once (the terrain is rebuilt)</td></tr>
+    <tr><td>Fullscreen / Window (main menu), F11</td><td>Fullscreen or a window</td><td><code>fullscreen=</code></td><td>At once</td></tr>
+  </table>
+  <p>All of them live in <code>savedata.txt</code> and are shared by the three players. The 3D effects are off by
+    default; a file from the first effects build with <code>effects3d=1</code> is read as High.</p>
+  <pre><code>fullscreen=0
+terrainRelief=0
+effectsLevel=3
+frameRate=144
+textureScale=0</code></pre>
+
+  <h2>What each level adds</h2>
+  <p>Each level keeps everything of the levels below it.</p>
+  <table>
+    <tr><th>Level</th><th>Adds</th></tr>
+    <tr><td><strong>Off</strong> (0)</td><td>Nothing: the classic look, byte for byte the picture of the build without effects.</td></tr>
+    <tr><td><strong>Low</strong> (1)</td><td>Distance fog in the colour of the world's background picture (from 20 blocks, whole at 140); soft round shadows under Blupi and the pickups, enemies and vehicles; explosions, splashes and sparks as particles cut from their own sprite frames; Blupi's moments as particles: dust when he lands or runs, a splash into water, bubbles under it, stars as he teleports, embers off the lava. Particles are stepped by the game's ticks (<code>EffectParticles</code>).</td></tr>
+    <tr><td><strong>Medium</strong> (2)</td><td>Ambient occlusion baked into the terrain's corners; the water and lava shaders (<code>SurfaceShaders</code>: the water below; the lava's slow pulse and crawling hot spots); FXAA edge smoothing.</td></tr>
+    <tr><td><strong>High</strong> (3)</td><td>Real sun shadows (<code>SceneShaders</code>): two cascades of 1024 texels, 44 blocks round the camera's target every frame and 160 blocks ahead every third frame, soft 16-sample filtering, thrown by the terrain, cubes, every model and every sprite onto everything (they replace Low's round shadows). Point lights, up to 8, from explosions, the lightning, the nearest lava and the electrodes. The models' Ray Dream procedural materials (wood, marble, spots, bump) from <code>avatars3d/objects/*/materials.txt</code>. A glow on what shines, with a light colour grade (<code>PostProcess</code>).</td></tr>
+    <tr><td><strong>Ultra</strong> (4)</td><td>A different picture pipeline, listed below. Desktop only in practice.</td></tr>
+  </table>
+
+  <h3>Ultra</h3>
+  <p>The levels below Ultra draw on the game's 800x480 logical surface, scaled up to the window. Ultra draws the
+    world at the window's own pixels (the HUD stays on the logical surface) and adds:</p>
+  <ul>
+    <li><strong>HDR finish</strong> (<code>UltraFinish</code>): a half-float scene, auto exposure, HDR bloom, ACES
+      tone mapping and a colour grade per world built from its sky.</li>
+    <li><strong>Physically based light</strong>, with the sky's light taken from the world's background picture and
+      the Ray Dream surface values of every object model.</li>
+    <li><strong>Screen-space effects</strong>: ambient occlusion (SSAO), contact shadows, and reflections on the water
+      and on metal and polished floors (read from the terrain atlas's surface map).</li>
+    <li><strong>Voxel global illumination</strong> (<code>TerrainGi.hpp</code>): light bounced from around, baked into
+      the terrain when it is built: a room is lit by its walls, grass tints the wall beside it, an overhang is darker
+      underneath. The reliefs read it per chunk, and sprites and particles per cell, so in a cave they are as dark as
+      its floor.</li>
+    <li><strong>Lit sprites and particles</strong>; fire, sparks and stars shine above white into the bloom.</li>
+    <li><strong>Volumetric fog</strong> with god rays through the shadow map.</li>
+    <li><strong>Lens</strong>: temporal anti-aliasing, depth of field, camera motion blur, film grain.</li>
+    <li><strong>Finer detail</strong>: the terrain atlas upscaled with normal and surface maps, and the models
+      smoothed by PN-triangle subdivision.</li>
+  </ul>
+  <p>Ultra's first frame builds the finer atlas and its maps; the game logs it and pauses for one to two seconds on
+    the desktop (the work is spread over up to eight threads). Loading a world at Ultra also takes a little longer
+    than at High, about half a second for mission 105 (the illumination bake and the programs).</p>
+
+  <h2>The water</h2>
+  <p>At Off and Low the water is its animated 2D tile on the outer faces of the water cells. From Medium up it is no
+    longer the tile: its colour and clearness come from the tiles, its surface is a height field of waves in world
+    space (three swells and two scales of chop that run on across the cells, calmer far off;
+    <code>WaterWaves.hpp</code>), with Fresnel clearness, a sun glint and a pale sheen at a glancing view. Seen from
+    inside it is darker. At Ultra the sky is reflected by Fresnel, the screen-space reflections ripple with the
+    waves, and from under the surface the sky shows only within Snell's window. Independently of the effects, a
+    camera under water gets a blue haze and less warm colour, fading out at the waterline.</p>
+
+  <h2>Where the shaders cannot run</h2>
+  <p>The shaders, the shadow map and the glow need GLSL source compiled at runtime (desktop GLSL 3.30 or GLSL ES
+    3.00) and render targets. Where they do not compile, they leave themselves out: the stock effects draw the
+    world (no ambient occlusion either), and the fog, the round shadows and the particles remain. Where Ultra's own
+    programs do not compile, Ultra's world is lit as High's.</p>
+
+  <h2>Frame rate</h2>
+  <p>The game always steps 60 times a second, as the original did. Above 60 fps the loop runs that often and the
+    frames between two steps are interpolated: the camera and its shake, Blupi, every moving object (projectiles
+    included) and the particles. An object that moves more than two blocks in one step (a respawn, a teleport) is
+    drawn where it lands, not in between. Above 60 the
+    screen's vertical sync is turned off. Captures, golden frames, autoplay, demo verification and resume replays
+    always step one tick per frame, so they are unaffected. The <code>fps</code> cheat shows the frames drawn per
+    second.</p>
+
+  <h2>Textures: Auto, 1x, 2x</h2>
+  <p>2x loads <code>Content/icons2x/</code> and <code>Content/backgrounds2x/</code> in place of the normal sheets
+    (<code>TextureScale.hpp</code>). A 2x sheet is used only if it is exactly twice the size of its 1x sheet,
+    otherwise the 1x one is kept, and all texture coordinates are computed from the logical 1x size. Auto picks 2x
+    on the desktop when Ultra is on and the display is at least 1000 pixels tall, since only Ultra draws the world at
+    the window's pixels. The web and Android always use 1x; the APK leaves the 2x folders out.</p>
+  <div class="warn"><strong>2x sheets not yet in the repository.</strong> As of 2026-11-10 the re-rendered 2x sheets
+    (from the original Ray Dream scenes) are still being made and are not committed. Until they are, 2x finds no
+    sheets and the game stays at 1x.</div>
+
+  <h2>Fullscreen and window</h2>
+  <p>The main menu's upper-left button switches between fullscreen and a window and always names the other mode;
+    F11 does the same. The first run is windowed; the choice is remembered as <code>fullscreen=0/1</code>.</p>
+
+  <h2>Environment overrides</h2>
+  <p>For tests and comparisons; see also <a href="configuration.html">Configuration</a>.</p>
+  <table>
+    <tr><th>Variable</th><th>Effect</th></tr>
+    <tr><td><code>GALAXY_EFFECTS</code></td><td><code>0</code>-<code>4</code> or <code>off</code>, <code>low</code>, <code>medium</code>, <code>high</code>, <code>ultra</code>: overrides the Setup's level.</td></tr>
+    <tr><td><code>GALAXY_TEXTURES</code></td><td><code>1x</code>, <code>2x</code> or <code>auto</code>: overrides the Setup's Textures.</td></tr>
+    <tr><td><code>GALAXY_TERRAIN_RELIEF</code></td><td><code>0</code> or <code>1</code>: overrides the Setup's 3D terrain.</td></tr>
+    <tr><td><code>GALAXY_EFFECTS_DEBUG</code></td><td><code>shadow</code> or <code>occlusion</code>: the terrain drawn as that factor alone (grey); at Ultra also <code>gi</code> (the light from around) and <code>sprites</code> (the sprites' light).</td></tr>
+    <tr><td><code>GALAXY_ULTRA_DEBUG</code></td><td><code>1</code>-<code>9</code>: one part of Ultra's finish shown alone or left out (no grade, no bloom, fixed exposure, the scene before tone mapping, the exposure, the screen occlusion, the contact shadows, the reflections' weight, the fog's light).</td></tr>
+    <tr><td><code>GALAXY_RELIEF_GI</code></td><td><code>0</code>: the reliefs drawn without Ultra's global illumination, to compare.</td></tr>
+    <tr><td><code>GALAXY_PERF</code></td><td><code>1</code>: prints the mean draw time and model counts every 120 frames.</td></tr>
+    <tr><td><code>GALAXY_INTERP_TRACE</code></td><td>A file name: writes one line per frame drawn in Play, showing the interpolation (step, fraction, camera, what moved).</td></tr>
+  </table>
+
+  <h2>Presentation only</h2>
+  <p>No effect changes the simulation. With the effects on, the golden behaviour trace and the autoplay traces are
+    equal to those without them; with them off, every frame is byte-equal to the build before they existed. Medium
+    and High have golden frames of their own beside the classic ones: <code>tests/golden/</code> (classic),
+    <code>tests/golden/effects-medium/</code> and <code>tests/golden/effects-high/</code>, checked by
+    <code>tools/verify_golden_frames.sh</code>. The effects' GPU-free decisions are covered by the CTest cases
+    <code>VerifySceneEffects</code>, <code>VerifyUltra</code> and <code>VerifyEffectParticles</code>; see
+    <a href="development/testing.html">Testing</a>.</p>
+  <p>Measured with <code>GALAXY_PERF</code> in mission 105 under a CPU rasteriser (relative numbers only): Off 23 ms
+    a frame, Low 24, Medium 25, High 68.</p>
+
+  <h2>Platform status (as of 2026-11-10)</h2>
+  <table>
+    <tr><th>Build</th><th>Status</th></tr>
+    <tr><td>Linux desktop, <code>OPENGL33</code></td><td><span class="badge badge-done">Verified</span> Off to High under Xvfb: 11 missions at each level, the editor, the Setup live. Ultra verified on the desktop as it was built (2026-11-09).</td></tr>
+    <tr><td>Web, <code>WEBGL2</code></td><td><span class="badge badge-done">Verified to High</span> High set in the main menu's Setup and played in headless Chrome, every shader compiled. Ultra's shaders were also seen to compile there on 2026-11-09 (its atlas maps take about 4 s, on one thread), but Ultra has not been played on the web, and the status document still lists it as not run there. Textures are always 1x.</td></tr>
+    <tr><td>Android, <code>OPENGLES3</code></td><td><span class="badge badge-wip">Not verified</span> The effects have not been run on Android. Textures are always 1x.</td></tr>
+    <tr><td>Windows, <code>SDLGPU</code></td><td><span class="badge badge-wip">Not verified</span> No fresh build or live 3D run yet; see <a href="platform-support.html">Platform Support</a>.</td></tr>
+  </table>
+
+  <h2>Source map</h2>
+  <table>
+    <tr><th>Source (<code>src/GalaxyEggbert/Game/</code>)</th><th>Role</th></tr>
+    <tr><td><code>SceneFrame.hpp</code> (<code>SceneEffects</code>), <code>SceneEffectsLogic.hpp</code></td><td>The level's flags per frame; shadow placement, light choice, occlusion (no GPU).</td></tr>
+    <tr><td><code>EffectParticles.hpp/.cpp</code></td><td>Low's particles.</td></tr>
+    <tr><td><code>SurfaceShaders.hpp/.cpp</code>, <code>WaterWaves.hpp</code></td><td>Water and lava shaders, the wave height field.</td></tr>
+    <tr><td><code>SceneShaders.hpp/.cpp</code></td><td>Terrain and model shaders, the shadow cascades, point lights, Ultra's lit programs.</td></tr>
+    <tr><td><code>PostProcess.hpp/.cpp</code></td><td>Glow, grade and FXAA for Medium and High.</td></tr>
+    <tr><td><code>UltraFinish.hpp/.cpp</code>, <code>UltraLogic.hpp</code>, <code>UltraAssets.hpp</code></td><td>Ultra's HDR finish, geometry pass, fog and lens; the sky light and grade tables.</td></tr>
+    <tr><td><code>TerrainGi.hpp</code>, <code>TerrainMaps.hpp</code>, <code>ModelSubdivision.hpp</code></td><td>Ultra's global illumination bake, the finer atlas and its maps, model smoothing.</td></tr>
+    <tr><td><code>TextureScale.hpp/.cpp</code></td><td>Choosing and loading 1x or 2x sheets.</td></tr>
+  </table>
+  <p>The level is chosen in <code>GalaxyEggbertGame::AppendSceneEffects()</code>
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code>) and drawn by
+    <a href="classes/WorldRenderer.html">WorldRenderer</a>.</p>
+
+  <div class="card-grid">
+    <a class="card" href="rendering.html"><h3>Rendering</h3><p>The scene frame, the renderer and its passes.</p></a>
+    <a class="card" href="configuration.html"><h3>Configuration</h3><p>Every setting, CMake option and environment variable.</p></a>
+    <a class="card" href="platform-support.html"><h3>Platform Support</h3><p>What runs where, and what is verified.</p></a>
+  </div>
+
+  <div class="page-nav">
+    <a class="prev" href="editor.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; 3D World Editor</span>
+    </a>
+    <a class="next" href="architecture.html">
+      <span class="label">Next</span>
+      <span class="title">Architecture &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

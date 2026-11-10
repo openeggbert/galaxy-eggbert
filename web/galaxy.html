@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Own Galaxy — Galaxy Eggbert Docs</title>
+<meta name="description" content="Each player's own world system: a main hub, fourteen worlds and their missions, built in the editor, played from the main menu with its own progress, and shared as one .galaxy file.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html" class="active">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Your Own Galaxy</h1>
+  <p class="subtitle">Each of the three players builds a whole campaign of their own, plays it from the main menu with separate progress, and can share it as a single file.</p>
+
+  <p>
+    Speedy Blupi let a player build private worlds in its Construction screens. Galaxy Eggbert turns that into a
+    complete world system per player: a main hub, up to fourteen worlds with a hub and eight missions each, and a
+    bonus world. It is built with the in-game <a href="editor.html">3D World Editor</a> from the game's existing
+    blocks and objects and is played under the campaign's own hub rules; nothing in it adds gameplay (ledger
+    row BD-0119). This page describes the state as of 2026-11-10.
+  </p>
+  <p>
+    <span class="badge badge-done">Done</span> Building, playing, progress, Continue, delete and restore, naming, export and import (desktop and web).
+    <span class="badge badge-wip">Not verified</span> Android, a physical gamepad, a real touch screen.
+  </p>
+
+  <h2>What a galaxy is made of</h2>
+  <p>A galaxy uses the campaign's own mission numbers, so its hubs, doors, gold bars and signs work exactly as the
+    campaign's do (see <a href="levels.html">Campaign &amp; Worlds</a>).</p>
+  <table>
+    <tr><th>Place</th><th>Mission numbers</th><th>Role</th></tr>
+    <tr><td>Main hub</td><td>1</td><td>World signs 1-14 lead to the world hubs. A gold bar appears for each world completed.</td></tr>
+    <tr><td>World hubs 1-14</td><td>10, 20, ... 140</td><td>Mission signs 1-8, a door beside each. Every door but the first opens once the mission before it is won; the golden key ends the world; the return sign leads back to the main hub.</td></tr>
+    <tr><td>Missions</td><td>11-18, 21-28, ... 141-148</td><td>Ordinary missions, played and won like the campaign's.</td></tr>
+    <tr><td>Bonus world</td><td>199</td><td>Reached after the main hub's exit, as in the campaign.</td></tr>
+  </table>
+  <p>A galaxy can therefore hold up to 14 worlds, two more than the campaign's twelve. Each place is an ordinary
+    <code>.vwr</code> world file (see <a href="internals/vwr-format.html">The .vwr format</a>).</p>
+
+  <h2>Building it: the galaxy screen</h2>
+  <p>The galaxy is built in the editor's galaxy screen. Open the main menu's <strong>3D World Editor</strong>, then
+    the world screen's <strong>Galaxy</strong> button. The main menu's own Galaxy button also opens this screen while
+    the selected player's galaxy has no main hub yet.</p>
+  <ul>
+    <li>The main hub and the bonus world are on top, the fourteen world numbers below them, and the selected world's
+      hub and eight missions along the bottom. A click on a world's number only selects it.</li>
+    <li>A place drawn faint does not exist yet: a click creates it from a starter world and opens it in the
+      editor. The main hub starts as a 3x3 board of rock with world sign 1 two cells ahead of Blupi; a world hub
+      with mission sign 1 and the return sign; a mission with a treasure chest and an exit.</li>
+    <li>A place that exists opens in the editor, where it is edited, saved and play-tested like any other world.</li>
+    <li><strong>Back</strong> returns to the world screen.</li>
+  </ul>
+
+  <h2>Playing it</h2>
+  <p>The main menu's <strong>Galaxy</strong> button (top right, left of Demo) plays the selected player's galaxy:
+    from its main hub, or from the place where the player left it. The game then reads every world from the galaxy's
+    folder instead of the shipped ones. Returning to the main menu leaves the galaxy; the menu always belongs to the
+    campaign. Each player's panel in the menu shows "Galaxy : N gates", the gates opened in that galaxy, with the
+    galaxy's name in place of "Galaxy" once it has one.</p>
+
+  <h3>Its own progress</h3>
+  <p>A galaxy's lives, current mission, last world and opened doors are kept apart from the campaign's, under keys of
+    their own in <code>savedata.txt</code>. They are written only once a galaxy has been played, so a player who
+    never plays one keeps the file exactly as before. Whether a galaxy is being played is never saved. Player A's
+    campaign progress (<code>gamer0.*</code>) and galaxy progress (<code>galaxy0.*</code>) side by side:</p>
+  <pre><code>gamer0.lives=3
+gamer0.missionNumber=11
+...
+galaxy0.lives=3
+galaxy0.missionNumber=20
+galaxy0.lastWorld=2
+galaxy0.hasProgress=1
+galaxy0.doorsUnlocked=0100...</code></pre>
+
+  <h3>Continue in a galaxy</h3>
+  <p>A galaxy mission writes the resume file exactly like a campaign mission: it is saved when Play loses the focus
+    and deleted on a clean exit. If the game ends without one in the middle of a galaxy mission, the next start shows
+    the Resume screen, and <strong>Continue</strong> goes
+    back into the galaxy and the mission at the recorded moment. The resume log names the galaxy's world file and its
+    hash; if the world was changed meanwhile, the game falls back to the checkpoint, as it does for the campaign. See
+    <a href="save-system.html">Save Data &amp; Resume</a>.</p>
+
+  <h2>Naming it</h2>
+  <p>Click the galaxy screen's title and type a name: letters, digits, spaces, <code>-</code> and <code>'</code>, at
+    most 24 characters (Shift for capitals, Backspace to erase). For touch and gamepad players a keyboard is drawn on
+    the screen under the title.
+    Enter, OK or a click elsewhere keeps the name; Escape or Cancel leaves it as it was. The name is stored in
+    <code>galaxy/name.txt</code>, shown in the menu's player panel and in the import list, travels inside an exported
+    pack and names its file.</p>
+
+  <h2>Deleting and restoring places</h2>
+  <ul>
+    <li>Every existing place has a bin on its corner. The first click arms it (a tick, "Delete?"), a second click
+      deletes the place into the galaxy's <code>backups/</code> folder.</li>
+    <li><strong>Backups</strong> switches the screen to restoring: a click on a place brings back its newest backup
+      (each place keeps up to three). Clicking again steps further back and comes round to where it began, so
+      nothing is lost.</li>
+    <li><strong>Delete galaxy</strong> (two clicks) removes the whole galaxy. It is first exported as a pack into the
+      shared folder, so Import can bring it back with its name and demos; then every place goes into its backups and
+      the name is removed. The galaxy's progress starts over.</li>
+  </ul>
+
+  <h2>Sharing it: one <code>.galaxy</code> file</h2>
+  <ul>
+    <li><strong>Export</strong> writes the whole galaxy, with the demos you recorded in it, as one file in
+      <code>customworlds/shared/</code>: <code>&lt;name&gt;.galaxy</code> for a named galaxy (spaces become
+      <code>-</code>), else <code>A-galaxy.galaxy</code> for player A. A name already taken is numbered
+      (<code>A-galaxy-2.galaxy</code>); an earlier export is never replaced. On the web the file is also downloaded.</li>
+    <li><strong>Import</strong> lists the packs in the shared folder on the right, newest first, eight to a page (on
+      the web the browser's file picker opens first and the chosen file is listed). A row clicked twice replaces your
+      galaxy with it: your current places go into their backups first and the galaxy's progress starts over. The
+      pack's demos are not put into your demo positions; they are copied to the shared demos as
+      <code>&lt;pack name&gt;-demo-&lt;position&gt;.gdemo</code>, where the demo positions' Import lists them (see
+      <a href="demos.html">Demos &amp; Recordings</a>).</li>
+    <li>A row's bin deletes the shared pack (two clicks). On the web this is the only way to reach that file.</li>
+  </ul>
+  <p>The pack is a simple container with a checksum:</p>
+  <pre><code>GALAXY_PACK 1
+name &lt;size&gt;               the galaxy's name, when it has one
+world &lt;mission&gt; &lt;size&gt;    each place: its .vwr bytes follow
+demo &lt;position&gt; &lt;size&gt;   each recording made in the galaxy: its .gdemo bytes follow
+END &lt;FNV-1a of everything before it, 16 hex digits&gt;</code></pre>
+  <p>Import refuses a pack that is damaged or truncated, of another version, holds a place or a position twice,
+    names a place that is not a galaxy's, or contains a world that does not load. A demo recorded with another
+    simulation revision is left out and the galaxy is kept.</p>
+
+  <h2>Where it is stored</h2>
+  <table>
+    <tr><th>What</th><th>Path in the player's folder</th></tr>
+    <tr><td>Player N's places (N = 0, 1, 2 for players A, B, C)</td><td><code>customworlds/gamerN/galaxy/world001.vwr</code>, <code>world010.vwr</code>, <code>world011.vwr</code> ... <code>world199.vwr</code></td></tr>
+    <tr><td>Their backups</td><td><code>customworlds/gamerN/galaxy/backups/world011.1.vwr</code> (newest) to <code>.3.vwr</code></td></tr>
+    <tr><td>The galaxy's name</td><td><code>customworlds/gamerN/galaxy/name.txt</code></td></tr>
+    <tr><td>Exported packs</td><td><code>customworlds/shared/*.galaxy</code></td></tr>
+    <tr><td>Progress</td><td><code>galaxyN.*</code> keys in <code>savedata.txt</code></td></tr>
+  </table>
+  <p>The player's folder is the system's per-user folder on the desktop (<code>~/.local/share/Galaxy Eggbert</code> on
+    Linux, <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows, or <code>--user DIR</code> /
+    <code>GALAXY_USER_DIR</code>), <code>/save</code> in the browser's storage on the web, and the app's private
+    storage on Android.</p>
+
+  <h2>For developers</h2>
+  <p>For QA, <code>--galaxy</code> together with <code>--mission N</code> starts mission N of the selected player's
+    galaxy, with the galaxy's progress; it works with <code>--autoplay</code> as well:</p>
+  <pre><code>./GalaxyEggbert --mission 11 --galaxy</code></pre>
+  <table>
+    <tr><th>Source</th><th>Role</th></tr>
+    <tr><td><code>src/GalaxyEggbert/Editor/CustomWorldStorage.hpp/.cpp</code></td><td><code>GalaxyDir()</code>, <code>GalaxyWorldPath()</code>, <code>IsGalaxyMission()</code>, <code>GalaxyMissionName()</code>, <code>CreateGalaxyStarterWorld()</code>, <code>GalaxyName()</code>/<code>SetGalaxyName()</code>, <code>PackGalaxy()</code>/<code>UnpackGalaxy()</code>, <code>ExportGalaxy()</code>, <code>ImportGalaxy()</code>, <code>DeleteGalaxy()</code>, <code>RestoreBackup()</code>, <code>DeleteSlotWorld()</code>. See <a href="classes/CustomWorldStorage.html">CustomWorldStorage</a>.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Editor/GalaxyBrowserScreen.hpp/.cpp</code></td><td>The galaxy screen: places, bins, Backups, Export, Import, Delete galaxy, naming.</td></tr>
+    <tr><td><code>src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code></td><td><code>StartGalaxy()</code>, <code>LeaveGalaxy()</code>, <code>MissionPath()</code>: which file a mission loads while a galaxy is played.</td></tr>
+    <tr><td><code>src/GalaxyEggbert/Game/SaveData.hpp</code></td><td><code>SetGalaxyMode()</code>, <code>GalaxyProgress()</code>, <code>ResetGalaxyProgress()</code>, <code>GetGalaxyGatesForGamer()</code>. See <a href="classes/SaveData.html">SaveData</a>.</td></tr>
+  </table>
+  <p>Tests: <code>VerifyGEEditorStorage</code> (the galaxy's files, packs, import, delete, restore),
+    <code>VerifyGESaveData</code> (the separate progress), <code>VerifyGEInputPad</code> (the menu's Galaxy button
+    and panel), <code>VerifyDemoReplay</code> (galaxy recordings).</p>
+
+  <h2>Verification status (as of 2026-11-10)</h2>
+  <ul>
+    <li><strong>Desktop</strong>: verified live: a galaxy made and played hub to hub to mission, progress kept apart,
+      <code>--galaxy</code> autoplay, delete and restore, focus lost then Continue in the galaxy, the resume self-test
+      equal in mission 11, keyboard and arrows on the galaxy screen, Delete galaxy and Import back.</li>
+    <li><strong>Web</strong> (2026-11-09, headless Chrome): a desktop pack imported and exported back byte for byte.</li>
+    <li><strong>Not verified</strong>: Android; a physical gamepad or touch screen.</li>
+  </ul>
+  <div class="tip"><strong>Editing while playing.</strong> The typed cheat <code>xnjttjpo</code> in a galaxy mission
+    opens the editor on that mission's world; saving writes the galaxy's file, its backup kept beside it, and Stop
+    returns to the mission from its start. See <a href="editor.html">3D World Editor</a>.</div>
+
+  <div class="card-grid">
+    <a class="card" href="editor.html"><h3>3D World Editor</h3><p>How the places of a galaxy are built.</p></a>
+    <a class="card" href="demos.html"><h3>Demos &amp; Recordings</h3><p>Recording a demo in your galaxy.</p></a>
+    <a class="card" href="levels.html"><h3>Campaign &amp; Worlds</h3><p>The hub rules a galaxy shares with the campaign.</p></a>
+  </div>
+
+  <div class="page-nav">
+    <a class="prev" href="demos.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Demos &amp; Recordings</span>
+    </a>
+    <a class="next" href="editor.html">
+      <span class="label">Next</span>
+      <span class="title">3D World Editor &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

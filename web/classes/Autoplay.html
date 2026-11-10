@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autoplay — Galaxy Eggbert Docs</title>
+<meta name="description" content="Autoplay is the QA harness that plays a mission through from a script, tick by tick, and records a trace so playthroughs can be replayed after any change.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> Autoplay</div>
+  <h1>Autoplay</h1>
+  <p class="subtitle">The QA harness: a script that plays a mission through, tick by tick, against the real game, and a trace of what happened.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/Autoplay.hpp</code> (its top comment is the authoritative description of the script language)</td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/Autoplay.cpp</code>; host side <code>GalaxyEggbertGame::EnableAutoplay()</code> in <code>src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code> and <code>StepAutoplay()</code> in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. It includes only <code>GalaxyEggbert/Def/GamePhase.hpp</code> and the standard library, so <code>VerifyAutoplay</code> tests it without CNA.</td></tr>
+  </table>
+
+  <div class="note"><strong>Not a player feature.</strong> Autoplay exists to check that every mission can
+  still be finished after a change. It is started only from the command line.</div>
+
+  <h2>Purpose</h2>
+  <p>
+    The game's Play path is deterministic at a fixed 1/60 s tick, so a playthrough written as a script
+    reproduces exactly, run after run. <code>Autoplay</code> parses such a script and, once per tick, is
+    given a snapshot of the game's state (<code>AutoplayState</code>) and returns the keys to hold
+    (<code>AutoplayKeys</code>). It steers Blupi to points, waits for lifts, crates, patrols and hazard
+    cycles, types cheat words, checks expectations and writes a trace. A command that runs out of
+    ticks, or Blupi dying, ends the run as a failure. As of 2026-11-10 there is a script for every
+    mission (<code>tools/autoplay/worldNNN.txt</code>), a chain per theme world from its hub, and
+    <code>tools/autoplay/campaign.txt</code>, which plays a new game through the whole campaign.
+  </p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><code>Def::GamePhase</code> (the <code>phase</code> condition takes a phase name).</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: <code>StepAutoplay()</code> builds the
+      <code>AutoplayState</code> from <a href="BlupiController.html">BlupiController</a>,
+      <a href="InteractionSystem.html">InteractionSystem</a> and <a href="WorldRuntime.html">WorldRuntime</a>
+      (lifts, enemies and projectiles found through the <a href="ObjectDefinitionRegistry.html">object
+      registry</a>'s semantic kinds) and turns the returned keys into a keyboard state: arrows, Left Ctrl
+      (jump), Space (action), Left Shift (crouch), Right Shift (look up) and the letter keys.</li>
+    <li><code>tools/autoplay.sh</code>, <code>tools/autoplay_all.sh</code>, <code>tools/play_pass.sh</code>,
+      <code>tools/record_demo.sh</code> (a demo can be recorded from a script).</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API declared in <code>src/GalaxyEggbert/Game/Autoplay.hpp</code>.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>Load</code></td><td><code>bool Load(const std::string&amp; path, std::string&amp; error)</code></td><td>Reads and parses a script file; includes resolve against the file's own directory. On failure <code>error</code> names the file and line.</td></tr>
+    <tr><td><code>Parse</code></td><td><code>bool Parse(std::string_view text, std::string&amp; error)</code></td><td>Parses script text; includes resolve against the current directory.</td></tr>
+    <tr><td><code>Step</code></td><td><code>AutoplayKeys Step(const AutoplayState&amp; state)</code></td><td>One tick: the keys to hold now, given the state after the previous tick.</td></tr>
+    <tr><td><code>Finished</code> / <code>Passed</code></td><td><code>bool Finished() const noexcept</code><br><code>bool Passed() const noexcept</code></td><td>The script has ended; it ended with no failure.</td></tr>
+    <tr><td><code>TakeLog</code></td><td><code>std::string TakeLog()</code></td><td>The trace lines written since the last call (each prefixed <code>t=&lt;tick&gt;</code>).</td></tr>
+    <tr><td><code>WantsShot</code></td><td><code>bool WantsShot() const noexcept</code></td><td>Whether the frame of this tick should be saved (<code>shots N</code>).</td></tr>
+    <tr><td><code>AutoplayState</code></td><td><code>struct AutoplayState</code></td><td>Tick, position (raw grid), yaw, ground/dead/ghost, animation, phase, mission, counters (treasures, eggs, lives, keys, dynamite), vehicle, cycle positions (blitz, temp, crush), switches pressed, saws turning, exit reached, and the lists of lifts, crates and enemies.</td></tr>
+    <tr><td><code>AutoplayKeys</code></td><td><code>struct AutoplayKeys { bool up, down, left, right, jump, action, crouch, lookUp; char letter; }</code></td><td>What to hold this tick.</td></tr>
+  </table>
+
+  <h2>Script language</h2>
+  <p>One command per line; <code>#</code> starts a comment. Positions are raw grid coordinates (as in
+  <code>.vwr</code> files and <code>--spawn</code>; a cell's centre is at its integer value); yaw in degrees,
+  0 facing -Z and 90 facing +X. Commands that wait default to at most 1800 ticks (<code>max N</code>).</p>
+  <table>
+    <tr><th>Command</th><th>Meaning</th></tr>
+    <tr><td><code>wait N</code></td><td>No keys for N ticks.</td></tr>
+    <tr><td><code>hold N KEY...</code></td><td>Hold keys for N ticks: <code>up down left right jump action crouch lookup</code>.</td></tr>
+    <tr><td><code>type WORD</code></td><td>Type lowercase letters, each followed by a release tick (cheat words).</td></tr>
+    <tr><td><code>face DEG</code></td><td>Turn on the spot until facing DEG.</td></tr>
+    <tr><td><code>go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...</code></td><td>Turn towards (X, Z) and walk until within T (default 0.25) or until COND; with <code>jump D</code> jump once when D or less from the point; <code>with KEY</code> holds another key too.</td></tr>
+    <tr><td><code>fly X Y Z ...</code></td><td>A <code>go</code> that also holds height Y (helicopter, overcraft), done within 0.3 of the height.</td></tr>
+    <tr><td><code>until COND [max N]</code></td><td>No keys until COND holds.</td></tr>
+    <tr><td><code>lift X Y Z</code>, <code>crate X Y Z [tol T]</code></td><td>Wait until a lift platform would carry Blupi at that point, or a crate stands there (default tolerance 0.05).</td></tr>
+    <tr><td><code>clear X Y Z R [lane x|z]</code>, <code>near X Y Z R [lane x|z]</code></td><td>Wait until no enemy, or an enemy, is within R: time a pass by a patrol.</td></tr>
+    <tr><td><code>expect COND</code></td><td>Record a pass or a failure.</td></tr>
+    <tr><td><code>log TEXT</code>, <code>trace N</code>, <code>shots N</code></td><td>Write to the trace; log the position every tick for N ticks (otherwise every 60); save the next N frames.</td></tr>
+    <tr><td><code>mortal</code></td><td>From here on a death is written to the trace instead of failing the run.</td></tr>
+    <tr><td><code>end</code>, <code>include FILE</code></td><td>Stop; insert another script (path relative to this script, nesting at most 8 deep).</td></tr>
+  </table>
+  <p>
+    A condition is <code>FIELD OP VALUE</code> with OP one of <code>= != &lt; &lt;= &gt; &gt;=</code>. Fields:
+    <code>x y z yaw tick mtick mission treasures eggs lives keys dynamite vehicle ground dead ghost anim
+    exit blitz temp switches saws crush phase</code>. <code>tick</code> counts from the script's start,
+    <code>mtick</code> from the current mission's start (use it in anything that can run inside a chain).
+    <code>vehicle</code> is 0 none, 1 helicopter, 2 jeep, 3 tank, 4 skateboard, 5 overcraft.
+    <code>phase</code> takes a name: <code>None First Wait Init Play Pause Lost Win Trial MainSetup PlaySetup
+    Resume Ranking Editor</code>.
+  </p>
+  <div class="note"><strong>Header versus parser.</strong> The parser accepts the field <code>vehicle</code>, but
+  the field list in the header comment of <code>Autoplay.hpp</code> does not mention it (as of 2026-11-10).
+  The <code>mortal</code> command is in the header but not in the handbook's summary table.</div>
+
+  <h2>How it is used</h2>
+  <p>The start of <code>tools/autoplay/world011.txt</code>, a real script:</p>
+  <pre><code># Mission 011 played through (plans/briefs/world011.md).
+wait 30
+expect mission = 11
+# A: walk to the pillar, jump onto it for treasure 1.
+go 65 56
+go 65 54 jump 1.2
+until treasures = 1 max 120
+...
+lift 58 10 34 max 400
+go 58 34 tol 0.15
+until y &gt;= 12.95 max 300</code></pre>
+  <p>
+    The game runs a script with <code>GalaxyEggbert --mission N --autoplay &lt;script&gt;</code> (add
+    <code>--spawn x,y,z[,yaw]</code> to start elsewhere, <code>--galaxy</code> to play the selected player's
+    galaxy). It writes <code>autoplay_trace.txt</code> in the working directory, draws only one frame in
+    30 unless a shot is wanted, and exits with code 0 when the script passed, 1 when it failed. By
+    default it runs as fast as the machine allows; the result is the same tick for tick.
+  </p>
+  <table>
+    <tr><th>Setting</th><th>Effect</th></tr>
+    <tr><td><code>AUTOPLAY_REALTIME=1</code></td><td>Pace at 60 Hz (for watching); results do not change.</td></tr>
+    <tr><td><code>AUTOPLAY_SHOTS=N</code></td><td>Save a frame every N ticks into <code>autoplay_shots/</code>.</td></tr>
+    <tr><td><code>GALAXY_RESUME_SELFTEST=&lt;ticks&gt;</code></td><td>Exercise the <a href="ResumeLog.html">resume</a> replay at that tick and fail the run if the state differs.</td></tr>
+  </table>
+  <p>The wrapper scripts:</p>
+  <ul>
+    <li><code>tools/autoplay.sh &lt;build-dir&gt; &lt;script&gt; &lt;mission&gt; [game arguments]</code>: runs the game
+      under its own Xvfb display from a run directory (<code>AUTOPLAY_RUN=&lt;dir&gt;</code> to choose it)
+      with symlinked assets, a fresh <code>savedata.txt</code> and <code>GALAXY_USER_DIR</code> set to that
+      directory; silent unless <code>QA_SOUND=1</code>; <code>AUTOPLAY_WORLDS=&lt;dir&gt;</code> substitutes the
+      <code>worlds3d</code> directory. Prints the trace and returns the game's exit code.</li>
+    <li><code>tools/autoplay_all.sh &lt;build-dir&gt; [worldNNN ...]</code>: every mission script (or the named
+      ones), one line per mission, exit code 1 if any failed. A script whose first line says
+      <code>BLOCKED</code> is listed and skipped.</li>
+    <li><code>tools/play_pass.sh</code> runs them in parallel lanes and lays kept frames out as contact sheets.</li>
+  </ul>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>Keep it engine-independent: no CNA or cna-engine include in <code>Autoplay.{hpp,cpp}</code>.</li>
+    <li>Scripts depend on gameplay timing (20 Hz tick tables of lifts, crates and creatures). A gameplay
+      change can break a script with no compile error; if one fails after an engine change, first check
+      the mechanic against the reference, and give a real defect a test before "fixing" the script.</li>
+    <li>Use <code>mtick</code> or a cycle field (<code>temp</code>, <code>blitz</code>, <code>crush</code>), never
+      <code>tick</code>, for timing inside a chain.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyAutoplay</code> (<code>tools/VerifyAutoplay.cpp</code>): parses scripts and plays their
+      commands against a simple stand-in Blupi (turning 135 degrees/s, walking 2.5 cells/s): steering,
+      jumps, timeouts and deaths, expectations, lanes. The same executable also holds the
+      <a href="ResumeLog.html">ResumeLog</a> format checks.</li>
+    <li>The playthroughs themselves (<code>tools/autoplay_all.sh</code>) are run by hand after gameplay or
+      world changes; they need a display and are not in ctest. The last recorded full pass of all 78
+      scripts is from 2026-11-07 (see <code>docs/handbook/04-testing.md</code>).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../development/testing.html">Testing</a></li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="BlupiController.html">BlupiController</a>, <a href="InteractionSystem.html">InteractionSystem</a></li>
+    <li><a href="ResumeLog.html">ResumeLog</a>, <a href="DemoReplay.html">DemoReplay</a></li>
+    <li><a href="../running.html">Running the Game</a>, <a href="../levels.html">Campaign &amp; Worlds</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/DemoReplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; DemoReplay</span>
+    </a>
+    <a class="next" href="../classes/TerrainRenderer.html">
+      <span class="label">Next</span>
+      <span class="title">TerrainRenderer &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

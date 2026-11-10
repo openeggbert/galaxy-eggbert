@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Startup Sequence — Galaxy Eggbert Docs</title>
+<meta name="description" content="What Galaxy Eggbert does from main() to the main menu: the player's folder, command-line flags, GalaxyEggbertGame construction, LoadContent, the Wait screen, the title scene, and the --mission shortcut.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,66 +14,197 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
-  <a href="index.html">Internals</a>
+  <a href="../internals/index.html" class="active">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Startup Sequence</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Internals</a> <span>/</span> Startup Sequence</div>
   <h1>Startup Sequence</h1>
-  <p class="subtitle">From process start to the first rendered terrain frame.</p>
+  <p class="subtitle">From <code>main()</code> to the main menu, step by step, as of 2026-11-10.</p>
 
-  <h2>Sequence</h2>
-  <pre><code>OS: exec GalaxyEggbertCNA
-  └─ main()  [src/GalaxyEggbertCNA/main.cpp]
-       ├─ game = new GalaxyEggbertCnaGame()
-       │    └─ constructor sets window title: "Galaxy Eggbert (CNA)"
-       ├─ game-&gt;Run()          [CNA's Game::Run() — owns the loop]
-       │    ├─ LoadContent()
-       │    │    ├─ worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")
-       │    │    │    └─ Worlds::World::loadFromFile(...) — parses VWR1 header,
-       │    │    │       chunk table, VCH1 payloads (see VWR Format)
-       │    │    ├─ terrainRenderer_ = GETerrainRenderer(world, GETileAtlas(...))
-       │    │    │    └─ builds static MeshBuilder → UploadTexturedMesh → CnaEngine::Graphics::GpuMesh
-       │    │    ├─ texture_ = Texture2D("Content/icons/object-m.png")
-       │    │    ├─ terrainEffect_ = BasicEffect(textured, no vertex color, bound to texture_)
-       │    │    └─ blupi_.SetPosition(0, 1, 0)
-       │    │
-       │    │  ... engine runs its internal frame loop ...
-       │    │
-       │    ├─ Update(gameTime)   [every frame]
-       │    │    ├─ worldRuntime_.Update(dt)      — advance 6fps anim phase
-       │    │    ├─ read Keyboard::GetState()
-       │    │    ├─ blupi_.Step(world, dx, dz, jump, dt)
-       │    │    └─ camera_.SetTarget(blupi_.GetPosition()); camera_.Update(dt)
-       │    │
-       │    └─ Draw(gameTime)     [every frame]
-       │         ├─ device.Clear(sky blue)
-       │         ├─ set View/Projection/World on terrainEffect_
-       │         └─ terrainRenderer_-&gt;Draw(device, *terrainEffect_)
-       └─ delete game</code></pre>
+  <p>
+    The files involved are <code>src/GalaxyEggbertCNA/main.cpp</code> (entry point and flags),
+    <code>GalaxyEggbertGame.cpp</code> (constructor), <code>GalaxyEggbertGameLoad.cpp</code>
+    (<code>LoadContent()</code>), <code>GalaxyEggbertGameUpdate.cpp</code> (the first updates) and
+    <code>GalaxyEggbertGameMissions.cpp</code> (title scene, missions). The host class is
+    <a href="../classes/GalaxyEggbertGame.html">GalaxyEggbertGame</a>, a
+    <code>Microsoft::Xna::Framework::Game</code> from CNA.
+  </p>
 
-  <h2>Key Observations</h2>
+  <h2>1. <code>main()</code></h2>
+  <p>
+    <code>main()</code> only calls <code>RunGame()</code> inside a <code>try</code>. An escaping exception
+    is printed (<code>GalaxyEggbertCNA: fatal exception: ...</code>) and rethrown, because in the
+    browser it would otherwise arrive as a bare pointer with no text. On Android CNA's
+    <code>Entrypoint.hpp</code> renames <code>main()</code> so the Java side can start it.
+  </p>
+  <p><code>RunGame()</code> first does the platform-specific preparation:</p>
   <ul>
-    <li>No <code>#ifdef</code> guards appear anywhere in this path — CNA is called directly.</li>
-    <li>There is no phase/menu system — <code>LoadContent()</code> goes straight into rendering the terrain.</li>
-    <li>The world path is relative (<code>"worlds3d/world001.vwr"</code>), so the working directory must be the build output directory.</li>
-    <li><code>GEBlupiController</code>'s spawn position <code>(0, 1, 0)</code> is hard-coded, not read from the world file (the <code>.vwr</code> format carries no spawn header, unlike mobile-eggbert's <code>.txt</code> format).</li>
+    <li><strong>Android:</strong> <code>RedirectStdioToLogcat()</code> and <code>PrepareAndroidAssets()</code> (<code>AndroidAssets.cpp</code>); it returns 1 if the assets cannot be prepared.</li>
+    <li><strong>Web:</strong> <code>Editor::ApplyCampaignEdits("worlds3d", CampaignOriginalsDir())</code> lays the player's in-browser edits of shipped worlds over the page's packed <code>worlds3d/</code> before anything loads a world (see <a href="world-loading.html">World Loading</a>).</li>
+  </ul>
+
+  <h2>2. The player's folder: <code>ChooseUserFolder()</code></h2>
+  <p>On desktop builds the folder for <code>savedata.txt</code>, <code>resume.txt</code>, <code>demos/</code> and <code>customworlds/</code> is chosen before the game object exists:</p>
+  <ol>
+    <li><code>--user DIR</code> on the command line, else</li>
+    <li>the environment variable <code>GALAXY_USER_DIR</code> (the test scripts use their run folder), else</li>
+    <li>CNA's <code>StorageDevice</code> root for the application name "Galaxy Eggbert" (<code>~/.local/share/Galaxy Eggbert</code> or <code>$XDG_DATA_HOME</code> on Linux, <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows).</li>
+  </ol>
+  <p>
+    In the default case the files an earlier build kept in the working folder are copied over once
+    (<code>Game::CopyOldUserFiles()</code>, only if the new folder has no <code>savedata.txt</code>;
+    nothing is moved or overwritten). <code>Game::SetUserFolder()</code> records the choice
+    (<code>UserFolder.hpp</code>). If no folder can be created the game keeps the working folder. The
+    web build keeps <code>/save</code> and Android its private storage; this step is skipped there.
+  </p>
+
+  <h2>3. Constructing <code>GalaxyEggbertGame</code></h2>
+  <p>The constructor (<code>GalaxyEggbertGame.cpp</code>):</p>
+  <ul>
+    <li>sets the window title to "Galaxy Eggbert";</li>
+    <li>reads <code>GALAXY_PERF=1</code> (timing output) and <code>GALAXY_MODEL_CULL=0</code> (disable model culling);</li>
+    <li>creates the <code>GraphicsDeviceManager</code> and selects the <code>HiDef</code> profile (the screenshot and golden-capture paths use <code>GetBackBufferData</code>, a HiDef operation);</li>
+    <li>loads <code>savedata.txt</code> (<code>saveData_.Load()</code>, <a href="../classes/SaveData.html">SaveData</a>) and applies its full-screen preference;</li>
+    <li>subscribes to CNA's <code>Keyboard::KeyDownEXT</code> for ordered key presses: demo key events, the editor's command keys and text entry, demo names, and typed cheat letters in Play.</li>
+  </ul>
+  <p>Members such as <code>Sound</code>, <code>Hud</code>, <code>InputPad</code>, <code>WorldRuntime</code>, <code>InteractionSystem</code> and <code>WorldEditor</code> are plain value members, constructed with the game.</p>
+
+  <h2>4. Command-line flags</h2>
+  <p><code>RunGame()</code> then scans <code>argv</code> and switches modes on the game object. All flags as of 2026-11-10:</p>
+  <table>
+    <tr><th>Flag</th><th>Effect</th></tr>
+    <tr><td><code>--user DIR</code></td><td>The player's folder (step 2).</td></tr>
+    <tr><td><code>--mission N</code></td><td>Skip the menus and start mission N in Play (<code>EnableStartMission</code>).</td></tr>
+    <tr><td><code>--spawn x,y,z[,yawDeg]</code></td><td>With <code>--mission</code>: place Blupi at that raw-grid position and yaw.</td></tr>
+    <tr><td><code>--galaxy</code></td><td>With <code>--mission</code>: play the selected player's own galaxy, with its progress.</td></tr>
+    <tr><td><code>--autoplay SCRIPT</code></td><td>Play the mission by an autoplay script (<a href="../classes/Autoplay.html">Autoplay</a>); the process exits with 2 if the script cannot be loaded, otherwise with the autoplay result.</td></tr>
+    <tr><td><code>--record-demo FILE</code>, <code>--demo-ticks N</code>, <code>--demo-title TEXT</code></td><td>Record a main-menu demo (used by <code>tools/record_demo.sh</code>).</td></tr>
+    <tr><td><code>--verify-demo FILE</code></td><td>Replay a demo and compare its end (<code>tools/verify_demos.sh</code>).</td></tr>
+    <tr><td><code>--golden-capture</code></td><td>Deterministic screenshots of world 999 for <code>tests/golden/</code>.</td></tr>
+    <tr><td><code>--golden-capture-trace</code></td><td>Deterministic movement trace for <code>tests/golden/golden_trace.txt</code>.</td></tr>
+  </table>
+  <p>See <a href="../running.html">Running the Game</a> and <a href="../configuration.html">Configuration</a> for the environment variables.</p>
+
+  <h2>5. <code>Run()</code> and <code>LoadContent()</code></h2>
+  <p>
+    <code>game-&gt;Run()</code> enters CNA's loop. As in XNA, CNA's <code>Game::DoInitialize()</code>
+    creates the graphics device, then calls <code>Initialize()</code>, which calls
+    <code>LoadContent()</code>. <code>GalaxyEggbertGame</code> does not override
+    <code>Initialize()</code>; everything happens in <code>LoadContent()</code>
+    (<code>GalaxyEggbertGameLoad.cpp</code>), synchronously, in this order:
+  </p>
+  <ol>
+    <li><strong>A first world.</strong> <code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code>, the main hub. If it is missing the function prints a hint ("run the binary from its own build directory") and returns: the game needs its data next to the executable.</li>
+    <li><strong>Texture scale.</strong> 1x or 2x for this run, decided once: the Setup's "Textures" setting, <code>GALAXY_TEXTURES</code>, or Auto (2x with Ultra effects on a display at least 1000 px tall). Web and Android always use 1x.</li>
+    <li><strong>The terrain sheet.</strong> <code>Content/icons/object-m.png</code> (or <code>icons2x/</code>): tile coverage is classified from its alpha (<code>TileCoverage.hpp</code>), brick edges and clear texels of opaque tiles are filled, and a padded, mipmapped copy is built for the <a href="../classes/TileAtlas.html">TileAtlas</a>. Average tile colours and water tints for the 3D effects are taken from it.</li>
+    <li><strong>The world's presentation.</strong> <code>RebuildWorldPresentation()</code>: background picture, <a href="../classes/TerrainRenderer.html">TerrainRenderer</a> meshes, block models (see <a href="world-loading.html">World Loading</a>). Then the terrain and grass effects (<code>textures3d/grass_top.png</code>).</li>
+    <li><strong>2D layers.</strong> <code>hud_.LoadContent()</code> and <code>inputPad_.LoadContent()</code> load their own sheets (<code>text.png</code>, <code>pad.png</code>, menu backgrounds).</li>
+    <li><strong>Object sheets</strong> for billboards: <code>element.png</code>, <code>explo.png</code>, <code>blupi.png</code>, <code>blupi1.png</code>.</li>
+    <li><strong>3D models.</strong> Blupi from <code>avatars3d/blupi/avatar.skinnedmodel.json</code> with its <code>clips.txt</code> and face textures, or the fox placeholder in <code>avatars3d/blupi_placeholder/</code> if the real model is absent (without any model the camera stays first-person). Then the object model library: <code>avatars3d/objects/index.txt</code>, and per model its <code>icons.txt</code> (into the <code>ObjectModelTable</code>), <code>materials.txt</code>, measured BigDecor shapes, spark textures and sign decals.</li>
+    <li><strong>Blupi's start.</strong> <code>PlaceBlupi()</code> at the world's spawn cell, or (0, 1, 0).</li>
+    <li><strong>Sound.</strong> <code>sound_.LoadContent()</code> loads whichever of <code>Content/sounds/sound000.wav</code> to <code>sound092.wav</code> exist (<a href="../classes/Sound.html">Sound</a>); sound on/off, effects volume and the jump-button side are restored from <code>SaveData</code>.</li>
+  </ol>
+  <p>The <a href="../classes/WorldEditor.html">WorldEditor</a> has no loading step; it builds what it needs when it is opened.</p>
+
+  <h2>6. The first frames: Wait, title scene, menu</h2>
+  <p>
+    The game starts in the <code>Wait</code> phase (<code>GamePhase</code>,
+    <code>include/GalaxyEggbert/Def/GamePhase.hpp</code>). Each <code>Update()</code> runs a fixed
+    1/60 s step:
+  </p>
+  <ul>
+    <li><strong>Title scene.</strong> While in <code>Wait</code> (and later in the main menu and the editor's world list) the game requests the title scene. <code>LoadTitleScene()</code> loads <code>worlds3d/title.vwr</code> into <code>WorldRuntime</code> (replacing the hub loaded above), rebuilds the presentation, puts a fresh Blupi at the world's spawn facing the camera, and marks the scene active. <code>UpdateTitleScene()</code> animates the world, lets Blupi idle and sways the camera 7 degrees either way over 14 seconds. If <code>title.vwr</code> is missing the plain screens are used.</li>
+    <li><strong>Wait.</strong> The original's 5-second loading gauge, now purely cosmetic (<code>kWaitDurationSeconds = 5.0f</code>): loading already finished in <code>LoadContent()</code>. When it ends, the game reads <code>resume.txt</code> (<code>ReadResumeLog()</code>) and goes to <code>Resume</code> if there is an interrupted mission or saved progress, otherwise to <code>Init</code>, the main menu.</li>
+    <li><strong>Resume.</strong> "Continue" replays the interrupted mission from its recorded start (<code>BeginResume()</code>, <a href="../classes/ResumeLog.html">ResumeLog</a>) or, failing that, loads the saved mission (<code>LoadMission(saveData_.GetMissionNumber())</code>). See <a href="../save-system.html">Save Data &amp; Resume</a>.</li>
+    <li><strong>Main menu (<code>Init</code>).</strong> Play calls <code>LoadMission(1)</code> (the main hub) and enters <code>Play</code>; Galaxy calls <code>StartGalaxy()</code> (<a href="../galaxy.html">Your Own Galaxy</a>); Editor opens the <code>WorldEditor</code>'s world list; Setup enters <code>MainSetup</code>; Demo, Help, Fullscreen/Window and Exit do what they say. 40 seconds without input in the settled menu start the demos (<a href="../demos.html">Demos &amp; Recordings</a>).</li>
+  </ul>
+
+  <h2>7. The <code>--mission</code> shortcut</h2>
+  <p>With <code>--mission N</code> the menus never appear. On the first <code>Update()</code> (<code>GalaxyEggbertGameUpdate.cpp</code>):</p>
+  <pre><code>if (startMission_ != 0)
+{
+    SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+    if (startGalaxy_) { galaxyGamer_ = saveData_.GetSelectedGamer(); saveData_.SetGalaxyMode(true); ... }
+    LoadMission(startMission_);
+    startMission_ = 0;
+    if (startSpawnSet_)
+    {
+        PlaceBlupi(startSpawnX_ - WorldRuntime::kWorldCenterX, startSpawnY_,
+                   startSpawnZ_ - WorldRuntime::kWorldCenterZ);
+        blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
+        ...
+    }
+}</code></pre>
+  <p>
+    The golden-capture modes do the same with the fixed showcase world, <code>LoadMission(999)</code>.
+    Once in <code>Play</code> with the mission loaded, <code>StartResumeLog()</code> records the
+    mission's start (build, world path and hash, seed, Blupi's position, settings) and input recording
+    begins; an armed demo recording starts at the same moment.
+  </p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="world-loading.html">World Loading</a> (what <code>LoadMission()</code> does)</li>
+    <li><a href="../game-loop.html">Game Loop</a>, <a href="../classes/GalaxyEggbertGame.html">GalaxyEggbertGame</a></li>
+    <li><a href="../running.html">Running the Game</a>, <a href="../configuration.html">Configuration</a>, <a href="../platform-support.html">Platform Support</a></li>
   </ul>
 
   <div class="page-nav">
-    <a href="index.html">← Internals</a>
-    <a href="vwr-format.html">VWR Format →</a>
+    <a class="prev" href="../internals/index.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Internals</span>
+    </a>
+    <a class="next" href="../internals/world-loading.html">
+      <span class="label">Next</span>
+      <span class="title">World Loading &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

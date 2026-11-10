@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rendering — Galaxy Eggbert Docs</title>
+<meta name="description" content="How Galaxy Eggbert draws a frame: the SceneFrame draw list, WorldRenderer, terrain meshes and reliefs, 3D models, billboards, the effect levels, the 2D HUD and the golden-frame check.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,131 +24,260 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html" class="active">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Rendering</div>
   <h1>Rendering</h1>
-  <p class="subtitle">One cube per non-air block, built with cna-engine's MeshBuilder and drawn as a GpuMesh through CNA.</p>
+  <p class="subtitle">How a frame is drawn: the simulation is read into a <code>SceneFrame</code> draw list, <code>WorldRenderer</code> draws it, the HUD goes on top (as of 2026-11-10).</p>
 
-  <h2>Overview</h2>
   <p>
-    <code>GalaxyEggbertCNA</code> renders terrain only — there is no Blupi sprite, no object
-    rendering, no HUD, no sky dome. Terrain rendering works end-to-end and is verified: a real run
-    on <code>worlds3d/world001.vwr</code> uploaded 2749 blocks (pre-bugfix count) as 65976 vertices
-    / 32988 triangles, and a 5×5 on-screen pixel sample found 21 of 25 sampled points showing real
-    terrain color across 10 distinct colors — confirming genuine texture sampling, not a placeholder.
+    There is one renderer. It is built on CNA's XNA 4.0 graphics API with cna-engine's helpers
+    (<code>MeshBuilder</code>, <code>GpuMesh</code>, <code>TextureAtlas</code> rectangles); see
+    <a href="engine-integration.html">Engine Integration</a>. Everything that changes how the game looks is
+    presentation only: the simulation never reads anything back from the renderer. This page is the
+    technical view; <a href="graphics.html">3D Effects &amp; Graphics</a> describes what a player sees and sets.
   </p>
 
-  <h2>Pipeline</h2>
-  <pre><code>GETerrainRenderer(world, tileAtlas):
-  staticMesh = MakeTexturedMeshBuilder()                // positions + one texture coordinate
-  for each (x, y, z) in world.blocksPerAxis()³:
-      block = world.getBlock(x, y, z)
-      if block.isAir(): continue
-      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ   // Y unshifted
-      if BlockTypes::tileAnimBase(block.type()) is animated:
-          store in m_animBlocks (rebuilt on anim-phase change)
-      else:
-          AddCenteredBox(staticMesh, (worldX, y, worldZ), size 1×1×1, faces)  // MeshBuilder::AddBox
-          // faces: one BoxFaceStyle{visible, uv} per BoxFace,
-          //        uv = tileAtlas.GetTileUv(block.type())
-
-  staticRenderer   = UploadTexturedMesh(device, staticMesh.Mesh())   // unique_ptr&lt;GpuMesh&gt;
-  animatedRenderer = UploadTexturedMesh(device, animatedMeshForCurrentPhase)</code></pre>
+  <h2>A frame, step by step</h2>
+  <p><code>GalaxyEggbertGame::DrawFrame()</code> in <code>src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp</code>:</p>
+  <ol>
+    <li><strong>Clear</strong> colour and depth to dark navy RGB(0, 35, 98), the corner colour of the menu pictures.</li>
+    <li><strong>Build the draw list</strong>: <code>BuildSceneFrame()</code> (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code>).
+      Skipped where no world is shown: the Wait and Init phases (unless the title scene is behind the menu),
+      both Setup screens and the editor's slot browser.</li>
+    <li><strong>Shadow map</strong> (effects High and up): <code>WorldRenderer::RenderShadowMap()</code> draws the casters from the sun into their own targets.</li>
+    <li><strong>Ultra only</strong>: a geometry pass (<code>WorldRenderer::DrawGeometry()</code>: normal, depth, mirror per pixel) for the screen-space effects.</li>
+    <li><strong>World</strong>: <code>DrawWorld()</code> calls <code>WorldRenderer::Draw()</code>, into a render target when a finish
+      (<code>PostProcess</code> or <code>UltraFinish</code>) is active, otherwise straight to the screen. The editor's gizmos follow, against the world's depth.</li>
+    <li><strong>Finish</strong>: bloom, grade and FXAA, or Ultra's HDR chain, onto the screen.</li>
+    <li><strong>2D overlay</strong>: <code>DrawOverlay()</code> with depth testing off: underwater tint, HUD, touch pad, menus, notices.</li>
+    <li><strong>Captures</strong>: <code>DrawFrameCaptures()</code> (screenshots, editor thumbnails, autoplay shots, golden frames).</li>
+  </ol>
   <p>
-    <code>MakeTexturedMeshBuilder</code>, <code>AddCenteredBox</code> and <code>UploadTexturedMesh</code>
-    are the game's small helpers in <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code> over
-    cna-engine's <a href="classes/CubeMesh.html">MeshBuilder</a> and
-    <a href="classes/CubeMeshRenderer.html">GpuMesh</a>. A full cube is 24 vertices + 36 indices — the
-    same vertices and indices easy-3d's <code>BuildCubeMesh</code> produced until 2026-10-20, bit for
-    bit; the GPU meshes replaced easy-3d's <code>CubeMeshRenderer</code>.
-  </p>
-  <p>
-    No face culling or greedy meshing is performed — every non-air block gets a full cube, even
-    where faces are fully occluded by neighbors. This is a known, flagged limitation (see
-    <a href="development/known-issues.html">Known Issues</a>) that will matter once denser
-    hand-authored worlds exist.
+    The game draws on CNA's 800&nbsp;&times;&nbsp;480 logical surface, which CNA scales to the window. Only Ultra
+    draws the world at the window's own pixels; the HUD stays on the logical surface. The simulation steps 60
+    times a second; at the Setup's higher frame rates (120, 144, 240) the camera, Blupi, moving objects and
+    particles are interpolated between steps.
   </p>
 
-  <h2>Texture Mapping — GETileAtlas</h2>
+  <h2>The seam: <code>SceneFrame</code></h2>
   <p>
-    <code>GetTileUv(blockType)</code> returns a <code>CnaEngine::Graphics::UvRect</code>
-    (<code>u0, v0, u1, v1</code>) into <code>object-m.png</code> (1301×1431 px; 64 px tiles, 20 columns,
-    65 px pitch: 64 px icon + 1 px inter-tile gap), computed with the game's own
-    <code>BlockTypes::tileUV()</code>. It returns an all-zero rect for Air (type ≤ 0) and for types
-    outside the sheet's grid.
-  </p>
-
-  <h2>Animated Tiles</h2>
-  <p>
-    Ported 1:1 from mobile-eggbert's <code>Tables.cpp</code> (via <code>GalaxyEggbertSimple3D</code>):
+    <code>src/GalaxyEggbert/Game/SceneFrame.hpp</code> is a plain draw list with no device, effect or GPU mesh in it.
+    The host fills it from the simulation (which object shows, by which icon or which model pose, where);
+    <code>WorldRenderer</code> draws only from it and from the loaded assets. The lists keep the order the world
+    has always been drawn in, so blending and depth come out the same. It was introduced on 2026-11-09 as a pure
+    refactor: golden frames, 1728 autoplay frames of 11 missions and 28 editor frames stayed byte-equal.
+    (<code>renderers.md</code> once proposed two interchangeable renderers; the owner chose one.)
   </p>
   <table>
-    <tr><th>Tile</th><th>Frames</th></tr>
-    <tr><td>Lava</td><td>8</td></tr>
-    <tr><td>Spike</td><td>16</td></tr>
-    <tr><td>Crusher</td><td>10</td></tr>
-    <tr><td>Saw</td><td>6</td></tr>
-    <tr><td>Water1 / Water2</td><td>6 each</td></tr>
-    <tr><td>Temp</td><td>20 (including 2 invisible/blank frames)</td></tr>
-    <tr><td>Fan ×4 directions</td><td>3 each</td></tr>
-    <tr><td>Marine</td><td>11</td></tr>
+    <tr><th>Member</th><th>Holds</th></tr>
+    <tr><td><code>camera</code> (<code>SceneCamera</code>)</td><td>View, projection, position, look-at target, vertical field of view, aspect ratio.</td></tr>
+    <tr><td><code>world</code>, <code>terrain</code></td><td>Whether the 3D world, and the terrain with everything drawn with it, are drawn.</td></tr>
+    <tr><td><code>reliefTarget</code>, <code>reliefRadius</code>, <code>reliefBudget</code></td><td>Where the terrain reliefs are built and how many chunks this frame (-1: all, on the first frame).</td></tr>
+    <tr><td><code>cubes</code>, <code>cubePieces</code></td><td>Lifts and crates as textured cubes; crates blown apart, each in its own transform.</td></tr>
+    <tr><td><code>opaqueModels</code>, <code>objectModels</code>, <code>translucentModels</code>, <code>editorStarts</code></td><td><code>SceneModel</code>s: a <code>SkinnedModelEXT</code>, clip name and time, world matrix, culling, alpha, tint, per-part textures and materials.</td></tr>
+    <tr><td><code>signDecals</code>, <code>electrodeSparks</code>, <code>dynamiteSparks</code>, <code>glueStrands</code></td><td>Textured quad sets and the glue death's strand mesh.</td></tr>
+    <tr><td><code>billboards</code>, <code>marine</code></td><td><code>SceneBillboardBatch</code>es, one per sprite sheet (<code>SceneSheet</code>: element, object-m, explo, blupi, blupi1, big decor).</td></tr>
+    <tr><td><code>effects</code> (<code>SceneEffects</code>)</td><td>The effect level and its switches, fog, soft shadows, point lights, particles, water tints.</td></tr>
   </table>
+
+  <h2>Inside <code>WorldRenderer::Draw()</code></h2>
+  <p>The order in <code>src/GalaxyEggbert/Game/WorldRenderer.cpp</code>, which matters for blending and depth:</p>
+  <ol>
+    <li>Fog on every world effect (effects on) or off again.</li>
+    <li>The sky background.</li>
+    <li>Terrain pass: reliefs updated near the camera's target, then the opaque terrain and lava; soft round
+      shadows; lift and crate cubes; the grass overlay; Blupi and the vehicles; every object model; sign and spark
+      decals; translucent models (a hidden or ghost Blupi); the editor's player starts; then the terrain's
+      semi-transparent pass (water and animated tiles) <em>after</em> the models, so water covers what lies in it
+      (OR-0052).</li>
+    <li>Billboards, blended with <code>NonPremultiplied</code> (the sheets have straight alpha).</li>
+    <li>Particles (effects on).</li>
+  </ol>
+
+  <h2>Sky background</h2>
   <p>
-    Animated blocks are split into a second mesh, rebuilt only when the anim phase actually
-    changes (not every frame). If the current phase yields zero visible animated cubes (e.g.
-    Temp's blank frames), the animated renderer is reset to null rather than uploading empty data.
+    <code>Content/backgrounds/decorNNN.png</code> is chosen by the world's sky region (28 of the 32 region ids have a
+    picture; a missing one leaves the clear colour). It is drawn as one camera-facing quad 900 blocks away, inside
+    the camera's 1000-block far plane. The 640&nbsp;&times;&nbsp;480 picture is wrapped round the horizon a whole number
+    of times, so turning the camera scrolls it, and the camera's height moves it at 2/3 of the world's speed, as the
+    original's parallax does (OR-0053).
   </p>
 
-  <h2>Draw Call</h2>
-  <pre><code>terrainEffect_-&gt;View = camera_.View();             // CnaEngine::Graphics::Camera
-terrainEffect_-&gt;Projection = camera_.Projection();
-terrainEffect_-&gt;World = Matrix::Identity;
-staticRenderer-&gt;Draw(device, *terrainEffect_);       // GpuMesh::Draw: each pass of the effect
-if (animatedRenderer) animatedRenderer-&gt;Draw(device, *terrainEffect_);</code></pre>
+  <h2>Terrain</h2>
+  <p>
+    <a href="classes/TerrainRenderer.html">TerrainRenderer</a> builds GPU meshes from the
+    <a href="classes/World.html">World</a>, one cell per block, textured from the tile sheet through
+    <a href="classes/TileAtlas.html">TileAtlas</a> (a padded, mipmapped copy of <code>object-m.png</code>).
+    How each block icon is drawn comes from <a href="classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>:
+    render modes <code>UniformCube</code>, <code>DirectionalCube</code>, <code>InnerPillarBox</code>, <code>ThinBar</code>,
+    <code>InnerFlatPlate</code>, <code>TripleCrossBillboard</code> and <code>SawBlade</code>, with geometry helpers
+    <code>DirectionalCubeTiles</code>, <code>InnerPillarBoxTiles</code>, <code>ThinBarTiles</code> and <code>InnerFlatPlateTiles</code>.
+  </p>
+  <table>
+    <tr><th>Mesh</th><th>What goes in</th><th>Drawn</th></tr>
+    <tr><td>Static opaque</td><td>Every still tile whose texels are mostly solid (<code>TileCoverage::Opaque</code>)</td><td>Opaque, lit; vertex colour carries ambient occlusion (or Ultra's GI) when the effects want it</td></tr>
+    <tr><td>Cut-out</td><td>Hard-edged sprite tiles: doors, pillars, girders, bars, flat-plate decor (<code>TileCoverage::Cutout</code>)</td><td><code>AlphaTestEffect</code> at alpha 128, writes depth; light baked into the vertex colour</td></tr>
+    <tr><td>Transparent static</td><td>Faint tiles such as cobwebs (<code>TileCoverage::Translucent</code>)</td><td>Blended, depth read only</td></tr>
+    <tr><td>Grass overlay</td><td>Tops of grass icon 107, textured by <code>textures3d/grass_top.png</code></td><td>Its own effect, right after the opaque terrain</td></tr>
+    <tr><td>Animated</td><td>Animated tiles (spikes, marine tiles and the like); those drawn as models are left out</td><td>Rebuilt by <code>Update()</code> when the animation phase changes; blended</td></tr>
+    <tr><td>Water</td><td>Water1/Water2 cells, exterior faces of each connected volume only (<code>WaterSurface.hpp</code>)</td><td>Rebuilt with the animation; blended last</td></tr>
+    <tr><td>Lava, lightning, wind</td><td>Each frame of the cycle built once when first shown and kept</td><td>Lava opaque with depth writes; lightning and wind blended</td></tr>
+  </table>
+  <p>A terrain larger than one buffer allows is uploaded in parts (<code>MeshParts.hpp</code>, <code>GpuMeshParts</code>).</p>
 
-  <h2>Known Rendering Limitations</h2>
+  <h3>Patching instead of rebuilding</h3>
+  <p>
+    The world keeps a block revision and a bounded change journal (<code>World::blockChangesSince()</code>).
+    <code>GalaxyEggbertGame::RefreshTerrainMeshIfChanged()</code> asks <code>TerrainRenderer::PatchModelCells()</code> to apply
+    changes that only touch model-drawn cells (a clay bridge crumbling, saw switches); anything else, or unknown
+    history, rebuilds the terrain, and the new renderer adopts the unchanged chunks' reliefs
+    (<code>AdoptReliefs()</code>). Measured rebuilds dropped from 211 to 6 in world 065 and from 259 to 0 in world 094 (OR-0074).
+  </p>
+
+  <h3>Terrain reliefs</h3>
+  <p>
+    Tiles that have an original Ray Dream scene can show that scene's relief on their exposed faces near the camera
+    (<code>TerrainRelief.hpp</code>, <code>avatars3d/terrain/</code>: 145 <code>.gtr</code> files serving 158 tile icons). The terrain
+    is split into chunks of 8&nbsp;&times;&nbsp;8&nbsp;&times;&nbsp;8 cells; a chunk within 8 blocks of the camera's target is built as
+    reliefs on worker threads (two at a time; on the web within the frame's budget) and released 4 blocks farther
+    out; until then, and everywhere else, it is textured cubes. The reliefs are <strong>off by default</strong>: the Setup's
+    "3D terrain" (<code>terrainRelief=</code>) turns them on, <code>GALAXY_TERRAIN_RELIEF=0|1</code> and
+    <code>GALAXY_TERRAIN_RELIEF_RADIUS</code> override (<a href="configuration.html">Configuration</a>).
+  </p>
+
+  <h3>Brick edges and lighting</h3>
+  <p>
+    The brick wall's edge pieces 262, 263 and 283 are drawn ragged only at a wall's open end: four courses of
+    bricks, each ending where its bricks end (<code>BrickEdges.hpp</code>, <code>AppendRaggedBrick</code>); elsewhere a whole
+    cube. Collision stays the whole cell. Terrain, grass and the lift and crate cubes are lit by one directional light
+    plus ambient (<code>TerrainLighting.hpp</code>: ambient 0.63, diffuse 0.42), so walls and steps no longer dissolve into
+    one flat colour.
+  </p>
+
+  <h2>3D models</h2>
+  <p>
+    All models are CNA <code>SkinnedModelEXT</code> directories drawn with one <code>SkinnedEffect</code> (or the effects'
+    model shader). They are converted from the original Ray Dream scenes (<a href="assets.html">Assets &amp; Tools</a>).
+  </p>
   <ul>
-    <li>No face culling between adjacent solid blocks.</li>
-    <li>No chunk-radius streaming — the entire world is uploaded up front.</li>
-    <li>No Blupi sprite, no object/pickup rendering, no sky dome, no HUD.</li>
+    <li><strong>Models in the terrain</strong> (<code>BlockModels.hpp</code>): the fans, the vanishing saucer, the crusher, the slime
+      drip and the saw are animated models; still tiles such as the stone and white columns, the golden support, the
+      barrel stack, the hanging bar, the teleporters, posts, the coloured doors and the spring are drawn as their
+      scene's model when <code>avatars3d/objects/</code> has it. Their roles and collision do not change; without the models
+      they stay textured cubes.</li>
+    <li><strong>Objects</strong>: <code>ObjectModelTable</code> reads <code>icons.txt</code> of each directory listed in
+      <code>avatars3d/objects/index.txt</code> (121 models). The game picks an object's sprite icon exactly as the original
+      would; an icon listed there is drawn as that model's pose (clip time, mirror, yaw, offset), any other icon stays a
+      billboard.</li>
+    <li><strong>Blupi</strong> (<code>avatars3d/blupi/</code>): 56 bones and one clip per <code>BlupiController::AnimState</code>
+      (68 clips, 20 frames a second), with the face texture switched per frame from <code>clips.txt</code>. The vehicles
+      (<code>vehicles/helico</code>, <code>jeep</code>, <code>over</code>, <code>skate</code>, <code>tank</code>) share his clip time and transform.
+      Drawn in third person only; without <code>avatars3d/blupi/</code> a fox placeholder (<code>avatars3d/blupi_placeholder/</code>) stands in.</li>
   </ul>
 
+  <h2>Billboards, decals and the water</h2>
+  <p>
+    Whatever has no model is a camera-facing quad cut from its sprite sheet, rebuilt every frame. Explosions, splashes,
+    sparks, the charge and the shield stay sprites by decision. Signs' painted faces and the dynamite and electrode
+    sparks are decals generated from the sprites. Water is drawn as the outside of each water volume only, so a
+    swimmer is not hidden behind stacked internal walls; under water the HUD lays a tint that fades in over the last
+    0.35 block below the surface (<code>WaterViewImmersion</code>).
+  </p>
+
+  <h2>Effect levels, technically</h2>
+  <p>
+    The Setup's "3D effects" (<code>effectsLevel=0..4</code>, off by default; <code>GALAXY_EFFECTS=0-4|off|low|medium|high|ultra</code>)
+    sets <code>SceneEffects</code>. Shaders are GLSL 3.30 or GLSL ES 3.00 compiled at run time through CNA's
+    <code>ShaderEffect</code>; where they do not compile, that part falls back to the stock effects by itself.
+  </p>
+  <table>
+    <tr><th>Level</th><th>Adds</th><th>Code</th></tr>
+    <tr><td>Off</td><td>The classic look; every frame byte-equal to a build without effects</td><td>&mdash;</td></tr>
+    <tr><td>Low</td><td>Distance fog in the background's colour, soft round shadows, particles for explosions, splashes, sparks and Blupi's moments</td><td><code>WorldEffects.cpp</code>, <code>EffectParticles</code> (stepped by ticks)</td></tr>
+    <tr><td>Medium</td><td>Ambient occlusion baked into terrain corners, water and lava shaders, FXAA</td><td><code>SceneShaders</code>, <code>SurfaceShaders</code>, <code>PostProcess</code></td></tr>
+    <tr><td>High</td><td>Sun shadow map (two 1024&sup2; cascades, 44 and 160 blocks), up to 8 point lights, Ray Dream procedural materials on models, bloom and grade</td><td><code>SceneShaders</code>, <code>PostProcess</code></td></tr>
+    <tr><td>Ultra</td><td>HDR at window resolution (auto exposure, bloom, ACES, a grade per world, TAA), physically based light, voxel GI baked into the terrain, SSAO, contact shadows, screen-space reflections, smoother models</td><td><code>UltraFinish</code>, <code>TerrainGi.hpp</code>, <code>ModelSubdivision.hpp</code></td></tr>
+  </table>
+  <div class="note"><strong>Status.</strong> Checked on desktop OpenGL 3.3 under Xvfb (11 missions at each level) and on WebGL 2 in
+    headless Chrome; not run on Android. <code>GALAXY_EFFECTS_DEBUG=shadow|occlusion</code> draws the terrain as that factor alone.
+    Golden trace and autoplay traces are equal with the effects on.</div>
+
+  <h2>2D: HUD, menus and the editor's UI</h2>
+  <p>
+    <a href="classes/Hud.html">Hud</a> and <a href="classes/InputPad.html">InputPad</a> draw real 3D quads with an orthographic
+    projection (<code>QuadBatch::FlushQuads</code>), not <code>SpriteBatch</code>, so their order against the scene is explicit on
+    every backend. They lay out in the original's 640&nbsp;&times;&nbsp;480 space, scaled by the viewport's height / 480 and centred;
+    menu screens fill the side bars beside their pictures. Text uses <code>Content/icons/text.png</code> with the original's
+    proportional glyph widths (<code>TextMetrics.hpp</code>). The editor's palette and toolbar use the same quad helpers in
+    viewport pixels.
+  </p>
+
+  <h2>Golden frames: the rendering regression check</h2>
+  <pre><code>xvfb-run -a tools/verify_golden_frames.sh &lt;build-dir&gt;
+xvfb-run -a tools/verify_golden_trace.sh &lt;build-dir&gt;</code></pre>
+  <p>
+    The first runs the game with <code>--golden-capture</code> (world 999, deterministic) and byte-compares frames 60, 120 and 180
+    with <code>tests/golden/</code> (effects off), <code>tests/golden/effects-medium/</code> and <code>tests/golden/effects-high/</code>.
+    <code>GOLDEN_UPDATE=1</code> rewrites only the effects' references; the classic ones are replaced by hand. Both need a display, so
+    they are manual checks, not CTest cases. CTest covers the pure parts: <code>VerifyTileFaces</code>, <code>VerifyTileCoverage</code>,
+    <code>VerifyTerrainLighting</code>, <code>VerifyTileUvBounds</code>, <code>VerifyObjectModelTable</code>, <code>VerifyEffectParticles</code>,
+    <code>VerifySceneEffects</code> and <code>VerifyUltra</code>. See <a href="development/testing.html">Testing</a>.
+  </p>
+
+  <h2>Related pages</h2>
+  <div class="card-grid">
+    <a class="card" href="classes/WorldRenderer.html"><h3>WorldRenderer</h3><p>Draws a SceneFrame.</p></a>
+    <a class="card" href="classes/TerrainRenderer.html"><h3>TerrainRenderer</h3><p>Terrain meshes, reliefs and patching.</p></a>
+    <a class="card" href="classes/TileAtlas.html"><h3>TileAtlas</h3><p>Block icons to UV rectangles.</p></a>
+    <a class="card" href="graphics.html"><h3>3D Effects &amp; Graphics</h3><p>The player's view of the settings.</p></a>
+  </div>
+
   <div class="page-nav">
-    <a href="game-loop.html">
+    <a class="prev" href="game-loop.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Game Loop</span>
     </a>
     <a class="next" href="audio.html">
       <span class="label">Next</span>
-      <span class="title">Audio &#8594;</span>
+      <span class="title">Audio &amp; Music &#8594;</span>
     </a>
   </div>
 </main>

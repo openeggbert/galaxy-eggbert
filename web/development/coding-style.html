@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Coding Style — Galaxy Eggbert Docs</title>
+<meta name="description" content="The code conventions Galaxy Eggbert actually follows: C++23, namespaces, naming, engine-independent headers, comments that cite the original, generated files and stable IDs.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,82 +14,198 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
-  <a href="index.html">Development</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html" class="active">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Coding Style</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Development</a> <span>/</span> Coding Style</div>
   <h1>Coding Style</h1>
-  <p class="subtitle">Rules from CLAUDE.md's Current Direction Lock and the existing codebase.</p>
+  <p class="subtitle">The conventions the code base actually follows, checked against the tree on 2026-11-10. There is no formatter: follow the surrounding file.</p>
 
-  <h2>The Direction Lock (binding, not a suggestion)</h2>
-  <div class="warn">
-    <strong>Read this before touching engine-layer code</strong>
-    Full text: <a href="../architecture.html">Architecture</a>. In short: CNA is used directly (no
-    abstraction layer); cna-engine's strict modules (<code>CnaEngine::Core</code>,
-    <code>CnaEngine::Graphics</code>; easy-3d until 2026-10-20) are small helpers beside it (must not
-    hide CNA; not a scene graph or a replacement engine); <code>GalaxyEggbertSimple3D</code> stays as
-    reference, not to be expanded;
-    <code>../mobile-eggbert</code> is read-only — its code/data requires explicit approval to reuse,
-    its assets do not.
-  </div>
-
-  <h2>No <code>#ifdef</code> Engine Guards</h2>
-  <p>
-    Neither <code>GalaxyEggbertSimple3D</code> nor <code>GalaxyEggbertCNA</code> may use
-    <code>#ifdef</code> to paper over engine differences — each target speaks its own API
-    (Simple3D, or CNA + cna-engine) directly. If a backend is missing a feature, that's a problem for the
-    sub-repo (<code>simple-3d</code> or <code>CNA</code>/<code>cna-engine</code>), not something to
-    work around here.
-  </p>
-
-  <h2>Naming Conventions (as used in src/GalaxyEggbertCNA/)</h2>
-  <table>
-    <tr><th>Element</th><th>Convention</th><th>Example</th></tr>
-    <tr><td>Classes</td><td>PascalCase, <code>GE</code> prefix for CNA/Simple3D game classes</td><td><code>GEWorldRuntime</code>, <code>GEBlupiController</code></td></tr>
-    <tr><td>Methods</td><td>PascalCase</td><td><code>LoadFromVwrFile()</code></td></tr>
-    <tr><td>Constants</td><td><code>kPascalCase</code></td><td><code>kMoveSpeed</code>, <code>kWorldCenterX</code></td></tr>
-    <tr><td>Enum values</td><td>PascalCase within enum class</td><td><code>GamePhase::Play</code></td></tr>
-    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::CNA</code>, <code>CnaEngine::Graphics</code></td></tr>
-  </table>
-
-  <h2>Header Layout</h2>
-  <p>
-    Public API headers used by tests live under <code>include/GalaxyEggbert/</code> (all
-    engine-agnostic: <code>Worlds/</code>, <code>def/</code>, <code>BlockTypes.hpp</code>,
-    <code>Def.hpp</code>, <code>GameConstants.hpp</code>). Private implementation headers live
-    beside their <code>.cpp</code> under <code>src/GalaxyEggbertCNA/</code> or
-    <code>src/GalaxyEggbertSimple3D/</code>.
-  </p>
-
-  <h2>Enum Stability</h2>
-  <p>
-    <code>ObjectType</code>, <code>SoundChannel</code>, <code>BlupiAction</code>, and other
-    <code>def/</code> enums are frozen to match mobile-eggbert's level/save format exactly — do not
-    renumber existing values. New values must be appended at the end.
-  </p>
-
-  <h2>Approval Gates</h2>
+  <h2>Language and layout</h2>
   <ul>
-    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../cna-engine</code> (which replaced <code>../easy-3d</code> on 2026-10-20) requires explicit, per-change user approval.</li>
-    <li>Copying mobile-eggbert code or data (tables, enums, save-format bytes) requires explicit approval, even data that "looks like just data."</li>
-    <li>No Lua unless explicitly requested by the user.</li>
+    <li><strong>C++23</strong> (<code>CMAKE_CXX_STANDARD 23</code>, required). <code>[[nodiscard]]</code>,
+      <code>constexpr</code>, <code>noexcept</code> and <code>enum class</code> are used freely.</li>
+    <li>There is no <code>.clang-format</code> or <code>.editorconfig</code>. Every header starts with
+      <code>#pragma once</code>; indentation is four spaces.</li>
+    <li>Brace style differs by area: <code>src/GalaxyEggbert/Game/</code>, <code>Editor/</code> and the host
+      (<code>src/GalaxyEggbertCNA/</code>) put braces on their own line; the voxel container in
+      <code>include/GalaxyEggbert/Worlds/</code> opens <code>namespace GalaxyEggbert::Worlds {</code> on the
+      same line and documents its API with Doxygen <code>/** @brief ... */</code> blocks.</li>
+  </ul>
+
+  <h2>Namespaces</h2>
+  <table>
+    <tr><th>Namespace</th><th>Where</th><th>What lives there</th></tr>
+    <tr><td><code>GalaxyEggbert</code></td><td><code>include/GalaxyEggbert/</code>, <code>src/GalaxyEggbert/*.cpp</code></td><td>Record codecs and tables: <code>BlockDefinitionRegistry</code>, <code>MoveObjectRecord</code>, <code>BigDecorRecord</code>, <code>HintZoneRecord</code>, <code>HubDoors</code></td></tr>
+    <tr><td><code>GalaxyEggbert::Worlds</code></td><td><code>include/GalaxyEggbert/Worlds/</code>, <code>src/GalaxyEggbert/Worlds/</code></td><td>The voxel container (<code>World</code>, <code>Chunk</code>, <code>Block</code>, bit packing, binary I/O)</td></tr>
+    <tr><td><code>GalaxyEggbert::Def</code></td><td><code>include/GalaxyEggbert/Def/</code></td><td>The original's enums: <code>ObjectType</code>, <code>SoundChannel</code>, <code>GamePhase</code>, <code>BlupiAction</code>...</td></tr>
+    <tr><td><code>GalaxyEggbert::Game</code></td><td><code>src/GalaxyEggbert/Game/</code></td><td>The game: <code>BlupiController</code>, <code>InteractionSystem</code>, <code>WorldRuntime</code>, renderers, <code>Hud</code>, <code>InputPad</code>, <code>Sound</code>, <code>SaveData</code>, <code>Autoplay</code>...</td></tr>
+    <tr><td><code>GalaxyEggbert::Editor</code></td><td><code>src/GalaxyEggbert/Editor/</code></td><td>The in-game 3D world editor</td></tr>
+    <tr><td><code>GalaxyEggbert::CNA</code></td><td><code>src/GalaxyEggbertCNA/</code></td><td>The application host only: <code>GalaxyEggbertGame</code>, <code>main.cpp</code>, Android asset copying</td></tr>
+  </table>
+  <p>Header-only helpers often get a nested namespace of their own: <code>Game::CratePush</code>,
+  <code>Game::BrickEdges</code>, <code>Game::TextMetrics</code>, <code>Editor::AutoTile</code>.</p>
+
+  <h2>Naming</h2>
+  <ul>
+    <li>Types and member functions are PascalCase (<code>BlupiController::SettleOnGround</code>,
+      <code>WorldRuntime::TryActivateSwitch</code>), except the voxel container, whose member functions are
+      lower camel case (<code>World::getBlock</code>, <code>saveToFile</code>, <code>blockChangesSince</code>).</li>
+    <li>Constants start with <code>k</code>: <code>kMoveSpeed</code>, <code>kCheatsEnabled</code>,
+      <code>kSolidBigDecorIcons</code>.</li>
+    <li>Data members come in two styles: a trailing underscore (<code>phase_</code>; the host, the editor,
+      <code>InputPad</code>, <code>SaveData</code>, <code>WorldRuntime</code>, <code>World</code>) and an
+      <code>m_</code> prefix (<code>m_yaw</code>; <code>BlupiController</code>, <code>TerrainRenderer</code>,
+      <code>CameraShake</code>, the shader and effect classes). Use the one the file uses.</li>
+    <li><strong>No <code>GE</code> prefix on game-owned or editor-owned names.</strong> The classes were
+      renamed (<code>GEWorldRuntime</code> is <code>WorldRuntime</code>, <code>GETerrainRenderer</code> is
+      <code>TerrainRenderer</code>, and so on). A few historic names keep it: the verifier executables
+      <code>VerifyGE...</code>, the CMake variable <code>GE_SHARED_SOURCES</code>, the object library
+      <code>GEEditorVerifySupport</code> and the function <code>ge_add_editor_verify</code>. Do not add new
+      ones, and do not rename those without a reason.</li>
+  </ul>
+
+  <h2>Headers and dependencies</h2>
+  <ul>
+    <li>Public engine-independent headers live in <code>include/GalaxyEggbert/</code> and are included as
+      <code>&lt;GalaxyEggbert/...&gt;</code>; sibling headers inside <code>src/GalaxyEggbert/Game/</code> as
+      <code>"..."</code>.</li>
+    <li><strong>No CNA or cna-engine include</strong> in <code>include/GalaxyEggbert/</code> or
+      <code>src/GalaxyEggbert/Worlds/</code>. These use plain floats and standard types, so the world model
+      can be tested without a graphics context.</li>
+    <li>Many rules are header-only helpers: 45 of the 80 headers in <code>src/GalaxyEggbert/Game/</code> have
+      no <code>.cpp</code> (for example <code>CratePush.hpp</code>, <code>TerrainLighting.hpp</code>,
+      <code>TileCoverage.hpp</code>, <code>DebugOverlay.hpp</code>, <code>FocusNavigator.hpp</code>,
+      <code>SceneEffectsLogic.hpp</code>). Pure <code>inline</code>/<code>constexpr</code> functions with no
+      GPU make a cheap <code>Verify*</code> test possible; prefer that shape for new logic.</li>
+    <li>Per-type facts belong in the two registries (<a href="../classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>,
+      <a href="../classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>), not in
+      <code>switch</code> statements spread over files.</li>
+  </ul>
+
+  <h2>Comments cite the original and the ledgers</h2>
+  <p>Comments in this code base are long and carry dates and ids. When you copy behaviour from the
+  original, cite the reference file and line; when you deviate, say so and point at the ledger row. A real
+  example, from <code>src/GalaxyEggbert/Game/CratePush.hpp</code>:</p>
+  <pre><code>namespace GalaxyEggbert::Game::CratePush
+{
+    // How Blupi moves a crate (ObjectType12), from Mobile Eggbert's Decor.cpp (2026-11-01, the
+    // fidelity audit's GP-crate rows, plans/audit/behavior_differences.md BD-0001):
+    //
+    // - While pushing (action Push) he walks CaisseGetMove(5) pixels a 20 Hz tick
+    //   (Decor.cpp:3388/3446); while pulling (Pop) he backs away CaisseGetMove(3) (:3410/3468).
+    ...
+    // The original's 64-pixel block is one Galaxy cell.
+    inline constexpr float kPixelsPerCell = 64.0f;
+    inline constexpr float kOriginalTicksPerSecond = 20.0f;
+    ...
+    // A 3D adaptation (M3D-0002): a crate that cannot go only because it lies off the lane of its
+    // move by up to this much across ... first slides into the lane, at the same speed.</code></pre>
+  <p>When you change behaviour that a comment documents, fix the comment. Some long comments (for example
+  at the top of <code>SaveData.hpp</code> and <code>GalaxyEggbertGame.hpp</code>) describe earlier states;
+  trust the code and the ledgers over them.</p>
+
+  <h2>Determinism</h2>
+  <p>The simulation runs on a fixed 1/60 s tick, and the golden trace, the autoplay playthroughs, the demo
+  replays and the resume feature all depend on it replaying identically. No wall-clock time, unseeded
+  randomness or frame-rate dependence in the simulation. Presentation-only work (the 3D effects,
+  interpolated drawing above 60 frames a second) must leave the simulation untouched.</p>
+
+  <h2>Generated files and stable IDs</h2>
+  <div class="warn"><strong>Never edit a generated file by hand.</strong> Change its generator and
+  regenerate: <code>avatars3d/**</code> (model converters), <code>tools/data/blocks.csv</code>
+  (<code>DumpBlockDefinitions</code>), <code>BoltPaths.hpp</code>, <code>GlueStrands.hpp</code>,
+  <code>LavaSurfaceData.hpp</code>, <code>plans/inventory/*.md</code>, the generated ledger tables, and every
+  <code>worlds3d/*.vwr</code> that has a script in <code>tools/worlds/</code>.</div>
+  <div class="warn"><strong>Never renumber IDs.</strong> <code>Def::ObjectType</code> values, block icon
+  numbers (the index into <code>Content/icons/object-m.png</code>) and sound channel numbers are the
+  original's and are stored in world files, demos and resume logs.</div>
+
+  <h2>Python</h2>
+  <ul>
+    <li>Python 3, run from the repository root with <code>python3 tools/...</code>; paths are resolved from
+      <code>__file__</code>; options via <code>argparse</code>.</li>
+    <li>A module docstring says what the tool does, how to run it and which brief or ledger it serves (see
+      <code>tools/levelcheck.py</code> or <code>tools/worlds/world012.py</code>). Some modules, such as
+      <code>tools/worldkit.py</code>, start with <code>from __future__ import annotations</code>; most world
+      generators do not.</li>
+    <li>World generators import the kits with the
+      <code>sys.path.insert(...)</code> + <code># noqa: E402</code> pattern and seed any randomness
+      (<code>random.Random(12)</code> in <code>world012.py</code>), so the output is byte-for-byte
+      reproducible.</li>
+    <li>Third-party dependencies are limited to <code>numpy</code> and <code>Pillow</code>; Blender and
+      <code>ffmpeg</code> are used as external programs by some asset tools.</li>
+  </ul>
+
+  <h2>Shell</h2>
+  <p><code>bash</code> with <code>set -u</code> (or <code>set -euo pipefail</code>), a header comment with
+  the usage that the script prints when called without arguments (<code>sed -n '2,12p' "$0"</code>), paths
+  derived from <code>BASH_SOURCE</code>, and scratch output in the git-ignored <code>build-probe/</code>
+  directory of the repository, never <code>/tmp</code>.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="index.html">Development</a>: rules, ledgers and commit messages</li>
+    <li><a href="testing.html">Testing &amp; QA</a>: how to add a <code>Verify*</code> test</li>
+    <li><a href="../project-structure.html">Project Structure</a></li>
   </ul>
 
   <div class="page-nav">
-    <a href="index.html">← Development</a>
-    <a href="debugging.html">Debugging →</a>
+    <a class="prev" href="../development/index.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Development</span>
+    </a>
+    <a class="next" href="../development/testing.html">
+      <span class="label">Next</span>
+      <span class="title">Testing &amp; QA &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

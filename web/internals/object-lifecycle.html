@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Object Lifecycle — Galaxy Eggbert Docs</title>
+<meta name="description" content="How a Galaxy Eggbert object travels from its world record to a live MobileObjSpec, through InteractionSystem's patrols, contacts, pickups, shots and dynamite, to a 3D model or billboard on screen, and what resets it.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,67 +14,204 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
-  <a href="index.html">Internals</a>
+  <a href="../internals/index.html" class="active">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Object Lifecycle</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Internals</a> <span>/</span> Object Lifecycle</div>
   <h1>Object Lifecycle</h1>
-  <p class="subtitle">Not implemented in GalaxyEggbertCNA yet. This page describes the porting target.</p>
+  <p class="subtitle">A MoveObject's path: world record &rarr; <code>MobileObjSpec</code> &rarr; <code>InteractionSystem</code> &rarr; drawn as a model or a billboard.</p>
 
-  <div class="warn">
-    <strong>Nothing here exists in CNA today</strong>
-    <code>GalaxyEggbertCNA</code> has no object pool, no pickups, no enemies, no patrol movement,
-    and no contact/collision events beyond terrain collision. This page describes mobile-eggbert's
-    <code>Decor.cpp</code> system as the <strong>behavioral reference</strong> that a future CNA
-    object system must replicate faithfully — per <code>CLAUDE.md</code>, <code>Decor.cpp</code>
-    (~11,700 lines) is canonical behavioral reference only; it must never be linked or copied.
-  </div>
-
-  <h2>mobile-eggbert's Object Model (reference only)</h2>
   <p>
-    A fixed-size pool of moving objects, each with a type (<code>ObjectType</code>), a linear
-    patrol path (<code>posStart</code>/<code>posEnd</code>), an animation phase, and an active
-    flag. Table-driven linear movement (<code>MoveObjectStepLine</code>) handles most patrol
-    enemies; a handful of types (dynamite, chargers, followers, crates) are hand-coded exceptions.
-    Full catalog: <code>mobile-eggbert-reference/03-objects.md</code> (204 <code>ObjectType</code>
-    IDs) and <code>04-enemy-behavior.md</code>.
+    "Objects" are everything that is not terrain: treasure chests, eggs, keys, the exit, lifts,
+    crates, enemies, vehicles, power-ups, shots and short-lived effects. They use the original game's
+    <code>ObjectType</code> numbers (<code>include/GalaxyEggbert/Def/ObjectType.hpp</code>, 0-203), and
+    what each type can do is declared in the <a href="../classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>.
+    Described as of 2026-11-10.
   </p>
 
-  <h2>What GalaxyEggbertSimple3D Already Ports</h2>
+  <h2>1. Stored: a type 1 record in the world</h2>
   <p>
-    The reference target (<code>GalaxyEggbertSimple3D</code>) has its own <code>GEDecorSystem</code>
-    implementing much of this already — crate push, platform patrol, hazard detection, enemy stomp,
-    respawn invincibility, pickups (treasure/keys/shield/egg/drink), exit-gate logic. That
-    implementation is a useful structural reference when the CNA port eventually begins. The
-    billboard-rendering path the CNA target needed first — easy-3d's <code>BillboardBatch</code> lacked
-    one — now exists: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and
-    drawn as a <a href="../classes/CubeMeshRenderer.html">GpuMesh</a>.
+    In a <code>.vwr</code> file an object is a 47-byte <a href="../classes/MoveObjectRecord.html">MoveObjectRecord</a>
+    stored as sparse metadata type 1 on the cell under its start position: type, start and end points
+    in raw grid floats, four patrol timings in 20 Hz ticks, and an optional icon override. The
+    <a href="../classes/WorldEditor.html">WorldEditor</a> and <code>tools/worldkit.py</code> write them.
   </p>
 
-  <h2>Roadmap (plan.md, E3D-MIG-070…074)</h2>
+  <h2>2. Loaded: <code>MobileObjSpec</code> in <code>WorldRuntime</code></h2>
+  <p>
+    <code>WorldRuntime::ResyncFromWorld()</code> (run by every load and after editor changes) calls
+    <code>CollectMoveObjects()</code> and builds the live list returned by
+    <code>GetMobileObjects()</code> / <code>GetMobileObjectsMutable()</code>:
+  </p>
+  <ul>
+    <li>types the registry does not support, or whose <code>placementKind</code> is <code>Null</code>, are skipped;</li>
+    <li>positions move to render space (X and Z minus 50, Y unchanged);</li>
+    <li><code>ForceOriginalTiming()</code> applies the few per-type timings the original fixes (the large creature, type 54, rests 152 ticks at each end);</li>
+    <li><code>current</code> = start, <code>active = true</code>, <code>phase = 0</code>, <code>patrolStep = 1</code>.</li>
+  </ul>
+  <table>
+    <tr><th><code>MobileObjSpec</code> field</th><th>Role</th></tr>
+    <tr><td><code>type</code>, <code>visualIcon</code></td><td>What it is; the optional icon override.</td></tr>
+    <tr><td><code>posStart*</code>, <code>posEnd*</code></td><td>The path's ends (render space). Never changed by play.</td></tr>
+    <tr><td><code>currentX/Y/Z</code></td><td>Where it is now: patrols, pushed crates and homing followers move this.</td></tr>
+    <tr><td><code>active</code></td><td>False once taken, destroyed or expired. The record stays in the list; some spawns reuse an inactive slot.</td></tr>
+    <tr><td><code>phase</code></td><td>Its own animation clock, in 20 Hz ticks.</td></tr>
+    <tr><td><code>stepAdvanceTicks</code>, <code>stepRecedeTicks</code>, <code>timeStopStartTicks</code>, <code>timeStopEndTicks</code>, <code>patrolStep</code>, <code>patrolTime</code></td><td>The patrol state machine (below).</td></tr>
+    <tr><td><code>firedByBlupi</code></td><td>A glue ball Blupi fired himself never hits him.</td></tr>
+  </table>
+  <p><code>WorldRuntime::Update(dt)</code> advances the world's 20 Hz animation tick and every object's <code>phase</code> by <code>dt &times; 20</code>.</p>
+
+  <h2>3. Simulated: <code>InteractionSystem::Update()</code></h2>
+  <p>
+    Once per tick in Play, after <code>BlupiController::Step()</code> has given Blupi his final position,
+    the host calls <code>interaction_.Update(dt, worldRuntime_, blupiX, blupiY, blupiZ, ...)</code> with
+    many flags describing Blupi's state (crouching, ballooned, invincible, in a vehicle, hidden, focused,
+    ghost...). <a href="../classes/InteractionSystem.html">InteractionSystem</a>
+    (<code>src/GalaxyEggbert/Game/InteractionSystem.{hpp,cpp}</code>) has no access to the controller,
+    camera or graphics: it changes objects and world blocks, plays sounds, and reports
+    <strong>events</strong> (<code>EventsThisFrame()</code>) that the host applies to Blupi, the camera
+    and the HUD.
+  </p>
+  <h3>Patrols and lifts</h3>
+  <p>
+    Patrolling types (registry flag <code>patrolMotion</code>: 2, 3, 4, 20, 32, 33, 44, 54) and lifts
+    (1, 47, 48) follow the original's four-phase cycle in <code>AdvancePatrolStep()</code>: 1 rest at
+    start, 2 advance, 3 rest at end, 4 recede. A lift carries Blupi: the system reports
+    <code>IsRidingLift()</code>, <code>RideDeltaX/Z()</code> and <code>RideStandY()</code>, and the host
+    calls <code>BlupiController::RideLift()</code>; the conveyor lifts 47/48 add their nudge. In the
+    editor, <code>AdvanceEditorPlatforms()</code> previews the same motion without contacts.
+  </p>
+  <h3>Crates</h3>
+  <p>
+    Crates (type 12) are pushed and pulled by <code>UpdateCratePush()</code> (rules in
+    <code>CratePush.hpp</code>). Every tick the host hands their cells to the controller
+    (<code>SetCrateCells()</code>), so they are solid for Blupi (see <a href="collision.html">Collision</a>).
+  </p>
+  <h3>Contact with enemies and hazards</h3>
+  <ul>
+    <li><code>genericContactHazard</code> (2, 3, 4, 16, 17, 20, 96, 97): touching one kills Blupi and destroys it; type 3 cannot hit a crouching Blupi. While ballooned, 3, 16, 96 and 97 pop the balloon instead (<code>BalloonPopped</code>).</li>
+    <li>The wasp (44) puts Blupi in a balloon (<code>BalloonTouched</code>). The large creature (54) is lethal only while it pauses at an end. Followers (96 dormant, 97 awake) wake when he comes near and home in on him.</li>
+    <li>In the jeep, tank or skateboard, small enemies and mines are destroyed and he lives. Shield, Hide and the super-Blupi cheat spare him where the original does.</li>
+  </ul>
+  <p>
+    A kill does not respawn Blupi directly: the system raises <code>DeathLockRequested</code>, the host
+    starts the death animation lock, and the life is resolved when it ends (section 4).
+  </p>
+  <h3>Pickups</h3>
+  <p>
+    <code>standardPickupTouch</code> types (treasure, egg, keys, power-ups, the exit...) are taken on
+    contact. As in the original the object disappears at once but the reward is applied when its
+    little "voyage" to the HUD ends (<code>BeginVoyage()</code>). Some pickups need the action button
+    (lollipop, drink); some are reusable and come back where they were
+    (<code>RespawnPickupItem()</code>). Types 7 and 21 are level exits; <code>ExitReached()</code> starts
+    the win cheer.
+  </p>
+  <h3>Shots and dynamite</h3>
+  <ul>
+    <li>The shooting enemies 32 and 33 fire glue balls (type 23) at fixed frames of their rest, along a grid ray to the next solid cell, never aimed. The tank and the helicopter fire Blupi's own glue (<code>firedByBlupi</code>).</li>
+    <li>Dynamite: <code>PlaceDynamite()</code> when Blupi stands with his hands free; it burns through the original's 100-tick fuse and its blast destroys every <code>dynamiteDestructible</code> object in reach. The blast is lethal to Blupi.</li>
+    <li>The decoy statue (200) placed with <code>TryPerso()</code> destroys the bulldozer and shooters that meet it.</li>
+  </ul>
+  <h3>Retirement and effects</h3>
+  <p>
+    Destroyed objects go through <code>Retire()</code>: <code>active = false</code>, and some types
+    (bulldozer, crate, spider, fish, bird, invert potion, followers) fly away as rotating debris
+    (<code>ByeByePieces()</code>). Explosions, splashes, sparkles and similar effects are themselves
+    short-lived objects appended to the same list.
+  </p>
+
+  <h2>4. What resets objects</h2>
+  <table>
+    <tr><th>Event</th><th>Objects</th><th>Blupi</th></tr>
+    <tr><td>Death with lives left</td><td>Unchanged: what was taken stays taken, what was destroyed stays gone, patrols continue.</td><td>After the death lock he reappears at his last safe position (<code>GetValidX/Y/Z()</code>, settled on the ground), and a life flies from the HUD to him.</td></tr>
+    <tr><td>Last life lost (Lost screen)</td><td>Unchanged. As in the original (<code>DoorsLost()</code>), the level is not reloaded; treasure and keys found are kept and lives are reset to 3.</td><td>Return puts him back at the world's start.</td></tr>
+    <tr><td><code>LoadMission()</code> (new mission, re-entry, Continue, "Original")</td><td>Rebuilt from the world's records; a fresh <code>InteractionSystem</code> (only lives carried over).</td><td>A fresh controller at the start or hub arrival.</td></tr>
+    <tr><td>Editor change</td><td><code>ResyncFromWorld()</code> rebuilds the list from the edited world.</td><td>Unchanged.</td></tr>
+  </table>
+
+  <h2>5. Drawn: model or billboard</h2>
+  <p>
+    The host turns the simulation into a draw list each frame
+    (<code>src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code> fills a <code>SceneFrame</code>, which
+    <a href="../classes/WorldRenderer.html">WorldRenderer</a> draws). For every active object:
+  </p>
   <ol>
-    <li>Render pickups/enemies as billboards from <code>element.png</code> (the easy-3d billboard blocker is gone: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code>).</li>
-    <li>Reuse <code>ObjectType</code> IDs from the existing engine-agnostic enum — already numerically frozen to match mobile-eggbert.</li>
-    <li>Use <code>Decor.cpp</code> as behavior reference only, never copied.</li>
-    <li>Faithfulness checks against mobile-eggbert before implementing any object behavior.</li>
-    <li>Stop-and-discuss rule if a change would require exposing internal <code>Decor</code> state beyond what's needed.</li>
+    <li><code>ResolveObjectVisual(type, phase, visualIcon)</code> gives the render mode (<code>Hidden</code>, <code>Billboard</code>, <code>SolidCube</code>), the sprite sheet (<code>element.png</code>, <code>object-m.png</code>, <code>explo.png</code>, <code>blupi.png</code>, <code>blupi1.png</code>) and the icon for the current animation phase (<code>GetObjIcon()</code> in <code>Game/ObjectIcons.cpp</code>). Patrolling enemies take their per-direction icon from their patrol state.</li>
+    <li><code>ObjectModelTable::Find(sheet, icon)</code> looks the icon up in the table read from <code>avatars3d/objects/*/icons.txt</code>. If found, the object is drawn as that 3D model, posed at the listed time of its "Frames" clip, mirrored and turned as listed, and turned further by the cell's object-turn record (metadata type 5).</li>
+    <li>Otherwise the icon is drawn as a camera-facing billboard cut from its sheet. The game keeps choosing icons exactly as the original; the model table only decides how an icon is shown.</li>
   </ol>
+  <p>Lifts, conveyor lifts, parked vehicles and the clay bridge have dedicated model paths; Blupi himself uses his skinned model (<a href="../rendering.html">Rendering</a>).</p>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tools/VerifyInteractionSystem.cpp</code> (ctest): patrols, contacts, pickups, shots, dynamite, cheats and timing functions without a window.</li>
+    <li><code>VerifyDefinitionRegistries</code>: every object capability flag matches the expected type lists; <code>VerifyGetObjIcon</code> and <code>VerifyObjIconAgainstReferenceDoc</code>: icon selection; <code>VerifyObjectModelTable</code>: the shipped <code>icons.txt</code> files.</li>
+    <li><code>VerifyMoveObjectTypesCna</code>: <code>WorldRuntime</code>'s reader of the original game's text level files (a reference path, not used for play) accepts the object types those files contain; <code>VerifyShippedWorlds</code>: every shipped world yields its objects.</li>
+    <li>Autoplay playthroughs exercise all of it in real worlds (<a href="../development/testing.html">Testing</a>).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../classes/InteractionSystem.html">InteractionSystem</a>, <a href="../classes/WorldRuntime.html">WorldRuntime</a>, <a href="../classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>, <a href="../classes/MoveObjectRecord.html">MoveObjectRecord</a></li>
+    <li><a href="collision.html">Collision</a>, <a href="../gameplay.html">Gameplay</a>, <a href="../tutorials/first-object.html">Tutorial: changing an object's behaviour</a></li>
+  </ul>
 
   <div class="page-nav">
-    <a href="world-loading.html">← World Loading</a>
-    <a href="collision.html">Collision System →</a>
+    <a class="prev" href="../internals/vwr-format.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; The .vwr Format</span>
+    </a>
+    <a class="next" href="../internals/collision.html">
+      <span class="label">Next</span>
+      <span class="title">Collision &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldEditor — Galaxy Eggbert Docs</title>
+<meta name="description" content="WorldEditor owns one session of the in-game 3D world editor: the world and galaxy screens, the free camera, ray-cast placement, the palette, undo/redo, copy and paste, saving and play-testing.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> WorldEditor</div>
+  <h1>WorldEditor</h1>
+  <p class="subtitle">One session of the in-game 3D world editor: browse a player's worlds, fly, place, undo, save and play-test.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Editor/WorldEditor.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Editor/WorldEditor.cpp</code> (browser, session, drawing), <code>src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp</code> (per-frame input, camera, aiming, placement, history)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Editor</code></td></tr>
+    <tr><th>Engine dependency</th><td>Uses CNA (XNA <code>KeyboardState</code>, <code>MouseState</code>, <code>GraphicsDevice</code>) and cna-engine (<code>Camera</code>, <code>DebugDraw</code>). It does not own a <code>WorldRuntime</code>: the host loads or creates the world and passes the <code>World</code> in every frame.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p><code>WorldEditor</code> is the in-game 3D world editor. One object lives inside the game host for the whole run and switches between two modes. While <em>browsing</em> (<code>IsBrowsing()</code>) it drives the world screen of the selected player (ten slots, older and shared worlds) or the galaxy screen (the player's own campaign). While <em>editing</em> it flies a free camera over the loaded world, aims a ray through the cursor, places and removes blocks, objects, BigDecor and Blupi starts from the palette, edits objects' routes and timing, keeps an undo history, copies and pastes boxes, and saves and play-tests the world.</p>
+  <p>The editor is the project's one approved exception to the faithful-remake rule: it may add content-authoring conveniences (a 3D camera, copy and paste, backups, thumbnails, sharing) but no gameplay mechanics. What it can place and how it validates follows the same registries the game uses (<a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>, <a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>). It was called <code>GEWorldEditor</code> until the editor moved into the <code>GalaxyEggbert::Editor</code> namespace and lost its <code>GE</code> prefixes; the verifiers keep the old names (<code>VerifyGEWorldEditor</code> and so on).</p>
+
+  <h2>Collaborators</h2>
+  <p>The editor is split into small parts under <code>src/GalaxyEggbert/Editor/</code>; <code>WorldEditor</code> composes them.</p>
+  <table>
+    <tr><th>Part</th><th>Header</th><th>Role</th></tr>
+    <tr><td><code>EditCommandStack</code>, <code>EditCommand</code></td><td><code>EditCommandStack.hpp</code></td><td>Undo/redo. One tagged <code>EditCommand</code> per user action (<code>BlockEdit</code>, <code>MoveObjectEdit</code>, <code>SkyRegionEdit</code>, <code>SpawnPointEdit</code>, <code>MusicEdit</code>, <code>BigDecorEdit</code>, <code>TurnEdit</code>, <code>MetadataEdit</code>, <code>Group</code>); the last 200 are kept.</td></tr>
+    <tr><td><code>Clipboard</code>, <code>CopyBox</code>, <code>TurnedQuarter</code>, <code>MirroredX</code>, <code>PasteBox</code></td><td><code>Clipboard.hpp</code></td><td>Copy a box with its blocks, turns, objects and BigDecor; turn it a quarter or mirror it on X; stamp it back as one <code>Group</code> command. Hint zones and the spawn point are not carried.</td></tr>
+    <tr><td><code>BoxRegion</code>, <code>NormalizeAndClamp</code></td><td><code>BoxRegion.hpp</code></td><td>An inclusive cuboid from two corner cells, clamped to the world: box fill, copy and Shift-extended selections.</td></tr>
+    <tr><td><code>EditorPalette</code>, <code>EditorPaletteLayout</code>, <code>EditorPaletteInput</code>, <code>EditorPaletteRenderer</code></td><td><code>EditorPalette*.hpp</code></td><td>What is selected (block, object, Blupi start or BigDecor), the on-screen actions (Stop, play-test, X/Y/Z offsets, PLACE, delete), layout rectangles, hit-testing and drawing.</td></tr>
+    <tr><td><code>PaletteCategories</code></td><td><code>PaletteCategories.hpp</code></td><td>Ten groups in Eggbert 2's menu order (Scenery, Technical blocks, Rock and terrain, Buildings, Hazards, Moving mechanisms, Treasures, Keys and progression, Vehicles, Characters and goals) plus Galaxy's Background group (32 sky regions, then music: none and tracks 1-10).</td></tr>
+    <tr><td><code>Raycast</code></td><td><code>VoxelRaycast.hpp</code></td><td>Amanatides-Woo voxel DDA in raw grid space to the first non-air cell. On an empty world the aim falls on <code>y = 0</code>.</td></tr>
+    <tr><td><code>AutoTile</code> (namespace)</td><td><code>AutoTile.hpp</code></td><td>The original editor's auto-tiling (<code>Decor::AdaptBorder</code>) in 3D: a placed or emptied cell and its six neighbours are re-tiled (rock, girders, grass, bars, brick, slime, palace, pipes).</td></tr>
+    <tr><td><code>VariantFamilies</code>, <code>BigDecorVariantFamilies</code>, <code>VariantCycler</code></td><td><code>EditorVariants.hpp</code></td><td>The original's variant families: a click on the block the previous click placed cycles it; Ctrl places without cycling.</td></tr>
+    <tr><td><code>EditorDeviceControls</code></td><td><code>EditorDeviceControls.hpp</code></td><td>Keyboard-free front end (touch, gamepad, a Tools menu). It turns those devices into the same keys, mouse and <code>EditorNavigation</code> the editor reads. Owned by the host.</td></tr>
+    <tr><td><code>EditorCommandKeys</code></td><td><code>EditorCommandKeys.hpp</code></td><td>Queues short V, O, Delete and Backspace presses between ticks so each one is a separate edit. Owned by the host.</td></tr>
+    <tr><td><code>EditorHighlightRenderer</code>, <code>ObjectPathRenderer</code></td><td><code>EditorHighlightRenderer.hpp</code>, <code>ObjectPathRenderer.hpp</code></td><td>The translucent cell, box and selection overlays; the numbered 1 and 2 cubes at a moving object's route ends (<code>ObjectPathMarkers.hpp</code>).</td></tr>
+    <tr><td><code>EditorBrowserScreen</code>, <code>GalaxyBrowserScreen</code></td><td><code>EditorBrowserScreen.hpp</code>, <code>GalaxyBrowserScreen.hpp</code></td><td>The world screen (slots, older and shared worlds, Backups, Export, Import, Galaxy) and the galaxy screen (main hub, bonus world, 14 worlds with 8 missions each, naming, export, import, delete).</td></tr>
+    <tr><td>Storage functions</td><td><code>CustomWorldStorage.hpp</code></td><td>Slot paths, backups, thumbnails, seeding, the galaxy's files: see <a href="CustomWorldStorage.html">CustomWorldStorage</a>.</td></tr>
+  </table>
+  <p><strong>Uses</strong> also: <a href="World.html">World</a> and <a href="MoveObjectRecord.html">MoveObjectRecord</a> (the data it edits), <code>GetObjectDefinition</code> (exit and motion capabilities), <code>WorldRuntime::kWorldCenterX/Z</code> (raw grid to render space).</p>
+  <p><strong>Used by</strong>: <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> (member <code>worldEditor_</code>) and the editor verifiers in <code>tools/</code>.</p>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API of <code>WorldEditor.hpp</code>, as of 2026-11-10. XNA and cna-engine namespaces are left out of the signatures for space.</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>EnterBrowser</code></td><td><code>void EnterBrowser(int gamerSlot)</code></td><td>Starts browsing for player 0-2: seeds slot 1 from the showcase world and a free slot from the gallery world, rescans both screens.</td></tr>
+    <tr><td><code>ShowGalaxy</code>, <code>ShowSlots</code></td><td><code>void ShowGalaxy()</code>, <code>void ShowSlots() noexcept</code></td><td>Switch the browser between the galaxy screen and the slots.</td></tr>
+    <tr><td><code>IsBrowsing</code></td><td><code>bool IsBrowsing() const noexcept</code></td><td>Browsing (no world loaded) versus editing.</td></tr>
+    <tr><td><code>UpdateBrowsing</code></td><td><code>BrowserRequest UpdateBrowsing(const MouseState&amp; mouse, int viewportWidth, int viewportHeight, bool backPressed = false)</code></td><td>Drives the active screen. Returns a <code>BrowserRequest</code>: <code>shouldOpen</code>/<code>openPath</code>, <code>shouldCreateNew</code>/<code>createPath</code>, <code>galaxyMission</code>, <code>galaxyImported</code>, <code>shouldReturnToMenu</code>. The host does the loading.</td></tr>
+    <tr><td><code>ExitBrowser</code>, <code>EnterEditing</code></td><td><code>void ExitBrowser() noexcept</code>, <code>void EnterEditing(float startX, float startY, float startZ) noexcept</code></td><td>Leave browsing; reset the camera (render space) and the session state, including the undo history.</td></tr>
+    <tr><td><code>SetWorldPath</code>, <code>GetWorldPath</code></td><td><code>void SetWorldPath(std::filesystem::path path) noexcept</code>, <code>const std::filesystem::path&amp; GetWorldPath() const noexcept</code></td><td>The file that Enter saves and the dice play-tests.</td></tr>
+    <tr><td><code>Update</code></td><td><code>void Update(const KeyboardState&amp; keyboard, const MouseState&amp; mouse, float dt, int viewportWidth, int viewportHeight, CnaEngine::Graphics::Camera&amp; camera, Worlds::World&amp; world, const Navigation&amp; navigation = {})</code></td><td>One editing frame: camera, palette, aim, then the first handler that takes the input (extended selection, clipboard, placement, removal, save/undo/stop, box fill, background, music, turn, variant, object editing).</td></tr>
+    <tr><td><code>ConsumeNeedsPresentationRebuild</code></td><td><code>bool ConsumeNeedsPresentationRebuild() noexcept</code></td><td>True once after an edit changed the world; the host rebuilds the presentation.</td></tr>
+    <tr><td><code>ConsumePlayTestRequested</code></td><td><code>bool ConsumePlayTestRequested() noexcept</code></td><td>True once after the dice saved the world, but only after the save's thumbnail was taken.</td></tr>
+    <tr><td><code>ConsumeThumbnailRequest</code></td><td><code>std::filesystem::path ConsumeThumbnailRequest() noexcept</code></td><td>The PNG the host writes the editor's view to after drawing this frame; empty when none.</td></tr>
+    <tr><td><code>BeginOutsideSession</code>, <code>EndOutsideSession</code></td><td><code>void BeginOutsideSession(std::filesystem::path backupDir, std::filesystem::path keepCopyIn = {})</code>, <code>void EndOutsideSession() noexcept</code></td><td>A session on a world opened from play (the <code>xnjttjpo</code> cheat): backups go to <code>backupDir</code>, each save is also copied into <code>keepCopyIn</code>, no thumbnail.</td></tr>
+    <tr><td><code>ConsumeLeaveRequested</code></td><td><code>bool ConsumeLeaveRequested() noexcept</code></td><td>Stop in an outside session: the host returns to the mission.</td></tr>
+    <tr><td><code>CurrentEditTarget</code></td><td><code>std::optional&lt;EditTarget&gt; CurrentEditTarget(const Worlds::World&amp; world) const</code></td><td>What Turn, Delete and the red selection tint act on: a block, object, BigDecor or Blupi start (with its colour) at a cell.</td></tr>
+    <tr><td><code>CurrentClipboard</code>, <code>IsPasting</code></td><td><code>const Clipboard* CurrentClipboard() const noexcept</code>, <code>bool IsPasting() const noexcept</code></td><td>The copy made with C (kept across worlds of one run) and whether pasting is on.</td></tr>
+    <tr><td><code>DrawWorldOverlays</code>, <code>Draw</code></td><td><code>void DrawWorldOverlays(GraphicsDevice&amp;, const Camera&amp;, const Worlds::World&amp;)</code>, <code>void Draw(GraphicsDevice&amp;, const Camera&amp;, int viewportWidth, int viewportHeight, const Worlds::World&amp;)</code></td><td>Depth-tested overlays drawn with the world (route cubes, aimed cell or box, selection); then the status lines, palette and axis names over the finished frame.</td></tr>
+    <tr><td><code>LiftPreset</code> (free function)</td><td><code>std::optional&lt;LiftTiming&gt; LiftPreset(Def::ObjectType type, int buttonIcon) noexcept</code></td><td>A lift's advance, recede and rest ticks (20 Hz) by its palette entry, from the PC editor: slow 20/20/20, normal 10/10/10, fast 6/6/3, fast/slow 5/22/2.</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> enters the <code>Editor</code> game phase in three ways:</p>
+  <ul>
+    <li>The main menu's editor button: <code>EnterBrowser(selected gamer)</code>, <code>ShowSlots()</code>.</li>
+    <li>The main menu's Galaxy button when the player's galaxy has no main hub yet (<code>StartGalaxy()</code>), or the world screen's Galaxy button: the galaxy screen.</li>
+    <li>The <code>xnjttjpo</code> cheat typed in Play (<code>OpenMissionInEditor()</code>): for a campaign world <code>BeginOutsideSession(CampaignBackupsDir(), CampaignEditsDir())</code> after keeping the shipped original; for a galaxy world backups stay beside the file. Stop returns to the mission, which restarts from its beginning with what was saved.</li>
+  </ul>
+  <p>Each tick in the <code>Editor</code> phase the host either drives the browser and acts on its request, or runs an editing frame and acts on the editor's one-shot signals (from <code>src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>, shortened):</p>
+  <pre><code>if (worldEditor_.IsBrowsing())
+{
+    const auto request = worldEditor_.UpdateBrowsing(
+        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(),
+        phaseKeys.IsKeyDown(Keys::Escape));
+    ...
+    else if (request.shouldOpen)
+    {
+        LoadCustomWorldForEditing(request.openPath);
+    }
+    ...
+}
+else
+{
+    worldEditor_.Update(phaseKeys, mouse, dt,
+                         viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
+                         worldRuntime_.GetWorldMutable(), editorNavigation);
+    ...
+    if (worldEditor_.ConsumeNeedsPresentationRebuild())
+    {
+        RebuildWorldPresentation();
+    }
+    InteractionSystem::AdvanceEditorPlatforms(worldRuntime_, dt);
+    if (worldEditor_.ConsumePlayTestRequested())
+    {
+        LoadCustomWorldForPlayTest(worldEditor_.GetWorldPath());
+    }
+    else if (worldEditor_.ConsumeLeaveRequested() &amp;&amp; editorMission_ != 0)
+    {
+        LeaveMissionEditor();
+    }
+}</code></pre>
+  <p>A new world is created by the host (<code>CreateEditorStarterWorld()</code>, or <code>CreateGalaxyStarterWorld(mission)</code> for a galaxy place), saved, then opened like any other. While editing, the world clock still runs, so lifts preview their patrol. A play-test loads the saved file with a fresh <code>InteractionSystem</code> and <code>BlupiController</code>; Pause's Menu or Back, or the return button on the Win/Lost screen, reopens the same world in the editor. Before an editing frame the keyboard, mouse, touches and gamepad pass through <code>EditorDeviceControls</code> and <code>EditorCommandKeys</code>.</p>
+
+  <h3>Controls</h3>
+  <table>
+    <tr><th>Device</th><th>Bindings (from <code>WorldEditorUpdate.cpp</code> and <code>EditorDeviceControls.cpp</code>)</th></tr>
+    <tr><td>Keyboard and mouse</td><td>W/A/S/D fly, Ctrl up, Z down (Shift alone also lowers); right button looks, wheel zooms. Left click or Space places at the preview; middle click or Backspace removes. NumPad 4/6, 8/2 and 7/9 move the preview on X, Z and Y, NumPad 5 resets it; Shift with them extends a 3D region that Place fills. Enter saves, U undo, R redo, F box fill (Escape cancels), C copy, P paste, Q turn the copy, X mirror it, Ctrl with a click places without cycling. Left/Right arrows step the background, M the music, O turns, V cycles the variant, H shows the keys. G, T, Tab, + and - pick an object, set its route end and adjust its ticks; Delete removes it. F10 or the Stop sign stops.</td></tr>
+    <tr><td>Gamepad</td><td>Left stick flies, right stick looks, RT/LT change height, A places, X removes, B cancels, D-pad and shoulder buttons move the preview, Y switches to a menu cursor, Start saves, Back stops.</td></tr>
+    <tr><td>Touch</td><td>On-screen Move and Up/Down controls and a Tools menu (Save, Undo, Redo, Select 3D, Remove, Turn, Variant, Copy, Paste, Box fill, Music, Help, Stop and the object commands); dragging over the world turns the view, a tap aims and places.</td></tr>
+  </table>
+  <div class="note"><strong>Verification status</strong> As of 2026-11-10 the keyboard and mouse, an SDL virtual gamepad and synthetic touches were checked live under Xvfb. A physical gamepad and a real touch screen have not been tested.</div>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>No new mechanics.</strong> The editor only places what the game already plays. Palette entries without a verified Galaxy implementation keep their Eggbert 2 position and show "Not yet implemented."</li>
+    <li><strong>Every change is a command.</strong> Each mutation is pushed onto <code>EditCommandStack</code> as one command per user action (a box fill or a paste is one); <code>MarkMutated()</code> sets the rebuild and unsaved flags together.</li>
+    <li><strong>The host owns loading.</strong> <code>WorldEditor</code> never loads or creates a world itself; it raises requests (<code>BrowserRequest</code>, <code>Consume*()</code>) that the host consumes, the same pending-signal idiom as <a href="InteractionSystem.html">InteractionSystem</a>.</li>
+    <li><strong>Unsaved work is protected.</strong> Stop with unsaved changes needs a second press. The first save after a world was opened backs up the previous file.</li>
+    <li><strong>One exit per world.</strong> Placing a red exit arrow or a final golden key, directly or in a paste, replaces the previous one (the original editor's <code>PlaceDecor10</code>), in one undoable step.</li>
+    <li><strong>Coordinates.</strong> The world and its records use raw grid cells (0-99). Drawing uses render space, raw minus <code>WorldRuntime::kWorldCenterX/Z</code>. The camera's yaw follows <code>BlupiController</code>: yaw 0 faces -Z.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <p>Five verifiers drive the real editor without a window. They share one object library (<code>GEEditorVerifySupport</code> in <code>CMakeLists.txt</code>), are registered by <code>ge_add_editor_verify</code> and run in the build directory's <code>verify-run/</code>, because they write <code>customworlds/</code> relative to their working directory.</p>
+  <table>
+    <tr><th>Test</th><th>Covers</th></tr>
+    <tr><td><code>VerifyGEWorldEditor</code></td><td>Placement, auto-tiling, variant cycling, turning, lift ends, copy/turn/mirror/paste, music, a mixed undo/redo history, outside (<code>xnjttjpo</code>) sessions, cursor aiming, the single-exit rule.</td></tr>
+    <tr><td><code>VerifyGEEditorDevices</code></td><td><code>EditorDeviceControls</code>: gamepad and touch input mapped to navigation and keys.</td></tr>
+    <tr><td><code>VerifyGEEditorPalette</code></td><td>Categories in source order, layout, hit-testing, placeable blocks and objects, BigDecor mode.</td></tr>
+    <tr><td><code>VerifyGEEditorStorage</code></td><td>Slots, seeding, backups, export and import, the browser screens, the galaxy (see <a href="CustomWorldStorage.html">CustomWorldStorage</a>).</td></tr>
+    <tr><td><code>VerifyGEEditorObjects</code></td><td>Object placement, removal and timing edits.</td></tr>
+  </table>
+  <p>For a look at the real thing, <code>tools/qa_live.sh</code> runs the step files in <code>tools/qa_steps/editor_*.txt</code> (play-test, copy and paste, lifts, backups, thumbnails, auto-tiling, cursor aiming). See <a href="../development/testing.html">Testing</a>.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../editor.html">3D World Editor</a>: the editor from the player's side</li>
+    <li><a href="../galaxy.html">Your Own Galaxy</a></li>
+    <li><a href="CustomWorldStorage.html">CustomWorldStorage</a>: where the edited worlds are kept</li>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: the host and its <code>Editor</code> phase</li>
+    <li><a href="World.html">World</a>, <a href="MoveObjectRecord.html">MoveObjectRecord</a>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>, <a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a></li>
+    <li><a href="../tutorials/modifying-levels.html">Modifying levels</a></li>
+    <li><a href="../cheats.html">Cheats &amp; Diagnostics</a>: <code>xnjttjpo</code></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/WorldRenderer.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; WorldRenderer</span>
+    </a>
+    <a class="next" href="../classes/CustomWorldStorage.html">
+      <span class="label">Next</span>
+      <span class="title">CustomWorldStorage &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

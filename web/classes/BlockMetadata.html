@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BlockMetadata — Galaxy Eggbert Docs</title>
+<meta name="description" content="Worlds::BlockMetadata, a helper for the 4-bit metadata nibble of a voxel block, and how it differs from sparse extra metadata.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,51 +22,122 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
-  <a href="index.html">Classes</a>
+  <a href="../classes/index.html" class="active">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> BlockMetadata</div>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> BlockMetadata</div>
   <h1>BlockMetadata</h1>
-  <p class="subtitle">Bit-level accessor wrapper around a Block's 4-bit metadata nibble.</p>
+  <p class="subtitle">A typed helper for the four metadata bits inside a <code>Block</code>. It gives the bits no meaning of its own.</p>
 
-  <h2>Overview</h2>
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/Worlds/BlockMetadata.hpp</code> (header-only)</td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Worlds</code></td></tr>
+  </table>
+
+  <h2>Purpose</h2>
   <p>
-    A thin wrapper around the 4-bit nibble stored in every <a href="Block.html">Block</a>. It does
-    not define what the bits <em>mean</em> — that semantic is left to gameplay code (e.g. rotation,
-    variant, or state), a design point relevant to the open question of per-block facing/rotation
-    metadata for cube-rendered objects (see <a href="../gameplay.html">Gameplay</a>).
+    Every <a href="Block.html">Block</a> carries a 4-bit metadata field (bits 3..0 of its raw value).
+    <code>BlockMetadata</code> wraps that nibble with bit getters, setters and copy-with-change
+    helpers, so that code does not do the masking by hand. The class deliberately defines no
+    semantics: rotation, variant or on/off state would be a game decision.
   </p>
-  <p>Header: <code>include/GalaxyEggbert/Worlds/BlockMetadata.hpp</code>.</p>
 
-  <h2>API</h2>
-  <pre><code>class BlockMetadata {
-public:
-    explicit BlockMetadata(uint8_t nibble);
+  <h2>Two kinds of "metadata"</h2>
+  <p>The word is used for two different things in the world format. Do not mix them up:</p>
+  <table>
+    <tr><th></th><th>Block metadata (this class)</th><th>Sparse extra metadata</th></tr>
+    <tr><td>Where</td><td>Inside the 16-bit block value, so inside the chunk palette</td><td>Per-cell records in the chunk's <code>BMD1</code> section</td></tr>
+    <tr><td>Size</td><td>4 bits</td><td>Any byte payload up to 65 535 bytes, typed by a 16-bit id</td></tr>
+    <tr><td>API</td><td><code>Block::make(type, metadata)</code>, <code>Block::metadata()</code></td><td><code>World::setBlockExtraMetadata()</code>, <code>collectExtraMetadata()</code>, <code>findBlockExtraMetadata()</code></td></tr>
+    <tr><td>Used by the game (2026-11-10)</td><td>No</td><td>Yes: objects (1), plate/fan turns (2), BigDecor (3), hint zones (4), object turns (5), legacy switch rows (6), player starts (7, 8)</td></tr>
+  </table>
+  <div class="note"><strong>Status.</strong> No world in <code>worlds3d/</code> has a non-zero block
+    metadata nibble, and outside its own tests and <code>Block.hpp</code> nothing in the code base
+    uses <code>BlockMetadata</code>. It is a ready, tested building block, not a feature. Distinct
+    values would also cost palette space: <code>make(10, 0)</code> and <code>make(10, 1)</code> are
+    two palette entries.</div>
 
-    bool bit0() const; bool bit1() const; bool bit2() const; bool bit3() const;
-    void setBit0(bool v); void setBit1(bool v); void setBit2(bool v); void setBit3(bool v);
+  <h2>Public API</h2>
+  <p>Verified in <code>BlockMetadata.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Member</th><th>Description</th></tr>
+    <tr><td><code>MetadataMask = 0x0F</code>, <code>Bit0Mask</code>..<code>Bit3Mask</code></td><td>0x01, 0x02, 0x04, 0x08.</td></tr>
+    <tr><td><code>constexpr BlockMetadata()</code></td><td>All bits clear.</td></tr>
+    <tr><td><code>explicit BlockMetadata(std::uint8_t value)</code></td><td>Throws <code>std::out_of_range</code> if <code>value &gt; 15</code>.</td></tr>
+    <tr><td><code>static constexpr fromMasked(std::uint8_t)</code></td><td>Keeps only the low four bits; never throws.</td></tr>
+    <tr><td><code>rawValue()</code>, <code>toUInt8()</code></td><td>The nibble, 0-15.</td></tr>
+    <tr><td><code>bit0()</code>..<code>bit3()</code>, <code>bit(index)</code></td><td>Read a bit; <code>bit()</code> throws for an index above 3.</td></tr>
+    <tr><td><code>setBit0(bool)</code>..<code>setBit3(bool)</code>, <code>setBit(index, bool)</code></td><td>Set or clear a bit in place.</td></tr>
+    <tr><td><code>withBit0(bool)</code>..<code>withBit3(bool)</code></td><td>A changed copy.</td></tr>
+    <tr><td><code>operator==</code>, <code>operator!=</code></td><td>Compare the nibbles.</td></tr>
+  </table>
 
-    bool bit(int index) const;               // generic, index 0..3
-    void setBit(int index, bool enabled);
-
-    BlockMetadata withBitN(int index, bool enabled) const;  // returns a modified copy
-
-    uint8_t rawValue() const;
-};</code></pre>
+  <h2>Usage</h2>
+  <pre><code>using namespace GalaxyEggbert::Worlds;
+const BlockMetadata m = BlockMetadata{}.withBit0(true).withBit2(true);   // 0b0101
+const Block b = Block::make(10, m);
+assert(b.blockMetadata().bit2());</code></pre>
 
   <h2>Tests</h2>
-  <p>Covered by <code>tests/GalaxyEggbert/Worlds/BlockMetadataTest.cpp</code>.</p>
+  <ul>
+    <li><code>tests/GalaxyEggbert/Worlds/BlockMetadataTest.cpp</code>: 16 tests covering construction and its range check, <code>fromMasked</code>, every getter and setter, the generic bit accessors and their index check, the <code>with*</code> copies, equality and the mask constants.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="Block.html">Block</a>, <a href="VoxelConfig.html">VoxelConfig</a></li>
+    <li><a href="../internals/vwr-format.html">The .vwr Format</a> (sparse metadata types)</li>
+  </ul>
 
   <div class="page-nav">
-    <a href="Block.html">← Block</a>
-    <a href="VoxelConfig.html">VoxelConfig →</a>
+    <a class="prev" href="../classes/Block.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Block</span>
+    </a>
+    <a class="next" href="../classes/VoxelConfig.html">
+      <span class="label">Next</span>
+      <span class="title">VoxelConfig &#8594;</span>
+    </a>
   </div>
 </main>
 </div>

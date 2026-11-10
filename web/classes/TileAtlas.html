@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TileAtlas — Galaxy Eggbert Docs</title>
+<meta name="description" content="TileAtlas maps Galaxy Eggbert block types to UV rectangles in the original tile sheet object-m.png, as laid out on disk or as the terrain's padded, mipmapped copy.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> TileAtlas</div>
+  <h1>TileAtlas</h1>
+  <p class="subtitle">Maps a block type to the UV rectangle of its texture icon in <code>object-m.png</code>, either as the sheet is or as the terrain's padded copy.</p>
+
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/TileAtlas.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/Game/TileAtlas.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Former name</th><td><code>GETileAtlas</code></td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    Every terrain block is textured with one icon of the original's tile sheet <code>Content/icons/object-m.png</code>:
+    1301&nbsp;&times;&nbsp;1431 pixels, 64-pixel tiles with a 1-pixel gap before each, 20 columns by 22 rows (icons 0-439).
+    <code>TileAtlas</code> is data only: it loads no pixels and draws nothing. <code>GetTileUv()</code> looks the block up in the
+    <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>, takes its <code>textureIcon</code> (which may differ from the
+    block type) and returns that icon's rectangle.
+  </p>
+  <p>Two layouts:</p>
+  <ul>
+    <li><strong><code>Layout::Sheet</code></strong> &mdash; the sheet as it is on disk. The rectangle comes from
+      <code>BlockTypes::tileUV()</code>, which accounts for the 65-pixel pitch and adds a half-texel inset so bilinear filtering never
+      samples the gap or the next tile (the cause of thin seam lines seen in July 2026). Used for lift and crate cubes, the editor's
+      markers and particles cut from tiles.</li>
+    <li><strong><code>Layout::Padded</code></strong> &mdash; the terrain's own copy built by <code>BuildPaddedSheet()</code>: each 64-pixel tile placed
+      on a 96-pixel pitch with a 16-pixel border of its own edge texels (1920&nbsp;&times;&nbsp;2112 at 1x). It can be mipmapped without tiles
+      bleeding into each other (distant floors used to shimmer into rings), and needs no inset. At texture scale 2 the tiles are 128
+      pixels, the border stays 16 and the sheet is 3200&nbsp;&times;&nbsp;3520, inside the 4096 limit.</li>
+  </ul>
+
+  <h2>Collaborators</h2>
+  <ul>
+    <li><a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>: <code>GetBlockDefinition()</code>, <code>textureSource</code>, <code>textureIcon</code>.</li>
+    <li><code>BlockTypes</code> (<code>include/GalaxyEggbert/BlockTypes.hpp</code>): <code>kSheetW</code>, <code>kSheetH</code>, <code>kTileSize</code>, <code>kSheetGap</code>, <code>kSheetCols</code>, <code>tileUV()</code>.</li>
+    <li>cna-engine's <code>CnaEngine::Graphics::UvRect</code>, the type returned.</li>
+    <li><a href="TerrainRenderer.html">TerrainRenderer</a> (padded atlas), the scene builder in <code>GalaxyEggbertGameScene.cpp</code> and the editor (sheet atlas).</li>
+    <li><code>TextureScale.hpp</code>: which scale a run loads (1x, or 2x where <code>Content/icons2x/</code> exists).</li>
+  </ul>
+
+  <h2>Public API</h2>
+  <table>
+    <tr><th>Member</th><th>What it does</th></tr>
+    <tr><td><code>enum class Layout { Sheet, Padded }</code></td><td>Which texture the UVs are for.</td></tr>
+    <tr><td><code>TileAtlas()</code>, <code>explicit TileAtlas(Layout layout, int scale = 1)</code></td><td>Default is <code>Sheet</code> at scale 1; a scale below 1 counts as 1.</td></tr>
+    <tr><td><code>CnaEngine::Graphics::UvRect GetTileUv(int blockType) const</code></td><td>The rectangle, or all zeros for air, negative or out-of-sheet types, unsupported types and types not textured from <code>object-m.png</code>.</td></tr>
+    <tr><td><code>int Scale() const</code></td><td>The texture scale given.</td></tr>
+    <tr><td><code>PaddedLayout Padded() const</code>, <code>static constexpr PaddedLayout PaddedLayoutFor(int scale)</code></td><td>Tile, border, pitch, width and height of the padded sheet at a scale.</td></tr>
+    <tr><td><code>kPaddedBorder</code> = 16, <code>kPaddedPitch</code> = 96, <code>kPaddedColumns</code> = 20, <code>kPaddedRows</code> = 22, <code>kPaddedWidth</code>, <code>kPaddedHeight</code></td><td>The 1x padded layout's constants.</td></tr>
+  </table>
+  <p>Free functions in the same header:</p>
+  <table>
+    <tr><th>Function</th><th>What it does</th></tr>
+    <tr><td><code>std::vector&lt;std::uint8_t&gt; BuildPaddedSheet(const std::uint8_t* sheetRgba, int width, int height, int scale = 1)</code></td><td>The padded RGBA sheet from <code>object-m.png</code>'s texels.</td></tr>
+    <tr><td><code>std::vector&lt;std::uint8_t&gt; DownsampleHalf(const std::vector&lt;std::uint8_t&gt;&amp; rgba, int width, int height)</code></td><td>The next mip level: each texel the mean of a 2&nbsp;&times;&nbsp;2 block.</td></tr>
+  </table>
+
+  <h2>How it is used</h2>
+  <p>The game keeps two atlases (<code>src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp</code>):</p>
+  <pre><code>// Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
+GalaxyEggbert::Game::TileAtlas tileAtlas_;
+// The terrain's own padded, mipmapped copy of object-m.png and its UVs (TileAtlas.hpp Layout::Padded).
+GalaxyEggbert::Game::TileAtlas terrainTileAtlas_{GalaxyEggbert::Game::TileAtlas::Layout::Padded};</code></pre>
+  <p>
+    At load it builds the padded texture with <code>BuildPaddedSheet()</code> and its mip chain with <code>DownsampleHalf()</code>, and
+    hands <code>terrainTileAtlas_</code> to every <a href="TerrainRenderer.html">TerrainRenderer</a>. A UV from one layout is only valid
+    on that layout's texture; mixing them shows the wrong part of the sheet.
+  </p>
+  <div class="note"><strong>Icon 440.</strong> The block registry has entries 0-440, but the sheet holds 440 icons (0-439).
+    Icon 440 has no rectangle; <code>VerifyTileUvBounds</code> keeps this as an explicit, tracked exception.</div>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyTileFaces</code> (<code>tools/VerifyTileFaces.cpp</code>): padded rectangles (border, pitch, 64-texel width), <code>BuildPaddedSheet()</code>'s edge copies, the 1x and 2x padded layouts.</li>
+    <li><code>VerifyTileUvBounds</code>: <code>BlockTypes::tileUV()</code> keeps every icon 0-439 inside the sheet.</li>
+    <li><code>VerifyTileCoverage</code>: the sheet's 1301&nbsp;&times;&nbsp;1431 holds 440 icons, and the 2x layout.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../assets.html">Assets &amp; Tools</a> &mdash; the tile sheet's geometry and origin.</li>
+    <li><a href="../rendering.html">Rendering</a>, <a href="TerrainRenderer.html">TerrainRenderer</a>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/TerrainRenderer.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; TerrainRenderer</span>
+    </a>
+    <a class="next" href="../classes/WorldRenderer.html">
+      <span class="label">Next</span>
+      <span class="title">WorldRenderer &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

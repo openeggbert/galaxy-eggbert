@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlupiController — Galaxy Eggbert Docs</title>
+<meta name="description" content="BlupiController is Blupi's movement, collision and animation-state model: Step, AnimState, SettleOnGround, vehicles, swimming and bars, independent of the engine.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> BlupiController</div>
+  <h1>BlupiController</h1>
+  <p class="subtitle">Blupi's body: movement, collision, jumping, swimming, vehicles, powers and the animation state that picks his clip.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/BlupiController.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/BlupiController.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. It sees only a <code>Worlds::World</code>, <code>SolidBox</code>es and plain floats and booleans.</td></tr>
+  </table>
+  <p>Older pages called this class <code>GEBlupiController</code> and described an invisible collision point. Since then Blupi is drawn
+  as a 3D model converted from the original Ray Dream scenes; the controller decides which clip that model plays. (The class comment
+  at the top of the header still describes the early placeholder; the code is current.)</p>
+
+  <h2>Purpose</h2>
+  <p><code>BlupiController</code> reproduces the original game's movement rules in 3D. Each call of <code>Step()</code> turns one tick of
+  steering input into a new position and status: tank-style turning (135&nbsp;&deg;/s) and walking (2.5 cells/s once under way, after
+  the original's four-tick ease-in), the original's jump speeds and gravity, ledges and walls, crouching and looking up, swimming at the
+  surface and under water, hanging on bars, being squashed or ballooned, riding lifts and crates, six vehicle modes, secret powers, and
+  the one-shot actions (switch, dynamite, pickups, death). It also keeps an <code>AnimState</code> from which the host chooses Blupi's
+  model clip, and it reports one-shot cues (head bump, bar grab, turn, idle fidget) as events for the host to play as sounds.</p>
+  <p>Speeds are written in the original's units: 64 pixels per block and 20 ticks per second, so <code>8 px/tick</code> becomes
+  <code>8 &times; 20 / 64 = 2.5</code> blocks per second.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><a href="World.html">World</a> and <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> (collision masks, water, springs, bars, hazards).</li>
+    <li><code>SolidBox.hpp</code> (solid BigDecor), <code>BarRows.hpp</code>, <code>LavaHeight.hpp</code>, <code>FanGeometry.hpp</code>, <code>BlockModels.hpp</code>, <code>PlateRotationMetadata.hpp</code>.</li>
+    <li><a href="WorldRuntime.html">WorldRuntime</a>'s centre constants (<code>kWorldCenterX/Z</code>) only.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: owns one <code>blupi_</code>, feeds it input, the terrain phase, crate cells and lift state every tick, and applies <a href="InteractionSystem.html">InteractionSystem</a> events to it.</li>
+    <li><code>VerifyBlupiMovement</code> drives it with scripted input; <code>WorldRuntime</code> reads its body constants for fan contact.</li>
+  </ul>
+  <p><code>InteractionSystem</code> does <em>not</em> use it: the two meet only in the host.</p>
+
+  <h2>Key members</h2>
+  <p>The header is about 1&nbsp;800 lines, most of it constants with the original's values and their sources. A selection of the
+  public API of <code>BlupiController.hpp</code> (verified 2026-11-10):</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>Step</code></td><td><code>void Step(const Worlds::World&amp; world, float turnInput, float moveInput, bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt, bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false, bool pushingCrate = false, bool holdingCrate = false)</code></td><td>One tick of movement and collision. Turn and move inputs are &minus;1/0/+1; terrain facts (vanished Temp tiles, water) are computed by the caller and passed in.</td></tr>
+    <tr><td><code>SetPosition</code></td><td><code>void SetPosition(float x, float y, float z) noexcept</code></td><td>Moves Blupi; he stays airborne (teleports and other callers).</td></tr>
+    <tr><td><code>SettleOnGround</code></td><td><code>void SettleOnGround(const Worlds::World&amp; world, bool tempPassable = false)</code></td><td>After a spawn or respawn, establishes standing before the first input tick (the original's <code>PlayPrepare</code>), so walking starts at once; a start in open air still falls.</td></tr>
+    <tr><td><code>GetX/GetY/GetZ</code>, <code>GetYaw</code>, <code>SetYaw</code>, <code>GetVelocityY</code>, <code>IsOnGround</code></td><td>getters, <code>void SetYaw(float) noexcept</code></td><td>Position (centred X/Z, feet Y), heading (0 faces &minus;Z), vertical speed, ground contact.</td></tr>
+    <tr><td><code>GetAnimState</code></td><td><code>AnimState GetAnimState() const noexcept</code></td><td>Which of the original's actions Blupi is in (see below).</td></tr>
+    <tr><td><code>GetAnimIcon</code>, <code>GetDisplayAnimIcon</code></td><td><code>int ...() const noexcept</code></td><td>The original sprite icon for the current frame (sprite fallback, first-person indicator).</td></tr>
+    <tr><td><code>EventsThisFrame</code></td><td><code>const std::vector&lt;Event&gt;&amp; EventsThisFrame() const noexcept</code></td><td>Sound cues of this tick (<code>HeadBumped</code>, <code>BarGrabbed</code>, <code>TurnStarted</code>, <code>IdleFidget</code>, <code>CrateGripped</code>, ...).</td></tr>
+    <tr><td><code>GetVehicleMode</code>, <code>IsInVehicle</code>, <code>TriggerMount</code>, <code>TriggerDismount</code>, <code>CanLeaveVehicle</code></td><td><code>bool TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept</code></td><td>Vehicles: <code>None</code>, <code>Helicopter</code>, <code>Jeep</code>, <code>Tank</code>, <code>Skateboard</code>, <code>Overcraft</code>, each with the original's speeds.</td></tr>
+    <tr><td><code>IsSurf</code>, <code>IsNage</code>, <code>GetWaterGaugeLevel</code>, <code>JustDrowned</code></td><td><code>bool ...() const noexcept</code></td><td>Floating at the surface, swimming under water, the air gauge (100, red below 25).</td></tr>
+    <tr><td><code>TriggerCrush</code>, <code>TriggerBalloon</code>, <code>PopBalloon</code></td><td><code>bool ...() noexcept</code></td><td>Squashed by a crusher; carried by a wasp's balloon.</td></tr>
+    <tr><td><code>TriggerShield</code>, <code>TriggerPower</code>, <code>TriggerCloud</code>, <code>TriggerHide</code>, <code>TriggerInvert</code></td><td><code>bool ...() noexcept</code></td><td>Secret powers and the inverted controls, each with the original's gate; true when granted.</td></tr>
+    <tr><td><code>TriggerTeleport</code>, <code>TriggerBye</code>, <code>TriggerSpringBounce</code>, <code>TriggerOneShotAnim</code></td><td><code>bool TriggerTeleport(std::uint16_t icon) noexcept</code>, ...</td><td>Teleporter transit, the exit wave, spring bounce, one-shot actions such as <code>FireTank</code>.</td></tr>
+    <tr><td><code>TriggerDeathLock</code>, <code>ConsumeDeathLockResolved</code></td><td><code>bool TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept</code></td><td>Freezes Blupi for a death (<code>Clear1</code>-<code>4</code>, <code>Glu</code>, <code>Drown</code>); the host respawns when it resolves.</td></tr>
+    <tr><td><code>SetCrateCells</code>, <code>SetSolidBoxes</code>, <code>FollowCrate</code></td><td><code>void SetCrateCells(std::vector&lt;std::array&lt;float, 3&gt;&gt; cells)</code>, ...</td><td>Crates and solid BigDecor count as solid for him; the caller updates them before each <code>Step()</code>.</td></tr>
+    <tr><td><code>SetRidingLift</code>, <code>SetLiftTops</code>, <code>SetLiftUnder</code>, <code>SetTerrainAnimationPhase</code></td><td><code>void ...(...) noexcept</code></td><td>Per-tick facts from the lifts and the terrain clock.</td></tr>
+    <tr><td><code>IsClearAt</code>, <code>CanStandAt</code></td><td><code>static bool ...(const Worlds::World&amp;, float x, float y, float z, ...)</code></td><td>Collision queries shared with the crate code.</td></tr>
+    <tr><td><code>CheatVehicle</code>, <code>DisableGhost</code>, <code>SetCheatSuperBlupi</code></td><td><code>void CheatVehicle(VehicleMode mode, const Worlds::World* world = nullptr) noexcept</code>, ...</td><td>Entry points for the typed cheats (vehicles, ghost, megablupi).</td></tr>
+    <tr><td>constants</td><td><code>kMoveSpeed = 2.5f</code>, <code>kTurnSpeed = 0.75&pi;</code>, <code>kJumpSpeed = 12.0f</code>, <code>kGravity = 25.0f</code>, <code>kStepLimit = 4/64</code>, <code>kHeadHeight = 49/64</code>, <code>kBodyHalfWidth = 18/64</code></td><td>Blocks per second, radians per second, block units.</td></tr>
+  </table>
+
+  <h3>AnimState</h3>
+  <p>An <code>enum class AnimState : std::uint8_t</code> with one value per live action of the original's <code>table_blupi</code>:
+  <code>Stop</code>, <code>March</code>, <code>Jump</code>, <code>Air</code>, <code>Down</code>, <code>Up</code>; the squashed and balloon states; each
+  vehicle's stop/march pair; <code>StopNage</code>/<code>MarchNage</code> and <code>StopSurf</code>/<code>MarchSurf</code> for swimming;
+  <code>StopSuspend</code>, <code>MarchSuspend</code>, <code>JumpSuspend</code> on bars; actions such as <code>Push</code>, <code>Switch</code>,
+  <code>TakeDynamite</code>, <code>PutDynamite</code>, <code>FireTank</code>, <code>HelicoGlu</code>; the mockery and reaction poses
+  (<code>Mockery</code>, <code>JumpAie</code>, <code>Ouf1a</code> ... <code>Ouf5</code>, <code>Vertigo</code>, <code>Recede</code>, <code>Advance</code>);
+  <code>Win</code>, <code>Turn</code>, <code>Bye</code>, <code>Teleporting</code>, <code>DeathLocked</code>, <code>PickupBusy</code>, and the short
+  transitions <code>StopMarch</code> and <code>StopJump</code>. The Blupi model in <code>avatars3d/blupi/</code> has a clip for each state.</p>
+
+  <h2>How it is used</h2>
+  <p>The host prepares the tick's facts, then steps him once per tick with the scaled simulation time:</p>
+  <pre><code>const float stepStartFeetY = blupi_.GetY();
+...
+blupi_.SetTerrainAnimationPhase(worldRuntime_.GetAnimPhase());
+blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
+            crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
+            wasPushingCrate_, holdingCrate_);</code></pre>
+  <p>Afterwards it reads <code>EventsThisFrame()</code> for sounds, compares before/after state (landing, water entry, teleport end)
+  and runs the actions. Mission starts go through <code>PlaceBlupi</code>, which sets the crate cells and calls
+  <code>SettleOnGround</code>.</p>
+
+  <h3>Movement facts worth knowing</h3>
+  <ul>
+    <li><strong>No step-up.</strong> As in the original's <code>Decor::TestPath</code>, a one-block step stops Blupi until he jumps.
+      <code>kStepLimit</code> is a 4-pixel tolerance so seams between almost equal heights do not snag him (it was a whole block until
+      2026-10-25).</li>
+    <li><strong>Swimming.</strong> In water there is no gravity: Jump or Right Shift swims up, Left Shift down. At the surface he floats
+      until he dives; Jump with open air above makes the weak jump out onto a bank. The air gauge drains only under water.</li>
+    <li><strong>Vehicles</strong> have their own maximum speeds, acceleration and gravity: the jeep and tank fall heavier than Blupi,
+      and the jeep with ground under one end only rolls off the edge nose first, tipping up to 45&deg;; the helicopter sinks slowly when idle; the overcraft climbs only with ground within 80 original
+      pixels below it. Water, a spring or the helicopter hitting a ceiling wrecks the vehicle (applied by the host's
+      <code>WreckVehicle()</code>).</li>
+    <li><strong>Bars.</strong> On a hanging bar he moves along it, can jump off, and does not re-grab for a moment after letting go.</li>
+  </ul>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>Engine independence.</strong> No CNA, cna-engine, camera or input type appears in the header or source. Terrain facts
+      that need <code>WorldRuntime</code> (the Temp phase, water at the feet) are passed in as booleans. This is what lets
+      <code>VerifyBlupiMovement</code> run without a window.</li>
+    <li><strong>Deterministic.</strong> The same inputs and <code>dt</code> give the same path; the golden trace, autoplay scripts,
+      the resume log and demos rely on it.</li>
+    <li><strong>The original's numbers.</strong> Speeds, durations and gates come from the reference game and carry their sources in
+      comments; changing one changes the timing of every playthrough script.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyBlupiMovement</code> (ctest, runs from the repository root): drives <code>Step()</code> against <code>worlds3d/world999.vwr</code>
+      with scripted input. It covers walking and the first-tick start after <code>SettleOnGround</code>, jumps, gravity and falls, walls,
+      crates and footprints as support, temporary platforms, swimming, vehicles (including penetration recovery for foot, jeep, tank and
+      helicopter) and the one-shot sound cues.</li>
+    <li><code>VerifyInteractionSystem</code> also creates controllers to check deaths and blasts end to end.</li>
+    <li>The golden trace (<code>tools/verify_golden_trace.sh</code>) records position, vertical speed, ground contact and animation per
+      tick for a fixed walk and jump; any change in movement shows up there.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../internals/collision.html">Collision</a>, <a href="../game-loop.html">Game Loop</a>, <a href="../gameplay.html">Gameplay</a>, <a href="../controls.html">Controls</a></li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>, <a href="WorldRuntime.html">WorldRuntime</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a></li>
+    <li><a href="../development/testing.html">Testing</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/WorldRuntime.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; WorldRuntime</span>
+    </a>
+    <a class="next" href="../classes/InteractionSystem.html">
+      <span class="label">Next</span>
+      <span class="title">InteractionSystem &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

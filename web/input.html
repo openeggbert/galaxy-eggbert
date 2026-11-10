@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Input — Galaxy Eggbert Docs</title>
+<meta name="description" content="How Galaxy Eggbert captures keyboard, mouse, touch, gamepad and accelerometer input into one record per tick, maps it to play and menus, and records it for mission resume and demos.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,71 +24,201 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html" class="active">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Input</div>
   <h1>Input</h1>
-  <p class="subtitle">Polled every frame via CNA's Keyboard API — no event-driven input.</p>
+  <p class="subtitle">Every device is read once per tick into one input record; the game reads only that record (as of 2026-11-10).</p>
 
-  <h2>Reading Input</h2>
-  <pre><code>auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
-bool up    = keys.IsKeyDown(Keys::Up);
-bool down  = keys.IsKeyDown(Keys::Down);
-bool left  = keys.IsKeyDown(Keys::Left);
-bool right = keys.IsKeyDown(Keys::Right);
-bool jump  = keys.IsKeyDown(Keys::Space);</code></pre>
-  <p>
-    Input is polled once per frame inside <code>GalaxyEggbertCnaGame::Update()</code>, then passed
-    directly into <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code>. There is no
-    event-driven input handling and no input abstraction layer.
-  </p>
+  <p>This page is for developers. For the keys, buttons and gestures a player uses, see
+  <a href="controls.html">Controls</a>; for typed cheat words, <a href="cheats.html">Cheats &amp; Diagnostics</a>.</p>
 
-  <h2>Full Key List</h2>
-  <p>See <a href="controls.html">Controls</a> — currently just arrow keys and Space.</p>
+  <h2>One input record per tick</h2>
+  <p>At the start of each tick <code>GalaxyEggbertGame::CaptureInput()</code> (<code>src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code>)
+  fills <code>tickInput_</code>, a <code>ResumeInput</code> (<code>src/GalaxyEggbert/Game/ResumeLog.hpp</code>):</p>
+  <table>
+    <tr><th>Field</th><th>Contents</th></tr>
+    <tr><td><code>keys</code></td><td>The XNA <code>Keys</code> values held, sorted: the keyboard with the gamepad merged in as keys (below).</td></tr>
+    <tr><td><code>mouseX</code>, <code>mouseY</code>, <code>wheel</code>, <code>buttons</code></td><td>The mouse; <code>buttons</code> is a bit set of left, middle, right, X1, X2.</td></tr>
+    <tr><td><code>viewportWidth</code>, <code>viewportHeight</code></td><td>The viewport the positions refer to.</td></tr>
+    <tr><td><code>touches</code></td><td>Every finger: id, x, y and state (pressed, moved, released).</td></tr>
+    <tr><td><code>touchControlsEnabled</code></td><td>Whether CNA reports a touch screen (<code>TouchPanel::GetCapabilities()</code>).</td></tr>
+    <tr><td><code>cheatLetter</code></td><td>One typed letter a-z in press order, 0 for none, -1 when typed letters are not captured.</td></tr>
+    <tr><td><code>accelValid</code>, <code>accelReset</code>, <code>accelY</code></td><td>The accelerometer reading, when it is on.</td></tr>
+  </table>
+  <p>After that, nothing in the tick asks a device. <code>CurrentKeyboardState()</code> and <code>CurrentMouseState()</code>
+  rebuild XNA states from the record, and the phase handlers, <code>InputPad</code> and the editor work on those. This is
+  what lets a recorded list of these records replay a game exactly (<a href="game-loop.html">Game Loop</a>).</p>
 
-  <h2>Not Implemented</h2>
-  <div class="nv">
-    <strong>Not implemented</strong>
-    No gamepad/controller support, no touch input, no key remapping, no pause/menu keys.
-    <code>GalaxyEggbertSimple3D</code> (the reference target) has a richer key set (rotation,
-    strafing, phase transitions, gamer-select) that has not been ported to CNA.
-  </div>
+  <h2>Keyboard</h2>
+  <p>The held keys come from CNA's <code>Keyboard::GetState()</code>. Play turns them into movement in
+  <code>src/GalaxyEggbert/Game/ControlInput.hpp</code>, where aliases are combined per direction:</p>
+<pre><code>// src/GalaxyEggbert/Game/ControlInput.hpp
+return {
+    float(keys.IsKeyDown(Keys::Right) || keys.IsKeyDown(Keys::D)) -
+        float(keys.IsKeyDown(Keys::Left) || keys.IsKeyDown(Keys::A)),
+    float(keys.IsKeyDown(Keys::Up) || keys.IsKeyDown(Keys::W)) -
+        float(keys.IsKeyDown(Keys::Down) || keys.IsKeyDown(Keys::S)),
+    keys.IsKeyDown(Keys::X) || keys.IsKeyDown(Keys::RightControl)};</code></pre>
+  <p>In the tank, <code>VehicleFireKeyboard()</code> turns Left Ctrl into F (fire) before anything else reads it. The
+  remaining play keys (Left Ctrl jump, Space action, Left Shift crouch, Right Shift look up, Esc, F-keys, Tab) are read
+  by name where they are used.</p>
+
+  <h3>Typed letters through KeyDownEXT</h3>
+  <p>Held-key snapshots miss a key pressed and released between two updates, and they lose the order of letters.
+  The game therefore subscribes to CNA's <code>Keyboard::KeyDownEXT</code> event, which delivers each physical press in
+  order. In Play, letters go into a queue and <code>CaptureInput()</code> puts one of them per tick into
+  <code>cheatLetter</code>; <code>InputPad</code> matches the typed cheat words from that stream. A recognised word's
+  prefix keeps its letters from also steering Blupi until they are released (<code>InputPad::FilterGameplayKeyboard()</code>).
+  This needs no text-input mode or on-screen keyboard, so it works with a keyboard attached to a touch device.</p>
+  <p>The same event feeds the editor's command keys, the typed names of galaxies and demos, and the demo idle timer.
+  Building with <code>-DGALAXY_EGGBERT_ENABLE_CHEATS=OFF</code> removes typed cheats and the hidden cheat menu.</p>
+
+  <h2>Gamepad</h2>
+  <p><code>src/GalaxyEggbert/Game/GamepadInput.hpp</code> is engine-independent. The host fills a <code>GamepadFrame</code> from
+  the first connected pad among XNA's <code>PlayerIndex</code> One to Four (<code>ReadGamepadFrame()</code>), and
+  <code>GamepadKeys()</code> names the keyboard keys it stands for. <code>ReadKeyboardState()</code>
+  (<code>src/GalaxyEggbertCNA/GameHelpers.hpp</code>) adds those keys to the keyboard's, so the pad drives every phase the
+  keyboard drives.</p>
+  <table>
+    <tr><th>Pad</th><th>Becomes</th><th>Meaning in play</th></tr>
+    <tr><td>Left stick (past 0.5) or D-pad</td><td>Arrow keys</td><td>walk, turn, turn around</td></tr>
+    <tr><td>A</td><td>Left Ctrl and Enter</td><td>jump (climb in the helicopter); confirm in menus</td></tr>
+    <tr><td>B or X</td><td>Space</td><td>action</td></tr>
+    <tr><td>Right trigger</td><td>F</td><td>fire in the tank or helicopter</td></tr>
+    <tr><td>RB</td><td>Right Ctrl</td><td>back up</td></tr>
+    <tr><td>LB</td><td>Left Shift</td><td>crouch</td></tr>
+    <tr><td>Y</td><td>Right Shift</td><td>look up</td></tr>
+    <tr><td>Start or Back</td><td>Escape</td><td>pause</td></tr>
+  </table>
+  <p>In the main menu and the editor the pad is not turned into keys: there it drives an on-screen cursor.
+  <code>EditorDeviceControls</code> (<code>src/GalaxyEggbert/Editor/</code>) reads the pad and touch directly and produces the
+  keyboard, mouse and camera movement the editor understands (sticks fly and look, A places, X removes). Since 2026-11-10 the demo positions, the galaxy screen and the world screen can be
+  driven with the arrows or the D-pad: <code>FocusNavigator.hpp</code> keeps one button chosen (drawn lit) and hands the
+  screen a mouse pressed at that button's centre when A or Enter is pressed; moving the mouse or touching ends the choice.</p>
+
+  <h2>Mouse</h2>
+  <ul>
+    <li>Menus and screens are clicked with the left button.</li>
+    <li>In Play, holding the left button and dragging turns the view (0.008 radians per pixel, pitch limited); walking
+      returns the camera behind Blupi. A press that lands on an on-screen control is not used for looking.</li>
+    <li>In the editor the cursor aims the placement ray (<code>VoxelRaycast</code>); see <a href="editor.html">3D World Editor</a>.</li>
+  </ul>
+
+  <h2>Touch</h2>
+  <p>Each finger from <code>TouchPanel::GetState()</code> is stored in the record. The on-screen pad of the original
+  (stick, Jump, Action, Pause, a crouch button now shown always, plus Galaxy's back-up button and, in the tank or helicopter, Fire) is drawn, and its mouse hit areas are
+  active, <strong>only when CNA reports a touch screen</strong> (since 2026-11-08); on a desktop without one the mouse stays
+  free for the camera.</p>
+  <ul>
+    <li><code>InputPad::UpdatePlayTouches()</code> takes several fingers at once: a finger that lands on the stick steers it
+      wherever it moves, Jump is held by any finger on it, Action and Pause fire when their finger lifts.</li>
+    <li>The stick is discrete like the original's: the finger's offset from its centre becomes -1, 0 or +1 per axis.</li>
+    <li>While fingers are down, and 15 ticks after, the mouse is ignored in Play: platforms also turn touches into mouse
+      events, which would press Action twice.</li>
+    <li>A hidden tap gesture opens the cheat menu (blocked by <code>fairplay</code>).</li>
+  </ul>
+  <p>Where there is no keyboard, a name (a galaxy, a demo) is typed on an on-screen keyboard (<code>ScreenKeyboard.hpp</code>,
+  2026-11-10).</p>
+
+  <h2>Accelerometer</h2>
+  <p>The Setup's Accelerometer switch (off by default, <code>accelActive=</code>) and sensitivity slider
+  (<code>accelSensitivity=</code>, 0-100, 50 by default) come from the original. When it is on and CNA reports a sensor
+  (<code>Microsoft::Devices::Sensors::Accelerometer</code>), <code>AccelTurnInput()</code> turns the device's tilt (its Y
+  component) into steering with the original's dead zone, and only after the device has once been held level. While
+  readings arrive, the on-screen stick gives way to Forward and Back buttons (<code>GALAXY_ACCEL_PAD=1</code> shows them
+  without a sensor). Replays read the recorded value, never the device.</p>
+
+  <h2>Menus: the 640&times;480 layout</h2>
+  <p>The original's screens are 640&times;480 images. <code>InputPad</code> and <code>Hud</code> keep the original's layout
+  and scale it with the window's height (scale = height / 480): the 640-wide image is centred and the bars beside it are
+  filled with the menu's own images. Buttons use the original's rectangles, scaled the same way, and are hit-tested
+  against the mouse or touch position (<code>QuadBatch::InRect()</code>). As in the original, buttons fire on release,
+  except Jump on the pad, which acts while held. The F1 help panel's close box shows the mapping:</p>
+<pre><code>// src/GalaxyEggbert/Game/ControlInput.hpp, ControlsHelp::OverClose()
+const float scale=std::min(width/640.f,height/480.f);
+const float ox=(width-640*scale)*.5f,oy=(height-480*scale)*.5f;
+return scale&gt;0 &amp;&amp; x&gt;=ox+550*scale &amp;&amp; x&lt;=ox+620*scale &amp;&amp;
+       y&gt;=oy+18*scale &amp;&amp; y&lt;=oy+54*scale;</code></pre>
+  <p>Enter (or the pad's A) confirms the Resume question, Pause and the Win/Lost screens; Escape goes back. The help
+  panel freezes the screen and swallows its closing key, so closing it cannot also pause or leave a menu.</p>
+
+  <h2>Recording input for resume and demos</h2>
+  <ul>
+    <li><strong>Mission resume.</strong> After each Play tick the record is appended to the mission's
+      <code>ResumeLog</code>. Identical consecutive records are stored once with a count. On continue,
+      <code>ReplayBatch()</code> sets <code>tickInput_</code> from the log and calls <code>UpdateTick()</code>; the devices are
+      not read. Touch capability, typed letters and the accelerometer come from the record, so a replay does not depend on
+      the device it runs on.</li>
+    <li><strong>Demos.</strong> A recording stores the same records, except F1-F24 and Tab (camera, full screen, help,
+      game speed): those are dropped before recording. A demo plays through <code>DemoTick()</code> the same way.</li>
+    <li><strong>Stopping a demo.</strong> While a demo plays, live input is only watched: a new key, mouse button, wheel
+      step, gamepad button or finger stops it; moving the mouse does not; the input that stopped it never reaches the menu.
+      The rules are in <code>DemoReplay.hpp</code> (<code>DemoNewPress()</code>, <code>DemoActivity()</code>).</li>
+    <li><strong>Autoplay and captures.</strong> With <code>--autoplay</code> or the golden capture modes, live devices are
+      ignored and the script's keys are used.</li>
+  </ul>
+  <p>File formats and where the files go: <a href="save-system.html">Save Data &amp; Resume</a> and
+  <a href="demos.html">Demos &amp; Recordings</a>.</p>
+
+  <div class="note"><strong>What has been tested.</strong> Keyboard and mouse live on Linux; the gamepad with an SDL
+  virtual gamepad under Xvfb; touch through the touch code paths and captures. No physical gamepad or touch screen has
+  been tried, and the accelerometer has not run on a real device.</div>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyGEInputPad</code>: the menus' and pad's hit areas and press rules.</li>
+    <li><code>VerifyGEEditorDevices</code>: the editor's touch and gamepad front end.</li>
+    <li><code>VerifyDemoReplay</code>: what stops a demo and resets the idle timer.</li>
+  </ul>
+  <p>Related: <a href="classes/InputPad.html">InputPad</a>, <a href="classes/ResumeLog.html">ResumeLog</a>,
+  <a href="classes/DemoReplay.html">DemoReplay</a>, <a href="classes/GalaxyEggbertGame.html">GalaxyEggbertGame</a>.</p>
 
   <div class="page-nav">
-    <a href="audio.html">
+    <a class="prev" href="audio.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Audio</span>
+      <span class="title">&#8592; Audio &amp; Music</span>
     </a>
     <a class="next" href="save-system.html">
       <span class="label">Next</span>
-      <span class="title">Save System &#8594;</span>
+      <span class="title">Save Data &amp; Resume &#8594;</span>
     </a>
   </div>
 </main>

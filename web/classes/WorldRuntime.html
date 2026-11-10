@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldRuntime — Galaxy Eggbert Docs</title>
+<meta name="description" content="WorldRuntime holds the loaded world for play: the voxel World, its moving objects as MobileObjSpec, BigDecor, hint zones, spawn, and the 20 Hz animation phase.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> WorldRuntime</div>
+  <h1>WorldRuntime</h1>
+  <p class="subtitle">The world as it is being played: the voxel grid, the live object list, BigDecor, spawn point and the animation clock.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Game/WorldRuntime.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Game/WorldRuntime.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Game</code></td></tr>
+    <tr><th>Engine dependency</th><td>None. Plain C++ over the engine-independent world model; it is linked into command-line verifiers.</td></tr>
+  </table>
+  <p>Older pages called this class <code>GEWorldRuntime</code>; the <code>GE</code> prefixes were dropped when the game code moved to
+  <code>src/GalaxyEggbert/Game/</code>.</p>
+
+  <h2>Purpose</h2>
+  <p><code>WorldRuntime</code> turns a world file into the state the game plays on. It owns a <a href="World.html">World</a> (the
+  100&nbsp;&times;&nbsp;100&nbsp;&times;&nbsp;100 voxel grid) and derives from it everything that changes during play or that other
+  systems look up every tick: the list of moving objects (<code>MobileObjSpec</code>), the BigDecor scenery and its solid boxes, the
+  training-hint zones, the spawn point, the sky region and the mission number. It also keeps the world's animation clock, which
+  advances at the original game's 20&nbsp;Hz reference rate, and offers a few pure helpers that encode the original's timing and
+  mission arithmetic.</p>
+
+  <h2>Collaborators</h2>
+  <h3>Uses</h3>
+  <ul>
+    <li><a href="World.html">World</a> and its records: <a href="MoveObjectRecord.html">MoveObjectRecord</a>, <code>BigDecorRecord</code>, <code>HintZoneRecord</code>, <code>PlayerStart</code>.</li>
+    <li><a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a> to skip unsupported or null-placement object types.</li>
+    <li><code>LegacySawFloors.hpp</code> (upgrades old saw cells on load), <code>FanGeometry.hpp</code>, <code>SolidBox.hpp</code>; the body constants of <a href="BlupiController.html">BlupiController</a> for fan contact.</li>
+  </ul>
+  <h3>Used by</h3>
+  <ul>
+    <li><a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a>: <code>LoadMission</code>, the title scene, editor play-tests, demo and resume validation.</li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>: moves, collects and spawns objects in the mutable object list.</li>
+    <li><a href="TerrainRenderer.html">TerrainRenderer</a> and the scene builder: animation phase, objects, BigDecor.</li>
+    <li><a href="WorldEditor.html">WorldEditor</a> through the host: edits the mutable <code>World</code>, then <code>ResyncFromWorld()</code>.</li>
+    <li>Verifiers: <code>VerifyShippedWorlds</code>, <code>VerifyInteractionSystem</code>, <code>VerifyMoveObjectTypesCna</code>.</li>
+  </ul>
+
+  <h2>Key members</h2>
+  <p>A selection of the public API of <code>WorldRuntime.hpp</code> (verified 2026-11-10):</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>kWorldCenterX</code>, <code>kWorldCenterZ</code></td><td><code>static constexpr int = 50</code></td><td>Offset between raw grid cells and centred world coordinates (see below).</td></tr>
+    <tr><td><code>LoadFromVwrFile</code></td><td><code>bool LoadFromVwrFile(const std::string&amp; path)</code></td><td>Loads a <code>.vwr</code> world. On failure returns false.</td></tr>
+    <tr><td><code>LoadFromVwrStream</code></td><td><code>bool LoadFromVwrStream(std::istream&amp; in)</code></td><td>The same from bytes already in memory, so mission loading and resume/demo validation read one identical snapshot. Resets the animation clock, then calls <code>ResyncFromWorld()</code>.</td></tr>
+    <tr><td><code>LoadFromMobileEggbertFile</code></td><td><code>bool LoadFromMobileEggbertFile(const std::string&amp; path)</code></td><td>Reads an original 2D <code>.txt</code> world; kept as a reference path for verifiers, not used by the game.</td></tr>
+    <tr><td><code>ResyncFromWorld</code></td><td><code>void ResyncFromWorld()</code></td><td>Re-derives sky region, mission number, spawn, hint zones, BigDecor cells and the object list from the current <code>World</code>, without disk I/O. Used after editor changes.</td></tr>
+    <tr><td><code>Update</code></td><td><code>void Update(float dt)</code></td><td>Advances the 20&nbsp;Hz animation tick and every object's <code>phase</code>.</td></tr>
+    <tr><td><code>GetWorld</code>, <code>GetWorldMutable</code></td><td><code>const Worlds::World&amp; GetWorld() const</code><br><code>Worlds::World&amp; GetWorldMutable()</code></td><td>The voxel grid; mutable access for tile reactions, the editor and tests.</td></tr>
+    <tr><td><code>GetMobileObjects</code>, <code>GetMobileObjectsMutable</code></td><td><code>const std::vector&lt;MobileObjSpec&gt;&amp; GetMobileObjects() const</code></td><td>The live objects (lifts, enemies, pickups, crates, effects).</td></tr>
+    <tr><td><code>GetAnimPhase</code></td><td><code>int GetAnimPhase() const</code></td><td>The raw 20&nbsp;Hz tick count; renderers divide it by each tile's own divisor.</td></tr>
+    <tr><td><code>GetSpawnTileX/Y/Z</code>, <code>GetSpawnRenderX/Y/Z</code>, <code>GetSpawnYaw</code>, <code>HasExplicitSpawnPoint</code></td><td><code>int</code> / <code>float</code> / <code>bool</code> getters</td><td>Spawn in raw cells and in centred coordinates; the yaw of the yellow player start.</td></tr>
+    <tr><td><code>GetSkyRegion</code>, <code>GetMissionNumber</code>, <code>OverrideMissionNumber</code></td><td><code>int ...() const</code>, <code>void OverrideMissionNumber(int) noexcept</code></td><td>Header fields of the world; a galaxy world is played as the mission of its place in the galaxy.</td></tr>
+    <tr><td><code>GetBigDecorCells</code>, <code>SolidBigDecorBoxes</code>, <code>SetBigDecorShapes</code></td><td><code>const std::vector&lt;BigDecorSpec&gt;&amp; ...</code>, <code>std::vector&lt;SolidBox&gt; ... const</code></td><td>Sparse BigDecor scenery and, for the solid models, collision boxes for Blupi and crates (shapes measured by the host from the models).</td></tr>
+    <tr><td><code>GetHintZones</code></td><td><code>const std::vector&lt;HintZoneRecord&gt;&amp; GetHintZones() const</code></td><td>Training-hint zones in record order.</td></tr>
+    <tr><td><code>TryActivateSwitch</code></td><td><code>std::optional&lt;bool&gt; TryActivateSwitch(float, float, float, bool blupiOnGround)</code></td><td>Toggles the switch under Blupi and every saw within X&nbsp;&plusmn;20 on the same row; returns the new state so the caller plays the sound.</td></tr>
+    <tr><td><code>TryConsumeFan</code>, <code>LastConsumedFan</code></td><td><code>std::optional&lt;std::uint16_t&gt; TryConsumeFan(float, float, float)</code></td><td>Touching a fan's rotor removes the fan and its wind column; the caller applies death or immunity.</td></tr>
+    <tr><td><code>FindTeleportDestination</code></td><td><code>bool FindTeleportDestination(std::uint16_t icon, float, float, float, float&amp;, float&amp;, float&amp;) const</code></td><td>The other teleporter with the same icon (330-333); Blupi lands one cell below it.</td></tr>
+    <tr><td><code>IsBlitzActiveAtPhase</code>, <code>IsCrusherActiveAtPhase</code>, <code>IsTempPassableAtPhase</code></td><td><code>static bool ...(int animPhase) noexcept</code></td><td>The original's hazard cycles as pure functions of the phase.</td></tr>
+    <tr><td><code>ComputeWorldSelectTarget</code>, <code>ComputeMissionBack</code>, <code>ComputeWinExitTarget</code></td><td><code>static int ...(int currentMission, ...) noexcept</code></td><td>Mission arithmetic of signs, Back and the exit (see below).</td></tr>
+  </table>
+
+  <h3>MobileObjSpec</h3>
+  <p>One moving or interactive object, in plain floats. The fields that matter most:</p>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>type</code>, <code>visualIcon</code></td><td><code>Def::ObjectType</code>; an optional tile override (0 keeps the type's own icon).</td></tr>
+    <tr><td><code>posStartX/Y/Z</code>, <code>posEndX/Y/Z</code></td><td>The path's two ends (centred X/Z; Y is the centre of the occupied cell, so an object on a floor at Y=0 has Y=1).</td></tr>
+    <tr><td><code>currentX/Y/Z</code>, <code>active</code></td><td>Live position (what is drawn) and whether the object still exists (false once collected).</td></tr>
+    <tr><td><code>phase</code></td><td>Per-object animation tick at 20&nbsp;Hz, read by <code>GetObjIcon</code>.</td></tr>
+    <tr><td><code>stepAdvanceTicks</code>, <code>stepRecedeTicks</code>, <code>timeStopStartTicks</code>, <code>timeStopEndTicks</code>, <code>patrolStep</code>, <code>patrolTime</code></td><td>The original's patrol state machine in 20&nbsp;Hz ticks: dwell at start, advance, dwell at end, recede. Lifts follow it too; <code>speed</code> no longer moves anything.</td></tr>
+    <tr><td><code>firedByBlupi</code></td><td>A glue ball Blupi fired himself never hits him.</td></tr>
+  </table>
+
+  <h2>Coordinates and the world centre</h2>
+  <p>Files, editor and tools use <strong>raw grid</strong> cells 0-99. The simulation and the renderer use <strong>centred</strong>
+  coordinates: X and Z minus <code>kWorldCenterX</code>/<code>kWorldCenterZ</code> (50), Y unchanged, so the world sits around the
+  origin. <code>ResyncFromWorld()</code> applies the shift when it builds <code>MobileObjSpec</code>s and BigDecor cells, and the spawn
+  is offered both ways (<code>GetSpawnTileX</code> raw, <code>GetSpawnRenderX</code> centred). Blupi's position in
+  <a href="BlupiController.html">BlupiController</a> is centred too; crate cells and solid boxes handed to it are raw.</p>
+
+  <h2>Animation phase</h2>
+  <p><code>Update(dt)</code> accumulates time and advances <code>animPhase_</code> once per 1/20&nbsp;s, the original's reference tick;
+  each object's <code>phase</code> advances by <code>dt &times; 20</code>. Animated tiles divide this tick by their own divisor (from
+  <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>) before choosing a frame. The hazard helpers read the same tick:</p>
+  <pre><code>bool WorldRuntime::IsBlitzActiveAtPhase(int animPhase) noexcept
+{
+    const int cycle = ((animPhase % 100) + 100) % 100; // defensive: handle a negative phase
+    return cycle % 2 == 0 &amp;&amp; cycle &lt; 50;
+}</code></pre>
+  <p>Lightning is lethal on even ticks of the first half of a 100-tick cycle; a crusher when <code>(phase/3)%10 &lt;= 2</code>; a vanishing
+  (Temp) tile is passable when <code>(phase/4)%20 &gt;= 18</code>. The host passes the Temp result to <code>BlupiController::Step</code> as a
+  plain <code>bool</code>.</p>
+
+  <h2>How it is used</h2>
+  <p>The host loads each mission from bytes it has already read, then re-applies the galaxy mission number when needed:</p>
+  <pre><code>std::istringstream world(bytes ? *bytes : std::string{}, std::ios::in | std::ios::binary);
+if (!bytes || !worldRuntime_.LoadFromVwrStream(world))
+{
+    ...
+    return;
+}
+loadedMissionPath_ = path;
+loadedMissionHash_ = ResumeLog::HashBytes(*bytes);
+if (galaxyGamer_ &gt;= 0) worldRuntime_.OverrideMissionNumber(missionNumber); // its place in the galaxy</code></pre>
+  <p>Every Play tick starts with <code>worldRuntime_.Update(simDt)</code>; <code>InteractionSystem::Update</code> then works on
+  <code>GetMobileObjectsMutable()</code>.</p>
+  <p>Mission arithmetic: from the main hub (mission 1) sign N leads to world N&times;10 (sign 13 to the showcase, world 999, except in
+  a player's galaxy); inside a world hub sign N leads to mission hub+N and sign 199 back to the main hub.
+  <code>ComputeMissionBack</code> returns to the mission's hub, or from a hub to the main hub. <code>ComputeWinExitTarget(1)</code> is 199
+  (the bonus world) and <code>ComputeWinExitTarget(199)</code> is 1.</p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li>Engine-independent: no CNA or cna-engine include, so the verifiers can load worlds without a window.</li>
+    <li>Object timing is the original's: the loader forces the big creature (type 54) to rest 152 ticks at each end, whatever the
+      file says.</li>
+    <li><code>ResyncFromWorld()</code> deliberately leaves the animation clock alone; <code>LoadFromVwrStream()</code> resets it, so a newly
+      loaded world starts at phase 0.</li>
+    <li>Old worlds with implicit saw floors are upgraded in memory on load (<code>UpgradeLegacySawFloors</code>).</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>VerifyShippedWorlds</code>: every <code>worlds3d/*.vwr</code> loads through <code>LoadFromVwrFile</code>, carries the mission number of
+      its file name, yields its objects, and survives load, save, load unchanged.</li>
+    <li><code>VerifyInteractionSystem</code>: loads <code>world999</code> and checks, among much else, the Blitz, crusher and Temp cycles and
+      patrol timing.</li>
+    <li><code>VerifyMoveObjectTypesCna</code>: <code>LoadFromMobileEggbertFile</code> on original world files (needs the sibling reference
+      checkout).</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../internals/world-loading.html">World Loading</a>, <a href="../internals/vwr-format.html">VWR Format</a>, <a href="../internals/object-lifecycle.html">Object Lifecycle</a></li>
+    <li><a href="World.html">World</a>, <a href="Chunk.html">Chunk</a>, <a href="MoveObjectRecord.html">MoveObjectRecord</a>, <a href="HubDoors.html">HubDoors</a></li>
+    <li><a href="InteractionSystem.html">InteractionSystem</a>, <a href="BlupiController.html">BlupiController</a>, <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a></li>
+    <li><a href="../game-loop.html">Game Loop</a>, <a href="../levels.html">Campaign &amp; Worlds</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/GalaxyEggbertGame.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; GalaxyEggbertGame</span>
+    </a>
+    <a class="next" href="../classes/BlupiController.html">
+      <span class="label">Next</span>
+      <span class="title">BlupiController &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

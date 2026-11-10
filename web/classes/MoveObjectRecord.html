@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveObjectRecord — Galaxy Eggbert Docs</title>
+<meta name="description" content="MoveObjectRecord, the codec that stores an object (pickup, enemy, lift, crate...) in a .vwr world as sparse metadata type 1; with its sibling codecs BigDecorRecord and HintZoneRecord.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> MoveObjectRecord</div>
+  <h1>MoveObjectRecord</h1>
+  <p class="subtitle">How a world file stores its objects: one 47-byte record per pickup, enemy, lift or crate, kept as sparse metadata type 1 on the object's start cell.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>include/GalaxyEggbert/MoveObjectRecord.hpp</code></td></tr>
+    <tr><th>Source</th><td><code>src/GalaxyEggbert/MoveObjectRecord.cpp</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert</code></td></tr>
+    <tr><th>Object types</th><td><code>GalaxyEggbert::Def::ObjectType</code> (<code>include/GalaxyEggbert/Def/ObjectType.hpp</code>), the original game's numbering</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p>
+    Everything in a level that moves or can be taken (the original game's "MoveObjects": treasure
+    chests, eggs, keys, lifts, crates, enemies, vehicles, the exit...) is not a voxel. It is stored in
+    the <code>.vwr</code> file as a sparse extra-metadata record of type
+    <code>kMoveObjectMetadataType = 1</code>, anchored at the cell
+    <code>floor(posStartX/Y/Z)</code>. The anchor only buckets the record into a chunk; the exact float
+    positions are inside the payload. <code>MoveObjectRecord</code> is the plain struct, and three free
+    functions encode, collect and remove it.
+  </p>
+  <p>
+    Coordinates are raw grid space (0-99), like every other <a href="World.html">World</a>
+    coordinate. Y is the centre of the occupied cell: an object standing on a floor block at Y = 0
+    has Y = 1. <a href="WorldRuntime.html">WorldRuntime</a> converts records to its live
+    <code>MobileObjSpec</code> list and applies the &minus;50 render shift on X and Z; see
+    <a href="../internals/object-lifecycle.html">Object Lifecycle</a>.
+  </p>
+
+  <h2>Public API</h2>
+  <p>Verified in <code>MoveObjectRecord.hpp</code> as of 2026-11-10.</p>
+  <table>
+    <tr><th>Field / function</th><th>Description</th></tr>
+    <tr><td><code>Def::ObjectType type</code></td><td>What the object is (default <code>ObjectType0</code>). Stored as one byte.</td></tr>
+    <tr><td><code>std::uint16_t visualIcon</code></td><td>Optional <code>object-m.png</code> tile override for variants whose look the type alone cannot give (for example the secret wooden case camouflaged as terrain). 0 = derive the icon from type and animation phase.</td></tr>
+    <tr><td><code>posStartX/Y/Z</code>, <code>posEndX/Y/Z</code></td><td>Patrol end points. <code>posEnd == posStart</code> means the object does not move.</td></tr>
+    <tr><td><code>float speed = 1.5f</code></td><td>Kept for compatibility; patrols are timed by the tick fields below.</td></tr>
+    <tr><td><code>stepAdvanceTicks = 60</code>, <code>stepRecedeTicks = 60</code>, <code>timeStopStartTicks = 40</code>, <code>timeStopEndTicks = 40</code></td><td>The original's four-phase patrol: dwell at start, advance, dwell at end, recede, in 20 Hz ticks. The defaults are placeholders for hand-made worlds, not values from the original.</td></tr>
+    <tr><td><code>constexpr std::uint16_t kMoveObjectMetadataType = 1</code></td><td>The metadata type of every object record.</td></tr>
+    <tr><td><code>void PlaceMoveObject(Worlds::World&amp;, const MoveObjectRecord&amp;)</code></td><td>Encodes and stores the record at its anchor cell. A second object on the same anchor cell <em>replaces</em> the first. Throws <code>std::out_of_range</code> if the anchor is outside the world.</td></tr>
+    <tr><td><code>std::vector&lt;MoveObjectRecord&gt; CollectMoveObjects(const Worlds::World&amp;)</code></td><td>Decodes every object in the world. A payload of any length other than 45 or 47 bytes throws <code>std::runtime_error</code>.</td></tr>
+    <tr><td><code>bool RemoveMoveObject(Worlds::World&amp;, x, y, z)</code></td><td>Removes the object anchored at that cell (the editor's delete).</td></tr>
+  </table>
+
+  <h2>Payload layout</h2>
+  <p>Little-endian, fixed size:</p>
+  <table>
+    <tr><th>Offset</th><th>Size</th><th>Field</th></tr>
+    <tr><td>0</td><td>1</td><td><code>type</code></td></tr>
+    <tr><td>1</td><td>12</td><td><code>posStartX</code>, <code>posStartY</code>, <code>posStartZ</code> (float32)</td></tr>
+    <tr><td>13</td><td>12</td><td><code>posEndX</code>, <code>posEndY</code>, <code>posEndZ</code> (float32)</td></tr>
+    <tr><td>25</td><td>4</td><td><code>speed</code></td></tr>
+    <tr><td>29</td><td>16</td><td><code>stepAdvanceTicks</code>, <code>stepRecedeTicks</code>, <code>timeStopStartTicks</code>, <code>timeStopEndTicks</code></td></tr>
+    <tr><td>45</td><td>2</td><td><code>visualIcon</code> (uint16)</td></tr>
+  </table>
+  <p>The older 45-byte form without <code>visualIcon</code> is still read, with the icon set to 0. Writers always produce 47 bytes.</p>
+
+  <h2>Usage</h2>
+  <p>From <code>WorldRuntime::ResyncFromWorld()</code> (<code>src/GalaxyEggbert/Game/WorldRuntime.cpp</code>), turning records into live objects:</p>
+  <pre><code>mobileObjects_.clear();
+for (const auto&amp; record : CollectMoveObjects(*world_))
+{
+    if (!IsSupportedObjectType(record.type) ||
+        GetObjectDefinition(record.type).placementKind == ObjectPlacementKind::Null)
+        continue;
+    MobileObjSpec spec;
+    spec.type = record.type;
+    spec.visualIcon = record.visualIcon;
+    spec.posStartX = record.posStartX - static_cast&lt;float&gt;(kWorldCenterX);
+    ...
+    mobileObjects_.push_back(spec);
+}</code></pre>
+  <p>
+    Writers: the in-game <a href="WorldEditor.html">WorldEditor</a> (object placement and removal),
+    <code>tools/GenerateSampleWorld3D.cpp</code>, and the Python world builder
+    <code>tools/worldkit.py</code>, which writes the same bytes. <code>tools/vwr_inspect.py</code>
+    lists them.
+  </p>
+
+  <h2>Sibling codecs</h2>
+  <p>Two smaller record types follow the same pattern (struct + place/collect functions over a <code>World</code>):</p>
+  <table>
+    <tr><th>Codec</th><th>Type</th><th>Payload</th><th>Notes</th></tr>
+    <tr><td><code>BigDecorRecord</code><br><code>include/GalaxyEggbert/BigDecorRecord.hpp</code></td><td>3</td><td>2 bytes: the icon (uint16, non-zero)</td><td>A large scenery picture from <code>explo.png</code> (palms, houses, machines...), Eggbert 2's separate BigDecor layer. Not a voxel. The anchor cell gives its position. <code>PlaceBigDecor()</code> throws <code>std::invalid_argument</code> for icon 0; <code>CollectBigDecor()</code>, <code>RemoveBigDecor()</code>. Some icons are solid in 3D (<code>kSolidBigDecorIcons</code>, <a href="BlockDefinitionRegistry.html">BlockDefinitionRegistry</a>).</td></tr>
+    <tr><td><code>HintZoneRecord</code><br><code>include/GalaxyEggbert/HintZoneRecord.hpp</code></td><td>4</td><td>4 bytes: <code>recordIndex</code>, <code>sizeX</code>, <code>sizeY</code>, <code>sizeZ</code></td><td>Where one of a training mission's hints applies: a box from the anchor (its minimum corner) spanning <code>size</code> cells on each axis. <code>Contains(x, y, z)</code>; <code>PlaceHintZone()</code> rejects zero sizes and boxes leaving the world; <code>CollectHintZones()</code> returns them sorted by <code>recordIndex</code>. Added 2026-10-25.</td></tr>
+  </table>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>tests/GalaxyEggbert/MoveObjectRecordTests.cpp</code>: <code>PlaceAndCollectRoundTripsAllFields</code>, <code>RoundTripsThroughSaveAndLoadFile</code>, <code>ReadsLegacyPayloadWithoutVisualOverride</code>, empty worlds, and removal (present and absent).</li>
+    <li><code>tests/GalaxyEggbert/BigDecorRecordTests.cpp</code> and <code>HintZoneRecordTests.cpp</code>: place/collect/replace/remove, file round-trips, rejection of invalid records.</li>
+    <li><code>VerifyShippedWorlds</code>: all shipped objects survive load &rarr; save &rarr; load; <code>VerifyGEEditorObjects</code>, <code>VerifyGEWorldEditor</code> and <code>VerifyGEEditorStorage</code> place, remove and save objects through the editor; <code>VerifyInteractionSystem</code> builds test worlds with <code>PlaceMoveObject</code>.</li>
+  </ul>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="../internals/object-lifecycle.html">Object Lifecycle</a>, <a href="../internals/vwr-format.html">The .vwr Format</a></li>
+    <li><a href="ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>, <a href="WorldRuntime.html">WorldRuntime</a>, <a href="InteractionSystem.html">InteractionSystem</a></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/BlockDefinitionRegistry.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; BlockDefinitionRegistry</span>
+    </a>
+    <a class="next" href="../classes/HubDoors.html">
+      <span class="label">Next</span>
+      <span class="title">HubDoors &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

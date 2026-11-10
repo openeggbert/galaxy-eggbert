@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D World Editor — Galaxy Eggbert Docs</title>
+<meta name="description" content="The in-game 3D world editor: opening it, the camera and aiming, the palette, placing and editing, selections, objects and routes, saving and play-testing, files, and its keyboard, touch and gamepad controls.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html" class="active">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>3D World Editor</h1>
+  <p class="subtitle">Build and change worlds inside the game: fly a free camera, aim at cells, place the game's own blocks, objects and scenery, then play-test at once.</p>
+
+  <p>
+    The editor follows the editors of Speedy Blupi and Eggbert 2: the same palette groups in the same order, the
+    same variant cycling, the same automatic re-tiling of rock edges, the same lift speeds. Because it works in 3D
+    it adds tools of its own: a free-fly camera, 3D box selection, copy and paste, quarter turns, backups and
+    thumbnails. This page describes the state as of 2026-11-10.
+  </p>
+  <div class="note"><strong>The rule.</strong> The editor is the one approved exception to the faithful-remake rule:
+    it may add authoring UX, but no gameplay mechanics. Everything it places is a block, object or decor the game
+    already has, behaving exactly as in the campaign.</div>
+
+  <h2>Opening the editor</h2>
+  <table>
+    <tr><th>Way in</th><th>What opens</th></tr>
+    <tr><td>Main menu, <strong>3D World Editor</strong> (above Play)</td><td>The world screen of the selected player.</td></tr>
+    <tr><td>World screen, <strong>Galaxy</strong></td><td>The player's own galaxy; see <a href="galaxy.html">Your Own Galaxy</a>.</td></tr>
+    <tr><td>Typing <code>xnjttjpo</code> during play</td><td>The editor on the world being played (Speedy Blupi's XMISSION cheat).</td></tr>
+  </table>
+  <h3>The world screen</h3>
+  <p>Each of the three players has <strong>ten world slots</strong>, shown as a grid of five by two. An occupied
+    slot opens; an empty one creates a new world there, a small playable starter (a 3x3 board of rock, a treasure
+    chest, an exit arrow and Blupi's start). A slot's bin deletes its world after a second click. Slot 1 is seeded
+    once with the showcase world, and the gallery (every block, object and scenery piece in one world) goes into the
+    next free slot. Worlds outside the ten slots and shared worlds are listed under "Other worlds": a click copies
+    one into a free slot. Back (or Escape) returns to the main menu.</p>
+  <h3>Editing a campaign world: <code>xnjttjpo</code></h3>
+  <p>Typed during play (no Enter), the cheat opens the editor on the mission's own world file. Saving writes the
+    shipped world itself, the versions before it kept in <code>customworlds/campaign-backups/</code>; Stop returns
+    to the mission, started again with the edits. Afterwards Pause shows an <strong>Original</strong> button: after
+    "Sure?" the world as shipped comes back and the mission restarts. On the web the shipped worlds live in the
+    page's data, so each edit is kept in the browser's storage and laid over them at every start. Like every typed
+    cheat it needs a build with cheats enabled and is blocked by <code>fairplay</code>; see
+    <a href="cheats.html">Cheats &amp; Diagnostics</a>.</p>
+
+  <h2>Camera and aiming</h2>
+  <p>The camera flies freely: W/A/S/D move, Ctrl rises, Shift or Z descends, the right mouse button held turns the
+    view, the mouse wheel zooms. A ray from the cursor through the voxel grid finds the aimed cell
+    (<code>VoxelRaycast</code>):</p>
+  <ul>
+    <li>the <strong>cyan</strong> outline is where Place will add a block, beside the aimed face;</li>
+    <li>the <strong>red</strong> outline and tint mark the edit target, the thing that Turn, Variant and Remove act on,
+      with its coordinates in the status line;</li>
+    <li>in an empty world the ray falls onto the ground plane, so the first block can be placed.</li>
+  </ul>
+  <p>NumPad 4/6 (X), 8/2 (Z) and 7/9 (Y) move the placement cell away from the aimed one; that coordinate stays fixed
+    while the camera moves, until NumPad 5 aims with the cursor again. The world's bounds carry its axes: X red,
+    Y green, Z blue.</p>
+
+  <h2>The palette</h2>
+  <p>The icon palette has the ten groups of Eggbert 2's editor in its order, then one group of Galaxy's own. A
+    group mixes terrain blocks, objects and big scenery (BigDecor) as the original's menus did. An entry the game
+    cannot place yet stays in its original position and shows "Not yet implemented."</p>
+  <table>
+    <tr><th>#</th><th>Group</th><th>Entries</th><th>What it holds</th></tr>
+    <tr><td>1</td><td>Scenery</td><td>11</td><td>Mostly BigDecor families (trees, palms, plants, houses, machine and toy backgrounds); the marine plant, a support and a web are cells</td></tr>
+    <tr><td>2</td><td>Technical blocks</td><td>8</td><td>One representative tile from each of the original's technical tables</td></tr>
+    <tr><td>3</td><td>Rock and terrain</td><td>10</td><td>Terrain tiles</td></tr>
+    <tr><td>4</td><td>Buildings</td><td>10</td><td>Building tiles, among them the brick wall and the flight barrier</td></tr>
+    <tr><td>5</td><td>Hazards</td><td>12</td><td>Patrol and following enemies, lava, a fan, spikes, the drip, the saw, the inverter, the lightning, the crusher</td></tr>
+    <tr><td>6</td><td>Moving mechanisms</td><td>13</td><td>The lift at four speeds, the conveyor lift, fish, bird, wasp, the large creature, spider, enemy Blupis</td></tr>
+    <tr><td>7</td><td>Treasures</td><td>9</td><td>Treasure chest, extra-life egg, lollipop, shield, drink, ammunition, charge, the personal mine, dynamite</td></tr>
+    <tr><td>8</td><td>Keys and progression</td><td>10</td><td>A key, doors, the hub door, a teleporter, a spring, temporary blocks, bridges, the crate and the secret crate (camouflaged as the selected terrain)</td></tr>
+    <tr><td>9</td><td>Vehicles</td><td>5</td><td>Overcraft, helicopter, skateboard, jeep, tank</td></tr>
+    <tr><td>10</td><td>Characters and goals</td><td>8</td><td>The exit, the four coloured Blupi starts, posts, signs, the golden key</td></tr>
+    <tr><td>11</td><td>Background (Galaxy)</td><td>32 + 11</td><td>The 32 sky regions as live thumbnails, then the music: none or tracks 1-10</td></tr>
+  </table>
+
+  <h2>Placing and changing</h2>
+  <ul>
+    <li><strong>Place</strong>: left click, Space or the PLACE button puts the selected entry in the cyan cell.</li>
+    <li><strong>Variants</strong>: clicking again on the cell just placed cycles through its variants; Ctrl+click
+      places without cycling (and picks a random member of a tree, palm or house family). <strong>V</strong> cycles
+      the aimed block through its variant family, or through the edge pieces of its re-tiling family.</li>
+    <li><strong>Re-tiling</strong>: placing or removing a block re-tiles it and its four neighbours, as the
+      original's <code>AdaptBorder</code> does, so rock and slime edges follow what borders them.</li>
+    <li><strong>Turn</strong> (O): a quarter turn of the red target. A plate, fan or wind tile changes its axis; a
+      window, sign or saw faces another side; models and Blupi starts turn too.</li>
+    <li><strong>Remove</strong>: Delete, Backspace or the middle button removes the red selection.</li>
+    <li><strong>One exit</strong>: placing a red exit arrow or the final golden key replaces the previous exit, as in
+      the original editor.</li>
+  </ul>
+
+  <h2>3D selection, box fill, copy and paste</h2>
+  <ul>
+    <li><strong>Shift + NumPad</strong> (or Shift + arrows, Home, Page Up) extends an inclusive 3D selection from the
+      aimed cell, its size shown while selecting. Place fills it with the selected block, Remove clears it, Escape
+      cancels. The whole fill is one Undo.</li>
+    <li><strong>F</strong> on two corners fills the box between them.</li>
+    <li><strong>C</strong> on two corners copies a box: its blocks, their turns, and the objects and BigDecor anchored
+      in it. <strong>P</strong> turns pasting on and off; <strong>Q</strong> turns the copy a quarter,
+      <strong>X</strong> mirrors it; a click stamps it with its corner at the preview (Ctrl+click keeps what lies
+      under its empty cells). One Undo takes a stamp back. The copy is kept across the worlds of one session.</li>
+  </ul>
+  <p><strong>Undo and redo</strong> (U and R) cover every edit: blocks, objects, BigDecor, sky, music, Blupi starts,
+    turns, object ends and timings.</p>
+
+  <h2>Objects, routes and lifts</h2>
+  <p>A lift or creature from the moving mechanisms is placed, then the next click sets the end of its route (the
+    editor prompts for it); Escape or a click on it again leaves it still. The four lift entries are one lift at the
+    original PC editor's four speeds, in 20 Hz ticks per cell: slow 20/20 with a rest of 20, normal 10/10/10, fast
+    6/6/3, and fast-up/slow-back 5/22/2.</p>
+  <ul>
+    <li><strong>G</strong> picks an object or a Blupi start; <strong>T</strong> sets the picked object's end;
+      <strong>Tab</strong> steps through its timing fields (advance, recede, rest at the start, rest at the end) and
+      <strong>+</strong>/<strong>-</strong> change the value; <strong>Delete</strong> removes the object.</li>
+    <li>Routes are drawn as numbered open cubes, <strong>1</strong> at the start and <strong>2</strong> at the end,
+      for every lift, fish, moving mine, bird, wasp, creature and enemy Blupi whose ends differ. Opaque terrain hides
+      them.</li>
+    <li>Lifts move along their routes in the editor, with their waits and return trip, by the same routine as in
+      play. This preview is never saved into the world.</li>
+  </ul>
+  <h3>The four Blupi starts</h3>
+  <p>Characters and goals holds four independent starts: yellow, orange, blue and green, each drawn in its colour.
+    Moving, turning or removing one leaves the others alone, even when two share a cell. Yellow is the
+    single-player start, and its heading is the one Blupi faces when the world begins.</p>
+  <h3>Sky region and music</h3>
+  <p>The Background group's thumbnails choose the world's sky region (its background picture); the Left and Right
+    arrows step through them too. Its note entries, or the <strong>M</strong> key, choose the world's music: none or
+    one of the original ten tracks.</p>
+
+  <h2>Saving and play-testing</h2>
+  <ul>
+    <li><strong>Enter</strong> (or Tools &gt; Save, a gamepad's Start) saves. The first save after a world was opened
+      keeps the file as it was as a backup, three generations deep.</li>
+    <li>Every save also stores a 64x64 thumbnail of the editor's view, which the world screen shows on the slot.</li>
+    <li>The <strong>dice</strong> saves and starts a play-test; Pause's Back returns to the editor with the same
+      world.</li>
+    <li>The <strong>Stop</strong> sign (F10) returns to the world screen. With unsaved changes it needs a second
+      press.</li>
+  </ul>
+  <h3>Backups, export and import</h3>
+  <p>On the world screen, <strong>Backups</strong> turns a click on a slot into a restore of its newest backup;
+    clicking again steps further back and comes round to where it began. A deleted slot keeps its world the same way.
+    <strong>Export</strong> turns a click on a slot into a copy in the shared folder (<code>A-world-3.vwr</code> for
+    player A's slot 3, replacing an earlier export of that slot); on the web the file is also downloaded.
+    <strong>Import</strong> opens the browser's file picker on the web; elsewhere it tells you where to put files.
+    Shared worlds are listed first among the other worlds, newest first.</p>
+  <table>
+    <tr><th>File</th><th>Path in the player's folder</th></tr>
+    <tr><td>Slot <em>K</em> of player <em>N</em> (N = 0, 1, 2)</td><td><code>customworlds/gamerN/custom_00K.vwr</code> (<code>custom_010.vwr</code> for slot 10)</td></tr>
+    <tr><td>Its backups</td><td><code>customworlds/gamerN/backups/custom_00K.1.vwr</code> (newest) to <code>.3.vwr</code></td></tr>
+    <tr><td>Its thumbnail</td><td><code>customworlds/gamerN/custom_00K.png</code></td></tr>
+    <tr><td>Shared worlds</td><td><code>customworlds/shared/</code></td></tr>
+    <tr><td>The galaxy</td><td><code>customworlds/gamerN/galaxy/</code></td></tr>
+    <tr><td>Campaign worlds edited with <code>xnjttjpo</code></td><td><code>customworlds/campaign-backups/</code>, <code>campaign-edits/</code>, <code>campaign-originals/</code> (the last on the desktop; the web keeps the originals in memory)</td></tr>
+  </table>
+  <p>The player's folder is the system's per-user folder on the desktop (<code>~/.local/share/Galaxy Eggbert</code>
+    on Linux, <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows, or <code>--user DIR</code>), <code>/save</code>
+    in the browser's storage on the web, and the app's private storage on Android. World files are ordinary
+    <code>.vwr</code> files; see <a href="internals/vwr-format.html">The .vwr format</a>.</p>
+
+  <h2>Controls</h2>
+  <h3>Keyboard and mouse</h3>
+  <p><strong>H</strong> shows these keys on the screen.</p>
+  <table>
+    <tr><th>Input</th><th>Action</th></tr>
+    <tr><td>W A S D</td><td>Fly</td></tr>
+    <tr><td>Ctrl / Shift or Z</td><td>Up / down</td></tr>
+    <tr><td>Right mouse button held, wheel</td><td>Look, zoom</td></tr>
+    <tr><td>Left click, Space</td><td>Place in the cyan cell (click again on it: next variant)</td></tr>
+    <tr><td>Ctrl + click</td><td>Place without cycling; when pasting, keep what is under the copy's air</td></tr>
+    <tr><td>Delete, Backspace, middle button</td><td>Remove the red selection</td></tr>
+    <tr><td>V / O</td><td>Next variant / quarter turn</td></tr>
+    <tr><td>NumPad 4/6, 8/2, 7/9; NumPad 5</td><td>Offset the cell in X, Z, Y; aim with the cursor again</td></tr>
+    <tr><td>Shift + NumPad</td><td>Extend a 3D selection</td></tr>
+    <tr><td>F / C / P / Q / X</td><td>Box fill / copy a box / paste / turn the copy / mirror the copy</td></tr>
+    <tr><td>U / R</td><td>Undo / redo</td></tr>
+    <tr><td>G / T / Tab / + / -</td><td>Pick an object or start / set its end / next field / change the value</td></tr>
+    <tr><td>Left / Right arrows, M</td><td>Background, music</td></tr>
+    <tr><td>Enter / Escape / F10</td><td>Save / cancel / Stop</td></tr>
+  </table>
+  <h3>Touch</h3>
+  <p>Touch editing needs no keyboard. The <strong>Move</strong> pad flies horizontally, the
+    <strong>Up</strong>/<strong>Down</strong> buttons change height, and dragging the world with another finger
+    looks around. Palette entries and PLACE are tapped as buttons. <strong>Tools &gt; Select 3D</strong> replaces
+    holding Shift, and six X-/X+/Y-/Y+/Z-/Z+ buttons extend the selection.</p>
+  <h3>Gamepad</h3>
+  <table>
+    <tr><th>Control</th><th>Action</th></tr>
+    <tr><td>Left stick / right stick</td><td>Fly / look</td></tr>
+    <tr><td>RT / LT</td><td>Up / down</td></tr>
+    <tr><td>A / X / B</td><td>Place / remove / cancel</td></tr>
+    <tr><td>D-pad, LB / RB</td><td>Offset the cell in X and Z, and in Y</td></tr>
+    <tr><td>Y</td><td>Switch between flying and an on-screen cursor (sticks move it, A clicks palette and Tools)</td></tr>
+    <tr><td>Start / Back</td><td>Save / Stop (with the unsaved-change guard)</td></tr>
+  </table>
+  <p>The menus and the world screen use the cursor automatically, so a whole session can start and end on a
+    gamepad; the mouse keeps working while one is plugged in.</p>
+  <h3>The Tools menu</h3>
+  <p>For touch and gamepad, the Tools menu lists every command with its keyboard equivalent
+    (<code>EditorDeviceControls</code>): Save (Enter), Undo (U), Redo (R), Select 3D, Cancel (Escape), Remove
+    (Backspace), Turn (O), Variant (V), Pick object (G), Set end (T), Next field (Tab), Value + and Value -, Delete
+    obj (Delete), Copy box (C), Paste (P), Turn copy (Q), Mirror (X), Box fill (F), Keep (Ctrl's place without
+    cycling), Reset XYZ (NumPad 5), Music (M), Help (H) and Stop (F10).</p>
+
+  <h2>For developers</h2>
+  <p>The editor lives in <code>src/GalaxyEggbert/Editor/</code>, namespace <code>GalaxyEggbert::Editor</code>.</p>
+  <table>
+    <tr><th>Source</th><th>Role</th></tr>
+    <tr><td><code>WorldEditor.hpp</code>, <code>WorldEditor.cpp</code>, <code>WorldEditorUpdate.cpp</code></td><td>One editing session: camera, aiming, placement, history, saving. See <a href="classes/WorldEditor.html">WorldEditor</a>.</td></tr>
+    <tr><td><code>EditorDeviceControls.*</code></td><td>Touch and gamepad front end; it only produces the keyboard and mouse input the editor already understands.</td></tr>
+    <tr><td><code>PaletteCategories.*</code>, <code>EditorPalette*.*</code></td><td>The groups in Eggbert 2's order, and the palette's input, layout and drawing.</td></tr>
+    <tr><td><code>VoxelRaycast.*</code>, <code>BoxRegion.*</code>, <code>Clipboard.*</code></td><td>Aiming, 3D selections, copy and paste.</td></tr>
+    <tr><td><code>EditCommandStack.*</code></td><td>Undo and redo.</td></tr>
+    <tr><td><code>AutoTile.hpp</code>, <code>EditorVariants.hpp</code></td><td>Re-tiling and variant families.</td></tr>
+    <tr><td><code>ObjectPathRenderer.*</code>, <code>ObjectPathMarkers.hpp</code>, <code>PlayerStartColor.hpp</code></td><td>Route cubes and the coloured starts.</td></tr>
+    <tr><td><code>CustomWorldStorage.*</code>, <code>EditorBrowserScreen.*</code>, <code>GalaxyBrowserScreen.*</code>, <code>PlatformFiles.*</code></td><td>Slots, backups, thumbnails, sharing, the web's download and file picker. See <a href="classes/CustomWorldStorage.html">CustomWorldStorage</a>.</td></tr>
+  </table>
+  <p>Tests: <code>VerifyGEWorldEditor</code>, <code>VerifyGEEditorDevices</code>, <code>VerifyGEEditorPalette</code>,
+    <code>VerifyGEEditorStorage</code>, <code>VerifyGEEditorObjects</code>. The comparison with the original editors,
+    row by row, is <code>plans/audit/editor_parity.md</code> (ED-0001 to ED-0013).</p>
+
+  <h2>Verification status (as of 2026-11-10)</h2>
+  <ul>
+    <li><strong>Desktop</strong>: every approved editor milestone (through EDITOR-130) is complete, with live checks
+      of placing, play-testing, backups, copy and paste, thumbnails and the coloured starts; touch editing (including
+      a touch-only 3x2x8 fill) was checked with direct touch events and gamepad editing with an SDL virtual gamepad.</li>
+    <li><strong>Web</strong>: export and import checked in headless Chrome (2026-11-06); <code>xnjttjpo</code> edits
+      kept over a reload (2026-11-09).</li>
+    <li><strong>Not verified</strong>: a physical gamepad or touch screen; editing on Android.</li>
+  </ul>
+
+  <div class="card-grid">
+    <a class="card" href="galaxy.html"><h3>Your Own Galaxy</h3><p>Build a whole campaign of your own.</p></a>
+    <a class="card" href="tutorials/modifying-levels.html"><h3>Authoring a world</h3><p>The editor and the Python generator, step by step.</p></a>
+    <a class="card" href="levels.html"><h3>Campaign &amp; Worlds</h3><p>How the shipped worlds are made.</p></a>
+  </div>
+
+  <div class="page-nav">
+    <a class="prev" href="galaxy.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Your Own Galaxy</span>
+    </a>
+    <a class="next" href="graphics.html">
+      <span class="label">Next</span>
+      <span class="title">3D Effects &amp; Graphics &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

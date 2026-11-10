@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CustomWorldStorage — Galaxy Eggbert Docs</title>
+<meta name="description" content="CustomWorldStorage keeps the worlds players make in the 3D editor: ten slots per player, backups, thumbnails, export and import, edits of shipped worlds and each player's own galaxy.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Classes</a> <span>/</span> CustomWorldStorage</div>
+  <h1>CustomWorldStorage</h1>
+  <p class="subtitle">Where player-made worlds live: ten slots per player, backups, thumbnails, sharing, edited shipped worlds and the player's galaxy.</p>
+
+  <h2>Location</h2>
+  <table>
+    <tr><th>Header</th><td><code>src/GalaxyEggbert/Editor/CustomWorldStorage.hpp</code></td></tr>
+    <tr><th>Sources</th><td><code>src/GalaxyEggbert/Editor/CustomWorldStorage.cpp</code>; web download and upload in <code>src/GalaxyEggbert/Editor/PlatformFiles.{hpp,cpp}</code></td></tr>
+    <tr><th>Namespace</th><td><code>GalaxyEggbert::Editor</code> (free functions and constants, no class)</td></tr>
+    <tr><th>Engine dependency</th><td>None: <code>std::filesystem</code>, the world model (<a href="World.html">World</a>, <a href="MoveObjectRecord.html">MoveObjectRecord</a>), <code>Game/UserFolder.hpp</code> and <code>Game/DemoReplay.hpp</code>. Only <code>PlatformFiles.cpp</code> has Emscripten code.</td></tr>
+  </table>
+
+  <h2>Purpose</h2>
+  <p><code>CustomWorldStorage</code> is the file layer of the 3D world editor and of the player's own galaxy. It names every file, lists what is on disk, and copies, backs up, restores, exports and imports worlds. It is deliberately <em>not</em> recorded in <a href="SaveData.html">SaveData</a>: the editor scans the directories each time, so a list cannot drift away from the files. Worlds belong to one of the three players (gamer slots 0-2, shown as A-C) chosen on the main menu.</p>
+  <p>All paths are inside the player's <strong>user folder</strong> (<code>Game/UserFolder.hpp</code>, since 2026-11-10). On the desktop that is <code>$XDG_DATA_HOME/Galaxy Eggbert</code> (by default <code>~/.local/share/Galaxy Eggbert</code>) on Linux, <code>%LOCALAPPDATA%\Galaxy Eggbert</code> on Windows (not verified), or a folder given with <code>--user DIR</code> or <code>GALAXY_USER_DIR</code>. The web build uses <code>/save</code>, which is kept in the browser's storage, and Android uses the app's private storage. Before 2026-11-10 the files were in the working folder; an existing player's files are copied over on the first start.</p>
+
+  <h2>Folder layout</h2>
+  <pre><code>customworlds/                      CustomWorldsRoot()
+  gamer0/ gamer1/ gamer2/          CustomWorldsDir(gamer), players A-C
+    custom_001.vwr ... custom_010.vwr   the ten slots (SlotWorldPath)
+    custom_003.png                 a slot's thumbnail (ThumbnailPath)
+    custom_011.vwr, other names    older worlds: listed, never deleted
+    backups/custom_003.1.vwr       backups, .1 newest ... .3 oldest
+    .demo-seeded, .gallery-seeded  seeding markers
+    galaxy/                        GalaxyDir(gamer): the player's galaxy
+      world001.vwr                 main hub
+      world010.vwr ... world140.vwr    world hubs 1-14
+      world011.vwr ... world148.vwr    missions 1-8 of each world
+      world199.vwr                 bonus world
+      name.txt, backups/
+  shared/                          SharedWorldsDir(): A-world-3.vwr, A-galaxy.galaxy ...
+  campaign-backups/                xnjttjpo: backups of edited shipped worlds
+  campaign-edits/                  xnjttjpo: a copy of every save of a shipped world
+  campaign-originals/              desktop: shipped worlds as they came, before the first edit</code></pre>
+  <p>On the web the originals are kept in memory in <code>worlds3d-shipped</code> beside <code>worlds3d/</code>, because the page's packed data holds the shipped worlds anyway.</p>
+
+  <h2>Collaborators</h2>
+  <p><strong>Uses</strong>: <code>UserPath()</code> (<code>UserFolder.hpp</code>), <code>World::saveToFile</code>/<code>loadFromFile</code>, <code>PlaceMoveObject</code> for the starter worlds, <code>DemoReplay</code> (recordings made in a galaxy travel with its pack), <code>FreeFileName</code> (numbered export names), and on the web <code>OfferDownload</code> and <code>RequestUpload</code> from <code>PlatformFiles.hpp</code> (a download, and the browser's file picker writing into <code>shared/</code>; elsewhere they do nothing and return false).</p>
+  <p><strong>Used by</strong>: <a href="WorldEditor.html">WorldEditor</a> (seeding on <code>EnterBrowser</code>, backups and thumbnails on save), <code>EditorBrowserScreen</code> and <code>GalaxyBrowserScreen</code> (the slot and galaxy screens), <a href="GalaxyEggbertGame.html">GalaxyEggbertGame</a> (opening galaxy worlds, <code>xnjttjpo</code>, Pause's "Original", galaxy demos) and <code>main.cpp</code> (the web's <code>ApplyCampaignEdits</code> at start).</p>
+
+  <h2>Key members</h2>
+  <p>A selection of the declarations in <code>CustomWorldStorage.hpp</code>, as of 2026-11-10 (<code>Worlds::World</code> is <code>GalaxyEggbert::Worlds::World</code>).</p>
+  <table>
+    <tr><th>Member</th><th>Signature</th><th>What it does</th></tr>
+    <tr><td><code>kCustomWorldSlotCount</code>, <code>kBackupGenerations</code></td><td><code>constexpr int</code> = 10, 3</td><td>Slots per player; backup generations per world.</td></tr>
+    <tr><td><code>CustomWorldsDir</code></td><td><code>std::filesystem::path CustomWorldsDir(int gamerSlot)</code></td><td>The player's folder, <code>customworlds/gamerN</code>.</td></tr>
+    <tr><td><code>SlotWorldPath</code></td><td><code>std::filesystem::path SlotWorldPath(int gamerSlot, int slot)</code></td><td>Slot 1-10's file, <code>custom_%03d.vwr</code>; may not exist yet.</td></tr>
+    <tr><td><code>ListOlderCustomWorlds</code>, <code>CopyIntoFreeSlot</code></td><td><code>std::vector&lt;std::filesystem::path&gt; ListOlderCustomWorlds(int gamerSlot)</code>, <code>std::filesystem::path CopyIntoFreeSlot(int gamerSlot, const std::filesystem::path&amp; source)</code></td><td>Worlds outside the ten slots; copying one (or a shared world) into the first free slot, the source untouched.</td></tr>
+    <tr><td><code>NextNewWorldPath</code></td><td><code>std::filesystem::path NextNewWorldPath(int gamerSlot)</code></td><td>The first free slot's path; empty when all ten are taken.</td></tr>
+    <tr><td><code>BackUpWorld</code>, <code>BackUpWorldTo</code></td><td><code>bool BackUpWorld(const std::filesystem::path&amp; world)</code>, <code>bool BackUpWorldTo(const std::filesystem::path&amp; world, const std::filesystem::path&amp; backupDir)</code></td><td>Keep the file as the newest backup, shifting the older ones and dropping the oldest; the second form keeps them elsewhere (edited shipped worlds).</td></tr>
+    <tr><td><code>RestoreBackup</code></td><td><code>bool RestoreBackup(const std::filesystem::path&amp; world)</code></td><td>The newest backup takes the world's place and the current world becomes the oldest backup, so repeated restores cycle back to the start.</td></tr>
+    <tr><td><code>DeleteSlotWorld</code></td><td><code>bool DeleteSlotWorld(const std::filesystem::path&amp; world)</code></td><td>Deletes a world into its backups (and drops its thumbnail).</td></tr>
+    <tr><td><code>ThumbnailPath</code></td><td><code>std::filesystem::path ThumbnailPath(const std::filesystem::path&amp; world)</code></td><td>The PNG beside the world: the editor's view at its last save.</td></tr>
+    <tr><td><code>SharedWorldsDir</code>, <code>ExportWorld</code>, <code>ListSharedWorlds</code></td><td><code>std::filesystem::path ExportWorld(int gamerSlot, int slot)</code></td><td>Copies a slot into <code>shared/</code> as <code>ExportName()</code> (<code>A-world-3.vwr</code>), replacing an earlier export of that slot.</td></tr>
+    <tr><td><code>SeedShowcaseSlot</code>, <code>SeedGallerySlot</code></td><td><code>bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path&amp; showcase)</code>, <code>bool SeedGallerySlot(int gamerSlot, const std::filesystem::path&amp; gallery)</code></td><td>Slot 1 gets the showcase world (999) once, only if empty; the first free slot gets the gallery world (998), kept current while unedited.</td></tr>
+    <tr><td><code>CampaignBackupsDir</code>, <code>CampaignEditsDir</code>, <code>CampaignOriginalsDir</code></td><td><code>std::filesystem::path ...()</code></td><td>The folders for shipped worlds edited with <code>xnjttjpo</code>.</td></tr>
+    <tr><td><code>ApplyCampaignEdits</code></td><td><code>int ApplyCampaignEdits(const std::filesystem::path&amp; worldsDir, const std::filesystem::path&amp; originalsDir = {})</code></td><td>Lays each kept edit over the shipped world of that name (the web, at every start).</td></tr>
+    <tr><td><code>HasCampaignEdit</code>, <code>KeepCampaignOriginal</code>, <code>RevertCampaignEdit</code></td><td><code>bool HasCampaignEdit(const std::filesystem::path&amp; world)</code> ...</td><td>Whether a shipped world is still its kept edit; keep the original before the first edit; Pause's "Original" puts it back.</td></tr>
+    <tr><td><code>GalaxyDir</code>, <code>GalaxyWorldPath</code>, <code>IsGalaxyMission</code></td><td><code>std::filesystem::path GalaxyWorldPath(int gamerSlot, int mission)</code>, <code>bool IsGalaxyMission(int mission) noexcept</code></td><td>A galaxy place's file, <code>galaxy/world%03d.vwr</code>; valid places are 1, the hubs 10-140, their missions 1-8, and 199.</td></tr>
+    <tr><td><code>CreateEditorStarterWorld</code>, <code>CreateGalaxyStarterWorld</code></td><td><code>Worlds::World CreateEditorStarterWorld()</code>, <code>Worlds::World CreateGalaxyStarterWorld(int mission)</code></td><td>A new world: a 3 x 3 rock board with a chest and an exit arrow; for a galaxy hub, the board with a world or mission sign (and a return sign) and Blupi's start.</td></tr>
+    <tr><td><code>PackGalaxy</code>, <code>UnpackGalaxy</code></td><td><code>std::string PackGalaxy(int gamerSlot)</code>, <code>std::optional&lt;GalaxyPack&gt; UnpackGalaxy(const std::string&amp; pack)</code></td><td>The whole galaxy as one <code>.galaxy</code> file and back.</td></tr>
+    <tr><td><code>ExportGalaxy</code>, <code>ImportGalaxy</code>, <code>DeleteGalaxy</code></td><td><code>std::filesystem::path ExportGalaxy(int gamerSlot)</code>, <code>int ImportGalaxy(int gamerSlot, const std::filesystem::path&amp; pack, int* demos = nullptr)</code>, <code>std::filesystem::path DeleteGalaxy(int gamerSlot)</code></td><td>Export into <code>shared/</code> (numbered, never replacing); import replacing the player's galaxy (old places into backups); delete after exporting a pack first.</td></tr>
+    <tr><td><code>GalaxyName</code>, <code>SetGalaxyName</code></td><td><code>std::string GalaxyName(int gamerSlot)</code>, <code>bool SetGalaxyName(int gamerSlot, const std::string&amp; name)</code></td><td>The galaxy's name in <code>galaxy/name.txt</code>: letters, digits, spaces, <code>-</code> and <code>'</code>, at most 24 characters.</td></tr>
+  </table>
+
+  <h3>The galaxy pack format</h3>
+  <p>A <code>.galaxy</code> file is text headers with raw bytes between them: <code>GALAXY_PACK 1</code>, an optional <code>name &lt;size&gt;</code> entry with the galaxy's name, then <code>world &lt;mission&gt; &lt;size&gt;</code> and that many <code>.vwr</code> bytes per place, <code>demo &lt;position&gt; &lt;size&gt;</code> and the <code>.gdemo</code> bytes for each recording the player made in the galaxy, and finally <code>END</code> with the FNV-1a hash of everything before it in 16 hex digits. <code>UnpackGalaxy</code> refuses a damaged or truncated pack, another version, a duplicated place or position, a place that is not a galaxy's, or a world that does not load. A demo recorded with another simulation revision is left out and the galaxy is kept. Imported demos go to the shared demos folder, never over one of the player's positions.</p>
+
+  <h2>How it is used</h2>
+  <p>The editor saves through <code>WorldEditor::SaveWorld</code> (in <code>src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp</code>, shortened). The first save of a visit backs the old file up; a save of a shipped world opened from play is also copied into <code>campaign-edits/</code>; a slot's save asks the host for a thumbnail:</p>
+  <pre><code>void WorldEditor::SaveWorld(const Worlds::World&amp; world)
+{
+    if (backedUpPath_ != worldPath_)
+    {
+        (void)(outsideSession_ &amp;&amp; !outsideBackupDir_.empty() ? BackUpWorldTo(worldPath_, outsideBackupDir_)
+                                                             : BackUpWorld(worldPath_));
+        backedUpPath_ = worldPath_;
+    }
+    world.saveToFile(worldPath_);
+    if (outsideSession_ &amp;&amp; !outsideCopyDir_.empty())
+    {
+        ...
+        std::filesystem::copy_file(worldPath_, outsideCopyDir_ / worldPath_.filename(),
+                                   std::filesystem::copy_options::overwrite_existing, error);
+    }
+    if (!outsideSession_)
+    {
+        thumbnailRequest_ = ThumbnailPath(worldPath_);
+    }
+    ...
+}</code></pre>
+  <p>When a player opens the editor, <code>WorldEditor::EnterBrowser</code> calls <code>SeedShowcaseSlot(gamer, "worlds3d/world999.vwr")</code> and <code>SeedGallerySlot(gamer, "worlds3d/world998.vwr")</code>. The galaxy screen opens <code>GalaxyWorldPath()</code> files and creates missing places from <code>CreateGalaxyStarterWorld()</code>. When a galaxy is imported or deleted, the host resets that player's galaxy progress in <a href="SaveData.html">SaveData</a>.</p>
+
+  <h2>Rules and invariants</h2>
+  <ul>
+    <li><strong>Nothing is lost silently.</strong> Older worlds outside the slots are listed and never deleted. Seeding never overwrites, and the markers stop a deleted or edited slot from being seeded again. Deleting a slot or a galaxy place moves it into its backups. Restoring rotates the backups instead of discarding the current file. Deleting a whole galaxy exports a pack first.</li>
+    <li><strong>The disk is the truth.</strong> The editor never keeps a list of worlds in <code>SaveData</code>; screens call <code>Refresh()</code> to rescan.</li>
+    <li><strong>The shipped folder stays clean.</strong> Backups of edited shipped worlds go to <code>campaign-backups/</code>, and no thumbnail is written beside them. On the desktop <code>xnjttjpo</code> edits the shipped file in place. On the web, where the shipped worlds are packed page data, <code>main.cpp</code> lays the kept edits over them at every start, before any world is loaded.</li>
+    <li><strong>A galaxy is a campaign.</strong> It uses the campaign's mission numbering (1, 10-140, 11-148, 199), so hubs, doors, gold bars and signs work without special cases.</li>
+    <li><strong>Platform differences are only paths.</strong> The web's <code>/save</code> and the download and file-picker transfer are persistence differences, not engine ones.</li>
+  </ul>
+
+  <h2>Tests</h2>
+  <p><code>VerifyGEEditorStorage</code> (<code>tools/VerifyGEEditorStorage.cpp</code>, registered with <code>ge_add_editor_verify</code>, runs in the build directory's <code>verify-run/</code>) covers the ten slots and older worlds, showcase and gallery seeding, the three backup generations and restore cycle, backup on the editor's first save, export and import through the world screen, galaxy paths and starter worlds, backups in another folder for <code>xnjttjpo</code>, the web's campaign edits and Pause's "Original", the galaxy screen's delete and restore, packing (damaged and invalid packs refused), export and import between players, the import list's paging by eight, galaxy names (including the on-screen keyboard), and galaxy recordings in packs. Live QA step files: <code>tools/qa_steps/editor_backups.txt</code> and <code>editor_thumbnails.txt</code>.</p>
+
+  <h2>Related pages</h2>
+  <ul>
+    <li><a href="WorldEditor.html">WorldEditor</a>: the editing session that saves through these functions</li>
+    <li><a href="../editor.html">3D World Editor</a> and <a href="../galaxy.html">Your Own Galaxy</a>: the player's side</li>
+    <li><a href="SaveData.html">SaveData</a> and <a href="../save-system.html">Save Data &amp; Resume</a>: the player's other files in the same user folder</li>
+    <li><a href="DemoReplay.html">DemoReplay</a>: recordings that travel in a galaxy pack</li>
+    <li><a href="../internals/vwr-format.html">The .vwr format</a></li>
+    <li><a href="../configuration.html">Configuration</a>: <code>--user</code> and <code>GALAXY_USER_DIR</code></li>
+  </ul>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/WorldEditor.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; WorldEditor</span>
+    </a>
+    <a class="next" href="../systems/index.html">
+      <span class="label">Next</span>
+      <span class="title">Systems &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

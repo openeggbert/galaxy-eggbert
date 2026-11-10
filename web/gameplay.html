@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gameplay — Galaxy Eggbert Docs</title>
+<meta name="description" content="What the player does in Galaxy Eggbert: Blupi's moves, the goals of a mission, lives, hazards, enemies, pickups, vehicles, the HUD, the camera and game speed.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,141 +24,263 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html" class="active">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Gameplay</div>
   <h1>Gameplay</h1>
-  <p class="subtitle">What GalaxyEggbertCNA actually does today, and what mobile-eggbert requires it to do eventually.</p>
+  <p class="subtitle">What the player does in Galaxy Eggbert: Blupi's moves, the goal of a mission, lives, hazards, enemies, pickups, vehicles and the screens around play.</p>
 
-  <div class="warn">
-    <strong>Read this first</strong>
-    <code>GalaxyEggbertCNA</code> currently has <strong>no real gameplay</strong> — no hazards,
-    no enemies, no pickups, no exit condition, no lives, no score. What exists is terrain
-    rendering and an invisible, collision-only player controller. Everything below the "Today"
-    section describes mobile-eggbert's actual mechanics as the fidelity target CNA must eventually
-    reach — per the project rule that Galaxy Eggbert may not invent mechanics beyond mobile-eggbert.
-  </div>
-
-  <h2>Today: What Runs</h2>
-  <ol>
-    <li>The game loads <code>worlds3d/world001.vwr</code> and renders its terrain.</li>
-    <li>An invisible <code>GEBlupiController</code> spawns at <code>(0, 1, 0)</code>.</li>
-    <li>Arrow keys move it on X/Z; Space jumps when grounded; gravity and 1-block step-up traversal apply.</li>
-    <li>The camera follows the controller's position.</li>
-    <li>Nothing else happens: no damage, no win/lose condition, no HUD, no sound.</li>
-  </ol>
-
-  <h2>GEBlupiController Physics Constants</h2>
-  <table>
-    <tr><th>Constant</th><th>Value</th></tr>
-    <tr><td><code>kMoveSpeed</code></td><td>5.5 units/s</td></tr>
-    <tr><td><code>kJumpSpeed</code></td><td>12.0 units/s</td></tr>
-    <tr><td><code>kGravity</code></td><td>25.0 units/s²</td></tr>
-    <tr><td><code>kFallLimit</code></td><td>−10.0 units/s (terminal fall velocity clamp)</td></tr>
-    <tr><td><code>kStepLimit</code></td><td>1.0 unit (max step-up height)</td></tr>
-  </table>
-  <p>These constants match <code>GalaxyEggbertSimple3D</code>'s equivalent controller.</p>
-
-  <h2>The Faithful-Remake Rule</h2>
   <p>
-    From <code>CLAUDE.md</code>: <em>"Galaxy Eggbert is a faithful 3D remake of mobile-eggbert.
-    Nothing more."</em> Before any feature is implemented or suggested, it must first be verified
-    to exist in mobile-eggbert.
+    Galaxy Eggbert plays the game of <em>Speedy Blupi</em> in free 3D. The rules, numbers and timings come from
+    Mobile Eggbert, the C++ port of Speedy Blupi that the project uses as its read-only reference; the worlds
+    are new 3D designs. This page describes the game as of 2026-11-10. The keys are on
+    <a href="controls.html">Controls</a>, the structure of hubs and missions on <a href="levels.html">Campaign &amp; Worlds</a>.
   </p>
-  <p><strong>Explicitly forbidden</strong> (do not exist in mobile-eggbert): coins/mince, time bonuses or star ratings, coyote time, wall jump, double jump, combo multipliers, or any other invented mechanic.</p>
-  <p><strong>Allowed 3D adaptations</strong> (natural technical consequences of 3D, not new gameplay): perspective camera, billboard sprites, shadows, step-up traversal.</p>
+  <div class="note"><strong>Faithful by rule.</strong> Every mechanic below traces to confirmed Mobile Eggbert behaviour.
+    Where a 2D rule needed a 3D reading, the choice is recorded as an intentional 3D adaptation in
+    <code>plans/audit/mechanics_3d_decisions.md</code>. What Galaxy Eggbert adds is listed at the end of this page.</div>
 
-  <h2>The Eventual Target: mobile-eggbert's Mechanics</h2>
-  <p>These are ported (or planned to be ported) from mobile-eggbert exactly — icons and IDs are frozen, not renumbered.</p>
+  <h2>Blupi in 3D</h2>
+  <p>Blupi is a 3D model converted from the Ray Dream scenes the original's sprites were rendered from, with a clip for
+    every action of the original: walking, jumping, pushing, swimming, riding, cheering and each death. He moves
+    freely over X and Z with real heights:</p>
+  <ul>
+    <li><strong>Walk and turn.</strong> Forward walks, left and right turn him (135 degrees a second). Down turns him
+      round with a short turn and then walks the new way.</li>
+    <li><strong>Jump</strong> up to two blocks, or across a gap of one cell (two is at the limit). He never steps up:
+      every one-block step is a jump, and a full jump needs two free cells above him.</li>
+    <li><strong>Crouch</strong> to pass under a hanging mine, to pull a crate or to dive; <strong>look up</strong>
+      to see above him.</li>
+    <li><strong>Back up</strong> while keeping his facing, on foot or in a vehicle. This is a Galaxy Eggbert addition:
+      the original has no backing up.</li>
+    <li><strong>Action</strong> takes a power-up that needs his hands, enters or leaves a vehicle, places dynamite and
+      flips a switch.</li>
+    <li>Falling does no damage. Falling off the bottom of the world kills him.</li>
+  </ul>
 
-  <h3>Collectibles (<code>ObjectType</code>)</h3>
+  <h2>The goal of a mission</h2>
   <table>
-    <tr><th>ObjectType</th><th>Name</th></tr>
-    <tr><td>5</td><td>Treasure</td></tr>
-    <tr><td>6</td><td>Extra-life egg</td></tr>
-    <tr><td>7</td><td>Level-exit goal marker</td></tr>
-    <tr><td>21</td><td>Secret-level exit marker</td></tr>
-    <tr><td>49 / 50 / 51</td><td>Key 1 / 2 / 3 (map to <code>DoorKeyFlags</code>)</td></tr>
-    <tr><td>25</td><td>Shield (100-tick invincibility)</td></tr>
-    <tr><td>30</td><td>Drink power-up</td></tr>
-    <tr><td>31</td><td>Charge/cloud power-up (100 ticks)</td></tr>
+    <tr><th>Object (type)</th><th>What it does</th></tr>
+    <tr><td>Treasure chest (5)</td><td>Collected by touch. The HUD counts chests as <em>taken / total</em>. Treasure gates open once enough chests are taken.</td></tr>
+    <tr><td>Red exit arrow (7)</td><td>Ends the mission, but only when every chest of the world is taken; otherwise a refusal sound plays and nothing happens.</td></tr>
+    <tr><td>Golden key (21)</td><td>Takes the arrow's place in the last mission of each world and ends the whole world, under the same chest rule.</td></tr>
+    <tr><td>Egg (6)</td><td>An extra life, up to ten.</td></tr>
+    <tr><td>Keys 1, 2, 3 (49, 50, 51)</td><td>Each opens one door of its kind. The door slides up and the key is used up.</td></tr>
+  </table>
+  <p>At the exit Blupi leaves any vehicle, turns to the camera and cheers for two seconds (the original's forty ticks).
+    Then the next world loads: his world's hub, where the next mission's bar has slid up, or after a golden key the
+    main hub, where one more gold bar has opened. As in the original there is no win screen between missions; the
+    <strong>Win</strong> screen appears only at the end of the bonus world 199 (and after the showcase world and
+    editor play-tests).</p>
+
+  <h2>Lives, death and respawn</h2>
+  <ul>
+    <li>A player starts with <strong>three lives</strong>. Each egg adds one, up to ten; at ten an egg stays where it is.</li>
+    <li>Death plays one of the original's death animations (charred by lightning or a blast, burnt in lava, caught in
+      glue, drowned, cut by a saw). If a life remains, one is spent and he goes on: most hazards send him back to his
+      last safe position, a place he stood on outside every hazard's reach; otherwise he gets up where he fell.</li>
+    <li>With no life left the <strong>Lost</strong> screen appears. Lives go back to three and Blupi returns to the
+      mission's starting point; the world is not reloaded, so chests, keys and dynamite already taken stay taken,
+      as in the original.</li>
+    <li>Lives and unlocked missions are saved for the selected player at every mission boundary, and an interrupted
+      mission resumes where it was left: see <a href="save-system.html">Save Data &amp; Resume</a>.</li>
+  </ul>
+
+  <h2>Hazards</h2>
+  <table>
+    <tr><th>Hazard</th><th>What happens</th></tr>
+    <tr><td>Lava</td><td>Kills. Its surface is animated and contact follows that height; a vehicle does not protect.</td></tr>
+    <tr><td>Spikes, the slime of world 6</td><td>Kill on contact.</td></tr>
+    <tr><td>Drips</td><td>A falling drop kills when it lands on him.</td></tr>
+    <tr><td>Saws</td><td>The visible half disk of a spinning blade kills. A saw stopped by its switch is harmless.</td></tr>
+    <tr><td>Crushers</td><td>Dangerous on the down-stroke only. They do not kill: Blupi is flattened for about ten seconds, moves slowly and cannot jump.</td></tr>
+    <tr><td>Electric arcs</td><td>Kill during the flickering first half of a five-second cycle.</td></tr>
+    <tr><td>Fans</td><td>The swept blades kill; the air column pushes Blupi sideways or slows a fall and lifts him a little.</td></tr>
+    <tr><td>Springs</td><td>Bounce him up, higher with Jump held and with the lollipop's power; they throw him out of a vehicle.</td></tr>
+    <tr><td>Vanishing saucers</td><td>Solid most of the time; during their two vanishing frames he falls through.</td></tr>
+    <tr><td>Deep water</td><td>He can stay under for about 25 seconds, then drowns. Any vehicle meeting water is wrecked.</td></tr>
+  </table>
+  <p>The shield and the drink's invisibility protect against hazards while they last (so does the <code>megablupi</code>
+    cheat). Hazard timings live in <code>WorldRuntime</code>; contact shapes follow the 3D models (a saw's upper half,
+    a fan's blade ring, the lava's waves).</p>
+
+  <h2>Enemies</h2>
+  <table>
+    <tr><th>Enemy (type)</th><th>Behaviour</th></tr>
+    <tr><td>Mine (2)</td><td>Stands still; touching it kills. The jeep, tank and skateboard run over mines.</td></tr>
+    <tr><td>Hanging mine (3)</td><td>Hangs from above; a crouching Blupi passes under it.</td></tr>
+    <tr><td>Moving mine (16)</td><td>Patrols a line.</td></tr>
+    <tr><td>Fish (17), bird (20)</td><td>Swim or fly a route; deadly to touch.</td></tr>
+    <tr><td>Wasp (44)</td><td>Does not kill: it turns Blupi into a balloon that drifts upward for about ten seconds. A hanging mine, moving mine or follow star pops the balloon and he falls.</td></tr>
+    <tr><td>Bulldozer (4)</td><td>Patrols; deadly to touch.</td></tr>
+    <tr><td>Enemy Blupis (32, 33)</td><td>Green Blupis in a helicopter that drops shots, or in a tank that fires to both sides. Their shots catch Blupi in glue.</td></tr>
+    <tr><td>Creature (54)</td><td>Dangerous only while it stands turning: then it catches Blupi in glue and wrecks any vehicle he rides.</td></tr>
+    <tr><td>Follow stars (96, 97)</td><td>Wake when Blupi comes near and home in on him; one that runs into a wall explodes.</td></tr>
+  </table>
+  <p>Each creature type moves at the original's speed and rests as long (one table in
+    <a href="classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a>). Dynamite destroys most enemies; the
+    charge's electric aura destroys the bulldozer and the enemy Blupis it touches.</p>
+
+  <h2>Pickups and powers</h2>
+  <table>
+    <tr><th>Pickup (type)</th><th>Taken by</th><th>Effect</th></tr>
+    <tr><td>Ammunition pack (29)</td><td>touch</td><td>Ten glue shots for the tank and the helicopter.</td></tr>
+    <tr><td>Dynamite (55)</td><td>Action</td><td>One stick at a time. Action places it; it blows up about 2.5 s later and destroys crates, saws and most enemies, and Blupi too if he stays close.</td></tr>
+    <tr><td>Shield (25)</td><td>touch</td><td>Invincible for about 25 s, sparks around him.</td></tr>
+    <tr><td>Lollipop (26)</td><td>Action</td><td>The power, about 15 s: higher jumps and bounces, faster crate pushing.</td></tr>
+    <tr><td>Drink (30)</td><td>Action</td><td>Invisible for about 20 s, protected as by the shield.</td></tr>
+    <tr><td>Charge (31)</td><td>touch</td><td>The cloud, about 20 s: an electric aura.</td></tr>
+    <tr><td>Invert sign (40)</td><td>touch</td><td>Left and right swapped for about 15 s.</td></tr>
+  </table>
+  <p>The powers share one countdown, shown as the yellow gauge, so only one is active at a time. A taken item first
+    flies to its place on the HUD, as in the original, and counts when it arrives.</p>
+
+  <h2>Vehicles</h2>
+  <table>
+    <tr><th>Vehicle (type)</th><th>Notes</th></tr>
+    <tr><td>Helicopter (13)</td><td>Flies: Jump climbs, crouch descends. Drops glue (needs ammunition) while airborne and off a lift. Wrecked by water and by flying into a ceiling.</td></tr>
+    <tr><td>Jeep (19)</td><td>Drives; runs over mines; drives off a lift onto the block beside it.</td></tr>
+    <tr><td>Tank (28)</td><td>Drives; runs over mines; fires glue straight ahead at its exact heading (needs ammunition).</td></tr>
+    <tr><td>Skateboard (24)</td><td>Rides; runs over mines.</td></tr>
+    <tr><td>Overcraft (46)</td><td>Hovers: it climbs only with ground close under it and otherwise sinks slowly.</td></tr>
+  </table>
+  <p>Action at a parked vehicle gets in, Action again gets out and leaves it parked. Water wrecks any vehicle, a spring
+    throws Blupi out, and a creature wrecks it. The invisible flight barrier (block 214) stops Blupi on foot and in the
+    jeep, tank and skateboard, but lets the helicopter and the overcraft pass. The helicopter, jeep, tank and
+    overcraft have their motor sounds; the skateboard has none, as in the original.</p>
+
+  <h2>Swimming and diving</h2>
+  <p>In water Blupi floats at the surface; crouch dives and he swims under. While he is under, a breath gauge runs
+    down (blue, red below a quarter) for about 25 seconds; empty, he drowns. He gets out by jumping onto a bank whose
+    top block is level with the water's top. A camera under the surface tints the view blue.</p>
+
+  <h2>The world's moving parts</h2>
+  <table>
+    <tr><th>Part</th><th>Behaviour</th></tr>
+    <tr><td>Crates (12)</td><td>Solid; he stands on them. Walking into one pushes it a cell along X or Z, crouching and pressing Down pulls it, only onto support: crates never fall. A move once started finishes its cell.</td></tr>
+    <tr><td>Lifts (1, 47, 48)</td><td>Platforms on authored paths with the original's timings; 47 and 48 also carry him sideways like a conveyor. A lift does not block him sideways and passes through him coming down.</td></tr>
+    <tr><td>Doors and treasure gates</td><td>Key doors open with the matching key; treasure gates open by themselves once enough chests are taken.</td></tr>
+    <tr><td>Switches</td><td>Action at a switch turns the saws of its row on or off: same height and Z, within 20 cells along X.</td></tr>
+    <tr><td>Teleporters</td><td>Standing under a pillar, after 6.4 s he arrives under the other pillar of the same colour.</td></tr>
+    <tr><td>Clay bridges</td><td>Crumble after he steps on them and come back a few seconds later.</td></tr>
   </table>
 
-  <h3>Enemies (<code>ObjectType</code>)</h3>
-  <table>
-    <tr><th>ObjectType</th><th>Name</th><th>Behavior</th></tr>
-    <tr><td>2, 3</td><td>Horizontal patrol enemies</td><td>Linear patrol</td></tr>
-    <tr><td>96, 97</td><td>Follow-enemy variants</td><td>97 tracks Blupi exactly</td></tr>
-    <tr><td>16</td><td>Spider</td><td>Patrol</td></tr>
-    <tr><td>17</td><td>Fish</td><td>Patrol (water)</td></tr>
-    <tr><td>20</td><td>Bird</td><td>Patrol</td></tr>
-    <tr><td>32 / 33</td><td>Blupih / Blupit tank</td><td>Fires projectiles (<code>ObjectType23</code>) on turn</td></tr>
-    <tr><td>44</td><td>Wasp/bee</td><td>Fast patrol</td></tr>
-    <tr><td>54</td><td>Large creature</td><td>Destroys helicopter on contact</td></tr>
-  </table>
+  <h2>Hubs</h2>
+  <p>Missions are entered from hubs. Walking into a sign makes Blupi turn and wave goodbye for 1.5 s, and that world
+    loads. In a world's hub, mission 1 is open and each later mission sits behind a blue bar that slides up once the
+    mission before it is won. In the main hub every world is open, and one gold bar opens per finished world; behind
+    the twelve bars is the way to the bonus world. Details: <a href="levels.html">Campaign &amp; Worlds</a>.</p>
 
-  <h3>Hazard Tiles (animated in CNA terrain today, but not yet damaging)</h3>
-  <table>
-    <tr><th>Tile</th><th>Frames</th></tr>
-    <tr><td>Lava</td><td>8</td></tr>
-    <tr><td>Spike</td><td>16</td></tr>
-    <tr><td>Crusher</td><td>10</td></tr>
-    <tr><td>Saw</td><td>6</td></tr>
-  </table>
-  <p>
-    These tiles already animate correctly in <code>GETerrainRenderer</code> (6 fps, matching
-    mobile-eggbert), but touching them currently has no gameplay effect — hazard damage is not wired up.
-  </p>
+  <h2>Screens around play</h2>
+  <ul>
+    <li><strong>Main menu:</strong> three players (A, B, C), each with their own progress; Play, Setup, Help,
+      3D World Editor, Galaxy, Demo and Demos, Fullscreen / Window and Exit. After 40 seconds without input it plays
+      the <a href="demos.html">demos</a>.</li>
+    <li><strong>Resume:</strong> after an interrupted mission, Continue or Home.</li>
+    <li><strong>Pause</strong> (Esc): Home, Back (to the hub; not shown in the main hub), Setup, Restart (missions
+      only) and Continue, plus Record (record a demo) and Original (for a world edited with <code>xnjttjpo</code>).</li>
+    <li><strong>Setup:</strong> sound effects and music volume, jump-button side, automatic zoom, accelerometer,
+      3D terrain, 3D effects, frame rate, textures and erasing a player's progress. See
+      <a href="configuration.html">Configuration</a> and <a href="graphics.html">3D Effects &amp; Graphics</a>.</li>
+    <li><strong>Win</strong> (the ending) and <strong>Lost</strong> (no life left), each with a return button.</li>
+  </ul>
 
-  <h3>Game Phases (<code>GamePhase</code> — defined, not yet dispatched by CNA)</h3>
+  <h2>The HUD</h2>
+  <p>The HUD is the original's bottom-of-screen layout in its 640&times;480 reference space, scaled to the window.</p>
   <table>
-    <tr><th>Phase</th><th>Meaning</th></tr>
-    <tr><td>Init</td><td>Gamer-select / main menu</td></tr>
-    <tr><td>Play</td><td>Active gameplay</td></tr>
-    <tr><td>Pause</td><td>Pause overlay</td></tr>
-    <tr><td>Win / Lost</td><td>Level complete / game over</td></tr>
-    <tr><td>MainSetup / PlaySetup</td><td>Settings screens</td></tr>
+    <tr><th>Element</th><th>Shown</th></tr>
+    <tr><td>Lives</td><td>A row of Blupi icons along the bottom.</td></tr>
+    <tr><td>Treasure counter <em>N/M</em></td><td>In missions; hidden in hubs.</td></tr>
+    <tr><td>Keys 1-3, dynamite</td><td>Their icons while held.</td></tr>
+    <tr><td>Glue shots, decoys</td><td>A fanned row of ammunition; decoys as <em>= N</em> (only from the <code>tenbombs</code> cheat).</td></tr>
+    <tr><td>Breath gauge</td><td>While under water: blue, red when low.</td></tr>
+    <tr><td>Power gauge</td><td>Yellow: the remaining time of the active power, the balloon or being flattened.</td></tr>
+    <tr><td>Training hint</td><td>A banner at the top in missions 11-14, as in the original.</td></tr>
+    <tr><td>Game speed</td><td>When not normal, for example <em>0.5x</em> or <em>2x</em>.</td></tr>
+    <tr><td>Top-left list</td><td>Active cheats, <em>Demo</em> during a demo, <em>REC</em> while recording.</td></tr>
   </table>
+  <p>On a touch screen the on-screen controls are drawn too; the optional compass and the debug panel are
+    <a href="cheats.html">cheats</a>. Code: <a href="classes/Hud.html">Hud</a>.</p>
 
-  <h2>Roadmap</h2>
-  <p>
-    The E3D-MIG task list (<code>plan.md</code>) sequences remaining gameplay work roughly as:
-    billboard rendering for Blupi and objects → gameplay porting (pickups, hazards, enemy stomp,
-    respawn invincibility, exit gate) → sound → HUD → save/load. See
-    <a href="development/known-issues.html">Known Issues</a> for the full list.
-  </p>
+  <h2>Camera</h2>
+  <ul>
+    <li><strong>Third person</strong> is the default: a chase camera that swings behind Blupi and rises over obstacles behind him.</li>
+    <li><strong>Automatic zoom on action</strong> (Setup, on by default) eases the view in to 1.3&times; while he walks.</li>
+    <li>Hold the left mouse button and drag to look around; walking brings the camera back behind him. Right Shift looks up.</li>
+    <li><strong>F3</strong> switches to first person (again to go back). Blupi is not drawn there; a small HUD icon
+      shows what he is doing.</li>
+    <li>The <code>zoom</code> cheat takes the chase camera 2, 4, 8 or 16 times farther out.</li>
+  </ul>
+
+  <h2>Game speed</h2>
+  <p>The simulation runs at a fixed 60 steps a second; the original's 20 Hz timings are converted. F5 is normal speed,
+    F6 fast (2&times;). Tab steps through slow motion, 0.5, 0.25 and 0.125 and back to normal (the original's Tab
+    toggles 0.5 only; the two slower steps were added on 2026-11-09). After the <code>quick</code> cheat F7 and F8 give
+    4&times; and 8&times;.</p>
+
+  <h2>What Galaxy Eggbert adds</h2>
+  <ul>
+    <li>Controls for 3D: turning, the turn-around on Down, backing up, the first-person view, mouse look.</li>
+    <li>Gamepad support and its mapping, multi-touch and the F1 help panel (Mobile Eggbert has no gamepad).</li>
+    <li>The two slower Tab steps, the volume sliders, the <code>compass</code>, <code>fairplay</code> and <code>help</code> cheats.</li>
+    <li>The <a href="editor.html">3D world editor</a>, <a href="galaxy.html">each player's own galaxy</a>,
+      <a href="demos.html">recorded demos</a> and the <a href="graphics.html">3D effect levels</a>.</li>
+  </ul>
+
+  <h2>Where it lives in the code</h2>
+  <table>
+    <tr><th>Class</th><th>Gameplay it owns</th></tr>
+    <tr><td><a href="classes/BlupiController.html">BlupiController</a></td><td>Movement, jumping, swimming, vehicles, powers, animation states.</td></tr>
+    <tr><td><a href="classes/InteractionSystem.html">InteractionSystem</a></td><td>Contacts with objects: pickups, enemies, crates, lifts, lives, the exit.</td></tr>
+    <tr><td><a href="classes/WorldRuntime.html">WorldRuntime</a></td><td>The loaded world, hazard timing, teleporters, switches, mission arithmetic.</td></tr>
+    <tr><td><a href="classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a></td><td>What each object type is and can do.</td></tr>
+    <tr><td><a href="classes/HubDoors.html">HubDoors</a></td><td>Hub bars, gold bars and arrivals.</td></tr>
+  </table>
+  <p>The researched notes on the original's behaviour are in <code>mobile-eggbert-reference/</code>
+    (<code>10-blupi-mechanics.md</code>, <code>12-hazards-and-interactables.md</code>, <code>13-object-pickups.md</code>,
+    <code>14-crates-lifts-bridges-effects.md</code>).</p>
 
   <div class="page-nav">
-    <a href="running.html">
+    <a class="prev" href="platform-support.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Running the Game</span>
+      <span class="title">&#8592; Platform Support</span>
     </a>
     <a class="next" href="controls.html">
       <span class="label">Next</span>

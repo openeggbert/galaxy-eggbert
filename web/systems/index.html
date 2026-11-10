@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Systems — Galaxy Eggbert Docs</title>
+<meta name="description" content="A map of Galaxy Eggbert's game systems: where each one lives in the code and which page explains it.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,74 +14,175 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
   <a href="../index.html">Home</a>
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
-  <a href="index.html" class="active">Systems</a>
+  <a href="../systems/index.html" class="active">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="../tutorials/index.html">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
-<main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Systems</div>
-  <h1>Systems</h1>
-  <p class="subtitle">Cross-cutting behaviors — what's implemented today, and what's planned.</p>
 
-  <div class="card-grid">
-    <a class="card" href="../gameplay.html">
-      <h3>Movement</h3>
-      <p>Gravity, jump, step-up collision. Implemented in <code>GEBlupiController</code> — invisible only.</p>
-    </a>
-    <a class="card" href="../rendering.html">
-      <h3>Rendering</h3>
-      <p>Terrain only: cube-per-block, animated tiles. No sprites yet.</p>
-    </a>
-    <a class="card" href="../audio.html">
-      <h3>Audio</h3>
-      <p>Not implemented. Planned: 93-channel WAV parity with mobile-eggbert.</p>
-    </a>
-    <a class="card" href="../input.html">
-      <h3>Input</h3>
-      <p>Arrow keys + Space, polled via CNA Keyboard each frame.</p>
-    </a>
-    <a class="card" href="../save-system.html">
-      <h3>Save System</h3>
-      <p>Not implemented. Save-format reuse is an open decision, not a default.</p>
-    </a>
-    <a class="card" href="../levels.html">
-      <h3>Level Loading</h3>
-      <p>.vwr binary format (default) and mobile-eggbert .txt parser (secondary).</p>
-    </a>
-    <a class="card" href="../game-loop.html">
-      <h3>Game Loop</h3>
-      <p>CNA's Game base class drives LoadContent/Update/Draw.</p>
-    </a>
-    <a class="card" href="../gameplay.html">
-      <h3>Gameplay</h3>
-      <p>No hazards, enemies, pickups, or exit condition yet — planned per plan.md's E3D-MIG-100s.</p>
-    </a>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> Systems</div>
+  <h1>Systems</h1>
+  <p class="subtitle">Each game system, the code that implements it, and the page that explains it.</p>
+
+  <p>
+    A "system" here is a behaviour the player sees, such as swimming or hub doors. Most of them are
+    spread over a few files rather than owned by a single class. The tables name the main code; paths
+    are relative to <code>src/</code>. In the play phase the systems run in a fixed order once per
+    1/60 s tick (<a href="../game-loop.html">Game Loop</a>).
+  </p>
+
+  <div class="note">
+    <strong>One boundary to keep</strong>
+    <code>InteractionSystem</code> knows nothing of <code>BlupiController</code>, the camera or the
+    graphics. It reports <em>events</em> (Blupi died, a pickup was taken, a voyage to another world is
+    requested), and the host applies whatever needs the controller, camera, HUD or sound. Most
+    systems below are wired through that boundary (<a href="../architecture.html">Architecture</a>).
   </div>
 
-  <h2>System Interaction Map (GalaxyEggbertCNA today)</h2>
+  <h2>Play</h2>
   <table>
-    <tr><th>System</th><th>Reads from</th><th>Writes to</th><th>Owner class</th></tr>
-    <tr><td>Movement</td><td>World (blocks), Keyboard</td><td>Blupi position/velocity</td><td><code>GEBlupiController</code></td></tr>
-    <tr><td>World loading</td><td>.vwr file, mobile-eggbert .txt (secondary)</td><td><code>Worlds::World</code></td><td><code>GEWorldRuntime</code></td></tr>
-    <tr><td>Tile animation</td><td>Elapsed time</td><td><code>animPhase_</code></td><td><code>GEWorldRuntime</code></td></tr>
-    <tr><td>Terrain rendering</td><td>World blocks, GETileAtlas, anim phase</td><td>CNA VertexBuffer/IndexBuffer</td><td><code>GETerrainRenderer</code></td></tr>
-    <tr><td>Camera</td><td>Blupi position</td><td>View/Projection matrices</td><td><code>CnaEngine::Graphics::Camera</code> (until 2026-10-20: <code>Easy3D::Camera3D</code>)</td></tr>
+    <tr><th>System</th><th>Main code</th><th>Read</th></tr>
+    <tr><td>Movement, jumping, gravity, ledges, hanging on bars</td>
+        <td><code>Game/BlupiController</code>, <code>Game/BarRows.hpp</code></td>
+        <td><a href="../classes/BlupiController.html">BlupiController</a></td></tr>
+    <tr><td>Collision with blocks, models and big decor</td>
+        <td><code>Game/BlupiController</code>, <code>Game/SolidBox.hpp</code>, <code>BlockDefinitionRegistry</code></td>
+        <td><a href="../internals/collision.html">Collision</a></td></tr>
+    <tr><td>Swimming and diving</td>
+        <td><code>Game/BlupiController</code></td>
+        <td><a href="../gameplay.html">Gameplay</a></td></tr>
+    <tr><td>Vehicles: jeep, tank, helicopter, skateboard, and others</td>
+        <td><code>Game/BlupiController</code> (driving), <code>GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code> (entering, leaving, wrecking, motor sounds), <code>Game/TankShot.hpp</code></td>
+        <td><a href="../gameplay.html">Gameplay</a></td></tr>
+    <tr><td>Objects, enemies and hazards</td>
+        <td><code>Game/InteractionSystem</code>, <code>Game/EnemyBlupi.hpp</code>, <code>Game/FanGeometry.hpp</code>, <code>Game/LavaHeight.hpp</code></td>
+        <td><a href="../classes/InteractionSystem.html">InteractionSystem</a>, <a href="../internals/object-lifecycle.html">Object Lifecycle</a></td></tr>
+    <tr><td>Pickups: treasure, eggs, keys, drinks, dynamite, ammunition, lives</td>
+        <td><code>Game/InteractionSystem</code>, <code>Game/ReusablePickup.hpp</code></td>
+        <td><a href="../gameplay.html">Gameplay</a></td></tr>
+    <tr><td>Crates (push and pull)</td>
+        <td><code>Game/CratePush.hpp</code>, <code>Game/InteractionSystem</code></td>
+        <td><a href="../gameplay.html">Gameplay</a></td></tr>
+    <tr><td>Lifts and moving platforms</td>
+        <td><code>Game/InteractionSystem</code> (patrols), <code>Game/LiftVisual.hpp</code></td>
+        <td><a href="../classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a></td></tr>
+    <tr><td>Switches, bridges, doors and teleporters</td>
+        <td><code>Game/InteractionSystem</code>, <code>Game/WorldRuntime</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code>; block changes patch the terrain through the world's change journal</td>
+        <td><a href="../classes/World.html">World</a>, <a href="../classes/TerrainRenderer.html">TerrainRenderer</a></td></tr>
+    <tr><td>Hubs, mission doors and progression</td>
+        <td><code>HubDoors.cpp</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code>, <code>Game/SaveData</code></td>
+        <td><a href="../classes/HubDoors.html">HubDoors</a>, <a href="../levels.html">Campaign &amp; Worlds</a></td></tr>
+    <tr><td>Chase camera and camera shake</td>
+        <td><code>Game/ChaseCameraYaw</code>, <code>Game/CameraShake</code>, cna-engine's <code>Camera</code></td>
+        <td><a href="../game-loop.html">Game Loop</a></td></tr>
   </table>
-  <p>
-    Audio, HUD, save, and gameplay-event systems (hazards, pickups, enemies, exit) do not exist yet
-    in this table — see <a href="../development/known-issues.html">Known Issues</a> for the roadmap.
-  </p>
+
+  <h2>Presentation</h2>
+  <table>
+    <tr><th>System</th><th>Main code</th><th>Read</th></tr>
+    <tr><td>World drawing</td>
+        <td><code>GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp</code> &rarr; <code>Game/SceneFrame.hpp</code> &rarr; <code>Game/WorldRenderer</code></td>
+        <td><a href="../rendering.html">Rendering</a></td></tr>
+    <tr><td>Terrain and reliefs</td>
+        <td><code>Game/TerrainRenderer</code>, <code>Game/TerrainRelief</code>, <code>Game/TileAtlas</code></td>
+        <td><a href="../classes/TerrainRenderer.html">TerrainRenderer</a></td></tr>
+    <tr><td>3D effects (Off to Ultra)</td>
+        <td><code>Game/WorldEffects.cpp</code>, <code>Game/SceneShaders</code>, <code>Game/PostProcess</code>, <code>Game/UltraFinish</code>, <code>Game/EffectParticles</code></td>
+        <td><a href="../graphics.html">3D Effects &amp; Graphics</a></td></tr>
+    <tr><td>HUD, training hints, compass</td>
+        <td><code>Game/Hud</code>, <code>Game/TrainingHints</code>, <code>Game/ObjectiveHint.hpp</code>, <code>HintZoneRecord</code></td>
+        <td><a href="../classes/Hud.html">Hud</a></td></tr>
+    <tr><td>Sound and music</td>
+        <td><code>Game/Sound</code>; music and vehicle motors in <code>GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code></td>
+        <td><a href="../audio.html">Audio &amp; Music</a></td></tr>
+  </table>
+
+  <h2>Around the game</h2>
+  <table>
+    <tr><th>System</th><th>Main code</th><th>Read</th></tr>
+    <tr><td>Phases, menus and Setup</td>
+        <td><code>Def/GamePhase.hpp</code>, <code>Game/InputPad</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp</code></td>
+        <td><a href="../classes/GalaxyEggbertGame.html">GalaxyEggbertGame</a>, <a href="../input.html">Input</a></td></tr>
+    <tr><td>Input devices</td>
+        <td><code>Game/ControlInput.hpp</code>, <code>Game/GamepadInput.hpp</code>, <code>Game/InputPad</code></td>
+        <td><a href="../controls.html">Controls</a>, <a href="../input.html">Input</a></td></tr>
+    <tr><td>Settings and progress</td>
+        <td><code>Game/SaveData</code>, <code>Game/UserFolder</code></td>
+        <td><a href="../save-system.html">Save Data &amp; Resume</a></td></tr>
+    <tr><td>Resuming an interrupted mission</td>
+        <td><code>Game/ResumeLog</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code></td>
+        <td><a href="../classes/ResumeLog.html">ResumeLog</a></td></tr>
+    <tr><td>Demos and recordings</td>
+        <td><code>Game/DemoReplay</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp</code></td>
+        <td><a href="../demos.html">Demos &amp; Recordings</a></td></tr>
+    <tr><td>Cheats and diagnostics</td>
+        <td><code>Game/InputPad</code> (typed words), <code>GalaxyEggbertCNA/GalaxyEggbertGame.cpp</code> (<code>ApplyCheat</code>, <code>ApplyTypedCheat</code>), <code>Game/DebugOverlay.hpp</code>, <code>Game/CheatConfig.hpp</code></td>
+        <td><a href="../cheats.html">Cheats &amp; Diagnostics</a></td></tr>
+    <tr><td>3D world editor</td>
+        <td><code>Editor/</code></td>
+        <td><a href="../editor.html">3D World Editor</a>, <a href="../classes/WorldEditor.html">WorldEditor</a></td></tr>
+    <tr><td>The player's galaxy</td>
+        <td><code>Editor/GalaxyBrowserScreen</code>, <code>Editor/CustomWorldStorage</code>, <code>GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp</code></td>
+        <td><a href="../galaxy.html">Your Own Galaxy</a></td></tr>
+    <tr><td>Scripted playthroughs (QA)</td>
+        <td><code>Game/Autoplay</code>, <code>tools/autoplay/</code></td>
+        <td><a href="../development/testing.html">Testing &amp; QA</a></td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a class="prev" href="../classes/CustomWorldStorage.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; CustomWorldStorage</span>
+    </a>
+    <a class="next" href="../tutorials/index.html">
+      <span class="label">Next</span>
+      <span class="title">Tutorials &#8594;</span>
+    </a>
+  </div>
 </main>
 </div>
 <script src="../assets/script.js"></script>

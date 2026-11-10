@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engine Integration — Galaxy Eggbert Docs</title>
+<meta name="description" content="How Galaxy Eggbert uses CNA (the XNA 4.0 API in C++) and cna-engine's strict modules: namespaces, CNA extensions, renderer identities, the required revisions and upstream bug tracking.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,122 +24,219 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html" class="active">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Engine Integration</div>
-  <h1>Engine Integration</h1>
-  <p class="subtitle">How Galaxy Eggbert uses CNA directly, with cna-engine's strict modules as small helpers beside it.</p>
+  <h1>Engine Integration (CNA, cna-engine)</h1>
+  <p class="subtitle">The game is written against CNA's XNA 4.0 API, with two strict cna-engine modules as helpers (as of 2026-11-10).</p>
 
-  <h2>Direct CNA — Not an Abstraction Layer</h2>
-  <p>
-    Unlike the older Simple3D direction (which wrapped Urho3D behind an abstraction so the engine
-    could theoretically be swapped), <code>GalaxyEggbertCNA</code> calls <strong>CNA directly</strong>.
-    CNA is an XNA-compatible, SDL3-based C++ game framework — game code uses its
-    <code>Microsoft::Xna::Framework::*</code> namespaces and types with no engine-selection
-    indirection layer.
-  </p>
+  <p>Galaxy Eggbert has no engine of its own. Its host class <code>GalaxyEggbertGame</code> derives from
+  <code>Microsoft::Xna::Framework::Game</code> and the game code calls CNA directly: devices, effects, textures,
+  input, audio and storage are XNA types. <strong>cna-engine</strong> adds a camera and mesh building on top;
+  it does not hide CNA. Both are sibling repositories built from source with the game (CMake
+  <code>add_subdirectory</code>), looked for at <code>../cna</code> and <code>../cna-engine</code> or at
+  <code>-DCNA_HOME</code> / <code>-DCNA_ENGINE_HOME</code>.</p>
 
-  <h2>cna-engine's Role — a Helper, Not a Hiding Layer</h2>
-  <p>
-    The strict modules of <strong>cna-engine</strong> (CMake targets <code>CnaEngine::Core</code> and
-    <code>CnaEngine::Graphics</code>, namespace <code>CnaEngine::Graphics</code>; XNA 4.0 types only)
-    live beside CNA, not above it. Game code still calls CNA directly for anything the engine modules
-    don't specifically help with. Their job here is narrow: a camera, texture regions, CPU-side mesh
-    building for boxes, plates and billboards, and GPU meshes drawn with the game's own effects. They
-    are not a scene graph and not a replacement engine.
-  </p>
-  <p>
-    Until 2026-10-20 this role was filled by the sibling helper library <strong>easy-3d</strong>
-    (namespace <code>Easy3D</code>). easy-3d was removed that day and replaced by cna-engine's strict
-    modules; the meshes the game builds are the same vertices and indices, bit for bit (verified by
-    cna-engine's <code>Easy3DEquivalenceTests</code>).
-  </p>
-  <h3>What cna-engine provides, used by GalaxyEggbertCNA</h3>
+  <h2>CNA</h2>
+  <p>CNA is a C++ implementation of the XNA 4.0 API. It brings its own SDL3 and SDL3_mixer (vendored, built on
+  the first configure) and needs three further siblings next to it: <code>easy-gl</code>, <code>meta-gl</code>
+  and <code>sharp-runtime</code> (the .NET-style <code>System</code> types). The game links the umbrella targets
+  <code>CNA</code> and <code>SHARP_RUNTIME</code>; CNA is built as a static library because cna-engine links its
+  module libraries too, and a shared CNA would put a second copy into the process.</p>
+
+  <h3>What the game uses, by namespace</h3>
   <table>
-    <tr><th>Class</th><th>Role</th><th>Replaced (easy-3d)</th></tr>
-    <tr><td><code>CnaEngine::Graphics::Camera</code></td><td>Drives View/Projection every frame: <code>SetLookAt(position, target, up)</code> (view exactly XNA <code>Matrix::CreateLookAt</code>), <code>SetPerspective(fov, aspect, near, far)</code>, <code>View()</code>, <code>Projection()</code>. The game keeps the look-at target itself (<code>cameraTarget_</code>).</td><td><code>Easy3D::Camera3D</code></td></tr>
-    <tr><td><code>CnaEngine::Graphics::UvRect</code> / <code>TextureAtlas</code></td><td>Texture regions: <code>UvRect</code> (<code>u0, v0, u1, v1</code>); <code>TextureAtlas</code> is cna-engine's counterpart of <code>Easy3D::TextureAtlas</code>. <code>GETileAtlas</code> returns <code>UvRect</code>s, still computed with the game's own <code>BlockTypes::tileUV()</code> (unchanged)</td><td><code>Easy3D::UvRect</code> (<code>U0, V0, U1, V1</code>), <code>Easy3D::TextureAtlas</code></td></tr>
-    <tr><td><a href="classes/CubeMesh.html"><code>CnaEngine::Graphics::MeshBuilder</code></a></td><td>CPU-side mesh building, positions + one texture coordinate: <code>AddBox</code>, <code>AddPlate</code>, <code>AddCrossedPlates</code>, <code>AddBillboard</code>, <code>AddVertex</code>/<code>AddTriangle</code>/<code>AddQuad</code></td><td><code>CubeBatch</code>, <code>BillboardBatch</code>, <code>BuildCubeMesh</code>, <code>Append*Mesh</code></td></tr>
-    <tr><td><a href="classes/CubeMeshRenderer.html"><code>CnaEngine::Graphics::GpuMesh</code></a></td><td><code>Upload(device, mesh, VertexLayout::PositionTexture())</code> to CNA buffers; <code>Draw(device, effect)</code> applies each pass of a caller-supplied <code>BasicEffect</code></td><td><code>Easy3D::CubeMeshRenderer</code>, <code>BillboardMeshRenderer</code></td></tr>
+    <tr><th>Namespace</th><th>Types used</th><th>Where</th></tr>
+    <tr><td><code>Microsoft::Xna::Framework</code></td><td><code>Game</code>, <code>GameTime</code>, <code>GraphicsDeviceManager</code>,
+      <code>Vector2/3/4</code>, <code>Matrix</code>, <code>Color</code>, <code>Rectangle</code>, <code>BoundingFrustum</code>,
+      <code>BoundingSphere</code></td><td>the host, the renderers, the camera code</td></tr>
+    <tr><td><code>...::Graphics</code></td><td><code>GraphicsDevice</code>, <code>BasicEffect</code>, <code>AlphaTestEffect</code>,
+      <code>SkinnedEffect</code>, <code>ShaderEffect</code>, <code>Texture2D</code>, <code>RenderTarget2D</code>,
+      <code>VertexBuffer</code>, <code>IndexBuffer</code>, the state objects, <code>SpriteBatch</code>, <code>SkinnedModelEXT</code></td>
+      <td><code>TerrainRenderer</code>, <code>WorldRenderer</code>, <code>Hud</code>, <code>InputPad</code>, the effects classes, the editor</td></tr>
+    <tr><td><code>...::Input</code></td><td><code>Keyboard</code> (and <code>KeyDownEXT</code>), <code>Mouse</code>, <code>GamePad</code>,
+      <code>Touch::TouchPanel</code></td><td><code>GalaxyEggbertGame.cpp</code>, <code>GameHelpers.hpp</code> (<a href="input.html">Input</a>)</td></tr>
+    <tr><td><code>...::Audio</code></td><td><code>SoundEffect</code>, <code>SoundEffectInstance</code></td><td><code>Sound</code> (<a href="audio.html">Audio</a>)</td></tr>
+    <tr><td><code>...::Media</code></td><td><code>Song</code>, <code>MediaPlayer</code></td><td>the music (<code>UpdateMusic()</code>)</td></tr>
+    <tr><td><code>...::Storage</code></td><td><code>StorageDevice</code></td><td>the player's folder (<code>main.cpp</code>)</td></tr>
+    <tr><td><code>Microsoft::Devices::Sensors</code></td><td><code>Accelerometer</code></td><td>tilt steering (<code>AccelTurnInput()</code>)</td></tr>
+    <tr><td><code>System</code></td><td><code>TimeSpan</code>, <code>Object</code>, <code>EventArgs</code></td><td>frame timing, <code>OnDeactivated</code>/<code>OnExiting</code></td></tr>
+    <tr><td><code>::CNA</code></td><td><code>ShaderDialectEXT</code>, <code>GraphicsCapability</code>, <code>Platform/Entrypoint.hpp</code></td>
+      <td>the shader preamble, the editor's wireframe fallback, Android's <code>SDL_main</code></td></tr>
   </table>
-  <p>
-    The game's own header <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code> adds four small helpers
-    for its one vertex format: <code>MakeTexturedMeshBuilder()</code>, <code>TexturedVertex(position, uv)</code>,
-    <code>AddCenteredBox(mesh, center, size, faces | uv)</code> and <code>UploadTexturedMesh(device, meshData)</code>.
-    The teleporter's pyramid tip (easy-3d's <code>AppendPyramidTipMesh</code>) is now the game's own
-    <code>AddPyramidTip()</code> in <code>src/GalaxyEggbert/Game/TerrainRenderer.cpp</code>.
-  </p>
-  <h3>Not taken over from easy-3d</h3>
-  <p>
-    easy-3d's separate CPU batches were not taken over — the builder is the batch. easy-3d's
-    <code>DebugDraw</code> was never used by the game.
-  </p>
+  <p>Note the two namespaces called CNA: <code>::CNA</code> is the engine's own, <code>GalaxyEggbert::CNA</code> is
+  the game's host.</p>
 
-  <h2>CNA APIs Used Directly by GalaxyEggbertCnaGame</h2>
-  <table>
-    <tr><th>CNA type</th><th>Used for</th></tr>
-    <tr><td><code>Microsoft::Xna::Framework::Game</code></td><td>Base class for <code>GalaxyEggbertCnaGame</code></td></tr>
-    <tr><td><code>GameTime</code></td><td>Delta time passed to <code>Update</code>/<code>Draw</code></td></tr>
-    <tr><td><code>Graphics::Texture2D</code></td><td>Loads <code>object-m.png</code></td></tr>
-    <tr><td><code>Graphics::BasicEffect</code></td><td>Textured, untextured-vertex-color-off shader for terrain draw</td></tr>
-    <tr><td><code>Input::Keyboard</code> / <code>Keys</code></td><td>Arrow keys + Space each frame</td></tr>
-    <tr><td><code>Color</code>, <code>Rectangle</code>, <code>Matrix</code></td><td>Standard XNA-compatible math/graphics types</td></tr>
-    <tr><td><code>VertexBuffer</code> / <code>IndexBuffer</code> / <code>DrawIndexedPrimitives</code></td><td>Behind <code>GETerrainRenderer</code>'s meshes, created and drawn through cna-engine's <code>GpuMesh</code> (<code>Upload</code> once, <code>Draw(device, effect)</code> per frame)</td></tr>
-  </table>
+  <h3>CNA extensions the game depends on</h3>
+  <p>CNA marks what XNA 4.0 does not have with an <code>EXT</code> suffix. The game needs these:</p>
+  <ul>
+    <li><strong><code>SkinnedModelEXT</code></strong>: a skinned model read from a directory with a
+      <code>.skinnedmodel.json</code> manifest, drawn with the stock <code>SkinnedEffect</code>. Blupi and every
+      converted object in <code>avatars3d/</code> use it (<code>ComputeBoneTransformsEXT</code>, <code>PartEXT</code>).</li>
+    <li><strong><code>Keyboard::KeyDownEXT</code></strong>: an event of physical key presses in order, including
+      presses released between two updates. Typed cheat words, the editor's command keys and typed names use it;
+      it needs no text-input mode or on-screen keyboard.</li>
+    <li><strong><code>ShaderEffect</code></strong> with GLSL source, <code>GraphicsDevice::GetShaderDialectEXT()</code> and
+      <code>GetCompileErrorEXT()</code>: the 3D-effects shaders. Where the device has no GLSL dialect the shaders are
+      left out and the game draws without them.</li>
+    <li><strong><code>StorageDevice::SetAppNameEXT()</code> / <code>GetStorageRootEXT()</code></strong>: the system's
+      per-user folder for "Galaxy Eggbert" (<a href="save-system.html">Save Data &amp; Resume</a>).</li>
+  </ul>
+<pre><code>// src/GalaxyEggbertCNA/GalaxyEggbertGameLoad.cpp
+content.setRootDirectoryProperty("avatars3d");
+blupiModel_ = content.Load&lt;std::shared_ptr&lt;Microsoft::Xna::Framework::Graphics::SkinnedModelEXT&gt;&gt;(
+    blupiModelIsReal_ ? "blupi/avatar" : "blupi_placeholder/avatar");
 
-  <h2>Entry Point</h2>
-  <pre><code>// src/GalaxyEggbertCNA/main.cpp
-int main() {
-    auto* game = new GalaxyEggbert::CNA::GalaxyEggbertCnaGame();
-    game-&gt;Run();
-    delete game;
+// src/GalaxyEggbert/Game/SurfaceShaders.cpp
+switch (device.GetShaderDialectEXT())
+{
+    case CNA::ShaderDialectEXT::GlslDesktop: return "#version 330 core\n";
+    case CNA::ShaderDialectEXT::GlslEs: return "#version 300 es\nprecision highp float;\n";
+    default: return {};
 }</code></pre>
+  <p>The game asks for the <code>HiDef</code> graphics profile in its constructor: the screenshot and golden-frame
+  captures use <code>GetBackBufferData</code>, which XNA allows only there.</p>
 
-  <h2>Lifecycle Overrides</h2>
-  <pre><code>class GalaxyEggbertCnaGame : public Microsoft::Xna::Framework::Game {
-    void LoadContent() override;              // load world, texture, build terrain renderer
-    void Update(GameTime&amp; gameTime) override;  // advance anim phase, read input, step Blupi, update camera
-    void Draw(const GameTime&amp; gameTime) override; // clear, set effect matrices, draw terrain
-};</code></pre>
-
-  <h2>Comparison: Simple3D vs. CNA Integration Style</h2>
+  <h2>Renderer identities</h2>
+  <p>CNA picks its graphics backend at configure time from <code>CNA_GRAPHICS_RENDERER</code>. The game never names
+  a renderer in its code; CMake passes the identity to CNA and links whatever CNA selected.</p>
   <table>
-    <tr><th>Aspect</th><th>GalaxyEggbertSimple3D</th><th>GalaxyEggbertCNA</th></tr>
-    <tr><td>Engine access</td><td>Through Simple3D's Urho3D-shaped abstraction</td><td>Direct CNA API calls, no abstraction layer</td></tr>
-    <tr><td>Helper library</td><td>None (Simple3D itself is the abstraction)</td><td>cna-engine's strict modules (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>), explicitly small and non-hiding — easy-3d until 2026-10-20</td></tr>
-    <tr><td>Rendering</td><td>Scene-graph nodes with StaticModel/BillboardSet</td><td>Meshes built with <code>MeshBuilder</code>, drawn with explicit <code>GpuMesh::Draw</code> calls via BasicEffect</td></tr>
-    <tr><td>Status</td><td>Only fully playable target</td><td>Terrain + collision-only movement only</td></tr>
+    <tr><th>Identity</th><th>Used for</th><th>Status</th></tr>
+    <tr><td><code>OPENGLES3</code></td><td>the native default when nothing is set; Android</td><td>Linux: builds and tests (CI uses the default). Android: built and run in the emulator.</td></tr>
+    <tr><td><code>OPENGL33</code></td><td>desktop OpenGL 3.3 core; the configuration the maintainer plays and verifies on Linux</td><td><span class="badge badge-done">Verified</span></td></tr>
+    <tr><td><code>WEBGL2</code></td><td>the Emscripten build (required there)</td><td><span class="badge badge-done">Verified</span> manually in headless Chrome; not in CI</td></tr>
+    <tr><td><code>SDLGPU</code></td><td>the Windows (MinGW) cross-build (spelled <code>SDL_GPU</code> before CNA renamed it)</td><td><span class="badge badge-planned">Not verified</span> no fresh build and live 3D run yet</td></tr>
   </table>
+  <p>The three GL identities share one implementation inside CNA (EasyGL). CNA retired its <code>VULKAN</code>
+  identity on 2026-10-13; Vulkan is reached through <code>SDLGPU</code> now. CNA's
+  <code>cmake/RendererSelection.cmake</code> is the authority for the list. See <a href="platform-support.html">Platform Support</a>
+  and <a href="configuration.html">Configuration</a>.</p>
+
+  <h3>The web build</h3>
+  <ul>
+    <li>The game calls the blocking <code>Game::Run()</code>, so it links CNA's <code>CNA::EmscriptenAsyncify</code>.</li>
+    <li>The assets (<code>Content/icons</code>, <code>backgrounds</code>, <code>sounds</code>, <code>demos</code>,
+      <code>worlds3d/</code>, <code>textures3d/</code>, <code>avatars3d/</code>) are packed with <code>--preload-file</code>;
+      the music is served beside the page and fetched when a world first plays it.</li>
+    <li>The player's files live in <code>/save</code>, an IndexedDB-backed file system (<code>-lidbfs.js</code>) that CNA's
+      storage start-up hook mounts and persists.</li>
+  </ul>
+
+  <h2>cna-engine</h2>
+  <p>cna-engine is a library of helper modules over CNA. The game builds only its <strong>strict</strong> modules,
+  <code>CnaEngine::Core</code> and <code>CnaEngine::Graphics</code>, which use plain XNA 4.0 types; the modules that need
+  CNA's extensions are switched off (<code>CNA_ENGINE_WITH_EXTENDED=OFF</code>,
+  <code>CNA_ENGINE_WITH_ENHANCED_GRAPHICS=OFF</code>), as are its tests and examples. The game links
+  <code>CnaEngine::Graphics</code> and includes only its Graphics headers:</p>
+  <table>
+    <tr><th>Type</th><th>Header</th><th>Used for</th></tr>
+    <tr><td><code>Camera</code></td><td><code>CnaEngine/Graphics/Camera.hpp</code></td><td>the game's camera (<code>camera_</code>: <code>SetLookAt</code>, <code>Position</code>, <code>View</code>, <code>Projection</code>), which the editor also flies and draws its markers with</td></tr>
+    <tr><td><code>MeshBuilder</code>, <code>MeshData</code>, <code>BuilderVertex</code>, <code>VertexAttribute</code></td><td><code>MeshBuilder.hpp</code>, <code>MeshData.hpp</code></td><td>building every CPU-side mesh: terrain, cubes, billboards, HUD and editor quads</td></tr>
+    <tr><td><code>BoxFaces</code>, <code>BoxFace</code>, <code>BoxFaceStyle</code>, <code>PlateAxis</code></td><td><code>MeshBuilder.hpp</code></td><td>boxes with a texture region per face, plates</td></tr>
+    <tr><td><code>GpuMesh</code>, <code>VertexLayout</code></td><td><code>GpuMesh.hpp</code>, <code>VertexLayouts.hpp</code></td><td>uploading a mesh and drawing it with the caller's effect</td></tr>
+    <tr><td><code>UvRect</code></td><td><code>TextureAtlas.hpp</code></td><td>texture regions: tiles in <code>object-m.png</code>, sprite icons, scene quads</td></tr>
+    <tr><td><code>DebugDraw</code></td><td><code>DebugDraw.hpp</code></td><td>lines: the editor's highlight edges (where the device has no wireframe mode) and the position axes</td></tr>
+  </table>
+  <p>Every Galaxy mesh is positions plus one texture coordinate (with normals where it is lit). The helpers that
+  wrap cna-engine for this are in <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code>:</p>
+<pre><code>// src/GalaxyEggbert/Game/TexturedMesh.hpp
+[[nodiscard]] inline CnaEngine::Graphics::MeshBuilder MakeTexturedMeshBuilder()
+{
+    return CnaEngine::Graphics::MeshBuilder(
+        {CnaEngine::Graphics::VertexAttribute::Position, CnaEngine::Graphics::VertexAttribute::TexCoord0});
+}
+...
+[[nodiscard]] inline std::unique_ptr&lt;CnaEngine::Graphics::GpuMesh&gt; UploadTexturedMesh(
+    Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device, const CnaEngine::Graphics::MeshData&amp; mesh)
+{
+    return std::make_unique&lt;CnaEngine::Graphics::GpuMesh&gt;(
+        CnaEngine::Graphics::GpuMesh::Upload(device, mesh, CnaEngine::Graphics::VertexLayout::PositionTexture()));
+}</code></pre>
+  <p>The <code>SceneFrame</code> draw list uses cna-engine's CPU-side <code>UvRect</code> and box faces too, so it
+  holds no GPU object (<a href="architecture.html">Architecture</a>).</p>
+
+  <h2>Which revisions</h2>
+  <p>From <code>CURRENT.md</code>'s "Verification baseline": the current source and CI use CNA
+  <code>594eb28dc</code> (with the optional <code>KeyDownEXT</code>), which includes <code>ee3235984</code>
+  (texture mip levels restored after a lost context, UB-009). The handbook states that the source needs
+  <code>594eb28dc</code> or newer.</p>
+  <p><code>.github/workflows/cna-ci.yml</code> pins all siblings to exact commits: <code>cna</code>,
+  <code>cna-engine</code>, <code>easy-gl</code>, <code>sharp-runtime</code>, <code>meta-gl</code>, and the
+  <code>worlds/</code> directory of <code>mobile-eggbert</code> (read by two verifiers).
+  <code>python3 tools/ci_pin_siblings.py</code> moves the pins to the local siblings' HEADs, and
+  <code>--check</code> reports drift.</p>
+
+  <h2>Upstream bugs</h2>
+  <p>The game does not patch its siblings. A defect found in CNA, cna-engine or another sibling is written down in
+  <code>upstream_bugs.md</code> as <code>UB-NNN</code>: what was observed, how to reproduce it, how Galaxy copes until it
+  is fixed, and the fixing commit. A workaround is removed only after the fix is re-verified. As of 2026-11-10 every
+  entry is marked fixed upstream:</p>
+  <table>
+    <tr><th>ID</th><th>Where</th><th>Problem</th></tr>
+    <tr><td>UB-001 - UB-004</td><td>CNA avatar converter and loader</td><td>mesh primitives overwriting each other, material colours lost, inside-out winding, unescaped part names</td></tr>
+    <tr><td>UB-005</td><td>cna-engine</td><td><code>AddPlate</code>/<code>AddCrossedPlates</code> drew their region upside down</td></tr>
+    <tr><td>UB-006</td><td>CNA on Android</td><td>every missed content name listed the APK's assets through JNI</td></tr>
+    <tr><td>UB-007</td><td>CNA EasyGL</td><td>the skinned shader needed more vertex uniforms than OpenGL ES 3.0 guarantees</td></tr>
+    <tr><td>UB-008</td><td>CNA audio</td><td>a missing <code>#include &lt;algorithm&gt;</code> broke the web build</td></tr>
+    <tr><td>UB-009</td><td>CNA EasyGL</td><td>only a texture's base level came back after a context loss (F9)</td></tr>
+    <tr><td>UB-010</td><td>CNA working tree</td><td>sampler collections bound before a device member existed</td></tr>
+  </table>
+  <p>The file also indexes problems recorded elsewhere (an easy-gl test failure, the retired Vulkan backend).</p>
+
+  <h2>History</h2>
+  <p>The project chose direct CNA on 2026-07-05, replacing an earlier plan to move through other engines. The
+  earlier target <code>GalaxyEggbertSimple3D</code> was retired once CNA reached parity and removed from the tree on
+  2026-07-25 (recoverable at commit <code>4afd53e</code>). Until 2026-10-20 the CNA target used a helper library called
+  easy-3d (<code>Easy3D::</code> camera and cube meshes); it was then replaced by cna-engine's <code>Camera</code>,
+  <code>MeshBuilder</code> and <code>GpuMesh</code>, with golden frames and traces byte-identical before and after.
+  Comments that still mention <code>Easy3D</code> describe that past.</p>
+
+  <h2>Related pages</h2>
+  <div class="card-grid">
+    <a class="card" href="build.html"><h3>Build Guide</h3><p>Checking out the siblings and configuring.</p></a>
+    <a class="card" href="rendering.html"><h3>Rendering</h3><p>How the world is drawn with these APIs.</p></a>
+    <a class="card" href="architecture.html"><h3>Architecture</h3><p>Where the engine sits in the layers.</p></a>
+  </div>
 
   <div class="page-nav">
-    <a href="project-structure.html">
+    <a class="prev" href="project-structure.html">
       <span class="label">Previous</span>
       <span class="title">&#8592; Project Structure</span>
     </a>

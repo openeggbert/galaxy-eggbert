@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Architecture — Galaxy Eggbert Docs</title>
+<meta name="description" content="How Galaxy Eggbert is layered: CNA and cna-engine, the GalaxyEggbertCNA host, the game and editor, the engine-independent model, the event boundary and the SceneFrame render seam.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -22,141 +24,267 @@
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
   <a href="platform-support.html">Platform Support</a>
-  <div class="nav-section">Gameplay</div>
+
+  <div class="nav-section">Playing</div>
   <a href="gameplay.html">Gameplay</a>
   <a href="controls.html">Controls</a>
-  <a href="levels.html">Levels &amp; Worlds</a>
-  <a href="assets.html">Assets</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
   <div class="nav-section">Architecture</div>
   <a href="architecture.html" class="active">Architecture</a>
   <a href="project-structure.html">Project Structure</a>
   <a href="engine-integration.html">Engine Integration</a>
   <a href="game-loop.html">Game Loop</a>
   <a href="rendering.html">Rendering</a>
-  <a href="audio.html">Audio</a>
+  <a href="audio.html">Audio &amp; Music</a>
   <a href="input.html">Input</a>
-  <a href="save-system.html">Save System</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
   <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="modules/index.html">Modules</a>
   <a href="classes/index.html">Classes</a>
   <a href="systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
   <a href="tutorials/index.html">Tutorials</a>
   <a href="internals/index.html">Internals</a>
   <a href="development/index.html">Development</a>
   <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
   <a href="development/debugging.html">Debugging</a>
   <a href="development/extending-the-game.html">Extending the Game</a>
   <a href="development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Architecture</div>
   <h1>Architecture</h1>
-  <p class="subtitle">The Direction Lock, layering, and how CNA, cna-engine, and mobile-eggbert relate.</p>
+  <p class="subtitle">The layers of the game, the rules that keep them apart, and how the parts talk to each other (as of 2026-11-10).</p>
 
-  <h2>The Direction Lock</h2>
-  <p>The intent of <code>CLAUDE.md</code>, the project's binding architectural rule set:</p>
-  <pre><code>Galaxy Eggbert
-  -&gt; CNA directly
-  -&gt; cna-engine's strict modules beside CNA (CnaEngine::Core, CnaEngine::Graphics —
-     camera, mesh builder, GPU meshes, texture regions; XNA 4.0 types only)
-  -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
-  <p>
-    Until 2026-10-20 the helpers beside CNA were the sibling library easy-3d (namespace
-    <code>Easy3D</code>: cameras, texture atlas, billboard/cube batching). cna-engine's strict modules
-    replaced it that day; see <a href="engine-integration.html">Engine Integration</a> for what
-    replaced what.
-  </p>
-  <p>This supersedes an older direction: <code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>.</p>
+  <p>Galaxy Eggbert has exactly one game target, the CMake target <code>GalaxyEggbertCNA</code> (the
+  executable is called <code>GalaxyEggbert</code>). It is written directly against <strong>CNA</strong>, a C++
+  implementation of the XNA 4.0 API, and uses two strict modules of <strong>cna-engine</strong> as helpers.
+  Above them the code is layered so that most of the game's rules can be compiled and tested without a
+  window, a GPU or CNA at all.</p>
 
-  <h3>Rules That Follow From the Lock</h3>
-  <ul>
-    <li>Do not expand the Simple3D/U3D/Nova3D direction except to keep <code>GalaxyEggbertSimple3D</code> working (bug fixes, faithful-remake gameplay parity are fine; new engine-layer investment is not).</li>
-    <li>Do not modify <code>../mobile-eggbert</code> without explicit user approval; do not refactor it or split it into a shared <code>core</code> library.</li>
-    <li>Do not copy mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame logic) into Galaxy Eggbert without explicit approval — even data that "looks like just data."</li>
-    <li>Reusing mobile-eggbert <em>assets</em> (PNGs, sounds, world files) by file path / build-time copy is allowed.</li>
-    <li>New CNA/cna-engine code goes under <code>src/GalaxyEggbertCNA/</code> — do not mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation.</li>
-    <li>cna-engine's strict modules are helpers beside CNA — they must not hide CNA (game code calls CNA directly); they are not a scene graph or a replacement engine.</li>
-    <li>No Lua unless explicitly requested by the user. No MeshCraft, Mesh World, Nova3D, or further Simple3D features re-added to the active path.</li>
-    <li><code>../simple-3d</code> may be read (never modified) only when genuinely needed for <code>GalaxyEggbertSimple3D</code> work.</li>
-    <li><strong>No <code>#ifdef</code> engine guards</strong> in either target — each speaks its own API directly.</li>
-  </ul>
+  <h2>The layers</h2>
+<pre><code>+--------------------------------------------------------------+
+| CNA: the XNA 4.0 API in C++ (Game loop, GraphicsDevice,      |  ../cna
+|      Input, Audio, Media, Storage; SDL3 underneath)          |  (sibling repo)
+| cna-engine strict modules: CnaEngine::Core, ::Graphics       |  ../cna-engine
+|      (Camera, MeshBuilder, GpuMesh, UvRect)                  |  (sibling repo)
++--------------------------------------------------------------+
+                              |
++--------------------------------------------------------------+
+| GalaxyEggbertCNA host               src/GalaxyEggbertCNA/    |
+|   GalaxyEggbertGame : Microsoft::Xna::Framework::Game        |
+|   phases, input capture, the tick order, SceneFrame building,|
+|   the frame, resume log and demos, platform glue             |
++--------------------------------------------------------------+
+               |                                |
++-----------------------------+  +-----------------------------+
+| Game                        |  | Editor                      |
+| src/GalaxyEggbert/Game/     |  | src/GalaxyEggbert/Editor/   |
+| BlupiController,            |  | WorldEditor, palette,       |
+| InteractionSystem,          |  | undo/redo, clipboard,       |
+| WorldRuntime, Hud, InputPad,|  | CustomWorldStorage, the     |
+| Sound, WorldRenderer, ...   |  | world and galaxy screens    |
++-----------------------------+  +-----------------------------+
+               |                                |
++--------------------------------------------------------------+
+| Engine-independent model   include/GalaxyEggbert/,           |
+|   src/GalaxyEggbert/Worlds/, src/GalaxyEggbert/*.cpp         |
+|   World, Chunk, Block, records, HubDoors,                    |
+|   BlockDefinitionRegistry, Def/ (the original's enums)       |
++--------------------------------------------------------------+</code></pre>
 
-  <h2>High-Level Layering</h2>
-  <pre><code>┌──────────────────────────────────────────────────────────┐
-│  mobile-eggbert (read-only reference: assets + behavior)  │
-└───────────────────────┬────────────────────────────────────┘
-                        │ assets reused by file path / build-time copy
-                        │ code/data referenced, never copied without approval
-           ┌────────────▼─────────────┐
-           │       CNA (game framework)│ ← XNA-compatible, SDL3-based
-           └────────────┬─────────────┘
-                        │ used directly (not hidden)
-           ┌────────────▼─────────────┐        ┌─────────────────────┐
-           │  cna-engine strict modules │◄──────┤  camera, UV regions, │
-           │  (CnaEngine::Graphics)     │       │  MeshBuilder, GpuMesh│
-           └────────────┬─────────────┘        └─────────────────────┘
-                        │
-           ┌────────────▼─────────────┐
-           │     GalaxyEggbertCNA        │  ← long-term target (this doc's focus)
-           │  GalaxyEggbertCnaGame        │
-           │  GEWorldRuntime, GETerrainRenderer,
-           │  GETileAtlas, GEBlupiController
-           └────────────┬─────────────┘
-                        │ uses (engine-agnostic, shared)
-           ┌────────────▼─────────────┐
-           │   GalaxyEggbert::Worlds     │
-           │   World / Chunk / Block /   │
-           │   BlockMetadata / VoxelConfig│
-           └──────────────────────────┘
-
-  (Separately, GalaxyEggbertSimple3D — built on Simple3D/U3D — remains the
-   only fully playable target and stays as reference until CNA reaches parity.)</code></pre>
-
-  <h2>GalaxyEggbertCNA Components</h2>
-
-  <h3>Entry point — <code>main.cpp</code></h3>
-  <p>Constructs a <code>GalaxyEggbertCnaGame</code>, calls <code>Run()</code>, deletes it.</p>
-
-  <h3>Game — <code>GalaxyEggbertCnaGame</code></h3>
-  <p>
-    Subclasses <code>Microsoft::Xna::Framework::Game</code> (CNA's game base class), overriding
-    <code>LoadContent()</code>, <code>Update(GameTime&amp;)</code>, <code>Draw(const GameTime&amp;)</code>.
-    Owns the world runtime, terrain renderer, Blupi controller, and camera.
-    See <a href="classes/GalaxyEggbertCnaGame.html">class reference</a>.
-  </p>
-
-  <h3>World runtime — <code>GEWorldRuntime</code></h3>
-  <p>Wraps a <code>Worlds::World</code>; loads <code>.vwr</code> or (secondary path) mobile-eggbert <code>.txt</code>; drives the 6 fps tile-animation phase. See <a href="classes/GEWorldRuntime.html">class reference</a>.</p>
-
-  <h3>Terrain renderer — <code>GETerrainRenderer</code></h3>
-  <p>Builds static and animated terrain meshes with cna-engine's <code>MeshBuilder</code> from the world's non-air blocks and draws them as <code>CnaEngine::Graphics::GpuMesh</code>es (until 2026-10-20: <code>Easy3D::CubeMeshRenderer</code>). See <a href="classes/GETerrainRenderer.html">class reference</a>.</p>
-
-  <h3>Tile atlas — <code>GETileAtlas</code></h3>
-  <p>Maps block type IDs to <code>CnaEngine::Graphics::UvRect</code>s in <code>object-m.png</code>, computed with <code>BlockTypes::tileUV()</code>. See <a href="classes/GETileAtlas.html">class reference</a>.</p>
-
-  <h3>Player controller — <code>GEBlupiController</code></h3>
-  <p>Invisible, collision-only movement placeholder: grid collision, step-up traversal, gravity, jump. See <a href="classes/GEBlupiController.html">class reference</a>.</p>
-
-  <h3>World data model — <code>GalaxyEggbert::Worlds</code></h3>
-  <p>Engine-agnostic. No CNA or cna-engine dependency. Shared verbatim by <code>GalaxyEggbertSimple3D</code> and <code>GalaxyEggbertCNA</code>. See <a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a>, <a href="classes/Block.html">Block</a>.</p>
-
-  <h2>Dependency Map</h2>
   <table>
-    <tr><th>Component</th><th>Depends on</th></tr>
-    <tr><td><code>GalaxyEggbertCnaGame</code></td><td>CNA (<code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>), cna-engine (<code>CnaEngine::Graphics::Camera</code>), GEWorldRuntime, GETerrainRenderer, GEBlupiController</td></tr>
-    <tr><td><code>GEWorldRuntime</code></td><td><code>GalaxyEggbert::Worlds::World</code> only</td></tr>
-    <tr><td><code>GETerrainRenderer</code></td><td>cna-engine (<code>MeshBuilder</code>, <code>GpuMesh</code>, via <code>TexturedMesh.hpp</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code></td></tr>
-    <tr><td><code>GETileAtlas</code></td><td>cna-engine (<code>UvRect</code>), <code>BlockTypes</code></td></tr>
-    <tr><td><code>GEBlupiController</code></td><td><code>GalaxyEggbert::Worlds</code> only — no CNA/cna-engine dependency, scriptable headlessly</td></tr>
-    <tr><td><code>Worlds::World / Chunk / Block</code></td><td>C++ stdlib only</td></tr>
+    <tr><th>Layer</th><th>Where</th><th>Namespace</th><th>May use</th></tr>
+    <tr><td>Engine and helpers</td><td>sibling repositories <code>cna</code>, <code>cna-engine</code></td>
+        <td><code>Microsoft::Xna::Framework</code>, <code>CnaEngine::Graphics</code></td><td>SDL3, SDL3_mixer, GL/WebGL</td></tr>
+    <tr><td>Host</td><td><code>src/GalaxyEggbertCNA/</code></td><td><code>GalaxyEggbert::CNA</code></td>
+        <td>everything below it; the only place with platform code (Android assets, Emscripten paths, executable hashing)</td></tr>
+    <tr><td>Game</td><td><code>src/GalaxyEggbert/Game/</code></td><td><code>GalaxyEggbert::Game</code></td>
+        <td>the model; CNA and cna-engine where it draws, plays sound or reads devices</td></tr>
+    <tr><td>Editor</td><td><code>src/GalaxyEggbert/Editor/</code></td><td><code>GalaxyEggbert::Editor</code></td>
+        <td>the model and the game's registries and drawing helpers</td></tr>
+    <tr><td>Model</td><td><code>include/GalaxyEggbert/</code>, <code>src/GalaxyEggbert/Worlds/</code>, <code>src/GalaxyEggbert/*.cpp</code></td>
+        <td><code>GalaxyEggbert</code>, <code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::Def</code></td>
+        <td>the C++ standard library only</td></tr>
   </table>
 
+  <p>The game layer is mixed on purpose: about 75 of its files include nothing from CNA or cna-engine
+  (<code>BlupiController</code>, <code>WorldRuntime</code>, <code>SaveData</code>, <code>ResumeLog</code>,
+  <code>DemoReplay</code>, <code>Autoplay</code>, <code>ObjectDefinitionRegistry</code>, ...), while the renderers,
+  <code>Hud</code>, <code>InputPad</code> and <code>Sound</code> do. The file names of the host are listed on
+  <a href="project-structure.html">Project Structure</a>; the engine side is described on
+  <a href="engine-integration.html">Engine Integration</a>.</p>
+
+  <h2>The rules that shape the code</h2>
+  <p>These come from the project's own rules (<code>CURRENT.md</code> "Non-negotiable boundaries",
+  <code>docs/handbook/01-overview.md</code>). Most defects in the project's history came from breaking one of them.</p>
+  <ol>
+    <li><strong>Faithful remake.</strong> Every gameplay feature must trace to confirmed behaviour of
+      <em>Mobile Eggbert</em> / <em>Speedy Blupi</em>. Where a 2D rule has no single 3D reading, the chosen
+      reading is recorded as an intentional 3D adaptation (<code>plans/audit/mechanics_3d_decisions.md</code>,
+      rows <code>M3D-NNNN</code>). Numeric IDs (object types, block icons, sound channels) are never renumbered:
+      they are stored in world files.</li>
+    <li><strong>The editor exception.</strong> The in-game 3D world editor is the one approved exception: its
+      user interface may be invented, but it must not add gameplay mechanics.</li>
+    <li><strong>An engine-independent model.</strong> <code>include/GalaxyEggbert/</code> and
+      <code>src/GalaxyEggbert/Worlds/</code> include nothing from CNA or cna-engine. CMake compiles them as
+      <code>GE_SHARED_SOURCES</code> into the game, the tools and the GoogleTest suite alike.</li>
+    <li><strong><code>InteractionSystem</code> has no controller, camera or graphics dependency.</strong> It
+      includes <code>WorldRuntime.hpp</code>, <code>Sound.hpp</code>, <code>ObjectiveHint.hpp</code> and
+      <code>Def/</code> headers only, takes Blupi's position and state as plain values, and reports what happened
+      as events and requests (below). <code>Sound.hpp</code> brings in CNA's audio types, so the test of it links
+      CNA, but it never opens a window or an audio device.</li>
+    <li><strong>Two registries are the single sources of truth.</strong>
+      <a href="classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a> holds one entry per block icon
+      (0-440) and <a href="classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a> one per
+      <code>Def::ObjectType</code> (0-203). Rendering, collision, editor validation, animation and interactions
+      read them and keep no parallel lists. A new behaviour starts with the registry entry
+      (<a href="tutorials/first-object.html">tutorial</a>).</li>
+    <li><strong>Determinism.</strong> The simulation steps a fixed 1/60 s, uses a recorded random seed and
+      never reads the wall clock. Golden traces, autoplay playthroughs, mission resume and the main-menu demos
+      all depend on it (<a href="game-loop.html">Game Loop</a>).</li>
+    <li><strong>No backend branches in game logic.</strong> A defect found in CNA or cna-engine is fixed there
+      and recorded in <code>upstream_bugs.md</code>, not worked around here.</li>
+  </ol>
+
+  <h2>Main components</h2>
+  <table>
+    <tr><th>Component</th><th>Source</th><th>Role</th></tr>
+    <tr><td><a href="classes/GalaxyEggbertGame.html">GalaxyEggbertGame</a></td><td><code>src/GalaxyEggbertCNA/GalaxyEggbertGame*.cpp</code></td>
+        <td>The XNA <code>Game</code>: owns every system below, runs the phases, the tick order and the frame.</td></tr>
+    <tr><td><a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a></td><td><code>src/GalaxyEggbert/Worlds/</code></td>
+        <td>The 100&times;100&times;100 voxel grid in 10&times;10&times;10 chunks, with a block revision counter and a change journal.</td></tr>
+    <tr><td><a href="classes/WorldRuntime.html">WorldRuntime</a></td><td><code>src/GalaxyEggbert/Game/WorldRuntime.cpp</code></td>
+        <td>A loaded <code>.vwr</code>: the world, its moving objects (MoveObjects), the 20&nbsp;Hz animation clock.</td></tr>
+    <tr><td><a href="classes/BlupiController.html">BlupiController</a></td><td><code>src/GalaxyEggbert/Game/BlupiController.cpp</code></td>
+        <td>Blupi's movement and collision model and animation state; engine-independent.</td></tr>
+    <tr><td><a href="classes/InteractionSystem.html">InteractionSystem</a></td><td><code>src/GalaxyEggbert/Game/InteractionSystem.cpp</code></td>
+        <td>Lifts, enemies, pickups, hazards, projectiles, dynamite, crates, lives and counters.</td></tr>
+    <tr><td><a href="classes/HubDoors.html">HubDoors</a></td><td><code>src/GalaxyEggbert/HubDoors.cpp</code></td>
+        <td>The hubs' door bars, gold bars and signs, from the saved progress.</td></tr>
+    <tr><td><a href="classes/TerrainRenderer.html">TerrainRenderer</a>, <a href="classes/TileAtlas.html">TileAtlas</a></td><td><code>src/GalaxyEggbert/Game/</code></td>
+        <td>The terrain meshes built from the world and patched from its change journal.</td></tr>
+    <tr><td><a href="classes/WorldRenderer.html">WorldRenderer</a></td><td><code>src/GalaxyEggbert/Game/WorldRenderer.cpp</code></td>
+        <td>Draws the 3D world from a <code>SceneFrame</code> (below).</td></tr>
+    <tr><td><a href="classes/Hud.html">Hud</a>, <a href="classes/InputPad.html">InputPad</a></td><td><code>src/GalaxyEggbert/Game/</code></td>
+        <td>The HUD; the menus, Setup, Pause, Win/Lost screens, the on-screen pad and typed cheats.</td></tr>
+    <tr><td><a href="classes/Sound.html">Sound</a></td><td><code>src/GalaxyEggbert/Game/Sound.cpp</code></td>
+        <td>The 93 sound channels with the original's volume and pitch table, heard from Blupi's place.</td></tr>
+    <tr><td><a href="classes/SaveData.html">SaveData</a>, <a href="classes/ResumeLog.html">ResumeLog</a>, <a href="classes/DemoReplay.html">DemoReplay</a></td><td><code>src/GalaxyEggbert/Game/</code></td>
+        <td>Settings and progress, the interrupted-mission log, the demo files (<a href="save-system.html">Save Data &amp; Resume</a>).</td></tr>
+    <tr><td><a href="classes/Autoplay.html">Autoplay</a></td><td><code>src/GalaxyEggbert/Game/Autoplay.cpp</code></td>
+        <td>The QA harness: a script decides the keys to hold each tick.</td></tr>
+    <tr><td><a href="classes/WorldEditor.html">WorldEditor</a>, <a href="classes/CustomWorldStorage.html">CustomWorldStorage</a></td><td><code>src/GalaxyEggbert/Editor/</code></td>
+        <td>The in-game editor and the player's world files, galaxies and their sharing.</td></tr>
+  </table>
+
+  <h2>How the components talk</h2>
+  <p>The host owns the systems as plain members and calls them in a fixed order every tick (the full order is
+  on <a href="game-loop.html">Game Loop</a>). The systems never call each other's owners back; they hand results
+  upward:</p>
+  <ul>
+    <li><strong>Values in.</strong> <code>BlupiController::Step()</code> gets the <code>World</code>, the inputs as
+      floats and booleans, and the time step. <code>InteractionSystem::Update()</code> gets the
+      <code>WorldRuntime</code>, Blupi's position, facing and a set of flags (in a vehicle, hidden, ballooned,
+      invincible, which powers may be granted...).</li>
+    <li><strong>Events out.</strong> <code>InteractionSystem::EventsThisFrame()</code> is a typed per-tick queue,
+      cleared and refilled by every <code>Update()</code>: <code>Died</code>, <code>BalloonTouched</code>,
+      <code>BalloonPopped</code>, <code>SmallShakeTriggered</code>, <code>BigShakeTriggered</code>,
+      <code>TankFired</code>, <code>GlueDropStarted</code>, <code>GlueDropped</code>, <code>EnemyNearMiss</code>,
+      <code>ShieldGranted</code>, <code>PowerGranted</code>, <code>CloudGranted</code>, <code>HideGranted</code>,
+      <code>InvertGranted</code>, <code>DynamiteTaken</code>. <code>BlupiController</code> has its own
+      <code>EventsThisFrame()</code> for sound cues (a turn, a head bump, a bar grabbed, a crate gripped...).</li>
+    <li><strong>Requests out.</strong> Two events carry a payload and at most one of each survives a tick:
+      <code>VoyageRequested</code> (a pickup flying to the HUD, which needs the camera to project its end point)
+      and <code>DeathLockRequested</code>. The host resolves them with <code>ResolvePendingVoyage()</code> and
+      <code>ResolveDeathLock()</code>, the only code that has both the camera and the HUD.</li>
+    <li><strong>The world as shared state.</strong> Tile reactions change blocks through the <code>World</code>;
+      the terrain notices through the block revision and the change journal
+      (<code>RefreshTerrainMeshIfChanged()</code>) instead of being told.</li>
+  </ul>
+<pre><code>// src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp, UpdateTickEvents()
+if (FindInteractionEvent(InteractionSystem::EventKind::SmallShakeTriggered))
+{
+    cameraShake_.Trigger(CameraShakeType::Small);
+}
+...
+if (FindInteractionEvent(InteractionSystem::EventKind::TankFired))
+{
+    blupi_.TriggerOneShotAnim(BlupiController::AnimState::FireTank,
+                               BlupiController::kFireTankDuration);
+}</code></pre>
+  <p>The editor follows the same pattern: <code>WorldEditor::UpdateBrowsing()</code> returns a request
+  (open a world, return to the menu, a galaxy was imported) and the host acts on it.</p>
+
+  <h2>The render seam: SceneFrame &rarr; WorldRenderer</h2>
+  <p>Since 2026-11-09 the 3D world is drawn in two steps, the seam described in <code>renderers.md</code>:</p>
+<pre><code>simulation state (WorldRuntime, BlupiController, InteractionSystem, camera)
+        |
+        |  GalaxyEggbertGame::BuildSceneFrame()      src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
+        v
+SceneFrame  -- a draw list: camera, cubes, models and poses, decals,
+        |      sparks, billboard batches, effects (shadows, lights, particles)
+        |      src/GalaxyEggbert/Game/SceneFrame.hpp
+        |
+        |  WorldRenderer::Draw(device, frame, assets)
+        v
+the 3D world on screen                         src/GalaxyEggbert/Game/WorldRenderer.cpp
+        then HUD, menus, editor overlays       src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp</code></pre>
+  <ul>
+    <li><code>SceneFrame</code> holds no device, effect or GPU mesh: geometry is XNA math and cna-engine's
+      CPU-side <code>UvRect</code> and box faces; loaded models and textures are only pointed at. Its lists keep
+      the order in which the world has always been drawn, so blending and depth come out the same.</li>
+    <li><code>WorldRenderer</code> decides <em>how</em>: effects, per-frame meshes, device state, and the optional
+      3D-effects layer (fog, shadows, particles and, at higher levels, shader passes). The game lends it the
+      loaded content each frame as <code>WorldRenderAssets</code>.</li>
+    <li>There is one renderer, by the project owner's decision; the "second renderer" of
+      <code>renderers.md</code> became the effect levels inside this one (<a href="graphics.html">3D Effects &amp; Graphics</a>).</li>
+    <li>The split was a pure refactor: golden frames, 1728 autoplay frames of 11 missions and 28 editor frames
+      were byte-equal to the build before it.</li>
+  </ul>
+  <p>Details of the passes are on <a href="rendering.html">Rendering</a>.</p>
+
+  <h2>What the layering buys</h2>
+  <ul>
+    <li><code>VerifyBlupiMovement</code> links <code>BlupiController.cpp</code> and the shared sources with no
+      CNA at all; <code>VerifyGESaveData</code>, <code>VerifyAutoplay</code> and <code>VerifyDemoReplay</code> test
+      engine-independent classes too; the GoogleTest target <code>GalaxyEggbertWorldsTests</code> covers the world
+      model and the record codecs.</li>
+    <li>Python tools (<code>tools/vwr_inspect.py</code>, <code>tools/worldkit.py</code>, the level checkers) read
+      the same block classes through <code>tools/data/blocks.csv</code>, exported from the registry by
+      <code>DumpBlockDefinitions</code>; a test fails when the CSV is stale.</li>
+    <li>The same simulation runs in the desktop, web and Android builds; only the host's platform glue differs.</li>
+  </ul>
+  <p>See <a href="development/testing.html">Testing</a> for the whole set.</p>
+
+  <div class="note"><strong>Older notes in the code.</strong> Long comments in <code>GalaxyEggbertGame.hpp</code>
+  and <code>InteractionSystem.hpp</code> are historical and sometimes describe states that no longer exist (an
+  invisible Blupi, a single-world save). Trust the code, <code>CURRENT.md</code> and the ledgers in
+  <code>plans/audit/</code> over them.</div>
+
+  <h2>Related pages</h2>
+  <div class="card-grid">
+    <a class="card" href="game-loop.html"><h3>Game Loop</h3><p>The fixed step, the tick order, phases and speeds.</p></a>
+    <a class="card" href="engine-integration.html"><h3>Engine Integration</h3><p>What the game uses from CNA and cna-engine.</p></a>
+    <a class="card" href="project-structure.html"><h3>Project Structure</h3><p>Every directory and the host's files.</p></a>
+    <a class="card" href="classes/index.html"><h3>Classes</h3><p>Reference pages for the main classes.</p></a>
+  </div>
+
   <div class="page-nav">
-    <a href="gameplay.html">
+    <a class="prev" href="graphics.html">
       <span class="label">Previous</span>
-      <span class="title">&#8592; Gameplay</span>
+      <span class="title">&#8592; 3D Effects &amp; Graphics</span>
     </a>
     <a class="next" href="project-structure.html">
       <span class="label">Next</span>

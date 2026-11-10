@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Authoring a New .vwr World — Galaxy Eggbert Docs</title>
+<title>A Block or Object Behaviour — Galaxy Eggbert Docs</title>
+<meta name="description" content="Tutorial: follow and change a block or object behaviour through BlockDefinitionRegistry and ObjectDefinitionRegistry, using two real examples, their consumers and the tests that guard them.">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
   <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
   <div id="search-results"></div>
 </div>
+
 <div id="wrapper">
 <nav id="sidebar">
   <div class="nav-section">Getting Started</div>
@@ -20,77 +22,197 @@
   <a href="../overview.html">Project Overview</a>
   <a href="../getting-started.html">Getting Started</a>
   <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Campaign &amp; Worlds</a>
+  <a href="../cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="../demos.html">Demos &amp; Recordings</a>
+  <a href="../galaxy.html">Your Own Galaxy</a>
+  <a href="../editor.html">3D World Editor</a>
+  <a href="../graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio &amp; Music</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save Data &amp; Resume</a>
+  <a href="../configuration.html">Configuration</a>
+  <a href="../assets.html">Assets &amp; Tools</a>
+
   <div class="nav-section">Reference</div>
   <a href="../modules/index.html">Modules</a>
   <a href="../classes/index.html">Classes</a>
   <a href="../systems/index.html">Systems</a>
+
   <div class="nav-section">Guides</div>
-  <a href="index.html">Tutorials</a>
+  <a href="../tutorials/index.html" class="active">Tutorials</a>
   <a href="../internals/index.html">Internals</a>
   <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/testing.html">Testing &amp; QA</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
 </nav>
+
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Authoring a New .vwr World</div>
-  <h1>Tutorial: Authoring a New .vwr World</h1>
-  <p class="subtitle">Use GenerateSampleWorld3D as a template to build your own hand-authored 3D world.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Tutorials</a> <span>/</span> A Block or Object Behaviour</div>
+  <h1>Tutorial: A Block or Object Behaviour</h1>
+  <p class="subtitle">Per-type facts live in two registries. This walk-through follows one object capability and one block change from the table to the code that reads it and the tests that guard it.</p>
 
-  <div class="warn">
-    <strong>No automated converter</strong>
-    There is deliberately no tool that converts a flat mobile-eggbert <code>.txt</code> level into
-    a <code>.vwr</code> world — this was explicitly rejected as a direction. <code>.vwr</code>
-    worlds with real Y variation must be hand-authored in code, as shown below.
-  </div>
+  <div class="warn"><strong>Fidelity rule</strong> A behaviour must trace to Mobile Eggbert. Before changing a
+  registry entry, find the original's code (<code>Decor.cpp</code> in the sibling repository
+  <code>mobile-eggbert</code>) or an owner decision recorded in <code>plans/audit/</code>, and cite it in the
+  comment and the commit. Never renumber a block or object type.</div>
 
-  <h2>Step 1 — Study the Existing Generator</h2>
-  <p>
-    <code>tools/GenerateSampleWorld3D.cpp</code> is the only example today. It builds
-    <code>worlds3d/world001.vwr</code>: a ground floor, a 10-step ascending staircase, a raised
-    platform, a walled room with a doorway, and two pillars — using only
-    <code>GalaxyEggbert::Worlds::World::setBlock()</code> calls, then
-    <code>world.saveToFile(...)</code>.
-  </p>
+  <h2>The two registries</h2>
+  <table>
+    <tr><th>Registry</th><th>Keyed by</th><th>Files</th></tr>
+    <tr><td><a href="../classes/BlockDefinitionRegistry.html">BlockDefinitionRegistry</a></td><td>block type = icon in <code>object-m.png</code>, 0-440</td><td><code>include/GalaxyEggbert/BlockDefinitionRegistry.hpp</code>, <code>src/GalaxyEggbert/BlockDefinitionRegistry.cpp</code></td></tr>
+    <tr><td><a href="../classes/ObjectDefinitionRegistry.html">ObjectDefinitionRegistry</a></td><td><code>Def::ObjectType</code>, 0-203</td><td><code>src/GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp</code>, <code>.cpp</code></td></tr>
+  </table>
+  <p>Both are built once in their constructor, are free of CNA types, and are read through
+  <code>GetBlockDefinition(type)</code> and <code>GetObjectDefinition(type)</code>. Consumers must not keep
+  parallel lists of type numbers; that was the point of centralising them (July 2026) and of the final object
+  audit, which left only distinct state machines and explicitly scoped cheat commands as code branches.</p>
 
-  <h2>Step 2 — Copy It as a Starting Point</h2>
-  <pre><code>#include "GalaxyEggbert/Worlds/World.hpp"
-#include "GalaxyEggbert/BlockTypes.hpp"
-using namespace GalaxyEggbert::Worlds;
+  <h2>Part 1: an object capability flag</h2>
+  <p>The hanging mine (<code>ObjectType</code> 3) kills on contact like the other hazards, except that a
+  crouching Blupi passes under it: the original's <code>MoveObjectDetect</code> skips that type while Blupi's
+  action is Down. In Galaxy that difference is one flag.</p>
 
-int main() {
-    World world;
+  <h3>The table</h3>
+  <p>In <code>ObjectDefinitionRegistry.cpp</code> the shared contact-hazard list and its exception:</p>
+  <pre><code>ForTypes(definitions_, {2, 3, 4, 16, 17, 20, 96, 97},
+         [](ObjectDefinition&amp; definition)
+{
+    definition.genericContactHazard = true;
+});
+...
+definitions_[3].genericContactHazardCrouchImmune = true;
+ForTypes(definitions_, {3, 16, 96, 97}, [](ObjectDefinition&amp; definition)
+{
+    definition.balloonPoppableHazard = true;
+});</code></pre>
 
-    // Ground floor
-    for (int x = 30; x &lt; 70; ++x)
-        for (int z = 30; z &lt; 70; ++z)
-            world.setBlock(x, 0, z, Block::make(BlockTypes::Ground));
+  <h3>The consumer</h3>
+  <p>One place reads it, the generic hazard contact in
+  <code>src/GalaxyEggbert/Game/InteractionSystem.cpp</code>:</p>
+  <pre><code>if (GetObjectDefinition(obj.type).genericContactHazard)
+{
+    if (blupiCrouching &amp;&amp;
+        GetObjectDefinition(obj.type).genericContactHazardCrouchImmune)
+    {
+        continue;
+    }
+    ...
+    if (!blupiInvincible &amp;&amp; !contactGrace_ &amp;&amp; touches)
+    {
+        if (blupiBallooned &amp;&amp;
+            GetObjectDefinition(obj.type).balloonPoppableHazard)
+        {
+            events_.push_back(Event{EventKind::BalloonPopped});
+            ...</code></pre>
+  <p>Note the shape: <code>InteractionSystem</code> does not touch the controller, the camera or the HUD; it
+  pushes an event and the host reacts. Keep new behaviour on that side of the boundary.</p>
 
-    // Add your own shapes here — staircases, platforms, rooms.
+  <h3>The guard</h3>
+  <p><code>tools/VerifyDefinitionRegistries.cpp</code> keeps an independent expectation for every flag and checks
+  all 204 types against it:</p>
+  <pre><code>bool ExpectedGenericContactHazardCrouchImmune(int raw)
+{
+    return raw == 3;
+}
+...
+Check(definition.genericContactHazardCrouchImmune ==
+          ExpectedGenericContactHazardCrouchImmune(raw),
+      "generic contact hazard crouch immunity is centralized without parity loss");</code></pre>
+  <p>So a registry change fails this test until you also change the expectation, which is deliberate: the two
+  edits together are the reviewable statement "type X now behaves like this". Then add a behavioural check
+  (in <code>VerifyInteractionSystem</code>, which runs <code>InteractionSystem</code> against
+  <code>world999</code>) that fails without your change.</p>
 
-    world.saveToFile("worlds3d/myworld.vwr");
-    return 0;
+  <h3>If the change touches animation</h3>
+  <p>An object's sprite frames per phase come from <code>GetObjIcon</code>
+  (<code>src/GalaxyEggbert/Game/ObjectIcons.cpp</code>). <code>VerifyGetObjIcon</code> locks every frame array and
+  divisor, and <code>VerifyObjIconAgainstReferenceDoc</code> cross-checks them against the tables in
+  <code>mobile-eggbert-reference/08-animations.md</code>. Where a 3D model replaces the sprite, the pose comes from
+  that model's <code>icons.txt</code> (generated; see <a href="../development/extending-the-game.html">Extending
+  the Game</a>).</p>
+
+  <h2>Part 2: a block becomes solid in 3D</h2>
+  <p>A block's collision mask is derived from the original's quarter-cell table
+  (<code>table_decor_quart</code>, in <code>DecorQuartTable.hpp</code>). Some tiles that the original's Blupi
+  walks in front of in 2D (columns, girders, posts) stand in his way in 3D. The owner decided they are solid
+  (owner report OR-0069; the commit of 2026-11-04 cites it by its earlier number OR-0042). That decision is a
+  named list in the header:</p>
+  <pre><code>inline constexpr std::array&lt;std::uint16_t, 12&gt; kSolidIn3DDecor{
+    49, 50, 51, 76, 77, 199, 200, 201, 235, 236, 300, 398};</code></pre>
+  <p>and one loop in the registry's constructor:</p>
+  <pre><code>// Solid in 3D (OR-0069, kSolidIn3DDecor): a whole block each, as the fans (M3D-0004). Drawn
+// as before (mobileTransparent is the original's). The secret passages stay passable.
+for (const auto icon : kSolidIn3DDecor)
+{
+    definitions_[static_cast&lt;std::size_t&gt;(icon)].collisionMask = 0xFFFF;
 }</code></pre>
 
-  <h2>Step 3 — Add a CMake Tool Target</h2>
-  <p>Follow the existing <code>GenerateSampleWorld3D</code> target pattern in <code>CMakeLists.txt</code> — it is engine-agnostic and needs no CNA link.</p>
+  <h3>Who picks it up</h3>
+  <ul>
+    <li><code>BlupiController</code> tests collision against <code>collisionMask</code>, and a tile with a full mask
+      is no longer passable <code>decor</code> (the registry derives <code>decor</code> from an empty mask and no
+      role), so Blupi stands on it and is stopped by it.</li>
+    <li>The renderer is unchanged: drawing follows the render mode, not the mask.</li>
+    <li>The Python checkers read <code>tools/data/blocks.csv</code> (columns <code>collision_mask</code> and
+      <code>solid</code>), so <code>levelcheck.py</code> sees the new walls only after the CSV is refreshed.</li>
+  </ul>
 
-  <h2>Step 4 — Generate and Point GalaxyEggbertCNA at It</h2>
-  <pre><code>cmake --build build-cna --target GenerateSampleWorld3D
-./build-cna/GenerateSampleWorld3D</code></pre>
-  <p>
-    Then change the path in <code>GalaxyEggbertCnaGame::LoadContent()</code>
-    (<code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code>) to your new file, or
-    replace <code>world001.vwr</code> directly.
-  </p>
+  <h3>Refresh the CSV and run the guards</h3>
+  <pre><code>cmake --build build-cna-opengl3 --target DumpBlockDefinitions VerifyDefinitionRegistries
+build-cna-opengl3/DumpBlockDefinitions &gt; tools/data/blocks.csv      # from the repository root
+ctest --test-dir build-cna-opengl3 -R "VerifyBlockDefinitionsCsv|VerifyDefinitionRegistries|VerifyBlupiMovement"</code></pre>
+  <p><code>VerifyBlockDefinitionsCsv</code> runs <code>DumpBlockDefinitions --check tools/data/blocks.csv</code>
+  and fails while the committed CSV differs from the C++ table. <code>VerifyDefinitionRegistries</code> recomputes
+  every mask from the quarter-cell table plus <code>kSolidIn3DDecor</code>.</p>
 
-  <h2>Step 5 — Verify Block Counts</h2>
-  <p>
-    Use <code>World::loadFromFile()</code> in a small test to round-trip your world and check its
-    non-air block count and Y range, the same way <code>world001.vwr</code>'s stats (2729 blocks,
-    Y range [0, 13]) were verified.
-  </p>
+  <h3>Then the worlds</h3>
+  <p>A tile that becomes solid can close a route a world relied on. The real commit (<code>2d9cdaf7</code>,
+  <code>feat(gameplay): the decor that stands in Blupi's way in 3D is solid, the secret passages stay
+  passable</code>) changed nine files together: the registry header and source, the ledger row, a new
+  <code>VerifyBlupiMovement</code> case (Blupi stands on a floor of girders, still falls through a cobweb), the
+  registry test's expectation, the regenerated <code>blocks.csv</code>, one world generator and its
+  <code>.vwr</code> (<code>world058</code>), and one playthrough (<code>world056.txt</code>). Run the world checks
+  and the playthroughs (<a href="../development/testing.html">Testing &amp; QA</a>, "Which checks for which
+  change") to find yours.</p>
+
+  <h2>Checklist</h2>
+  <ol>
+    <li>Evidence first: the original's code, or a ledger row / owner decision for a 3D adaptation.</li>
+    <li>Change the registry entry, not a consumer; update its comment with the citation.</li>
+    <li>Update the expectation in <code>VerifyDefinitionRegistries</code>; add a behavioural test that fails
+      without the change.</li>
+    <li>Block change: rebuild and regenerate <code>tools/data/blocks.csv</code>.</li>
+    <li>Run ctest, the golden trace, the affected missions' playthroughs and <code>tools/verify_demos.sh</code>;
+      a world that no longer works is fixed in its generator.</li>
+    <li>Record the change in its ledger row and commit everything together, the id in the subject.</li>
+  </ol>
 
   <div class="page-nav">
-    <a href="building.html">← Building GalaxyEggbertCNA</a>
-    <a href="modifying-levels.html">Adding a Block Type →</a>
+    <a class="prev" href="../tutorials/modifying-levels.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Tutorial: Authoring a World</span>
+    </a>
+    <a class="next" href="../internals/index.html">
+      <span class="label">Next</span>
+      <span class="title">Internals &#8594;</span>
+    </a>
   </div>
 </main>
 </div>
