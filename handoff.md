@@ -6,7 +6,30 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-10 (multiplayer on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Multiplayer (2026-11-10, owner Q-019) — on branch `multiplayer`, not merged
+
+Where: branch `multiplayer`, worktree `../galaxy-eggbert-multiplayer` (its own build tree
+`build-cna-opengl3`). Merged into `develop` only when the owner accepts it. Design and status:
+`plans/plan_gemultiplayer.md` (its header); the player's guide and ZeroTier:
+`docs/handbook/09-multiplayer.md`; the differences from SB2: BD-0120.
+
+Done: the protocol, the lobby, the CNA session, the screens (games on the network, lobby with chat),
+the match (SB2's rules), poses and world replication, team colours, Android permissions and
+multicast lock, worlds 201-204, `VerifyNetProtocol`, `tools/net_two_players.sh` with the scenarios
+bomb/laid/shot/vehicle (all PASS), CTest 117/117 (single player unchanged).
+
+How to check it:
+```bash
+cd ../galaxy-eggbert-multiplayer
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA VerifyNetProtocol --parallel 6
+NET_LIVES=1 tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/bomb_host.txt tools/autoplay/net/bomb_join.txt
+tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tools/autoplay/net/laid_join.txt
+```
+Next: the Android build (arm64 only, to spare the SSD) and a phone-PC game; the owner's look; more
+of SB2's worlds (205-212) if wanted; then the merge on acceptance, and the AI policy after it.
 
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 

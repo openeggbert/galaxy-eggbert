@@ -1640,6 +1640,52 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0120 — The network game (owner request, Speedy Blupi 2's) — IMPLEMENTED on branch `multiplayer`
+
+Owner (2026-11-10, owner_questions.md Q-019): multiplayer as Speedy Blupi 2 / Speedy Eggbert 2
+plays it (../blupi_recon reconstructs it), though Mobile Eggbert has none; LAN, Linux and Android;
+the original's evident defects not reproduced. Kind: gameplay (an approved addition).
+
+As the original (games/sb2/src): 2-4 players, the lobby of four places (colour cycling, need not
+differ; ready; the host's Start when all present are ready, two at least; the host's mission);
+the chat in the lobby ("<name> text", six lines, event.cpp:4554); ten lives and each at his team's
+start (decblock.cpp:1349); crates, goals and enemy Blupis taken out (decblock.cpp:1430); each
+team's personal bombs (his own taken back and laid, another's lethal, decblupi.cpp:2379, 3721);
+a death restarts at the last safe place (decblupi.cpp:4078); PK_DIE/LOST/ABANDON with the
+original's notices (decmove.cpp:202-232; sb2-eggbert-en.rc 257-261); the last one present wins
+(decblupi.cpp:4097, text 287); a pause stops everyone (PK_PAUSE); remote Blupis only drawn, no
+collision between players; world changes as the original's MODIFDECOR/OBJECTSTART/OBJECTDELETE
+(blocks, pickups, bombs, vehicles taken and left, dynamite, tank and helicopter shots); cheats and
+speed per machine, as the original (not gated in a network game).
+
+Differences:
+- Transport: CNA SystemLink (ENet over UDP, LAN discovery) in place of DirectPlay; a content hash
+  (the multiplayer worlds, the Blupi model's clips) in the session's properties, so only games of
+  the same content are listed (blupi_recon's port does the same).
+- Not reproduced (the original's defects, blupi_recon MULTIPLAYER_ASSESSMENT): the 32768-tick
+  clock wrap; events of an old packet applied unordered (events are reliable and ordered here);
+  the full event queue silently dropping events; the cloud-stop's slot/team mix-up.
+- The host leaving ends the game for everyone (the owner's choice; the original never handled
+  its DirectPlay host migration).
+- The original closes the network game as the win/lost screen opens; here it closes as the player
+  leaves that screen, so a host knocked out does not end the others' match at once.
+- A remote Blupi is drawn from his machine's model transform, clip and time (20 a second, moved
+  between the last two), not from a sprite icon; his team's colour by recolouring the yellow
+  materials (the editor's starts' RecolorPlayerStartPixel); each team's bombs likewise.
+- Galaxy's own screens: the Multiplayer button in the menu's left panel, the games' list and the
+  lobby as panels with the original's texts, "(host)" and "(you)" marks and a status line.
+- Mobile Eggbert has no network game: the four multiplayer worlds 201-204 are Galaxy's 3D halls
+  with SB2's missions' identity (plans/briefs/world201-204.md).
+
+Validation: VerifyNetProtocol (messages and their refusal of damaged packets, the lobby, the
+rules, a two-machine replication round); tools/net_two_players.sh, two instances on one machine
+through the screens and their autoplay scripts in real time: bomb (another team's bombs kill, the
+knocked-out one sends LOST, the other wins), laid (a bomb taken back and laid elsewhere kills the
+other there), shot (a tank's shot kills the other there), vehicle (a tank taken and left
+elsewhere), all PASS; two instances driven by the pointer under Xvfb (list, join, colour, ready,
+chat, start; each sees the other in his colour). CTest 117/117 (single player unchanged:
+VerifyDemoReplays). Evidence: build-probe/mp-shots/, build-probe/net-two-players/.
+
 ## BD-0119 — Each player's own galaxy (owner request) — FIXED_AND_VERIFIED
 
 Owner (2026-11-08): each of the three players builds a world system of their own, a main hub, sub
