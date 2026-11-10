@@ -1,0 +1,30 @@
+Galaxy Eggbert - third-party components
+=======================================
+
+Galaxy Eggbert itself is free software under the GNU General Public License,
+version 3 (LICENSE).
+
+Bundled with the program (Linux archive: lib/; Windows: next to the .exe;
+Android: inside the APK):
+
+- CNA, an XNA 4.0 reimplementation in C++ (Microsoft Public License, Ms-PL).
+  https://github.com/libcna/cna
+- cna-engine, helper modules for CNA (MIT License).
+  https://github.com/libcna/cna-engine
+- SDL3, SDL3_image and SDL3_mixer (zlib License). Their license texts are in
+  licenses/SDL/ in the Linux archive.
+
+Used from the system on Linux (not bundled): the graphics stack (OpenGL),
+FFmpeg (libavcodec, libavformat, libavutil, libswresample; LGPL 2.1 or later,
+or GPL depending on the distribution's build), the C and C++ runtimes.
+
+Game data
+---------
+
+Galaxy Eggbert is a 3D remake of Speedy Blupi / Speedy Eggbert for mobile
+(mobile-eggbert, MIT License, Copyright (c) 2013 Daniel Roux;
+https://github.com/openeggbert/mobile-eggbert), from whose package its 2D
+graphics, sounds and music come. Speedy Blupi and Speedy Eggbert are original
+creations of EPSITEC SA. The 3D models and the 2x graphics were converted and
+rendered from the original Ray Dream Studio scenes. The 3D worlds are original
+Galaxy Eggbert designs.

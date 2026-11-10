@@ -78,6 +78,11 @@ content-authoring UX, but not new gameplay mechanics.
 - A goodbye on quitting from the menu (2026-11-10, as Speedy Blupi's edition): thanks and credits
   over the title scene, a key, click, button or touch closes the game. Galaxy's own loading screen
   shows from the first frame (the logo until the title scene is up), not Mobile Eggbert's.
+- Release packages (2026-11-10): `tools/release/make_release.sh` makes the Linux archive (CPack,
+  versioned from `VERSION.txt`, with LICENSE, THIRD_PARTY.txt, RELEASE_NOTES.md; it needs glibc
+  2.38 and the system's FFmpeg) and the release-signed Android APK (arm64), with SHA256SUMS.txt.
+  1.0.0-rc1 built and the archive run; not published. Windows and a glibc 2.35 archive are open
+  (Q-018).
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
   only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x

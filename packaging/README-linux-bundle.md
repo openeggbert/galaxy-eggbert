@@ -16,6 +16,9 @@ host distribution, including its graphics stack, FFmpeg, and C++ runtime. If
 the game cannot start because a system library is absent, install the matching
 runtime package from your distribution and try again.
 
-`LICENSE` applies to Galaxy Eggbert. Licenses for the bundled SDL libraries
+`LICENSE` applies to Galaxy Eggbert; `THIRD_PARTY.txt` lists what it is built on and
+where its data comes from, `RELEASE_NOTES.md` what this release holds. Your saved
+games are in `~/.local/share/Galaxy Eggbert` (`--user DIR` chooses another folder).
+Licenses for the bundled SDL libraries
 are in `licenses/SDL/`. This archive is a runtime bundle, not the full source
 release; the source tree contains the build instructions and GPLv3 license.

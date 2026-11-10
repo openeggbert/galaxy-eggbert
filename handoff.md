@@ -96,7 +96,14 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   `GALAXY_TEXTURES=2x`: the log says `textures 2x`, no light lines. Golden frames force 1x.
 - **Megablupi keeps the breath under water (fixed, owner report):** `BlupiController` gauge gate
   now has the original's `!m_bSuperBlupi` (Decor.cpp:4617) beside Shield/Hide; VerifyBlupiMovement.
-- Still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
+- **Release packages (Linux and Android done; Windows and glibc 2.35 open: Q-018).**
+  `tools/release/make_release.sh <Release build> <out>`: CPack's `package` (now
+  `GalaxyEggbert-<VERSION.txt>-linux-x86_64.tar.gz`, with THIRD_PARTY.txt, RELEASE_NOTES.md and
+  VERSION.txt from `packaging/`), android/'s `assembleRelease` for arm64-v8a (versionName read
+  from VERSION.txt), SHA256SUMS.txt; prints the glibc the program needs (2.38 today). 1.0.0-rc1
+  built into `build-probe/release/`; the Linux archive (139 MB) extracted and run under Xvfb:
+  SDL3 from its `lib/` (RUNPATH `$ORIGIN/lib`), the user folder as asked, the game loop reached.
+- Was still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
   README/COPYING/THIRD_PARTY, release notes), the 2x sheets when ray announces them (ray and
   geultra handed that to this session).
 

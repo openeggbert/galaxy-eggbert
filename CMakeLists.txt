@@ -610,6 +610,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                 USE_SOURCE_PERMISSIONS
                 COMPONENT Runtime)
             install(FILES LICENSE DESTINATION "." COMPONENT Runtime)
+            install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/THIRD_PARTY.txt"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/packaging/RELEASE_NOTES.md"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt"
+                DESTINATION "." COMPONENT Runtime)
             install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/README-linux-bundle.md"
                 DESTINATION "."
                 RENAME "README-Linux.md"
@@ -636,7 +640,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
             set(CPACK_GENERATOR "TGZ")
             set(CPACK_PACKAGE_NAME "GalaxyEggbert")
-            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbert-linux-${CMAKE_SYSTEM_PROCESSOR}")
+            # The release's version (VERSION.txt) in the archive's name.
+            file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" _ge_version LIMIT_COUNT 1)
+            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbert-${_ge_version}-linux-${CMAKE_SYSTEM_PROCESSOR}")
             set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
             set(CPACK_COMPONENTS_ALL Runtime)
             # CPack otherwise invokes the root install with no component,

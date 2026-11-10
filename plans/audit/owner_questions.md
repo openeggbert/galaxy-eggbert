@@ -336,3 +336,20 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
   Blupi, or above his floor, left out or see-through), so that a cave shows too: needs the terrain
   drawn per chunk or a clip in the shader; days. (c) not at all (it is not the 1998 game's).
   Recommendation: (a), behind the cheat word as in Mobile Eggbert, reset on leaving the level.
+
+## Q-018 — the release packages (owner's goal of 2026-11-10): Windows, glibc 2.35, version, where to publish
+
+`tools/release/make_release.sh build-cna-opengl3 <out>` makes the Linux archive and the Android APK
+with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/release/`). Open:
+
+1. **Windows zip.** Galaxy has never been cross-built for Windows here: it needs a MinGW build tree
+   of CNA + Galaxy with SDL3 for MinGW (MinGW-w64 GCC is installed), and CURRENT.md asks for a live
+   3D run on Windows before Windows is called supported. Build it (a new tree: which name?) and
+   who runs it on Windows?
+2. **glibc 2.35.** The Linux program needs glibc 2.38 (its C23 `strtol` symbols, GCC 14's
+   libstdc++) and the distribution's FFmpeg; Debian 13 has no older toolchain. An archive for
+   glibc 2.35 needs a build on Ubuntu 22.04 (a container or chroot: neither docker, podman nor
+   debootstrap is installed). Install one of them, or accept 2.38 (Debian 13, Ubuntu 24.04+)?
+3. **The version number.** `VERSION.txt` says 1.0.0-rc1 (Android's versionName reads it). Keep it?
+4. **Where to publish** (GitHub release of openeggbert/galaxy-eggbert? the web build on the site?).
+   Nothing is pushed or published yet.

@@ -93,7 +93,8 @@ android {
         minSdkVersion 24
         targetSdkVersion 35
         versionCode 1
-        versionName "1.0"
+        // The release's version (VERSION.txt at the repository's root), as the desktop archive's.
+        versionName rootProject.file("../VERSION.txt").text.trim()
 
         externalNativeBuild {
             cmake {
