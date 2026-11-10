@@ -353,3 +353,23 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
 3. **The version number.** `VERSION.txt` says 1.0.0-rc1 (Android's versionName reads it). Keep it?
 4. **Where to publish** (GitHub release of openeggbert/galaxy-eggbert? the web build on the site?).
    Nothing is pushed or published yet.
+
+## Q-019 — multiplayer: the owner's decisions (2026-11-10, asked interactively) — ANSWERED
+
+`plans/plan_gemultiplayer.md` §10 Q1-Q11:
+
+1. **Scope (Q1):** approved, Speedy Blupi 1/2 (blupi_recon) as the source of truth although
+   mobile-eggbert has no multiplayer.
+2. **Rules (Q2):** SB2 / Speedy Eggbert 2 (the editor already follows Eggbert 2).
+3. **Maps (Q3):** one multiplayer world first, then 3-5, their identity from SB2's world201-212.
+4. **Platforms (Q4):** Linux and Android in v1 (Windows with the Windows build, Q-018); not the web.
+5. **Internet (Q5):** LAN only in v1, with a ZeroTier-style VPN documented for play over the internet.
+6. **Sign-in (Q6):** automatic, as the selected player A/B/C (no Guide screen).
+7. **Host loss (Q7):** the session ends for everyone (as the original).
+8. **Original defects (Q8):** not reproduced; each kept out is written into behavior_differences.md.
+9. **Team colours (Q9):** derived by recolouring (yellow, orange, blue, green, as the editor's starts).
+10. **Who and when (Q10):** an agent, before the AI policy (introduced after multiplayer is done), on a
+    separate branch `multiplayer`, merged into `develop` only on the owner's acceptance.
+11. **Speed and cheats (Q11):** as the original allowed them in a network game (to be found in
+    blupi_recon).
+12. **Chat:** in the first version already.

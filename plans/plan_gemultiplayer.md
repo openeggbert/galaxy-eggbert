@@ -994,6 +994,11 @@ both columns.
 
 ## 10. Open owner decisions [OWNER]
 
+**Answered on 2026-11-10** (`plans/audit/owner_questions.md` Q-019): Q1 yes; Q2 SB2/SE2; Q3 one world,
+then 3-5 from SB2's world201-212; Q4 Linux + Android; Q5 LAN + documented ZeroTier; Q6 automatic as
+player A/B/C; Q7 the session ends; Q8 defects not reproduced; Q9 recolouring; Q10 an agent before
+the AI policy, on branch `multiplayer`, merged on acceptance; Q11 as the original; chat in v1.
+
 Write these into `plans/audit/owner_questions.md` as Q-NNN entries. Do not block on them; do the
 spike meanwhile if Q1 is at least provisionally yes.
 

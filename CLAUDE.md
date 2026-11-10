@@ -37,6 +37,12 @@ guidance.
   must not introduce new gameplay behavior. Its palette/order and interaction should follow the
   Eggbert 2 editor where specified, with documented Galaxy-only additions such as background
   selection.
+- Multiplayer is approved (the owner, 2026-11-10) although `mobile-eggbert` has none: its source of
+  truth is Speedy Blupi 2 / Speedy Eggbert 2's network game as `../blupi_recon` reconstructs it (SB1
+  where SB2 is silent), the original's evident defects not reproduced. It is developed on the
+  `multiplayer` branch and merged into `develop` only on the owner's acceptance; the AI policy is
+  introduced after it. Decisions: `plans/audit/owner_questions.md` Q-019, design
+  `plans/plan_gemultiplayer.md`.
 - Real 3D worlds are hand-authored as original tile-based 3D designs. Mobile Eggbert's maps
   give identity, theme and mechanics only: no 2D-to-3D conversion or extrusion, no 2.5D.
 - Models and animations come from the original Ray Dream sources (`../speedyblupi-data`)
