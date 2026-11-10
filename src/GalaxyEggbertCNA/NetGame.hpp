@@ -58,6 +58,7 @@ namespace GalaxyEggbert::CNA
             float age = 0.0f;      // seconds since the pose arrived
             float interval = 0.05f; // between the last two poses
             int lives = Net::kMultiplayerLives;
+            bool paused = false; // his pause stops everyone's game (PK_PAUSE) while he is there
         };
         bool match = false;
         int world = Net::kFirstWorld;
@@ -67,7 +68,6 @@ namespace GalaxyEggbert::CNA
         std::vector<Peer> peers;
         Net::Replicator replicator;
         std::vector<Net::WorldEvent> incoming;
-        bool remotePaused = false;
         bool localPaused = false;
         bool lost = false;   // no life left: the Lost screen, out of the match
         bool won = false;

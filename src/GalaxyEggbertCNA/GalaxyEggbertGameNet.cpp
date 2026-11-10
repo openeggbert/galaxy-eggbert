@@ -122,7 +122,7 @@ namespace GalaxyEggbert::CNA
     {
         std::vector<std::string> lines;
         if (!NetMatchActive()) return lines;
-        if (net_->remotePaused) lines.emplace_back(Net::kTextPause);
+        if (NetRemotePaused()) lines.emplace_back(Net::kTextPause);
         for (const auto& [text, seconds] : net_->notices) lines.push_back(text);
         return lines;
     }
@@ -288,7 +288,8 @@ namespace GalaxyEggbert::CNA
             }
             return;
         case Net::MessageKind::Pause:
-            if (n.match) n.remotePaused = m.ready;
+            // Each player's own pause: one who left or lost holds no one up.
+            if (auto* p = peer(); p != nullptr && n.match) p->paused = m.ready;
             return;
         }
     }
@@ -790,7 +791,7 @@ namespace GalaxyEggbert::CNA
         n.match = true;
         n.tick = 0;
         n.lost = n.won = false;
-        n.remotePaused = n.localPaused = false;
+        n.localPaused = false;
         n.notices.clear();
         n.typing = false;
         n.screen = NetGame::Screen::None;
@@ -932,7 +933,6 @@ namespace GalaxyEggbert::CNA
         n.peers.clear();
         n.incoming.clear();
         n.notices.clear();
-        n.remotePaused = false;
         n.screen = NetGame::Screen::None;
         interaction_ = InteractionSystem(); // his ten lives stay in the network game
         StopVehicleMotorSound();
@@ -971,5 +971,11 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    bool GalaxyEggbertGame::NetRemotePaused() const noexcept { return NetMatchActive() && net_->remotePaused; }
+    bool GalaxyEggbertGame::NetRemotePaused() const noexcept
+    {
+        if (!NetMatchActive()) return false;
+        for (const auto& peer : net_->peers)
+            if (peer.present && peer.paused) return true;
+        return false;
+    }
 }
