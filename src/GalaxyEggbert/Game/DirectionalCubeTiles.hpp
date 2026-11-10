@@ -87,4 +87,7 @@ namespace GalaxyEggbert::Game
     // swatch on each, no open side such as icon 200's top and bottom): with opaque texels it hides
     // what lies behind any of its sides, so the terrain can cull faces against it.
     [[nodiscard]] bool IsClosedDirectionalCube(int icon);
+    // Whether face @p face (a CnaEngine::Graphics::BoxFace) of a DirectionalCube is there (the grass
+    // 107's top is open, its sides and bottom are not).
+    [[nodiscard]] bool DirectionalCubeFaceClosed(int icon, int face);
 }

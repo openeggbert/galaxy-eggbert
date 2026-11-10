@@ -308,6 +308,14 @@ namespace GalaxyEggbert::Game
         return true;
     }
 
+    bool DirectionalCubeFaceClosed(int icon, int face)
+    {
+        if (face < 0 || face >= 6) return false;
+        CnaEngine::Graphics::BoxFaces faces;
+        ConfigureDirectionalCubeFaces(icon, CnaEngine::Graphics::UvRect{}, CnaEngine::Graphics::UvRect{}, faces);
+        return faces[static_cast<std::size_t>(face)].visible;
+    }
+
     int SingleTexturedSide(int icon, std::uint8_t hiddenFaces, const int (&room)[4])
     {
         for (const auto& entry : kDirectionalEntries)

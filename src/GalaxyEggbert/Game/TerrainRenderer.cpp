@@ -330,12 +330,15 @@ namespace GalaxyEggbert::Game
         constexpr float kGrassPlateWidth = 1.0f;
         constexpr float kGrassPlateDepth = 1.0f;
 
+        // `towardFace`: the neighbour's face (BoxFace) that touches the face asked about; the block's
+        // own faces count then (IsTerrainOccluderFace), -1 the whole block.
         bool IsOccluderBlock(const Worlds::World& world, int blocksPerAxis, int x, int y, int z,
-                             const std::vector<TileCoverage>& tileCoverage)
+                             const std::vector<TileCoverage>& tileCoverage, int towardFace = -1)
         {
             if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
                 return false;
-            return IsTerrainOccluder(world.getBlock(x, y, z), tileCoverage);
+            return towardFace < 0 ? IsTerrainOccluder(world.getBlock(x, y, z), tileCoverage)
+                                  : IsTerrainOccluderFace(world.getBlock(x, y, z), tileCoverage, towardFace);
         }
 
         // A face of a DirectionalCube hidden by its neighbour (IsOccluderBlock), as a plain cube's
@@ -353,7 +356,9 @@ namespace GalaxyEggbert::Game
             std::uint8_t mask = 0;
             for (const auto& side : kSides)
             {
-                if (IsOccluderBlock(world, blocksPerAxis, x + side.dx, y + side.dy, z + side.dz, tileCoverage))
+                // The neighbour's face against this one: BoxFace pairs (+Z, -Z), (+X, -X), (+Y, -Y).
+                if (IsOccluderBlock(world, blocksPerAxis, x + side.dx, y + side.dy, z + side.dz, tileCoverage,
+                                    static_cast<int>(side.face) ^ 1))
                 {
                     mask |= static_cast<std::uint8_t>(1u << static_cast<unsigned>(side.face));
                 }
@@ -1017,17 +1022,17 @@ namespace GalaxyEggbert::Game
                     const std::uint8_t besideRelief = reliefTile ? std::uint8_t{0} : reliefNeighbourFaces(x, y, z);
                     CnaEngine::Graphics::BoxFaces faces;
                     faces[static_cast<int>(BoxFace::PositiveZ)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1, tileCoverage, 1), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeZ)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1, tileCoverage, 0), tileUv};
                     faces[static_cast<int>(BoxFace::PositiveX)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z, tileCoverage, 3), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeX)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z, tileCoverage, 2), tileUv};
                     faces[static_cast<int>(BoxFace::PositiveY)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z, tileCoverage, 5), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeY)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z, tileCoverage), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z, tileCoverage, 4), tileUv};
                     for (int face = 0; face < 6; ++face)
                     {
                         if ((besideRelief & (1u << face)) != 0)

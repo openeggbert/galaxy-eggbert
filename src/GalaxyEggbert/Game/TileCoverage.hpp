@@ -115,8 +115,8 @@ namespace GalaxyEggbert::Game
     // clear texel takes the mean of its solid (or already filled) 8 neighbours within the same tile,
     // ring by ring inward, and becomes solid (the terrain's opaque pass draws with the blend state
     // the frame left, so a clear texel let the black behind the face show through). Only tiles
-    // classified opaque are touched: the cutout and blended ones keep their shapes. `rgba`: 4 bytes
-    // a texel, row by row, the sheet as ClassifyTileSheet's.
+    // classified opaque are touched: the cutout and blended ones keep their shapes; their texels all
+    // end wholly opaque. `rgba`: 4 bytes a texel, row by row, the sheet as ClassifyTileSheet's.
     inline void FillOpaqueTilesClearTexels(std::uint8_t* rgba, int width, int height,
                                            const std::vector<TileCoverage>& coverage, int scale = 1)
     {
@@ -203,6 +203,16 @@ namespace GalaxyEggbert::Game
                 }
                 filled.swap(next);
                 clear -= done;
+            }
+            // And every texel wholly opaque (2026-11-10, the owner's report: light lines round every
+            // cell of a wall with the 2x textures): a sheet rendered with a soft mask (the 2x one) has
+            // its opaque tiles' edges at alpha 140-250, which blended the light behind into them.
+            for (int y = 0; y < kTileSize; ++y)
+            {
+                for (int x = 0; x < kTileSize; ++x)
+                {
+                    at(x, y)[3] = 255;
+                }
             }
         }
     }
