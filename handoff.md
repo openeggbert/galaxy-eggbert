@@ -8,7 +8,19 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## The owner's goal of 2026-11-10: user folder, on-screen keyboard, gamepad, demo names, galaxy delete, goodbye, release packages
+## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
+
+At medium and up the terrain's cubes (`m_occluded`), the grass plates (`LitWith`) and the cutouts are
+drawn by different programs; the driver compiled the same `Projection * View * World` differently
+in each, so their shared edges fought in depth and the faces under the grass plates (the side faces
+between two grass cubes are drawn: a grass cube is no occluder) showed as thin lines along the cells
+(light or dark by the world's side texture). `CompileShaderEffect` (SurfaceShaders.cpp) now puts
+`invariant gl_Position;` in every vertex shader. The owner saw the lines gone on his GPU (high);
+llvmpipe under Xvfb still shows some at medium (its rasteriser, `GALAXY_EFFECTS_DEBUG=occlusion`
+shows them white): if they come back on hardware, cull the side faces between two grass-top cubes
+or lift the grass plates a hair in the effects' path. Golden frames (off/medium/high) unchanged.
+
+, on-screen keyboard, gamepad, demo names, galaxy delete, goodbye, release packages
 
 The owner's list (from the comparison with blupi_recon's port): finish the day's screens for
 touch and gamepad, name demos, delete a whole galaxy, keep the player's files in the system's

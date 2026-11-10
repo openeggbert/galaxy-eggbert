@@ -268,7 +268,11 @@ void main()
         }
         try
         {
-            auto effect = std::make_unique<Graphics::ShaderEffect>(device, preamble + vertexBody, preamble + fragmentBody);
+            // Every program computes a vertex's place exactly as the others do (the terrain's cubes,
+            // its grass and its cutouts are drawn by different programs; their shared edges fought
+            // in depth: thin lines of the faces behind between the cells, 2026-11-10).
+            auto effect = std::make_unique<Graphics::ShaderEffect>(device, preamble + "invariant gl_Position;\n" + vertexBody,
+                                                                   preamble + fragmentBody);
             if (!effect->IsEffectValid())
             {
                 std::cout << "GalaxyEggbertCNA: 3D effects: " << name << " did not compile: " << effect->GetCompileErrorEXT()
