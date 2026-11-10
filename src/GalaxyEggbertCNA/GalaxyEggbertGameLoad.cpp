@@ -144,7 +144,10 @@ namespace GalaxyEggbert::CNA
 
         // The textures' size for this run (TextureScale.hpp: the Setup's "Textures", GALAXY_TEXTURES, or
         // auto: 2x with Ultra on a display at least 1000 pixels tall), decided once before any texture loads.
-        GalaxyEggbert::Game::SetTextureScaleSetting(saveData_.GetTextureScale());
+        // The golden captures are 1x whatever the folder's savedata.txt says (its textureScale=2 made
+        // effects-high's frame differ, 2026-11-10); GALAXY_TEXTURES still overrides.
+        GalaxyEggbert::Game::SetTextureScaleSetting(goldenCaptureMode_ || goldenTraceMode_ ? 1
+                                                                                          : saveData_.GetTextureScale());
         const int displayHeight = Microsoft::Xna::Framework::Graphics::GraphicsAdapter::getDefaultAdapterProperty()
                                       .getCurrentDisplayModeProperty()
                                       .getHeightProperty();
