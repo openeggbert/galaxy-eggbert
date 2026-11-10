@@ -84,8 +84,12 @@ content-authoring UX, but not new gameplay mechanics.
   size; the terrain's padded atlas 3200x3520 at 2x). The Setup's "Textures" (Auto / 1x / 2x, at
   the next start, `textureScale=`) or `GALAXY_TEXTURES=1x|2x|auto`; Auto picks 2x with Ultra on a
   display at least 1000 px tall. Web and Android always 1x; the APK leaves both directories out.
-  The re-rendered sheets (from the Ray Dream scenes, `../speedyblupi-hd/galaxy/`) are still being
-  made; until they are committed, 2x finds no sheets and stays 1x.
+  The sheets are in (2026-11-10, ray's final set from `../speedyblupi-hd/galaxy/`, 9 icon sheets and
+  39 backgrounds, each exactly 2x its 1x file; per cell provenance in
+  `../speedyblupi-hd/manifest/build_galaxy.csv`: reduced from 8x Ray Dream renders where they
+  passed verification, else an edge-padded per-cell Lanczos of the 1x pixels). Checked live at
+  Ultra in a 1360x840 window (`textures 2x` in the log; no light band at the cells' edges, which an
+  earlier whole-sheet stand-in had). Opaque tiles are made wholly opaque at load whatever the sheet.
 
 - The world is drawn from a `SceneFrame` by `WorldRenderer` (2026-11-09, the owner's request; the seam
   of `renderers.md`, one renderer, no second one): `GalaxyEggbertGameScene.cpp` reads the simulation

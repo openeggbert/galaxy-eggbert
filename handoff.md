@@ -90,6 +90,12 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   the 2x stand-in sheet left in `build-cna-opengl3/Content/icons2x` (moved to
   `build-probe/stale-2x-standins/`) had a light 2-px band and soft alpha at every tile edge
   (Lanczos ringing; opaque tiles are now forced to alpha 255 at load, and ray fixed the builder).
+- **2x sheets committed (ray's final set, handed over by ray and geultra).** Copied from
+  `../speedyblupi-hd/galaxy/{icons2x,backgrounds2x}` (48 files, each checked exactly 2x its 1x file,
+  icon 10's edge texels = the 1x edge colour, alpha 255); live at Ultra 1360x840 with
+  `GALAXY_TEXTURES=2x`: the log says `textures 2x`, no light lines. Golden frames force 1x.
+- **Megablupi keeps the breath under water (fixed, owner report):** `BlupiController` gauge gate
+  now has the original's `!m_bSuperBlupi` (Decor.cpp:4617) beside Shield/Hide; VerifyBlupiMovement.
 - Still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
   README/COPYING/THIRD_PARTY, release notes), the 2x sheets when ray announces them (ray and
   geultra handed that to this session).
