@@ -1,0 +1,13 @@
+# tools/net_two_players.sh, the one who joins (orange, world 201): gets into the tank (57, 46),
+# (the action key), drives it to (57, 42) and gets out (the action key again).
+until phase = Play max 7200
+wait 30
+go 57 46 max 900 tol 0.4
+hold 2 action
+wait 30
+go 57 42 max 900
+hold 2 action
+wait 60
+go 59 40 max 900
+wait 300
+end

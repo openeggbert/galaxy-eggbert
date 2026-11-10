@@ -1,0 +1,17 @@
+# tools/net_two_players.sh, the one who joins (orange, world 201): takes the ammunition (56, 44),
+# gets into the tank (57, 46), turns it north (-Z) and fires (F) along x 57 at the host there.
+until phase = Play max 7200
+wait 30
+go 56 44 max 900
+go 57 46 max 900 tol 0.4
+hold 2 action
+wait 30
+face 0
+wait 300
+hold 3 fire
+wait 150
+hold 3 fire
+wait 150
+hold 3 fire
+wait 300
+end

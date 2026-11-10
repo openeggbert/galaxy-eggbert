@@ -26,16 +26,25 @@ namespace GalaxyEggbert::Net
     }
 
     // What a player makes that the others must have too (ObjectStart(..., TRUE), sent reliably): a
-    // personal bomb laid (200-203, its team's, decblupi.cpp:2395), a lit dynamite (56), whose blast
-    // each machine then plays on its own (killing whoever is near on that machine), and his tank's
-    // or helicopter's shot (23, TYPE_BALLE, decblupi.cpp:715, 1885), which kills the Blupi it meets
-    // there (decblupi.cpp:3514). The bombs' end (taken back, blown up) is sent too; a fuse and a
-    // shot run to their end everywhere.
+    // personal bomb laid (200-203, its team's, decblupi.cpp:2395), a vehicle left where he got out
+    // of it (helicopter 13, jeep 19, skateboard 24, tank 28, overcraft 46: taking one is an
+    // ObjectDelete, leaving it an ObjectStart, decblupi.cpp:3285-3300), a lit dynamite (56), whose
+    // blast each machine then plays on its own (killing whoever is near on that machine), and his
+    // tank's or helicopter's shot (23, TYPE_BALLE, decblupi.cpp:715, 1885), which kills the Blupi
+    // it meets there (decblupi.cpp:3514). The bombs' and vehicles' end (taken, blown up) is sent
+    // too; a fuse and a shot run to their end everywhere.
+    [[nodiscard]] constexpr bool IsVehicle(int type) noexcept
+    {
+        return type == 13 || type == 19 || type == 24 || type == 28 || type == 46;
+    }
     [[nodiscard]] constexpr bool IsReplicatedSpawn(int type) noexcept
     {
-        return type == 23 || type == 56 || (type >= 200 && type <= 203);
+        return type == 23 || type == 56 || (type >= 200 && type <= 203) || IsVehicle(type);
     }
-    [[nodiscard]] constexpr bool IsPersistentSpawn(int type) noexcept { return type >= 200 && type <= 203; }
+    [[nodiscard]] constexpr bool IsPersistentSpawn(int type) noexcept
+    {
+        return (type >= 200 && type <= 203) || IsVehicle(type);
+    }
 
     // decblupi.cpp:4097-4110: once fewer than two players are present (the others left or lost),
     // the one still playing wins.

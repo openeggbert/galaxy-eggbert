@@ -150,6 +150,9 @@ int main()
               !RemovedInMultiplayer(49) && !RemovedInMultiplayer(200),
           "a network game takes out crates, goals and enemy Blupis only (decblock.cpp:1430)");
     check(LastSurvivor(1) && !LastSurvivor(2) && LastSurvivor(0), "fewer than two present: the one left wins");
+    check(IsReplicatedSpawn(28) && IsPersistentSpawn(13) && IsReplicatedSpawn(23) && !IsPersistentSpawn(23) &&
+              IsReplicatedSpawn(56) && !IsPersistentSpawn(56) && !IsReplicatedSpawn(5),
+          "what a player makes: bombs and vehicles left stay until taken; a fuse and a shot run out");
     check(DieNotice("Ann", 3) == "Ann has 3 lives left !" && DieNotice("Ann", 1) == "Ann has only one more life left !" &&
               DieNotice("Ann", 0) == "Ann has no life left !" && LeftNotice("Ben") == "Ben has left the game ..." &&
               LostNotice("Cid") == "Cid has been just knocked out ...",
