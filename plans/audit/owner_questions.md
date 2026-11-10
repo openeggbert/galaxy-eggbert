@@ -373,3 +373,20 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
 11. **Speed and cheats (Q11):** as the original allowed them in a network game (to be found in
     blupi_recon).
 12. **Chat:** in the first version already.
+
+## Q-020 — multiplayer: acceptance of branch `multiplayer` (2026-11-10) — OPEN
+
+The network game is implemented on branch `multiplayer` (worktree `../galaxy-eggbert-multiplayer`;
+`docs/handbook/09-multiplayer.md`, BD-0120, `plans/plan_gemultiplayer.md`'s status). Checked on one
+machine with two instances (screens, chat, start, the rules, bombs, shots, vehicles, pause, leaving,
+the win); single player unchanged (CTest, demo replays). For the owner:
+
+1. **A game between real machines.** Two PCs on one network, or a PC and the phone (an arm64
+   release APK of the branch is built: `android/app/build/outputs/apk/release/` in the worktree;
+   it replaces the installed Galaxy Eggbert, same signature, data kept). Does it play as expected?
+2. **Merge into `develop`?** On acceptance the branch is merged (Q-019 Q10); the AI policy follows.
+3. **More worlds?** 201-204 exist (machine arena, machine towers, toy box, metal works). SB2 has
+   205-212 (stone village 205/207/209, metal 206/210, library 208, palace 211, clods 212): add one
+   or more?
+4. **Speed and cheats:** SB2 does not restrict them in a network game (each machine its own); the
+   same here. Keep it so?
