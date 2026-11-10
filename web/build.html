@@ -20,6 +20,7 @@
   <div class="nav-section">Getting Started</div>
   <a href="index.html">Home</a>
   <a href="overview.html">Project Overview</a>
+  <a href="releases.html">Releases</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="build.html" class="active">Build Guide</a>
   <a href="running.html">Running the Game</a>
@@ -82,6 +83,7 @@
     <tr><td>Web (Emscripten)</td><td><code>WEBGL2</code></td><td><code>build-cna-webgl2/</code></td><td><span class="badge badge-wip">Manual</span> verified in headless Chrome, not in CI</td></tr>
     <tr><td>Android (Gradle)</td><td><code>OPENGLES3</code></td><td><code>android/app/build/</code></td><td><span class="badge badge-wip">Emulator</span> builds and runs, not played on a device</td></tr>
     <tr><td>Windows (MinGW)</td><td><code>SDLGPU</code> planned</td><td><code>build-windows/</code></td><td><span class="badge badge-planned">Not verified</span></td></tr>
+    <tr><td><a href="#release">Release packages</a></td><td>Linux archive + Android APK</td><td>a Release desktop tree</td><td><span class="badge badge-done">Built</span> 1.0.0-rc1 on 2026-11-10, not published</td></tr>
   </table>
 
   <h2>Before you configure</h2>
@@ -136,27 +138,56 @@ cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4</code></p
   <h2>Linux runtime bundle</h2>
   <p>
     The <code>package</code> target (CPack, <code>TGZ</code>) makes a relocatable x86-64 archive,
-    <code>GalaxyEggbert-linux-x86_64.tar.gz</code>, in the build directory. Configure the tree as
+    <code>GalaxyEggbert-&lt;version&gt;-linux-x86_64.tar.gz</code> (the version from <code>VERSION.txt</code>,
+    e.g. <code>GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz</code>), in the build directory. Configure the tree as
     Release. <code>README.md</code> does this in a separate <code>build-package</code> directory; the
     same target in the desktop tree, as below, should work equally but has not been run separately:
   </p>
 <pre><code>cmake -S . -B build-cna-opengl3 -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-cna-opengl3 --target package --parallel 4
-tar -xzf build-cna-opengl3/GalaxyEggbert-linux-x86_64.tar.gz
-./GalaxyEggbert-linux-x86_64/run-galaxy-eggbert</code></pre>
+tar -xzf build-cna-opengl3/GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz
+./GalaxyEggbert-1.0.0-rc1-linux-x86_64/run-galaxy-eggbert</code></pre>
   <p>
     The archive holds the executable, the launcher <code>run-galaxy-eggbert</code> (it enters its own
     directory and starts the game with your arguments), <code>Content/</code>, <code>worlds/</code>,
     <code>worlds3d/</code>, <code>textures3d/</code>, <code>avatars3d/</code>, the SDL3, SDL3_image and
     SDL3_mixer shared libraries in <code>lib/</code> (found through the RPATH
-    <code>$ORIGIN/lib</code>), their licenses in <code>licenses/SDL/</code>, <code>LICENSE</code> and
-    <code>README-Linux.md</code> (from <code>packaging/README-linux-bundle.md</code>).
+    <code>$ORIGIN/lib</code>), their licenses in <code>licenses/SDL/</code>, <code>LICENSE</code>,
+    <code>README-Linux.md</code> (from <code>packaging/README-linux-bundle.md</code>), and since 1.0.0-rc1
+    <code>THIRD_PARTY.txt</code>, <code>RELEASE_NOTES.md</code> (both from <code>packaging/</code>) and
+    <code>VERSION.txt</code>.
   </p>
   <p>
     It is a runtime bundle, not an AppImage: the host still supplies the graphics stack, FFmpeg and the
     C++ runtime. Turn the target off with <code>-DGALAXY_EGGBERT_ENABLE_LINUX_BUNDLE=OFF</code>; it is
-    never defined for Emscripten, Android or Apple builds.
+    never defined for Emscripten, Android or Apple builds. The archive needs the glibc of the system it
+    was built on or newer: built on Debian 13 it needs glibc 2.38. An archive for older systems has to be
+    built on one.
   </p>
+
+  <h2 id="release">Release packages</h2>
+  <p>
+    <code>tools/release/make_release.sh</code> makes a release's packages in one folder. It needs a
+    configured <strong>Release</strong> desktop tree (it stops otherwise):
+  </p>
+<pre><code>tools/release/make_release.sh build-cna-opengl3 &lt;out-dir&gt;              # Linux archive + Android APK
+tools/release/make_release.sh build-cna-opengl3 &lt;out-dir&gt; --no-android # Linux archive only</code></pre>
+  <ul>
+    <li><strong>Version</strong>: the first line of <code>VERSION.txt</code> (<code>1.0.0-rc1</code> as of
+      2026-11-10). CMake puts it in the archive's name, and Gradle uses it as the APK's
+      <code>versionName</code>.</li>
+    <li><strong>Linux</strong>: builds <code>GalaxyEggbertCNA</code> and the <code>package</code> target, moves
+      <code>GalaxyEggbert-&lt;version&gt;-linux-x86_64.tar.gz</code> to the output folder and prints the
+      highest glibc version that the program and its bundled libraries ask for.</li>
+    <li><strong>Android</strong>: <code>./gradlew assembleRelease -PgalaxyAbis=arm64-v8a</code>, signed with
+      the release key named in <code>android/key.properties</code> (git-ignored, like the keystore), copied as
+      <code>GalaxyEggbert-&lt;version&gt;-android-arm64.apk</code>. <code>-PgalaxyAbis</code> chooses the
+      ABIs. The test-only <code>android.injected.build.abi</code> property is not used for releases.</li>
+    <li><strong>Notes and checksums</strong>: <code>packaging/RELEASE_NOTES.md</code> is copied beside the
+      packages and <code>SHA256SUMS.txt</code> is written.</li>
+    <li><strong>Windows</strong> is not made by the script: its cross-build has not been run yet.</li>
+  </ul>
+  <p>What the packages need and how to install them: <a href="releases.html">Releases</a>.</p>
 
   <h2>Tests</h2>
 <pre><code>cmake --build build-cna-opengl3 --parallel 4      # everything, tests included
@@ -235,7 +266,9 @@ cmake --build build-cna-webgl2 --target GalaxyEggbertCNA --parallel 4</code></pr
     <li>The application id is <code>org.openeggbert.galaxyeggbert</code>, so it installs beside Mobile
       Eggbert's app.</li>
     <li>Release: <code>./gradlew assembleRelease</code> needs <code>android/key.properties</code> and a
-      keystore, both git-ignored; never commit them. <code>ANDROID.md</code> has the steps.</li>
+      keystore, both git-ignored; never commit them. <code>ANDROID.md</code> has the steps. Add
+      <code>-PgalaxyAbis=arm64-v8a</code> for a phone-only APK, as the <a href="#release">release
+      script</a> does. <code>versionName</code> comes from <code>VERSION.txt</code>.</li>
   </ul>
 
   <h2>Windows (MinGW)</h2>

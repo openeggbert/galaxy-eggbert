@@ -232,7 +232,9 @@ pre code {
 .tip  { background: var(--tip-bg);  border-left: 4px solid var(--tip-bord);  }
 .nv   { background: var(--warn-bg); border-left: 4px solid #e0a800; }
 
-.note strong, .warn strong, .tip strong, .nv strong {
+/* The callout's title is its first <strong>; any later <strong> is plain bold text. */
+.note > strong:first-child, .warn > strong:first-child,
+.tip > strong:first-child, .nv > strong:first-child {
   display: block;
   margin-bottom: 0.2rem;
   font-size: 0.8rem;
@@ -240,10 +242,10 @@ pre code {
   letter-spacing: 0.06em;
 }
 
-.note strong { color: #729fee; }
-.warn strong { color: #f08030; }
-.tip  strong { color: #4dba6f; }
-.nv   strong { color: #e0a800; }
+.note > strong:first-child { color: #729fee; }
+.warn > strong:first-child { color: #f08030; }
+.tip  > strong:first-child { color: #4dba6f; }
+.nv   > strong:first-child { color: #e0a800; }
 
 /* ── tables ── */
 table {

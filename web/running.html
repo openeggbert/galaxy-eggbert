@@ -20,6 +20,7 @@
   <div class="nav-section">Getting Started</div>
   <a href="index.html">Home</a>
   <a href="overview.html">Project Overview</a>
+  <a href="releases.html">Releases</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="build.html">Build Guide</a>
   <a href="running.html" class="active">Running the Game</a>
@@ -85,8 +86,13 @@
   </p>
 
   <h2>Linux bundle</h2>
-<pre><code>tar -xzf GalaxyEggbert-linux-x86_64.tar.gz
-./GalaxyEggbert-linux-x86_64/run-galaxy-eggbert</code></pre>
+<pre><code>tar -xzf GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz
+./GalaxyEggbert-1.0.0-rc1-linux-x86_64/run-galaxy-eggbert</code></pre>
+  <p>
+    The archive's name carries the version from <code>VERSION.txt</code>. A bundle built on Debian 13 needs
+    glibc 2.38 or newer; see <a href="releases.html">Releases</a> for the 1.0.0-rc1 packages and their
+    requirements.
+  </p>
   <p>
     <code>run-galaxy-eggbert</code> changes into the bundle's directory and runs
     <code>GalaxyEggbert</code> with the arguments you gave it, so every flag below works through it.

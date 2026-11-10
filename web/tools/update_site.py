@@ -32,6 +32,7 @@ SIDEBAR = [
     ("Getting Started", [
         ("index.html", "Home"),
         ("overview.html", "Project Overview"),
+        ("releases.html", "Releases"),
         ("getting-started.html", "Getting Started"),
         ("build.html", "Build Guide"),
         ("running.html", "Running the Game"),
@@ -80,6 +81,7 @@ SIDEBAR = [
 SITE_ORDER = [
     ("index.html", "Home"),
     ("overview.html", "Project Overview"),
+    ("releases.html", "Releases"),
     ("getting-started.html", "Getting Started"),
     ("build.html", "Build Guide"),
     ("running.html", "Running the Game"),

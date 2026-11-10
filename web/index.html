@@ -20,6 +20,7 @@
   <div class="nav-section">Getting Started</div>
   <a href="index.html" class="active">Home</a>
   <a href="overview.html">Project Overview</a>
+  <a href="releases.html">Releases</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
@@ -89,14 +90,19 @@
     <strong>State as of 2026-11-10</strong>
     The game is complete and playable. All 78 campaign worlds are built, and every mission has
     a scripted playthrough that plays it to the end. The desktop (Linux) and
-    WebGL 2 builds pass every automated check. A public release is waiting only on the
-    maintainer's decision. The status source is <code>CURRENT.md</code> in the
+    WebGL 2 builds pass every automated check. Release candidate <strong>1.0.0-rc1</strong> was built on
+    2026-11-10, a Linux archive and an Android APK (<a href="releases.html">Releases</a>). Where and when it is
+    published is the maintainer's decision. The status source is <code>CURRENT.md</code> in the
     repository; <a href="development/known-issues.html">Known Issues</a> summarises what is
     still open.
   </div>
 
   <h2>Quick Navigation</h2>
   <div class="card-grid">
+    <a class="card" href="releases.html">
+      <h3>&#128230; Releases</h3>
+      <p>1.0.0-rc1: the Linux archive and the Android APK, requirements and installation.</p>
+    </a>
     <a class="card" href="getting-started.html">
       <h3>&#128640; Getting Started</h3>
       <p>Prerequisites, sibling repositories and the shortest path to a running game.</p>
@@ -175,10 +181,10 @@
   <h2>Platforms</h2>
   <table>
     <tr><th>Platform</th><th>Status</th></tr>
-    <tr><td>Linux desktop (OpenGL)</td><td><span class="badge badge-done">Verified</span> builds, tests and plays; a relocatable <code>.tar.gz</code> runtime bundle</td></tr>
+    <tr><td>Linux desktop (OpenGL)</td><td><span class="badge badge-done">Verified</span> builds, tests and plays; a relocatable <code>.tar.gz</code> runtime bundle (1.0.0-rc1 needs glibc 2.38 or newer)</td></tr>
     <tr><td>Web (Emscripten, WebGL 2)</td><td><span class="badge badge-done">Verified</span> manually in headless Chrome; not part of CI</td></tr>
-    <tr><td>Android</td><td><span class="badge badge-wip">Partial</span> the APK builds and runs in the emulator, and a release APK reached the title screen on a phone; not played on a device yet</td></tr>
-    <tr><td>Windows</td><td><span class="badge badge-planned">Not verified</span> the current <code>SDLGPU</code> renderer configuration has had no fresh build and live run</td></tr>
+    <tr><td>Android</td><td><span class="badge badge-wip">Partial</span> a signed arm64 APK for Android 7.0+ is part of 1.0.0-rc1; it runs in the emulator and reached the title screen on a phone, but has had little testing on devices</td></tr>
+    <tr><td>Windows</td><td><span class="badge badge-planned">Not verified</span> the current <code>SDLGPU</code> renderer configuration has had no fresh build and live run; not part of 1.0.0-rc1</td></tr>
   </table>
   <p>Details: <a href="platform-support.html">Platform Support</a>.</p>
 

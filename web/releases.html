@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Releases — Galaxy Eggbert Docs</title>
+<meta name="description" content="Galaxy Eggbert 1.0.0-rc1: the Linux archive and the Android APK, what they need, how to install and run them, and their known limitations.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="releases.html" class="active">Releases</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Playing</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Campaign &amp; Worlds</a>
+  <a href="cheats.html">Cheats &amp; Diagnostics</a>
+  <a href="demos.html">Demos &amp; Recordings</a>
+  <a href="galaxy.html">Your Own Galaxy</a>
+  <a href="editor.html">3D World Editor</a>
+  <a href="graphics.html">3D Effects &amp; Graphics</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio &amp; Music</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save Data &amp; Resume</a>
+  <a href="configuration.html">Configuration</a>
+  <a href="assets.html">Assets &amp; Tools</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/testing.html">Testing &amp; QA</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Releases</h1>
+  <p class="subtitle">Galaxy Eggbert 1.0.0-rc1: the release candidate's packages, what they need, and how to install and run them.</p>
+
+  <div class="warn">
+    <strong>Built, not published yet</strong>
+    The packages of release candidate <strong>1.0.0-rc1</strong> were built on 2026-11-10, and the Linux
+    archive was run. They have not been published. Where they will be published (for example a GitHub
+    release of the repository), and whether the web build goes on this site, is still the maintainer's
+    decision (<code>plans/audit/owner_questions.md</code>, Q-018). Until then the game is built from
+    source: see <a href="getting-started.html">Getting Started</a>.
+  </div>
+
+  <h2>What 1.0.0-rc1 contains</h2>
+  <ul>
+    <li>The whole campaign in 3D: the main hub, twelve theme worlds with their 64 missions, and the bonus
+      world, played as in the original (<a href="levels.html">Campaign &amp; Worlds</a>).</li>
+    <li>Three players with their own progress, and each player's <a href="galaxy.html">own galaxy</a>, which can be
+      named, exported, imported and deleted (with a backup).</li>
+    <li>The <a href="editor.html">3D world editor</a>, on keyboard and mouse, a gamepad or a touch screen.</li>
+    <li>Ten <a href="demos.html">demos</a> in the main menu, and the player's own recordings.</li>
+    <li>Optional <a href="graphics.html">3D effects</a> (Off to Ultra), 2x textures, frame rates up to 240 fps,
+      full screen, gamepad and touch controls, and the original <a href="cheats.html">cheats</a>.</li>
+  </ul>
+  <p>The version is kept in <code>VERSION.txt</code> at the repository's root. Both packages read it: the
+    Linux archive's name and the APK's <code>versionName</code>.</p>
+
+  <h2>Files</h2>
+  <table>
+    <tr><th>File</th><th>For</th></tr>
+    <tr><td><code>GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz</code></td><td>64-bit Linux (x86-64)</td></tr>
+    <tr><td><code>GalaxyEggbert-1.0.0-rc1-android-arm64.apk</code></td><td>Android 7.0 (API 24) or newer, arm64 phones and tablets</td></tr>
+    <tr><td><code>SHA256SUMS.txt</code></td><td>SHA-256 checksums of the two packages</td></tr>
+    <tr><td><code>RELEASE_NOTES.md</code></td><td>What the release holds and its known limitations</td></tr>
+  </table>
+  <p>Check a download against the checksums before running it:</p>
+<pre><code>sha256sum -c --ignore-missing SHA256SUMS.txt</code></pre>
+
+  <h2>Linux</h2>
+  <h3>Requirements</h3>
+  <ul>
+    <li>x86-64 and <strong>glibc 2.38 or newer</strong>, for example Debian 13 or Ubuntu 24.04 and later. The
+      program and its bundled libraries need 2.38 (C23 <code>strtol</code> symbols and the C++ runtime of
+      GCC 14).</li>
+    <li>From the distribution: OpenGL drivers, FFmpeg (<code>libavcodec</code>, <code>libavformat</code>,
+      <code>libavutil</code>, <code>libswresample</code>) and the C and C++ runtimes. SDL3, SDL3_image and
+      SDL3_mixer are bundled.</li>
+  </ul>
+  <h3>Install and run</h3>
+<pre><code>tar -xzf GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz
+./GalaxyEggbert-1.0.0-rc1-linux-x86_64/run-galaxy-eggbert</code></pre>
+  <p>
+    The launcher enters its own directory and starts <code>GalaxyEggbert</code> with any arguments you give
+    it, so the command-line flags in <a href="running.html">Running the Game</a> work through it. Keep the
+    extracted folder together: the program finds <code>Content/</code>, <code>worlds3d/</code>,
+    <code>textures3d/</code> and <code>avatars3d/</code> next to it. The archive also holds
+    <code>LICENSE</code>, <code>THIRD_PARTY.txt</code>, <code>RELEASE_NOTES.md</code>, <code>VERSION.txt</code>,
+    <code>README-Linux.md</code> and the SDL licences in <code>licenses/SDL/</code>. It is a runtime bundle, not
+    an AppImage. If the game does not start because a system library is missing, install your distribution's
+    package for it.
+  </p>
+  <h3>Saved games</h3>
+  <p>
+    Settings, progress, an interrupted mission, recordings and custom worlds are kept in
+    <code>~/.local/share/Galaxy Eggbert</code> (or <code>$XDG_DATA_HOME/Galaxy Eggbert</code>), not in the
+    extracted folder, so a new version can be unpacked anywhere. <code>--user DIR</code> chooses another
+    folder. The files of an earlier build kept beside the game are copied there on the first start. See
+    <a href="save-system.html">Save Data &amp; Resume</a>.
+  </p>
+
+  <h2>Android</h2>
+  <ul>
+    <li>Android 7.0 (API 24) or newer on an arm64 device. The APK is signed with the project's release key.</li>
+    <li>Install it as an app from outside a store (allow the installer when the phone asks). Its package id is
+      <code>org.openeggbert.galaxyeggbert</code>, so it installs beside Mobile Eggbert instead of replacing it.</li>
+    <li>On the first start the game copies its data to the app's private storage, where its saves stay too.</li>
+    <li>The 2x textures are not in the APK; Android always uses the normal sheets.</li>
+  </ul>
+
+  <h2>Known limitations of 1.0.0-rc1</h2>
+  <table>
+    <tr><th>Area</th><th>Limitation</th></tr>
+    <tr><td>Linux, older systems</td><td>No archive for glibc 2.35 (for example Ubuntu 22.04). It has to be built on such a system, and no container or chroot for that exists on the build machine yet.</td></tr>
+    <tr><td>Windows</td><td>Not part of this release candidate. The Windows cross-build has not been run, and Windows is not called supported until a build also passes a live 3D run.</td></tr>
+    <tr><td>Android</td><td>A release APK has reached the title screen on a phone, but the game has had little testing on real devices: gamepads and the accelerometer especially. An accelerometer that did not react and an occasional freeze were reported and are not reproduced yet.</td></tr>
+    <tr><td>Web</td><td>The WebGL 2 build works (checked in headless Chrome) but is not one of the packages; whether it is published is open.</td></tr>
+    <tr><td>Multiplayer</td><td>Not available.</td></tr>
+  </table>
+  <p>Everything still open is collected in <a href="development/known-issues.html">Known Issues</a>.</p>
+
+  <h2>Licences</h2>
+  <p>
+    Galaxy Eggbert is free software under the GNU General Public License, version 3. The packages bundle
+    CNA (Ms-PL), cna-engine (MIT) and SDL3, SDL3_image and SDL3_mixer (zlib). The 2D graphics, sounds and
+    music come from Mobile Eggbert (MIT); Speedy Blupi and Speedy Eggbert are original creations of
+    EPSITEC SA. The 3D models and the 2x graphics were converted and rendered from the original Ray Dream
+    scenes, and the 3D worlds are Galaxy Eggbert's own designs. <code>THIRD_PARTY.txt</code> in each package
+    has the details; <a href="assets.html">Assets &amp; Tools</a> describes where each asset comes from.
+  </p>
+
+  <h2>Making the packages</h2>
+  <p>
+    <code>tools/release/make_release.sh</code> builds both packages from a Release build tree, writes the
+    checksums and prints the glibc version the Linux program needs. See
+    <a href="build.html#release">Build Guide: Release packages</a>.
+  </p>
+
+  <div class="page-nav">
+    <a class="prev" href="overview.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Project Overview</span>
+    </a>
+    <a class="next" href="getting-started.html">
+      <span class="label">Next</span>
+      <span class="title">Getting Started &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

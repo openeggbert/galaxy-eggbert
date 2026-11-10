@@ -20,6 +20,7 @@
   <div class="nav-section">Getting Started</div>
   <a href="index.html">Home</a>
   <a href="overview.html">Project Overview</a>
+  <a href="releases.html">Releases</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
@@ -93,7 +94,7 @@
 ├── docs/                    handbook/ and provenance/
 ├── android/                 Gradle project for the APK
 ├── cmake/                   CMake helpers, MinGW toolchain, web shells
-├── packaging/               Linux runtime-bundle launcher and README
+├── packaging/               Linux bundle launcher and README, release notes, third-party list
 ├── web/                     this website
 ├── .github/workflows/       cna-ci.yml (build and test), pages.yml (website)
 └── CMakeLists.txt, CURRENT.md, handoff.md, plan.md, ... (root documents, below)</code></pre>
@@ -173,6 +174,8 @@
         <td>Other asset generators (terrain reliefs, lava surface, lightning paths, glue strands, music rendering, the grass texture).</td></tr>
     <tr><td><code>tools/audit/</code>, <code>tools/qa_steps/</code>, <code>tools/data/</code></td><td>Ledger generators, step files for
       <code>qa_live.sh</code>, the exported <code>blocks.csv</code>.</td></tr>
+    <tr><td><code>tools/release/</code></td><td><code>make_release.sh</code>: a release's Linux archive, Android APK and
+      checksums (<a href="build.html#release">Build Guide</a>).</td></tr>
   </table>
   <p>See <a href="assets.html">Assets &amp; Tools</a> and <a href="development/testing.html">Testing</a>.</p>
 
@@ -229,7 +232,8 @@
       <code>toolchains/mingw-w64.cmake</code>, <code>web/shell-cna.html</code> (the page around the web build).</li>
     <li><code>android/</code>: the Gradle project (<code>app/build.gradle</code>, <code>gradlew</code>,
       <code>local.properties.template</code>, <code>SpeedyBlupiActivity.java</code>).</li>
-    <li><code>packaging/</code>: <code>run-galaxy-eggbert.sh.in</code> and <code>README-linux-bundle.md</code>.</li>
+    <li><code>packaging/</code>: <code>run-galaxy-eggbert.sh.in</code>, <code>README-linux-bundle.md</code>, and the
+      <code>RELEASE_NOTES.md</code> and <code>THIRD_PARTY.txt</code> that go into the release packages.</li>
     <li><code>.github/workflows/</code>: <code>cna-ci.yml</code> (Linux build and CTest with pinned siblings),
       <code>pages.yml</code> (deploys <code>web/</code>).</li>
     <li><code>Doxyfile</code>: the API documentation target <code>GalaxyEggbertDocs</code> (only when Doxygen is installed).</li>
@@ -252,7 +256,8 @@
     <tr><td><code>REMAKE-ANALYSIS.md</code>, <code>easy3d.md</code>, <code>assets-3d-analysis.md</code></td><td>Older analyses (root causes, the 2026-07 migration to CNA, 3D sources).</td></tr>
     <tr><td><code>backlog.md</code>, <code>editor-wireframe-gles-bug.md</code>, <code>texture-distance-washout-bug.md</code></td><td>Small notes and bug records, partly historical.</td></tr>
     <tr><td><code>AGENTS.md</code>, <code>CLAUDE.md</code></td><td>The contributor rules (direction, fidelity, boundaries, build hygiene).</td></tr>
-    <tr><td><code>LICENSE</code></td><td>The licence.</td></tr>
+    <tr><td><code>LICENSE</code></td><td>The licence (GNU GPL v3).</td></tr>
+    <tr><td><code>VERSION.txt</code></td><td>The release version (<code>1.0.0-rc1</code> as of 2026-11-10), read by CMake for the Linux archive's name and by Gradle for the APK's <code>versionName</code>.</td></tr>
   </table>
 
   <div class="tip"><strong>Where to start reading.</strong> <code>CURRENT.md</code>, then

@@ -32,12 +32,17 @@
    {
     "t": "Galaxy Eggbert Documentation",
     "u": "index.html",
-    "k": "galaxy eggbert documentation a faithful 3d remake of speedy blupi : c++23 · cna · cna-engine · cmake what is galaxy eggbert? quick navigation 🚀 getting started 🔧 build guide 🎮 gameplay 🎮 controls 🌎 campaign & worlds ⛏ 3d world editor 🌌 your own galaxy 🎥 demos & recordings ✨ 3d effects & graphics 🏛 architecture 📄 class reference ✅ testing & qa what the game has today platforms technology stack about this site"
+    "k": "galaxy eggbert documentation a faithful 3d remake of speedy blupi : c++23 · cna · cna-engine · cmake what is galaxy eggbert? quick navigation 📦 releases 🚀 getting started 🔧 build guide 🎮 gameplay 🎮 controls 🌎 campaign & worlds ⛏ 3d world editor 🌌 your own galaxy 🎥 demos & recordings ✨ 3d effects & graphics 🏛 architecture 📄 class reference ✅ testing & qa what the game has today platforms technology stack about this site"
    },
    {
     "t": "Project Overview",
     "u": "overview.html",
     "k": "project overview where galaxy eggbert comes from, the rules it is built by, and how it got to where it is. from speedy blupi to galaxy eggbert the rules the project is built by what the remake contains repositories involved how it got here the project's own documents"
+   },
+   {
+    "t": "Releases",
+    "u": "releases.html",
+    "k": "releases galaxy eggbert 1.0.0-rc1: the release candidate's packages, what they need, and how to install and run them. what 1.0.0-rc1 contains files linux requirements install and run saved games android known limitations of 1.0.0-rc1 licences making the packages"
    },
    {
     "t": "Getting Started",
@@ -47,7 +52,7 @@
    {
     "t": "Build Guide",
     "u": "build.html",
-    "k": "build guide every way to build the game: linux desktop, the linux bundle, webgl 2, android and windows, plus tests and ci. before you configure linux desktop useful targets without cheats linux runtime bundle tests web (emscripten, webgl 2) android (gradle) windows (mingw) continuous integration related pages"
+    "k": "build guide every way to build the game: linux desktop, the linux bundle, webgl 2, android and windows, plus tests and ci. before you configure linux desktop useful targets without cheats linux runtime bundle release packages tests web (emscripten, webgl 2) android (gradle) windows (mingw) continuous integration related pages"
    },
    {
     "t": "Running the Game",

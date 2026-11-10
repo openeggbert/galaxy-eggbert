@@ -20,6 +20,7 @@
   <div class="nav-section">Getting Started</div>
   <a href="index.html">Home</a>
   <a href="overview.html">Project Overview</a>
+  <a href="releases.html">Releases</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="build.html">Build Guide</a>
   <a href="running.html">Running the Game</a>
@@ -76,10 +77,10 @@
   <table>
     <tr><th>Platform</th><th>Status</th><th>What has been checked</th></tr>
     <tr><td>Linux desktop (x86-64)</td><td><span class="badge badge-done">Verified</span></td><td>Built and tested by CI. Played live on a GPU and under Xvfb; every mission has an automated playthrough (last full pass 2026-11-06); golden frames match (2026-11-09). Renderers <code>OPENGL33</code> and <code>OPENGLES3</code>.</td></tr>
-    <tr><td>Linux runtime bundle</td><td><span class="badge badge-done">Builds</span></td><td>The <code>package</code> target produces <code>GalaxyEggbert-linux-x86_64.tar.gz</code> reproducibly. Starting it on other distributions is a check of the host, not part of CI or a release gate.</td></tr>
-    <tr><td>Web (Emscripten, WebGL 2)</td><td><span class="badge badge-wip">Manually verified</span></td><td>Built and run in headless Chrome (2026-11-09: demos, recording, galaxies, the kept world edits, persistence over a reload). Not in CI and not published by any pipeline.</td></tr>
-    <tr><td>Android (APK)</td><td><span class="badge badge-wip">Partial</span></td><td>Builds APKs for <code>arm64-v8a</code> and <code>x86_64</code> and starts in the emulator, where the 3D models draw since CNA's UB-007 fix (2026-11-06). On 2026-11-09 a release APK was installed on a phone: the assets were copied, <code>world001</code> loaded and the title screen drew. It has not been played further on a device. The maintainer reported from the phone that the accelerometer did not react and that the game sometimes froze; neither is reproduced yet.</td></tr>
-    <tr><td>Windows (MinGW)</td><td><span class="badge badge-planned">Not verified</span></td><td>An earlier cross-build reached a window with a since-retired CNA renderer. The current configuration has had no fresh build and no live 3D run; not supported until both pass.</td></tr>
+    <tr><td>Linux runtime bundle</td><td><span class="badge badge-done">Builds</span></td><td>The <code>package</code> target produces <code>GalaxyEggbert-&lt;version&gt;-linux-x86_64.tar.gz</code> reproducibly. Release 1.0.0-rc1's archive (2026-11-10) needs glibc 2.38 or newer (Debian 13, Ubuntu 24.04 and later) and the distribution's FFmpeg; no archive for glibc 2.35 exists yet (<a href="releases.html">Releases</a>). Starting it on other distributions is a check of the host, not part of CI or a release gate.</td></tr>
+    <tr><td>Web (Emscripten, WebGL 2)</td><td><span class="badge badge-wip">Manually verified</span></td><td>Built and run in headless Chrome (2026-11-09: demos, recording, galaxies, the kept world edits, persistence over a reload). Not in CI and not published by any pipeline; not one of the 1.0.0-rc1 packages.</td></tr>
+    <tr><td>Android (APK)</td><td><span class="badge badge-wip">Partial</span></td><td>Release 1.0.0-rc1 has a signed arm64 APK for Android 7.0 (API 24) or newer. Builds APKs for <code>arm64-v8a</code> and <code>x86_64</code> and starts in the emulator, where the 3D models draw since CNA's UB-007 fix (2026-11-06). On 2026-11-09 a release APK was installed on a phone: the assets were copied, <code>world001</code> loaded and the title screen drew. It has not been played further on a device. The maintainer reported from the phone that the accelerometer did not react and that the game sometimes froze; neither is reproduced yet.</td></tr>
+    <tr><td>Windows (MinGW)</td><td><span class="badge badge-planned">Not verified</span></td><td>An earlier cross-build reached a window with a since-retired CNA renderer. The current configuration has had no fresh build and no live 3D run; not supported until both pass. Not part of release 1.0.0-rc1.</td></tr>
     <tr><td>macOS</td><td><span class="badge badge-planned">Not a target</span></td><td>No build is documented or tried.</td></tr>
   </table>
   <p>How to build each one: <a href="build.html">Build Guide</a>. Open problems:
