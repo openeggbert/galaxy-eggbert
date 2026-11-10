@@ -503,16 +503,20 @@ BD-0119) are done too. What is left:_
 
 ### Waiting on the owner
 
-- **A release of the desktop and web builds**: they pass every automated check; the release audit
-  (§6) leaves only the owner's word.
+- **Publishing release 1.0.0-rc1** (Q-018): the Linux archive and the Android APK are built
+  (`tools/release/make_release.sh`, `build-probe/release/`); open are the Windows package, an
+  archive for glibc 2.35, the version number and where to publish (the web build too?).
+- **Multiplayer**: analysed in `plans/plan_gemultiplayer.md` (nothing built); its questions Q1-Q11
+  are the owner's.
 - Optional: a human play pass (MR-0004 lists what to try); the owner judged the automated
   playthroughs sufficient (MR-0007), so it does not hold anything up.
 
 ### Outside the code's reach here
 
-- Android played on a device (Q-009, OR-0011): the APK builds and draws the 3D models in the
-  emulator since CNA's UB-007 fix; there is no device or KVM here to play it.
-- A physical gamepad and touch screen: verified with an SDL virtual gamepad only.
+- Android: played by the owner on his phone (2026-11-10, 1.0.0-rc1): everything worked but the
+  accelerometer, fixed the same evening (geultra, 86017658); his word on the fix is still to come.
+- A physical gamepad on the desktop and a desktop touch screen: verified with an SDL virtual
+  gamepad only (the phone's touch screen works).
 - Windows: the `SDL_GPU` path has had no fresh cross-build or live 3D run; not supported until both
   pass.
 

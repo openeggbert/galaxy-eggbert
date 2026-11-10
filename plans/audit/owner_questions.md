@@ -197,7 +197,7 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   speeds up the lava worlds (084, 094, 106).
 - Meanwhile: the void stays; 105's teleporter pair (the hut and the roof) is in.
 
-## Q-009 — Android: KVM or a phone for a real test (2026-11-03, OR-0011)
+## Q-009 — Android: KVM or a phone for a real test (2026-11-03, OR-0011) — DONE: the owner played 1.0.0-rc1 on his phone 2026-11-10
 
 - The APK builds and starts in the emulator (assets copied, the title scene drawn:
   `plans/evidence/android-emulator-loading.png`), but this workstation has no `/dev/kvm`
