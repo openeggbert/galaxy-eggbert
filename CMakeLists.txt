@@ -190,6 +190,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Game/UserFolder.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
         src/GalaxyEggbert/Editor/ObjectPathRenderer.cpp
@@ -756,6 +757,18 @@ target_include_directories(VerifyAutoplay PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# The network game's messages and lobby (src/GalaxyEggbert/Net/): round trips, damaged and foreign
+# packets refused, the lobby's rules. Engine-independent.
+add_executable(VerifyNetProtocol
+        tools/VerifyNetProtocol.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
+)
+target_include_directories(VerifyNetProtocol PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+add_test(NAME VerifyNetProtocol COMMAND VerifyNetProtocol)
 
 # The main menu's demos (DemoReplay.hpp): their file format and compatibility checks, the idle timer,
 # the input that stops a demo, and the order they play in; engine-independent. The shipped demos
