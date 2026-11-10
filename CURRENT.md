@@ -61,6 +61,15 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
+  `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
+  only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x
+  size; the terrain's padded atlas 3200x3520 at 2x). The Setup's "Textures" (Auto / 1x / 2x, at
+  the next start, `textureScale=`) or `GALAXY_TEXTURES=1x|2x|auto`; Auto picks 2x with Ultra on a
+  display at least 1000 px tall. Web and Android always 1x; the APK leaves both directories out.
+  The re-rendered sheets (from the Ray Dream scenes, `../speedyblupi-hd/galaxy/`) are still being
+  made; until they are committed, 2x finds no sheets and stays 1x.
+
 - The world is drawn from a `SceneFrame` by `WorldRenderer` (2026-11-09, the owner's request; the seam
   of `renderers.md`, one renderer, no second one): `GalaxyEggbertGameScene.cpp` reads the simulation
   into a draw list (cubes, models and poses, decals, sparks, billboard batches, in the order the
@@ -72,9 +81,14 @@ content-authoring UX, but not new gameplay mechanics.
   High, Ultra, saved as `effectsLevel=0..4`, off by default; `GALAXY_EFFECTS=0-4|off|low|medium|high|ultra`
   overrides it). Ultra (desktop): the world at the window's own pixels in HDR (ACES, auto exposure,
   HDR bloom, a grade per world), physically based light with the sky's light from the background,
-  SSAO, contact shadows, screen-space reflections on the water, a voxel GI baked into the terrain,
-  volumetric fog with god rays, TAA, depth of field, motion blur, grain, the atlas finer with normal
-  and surface maps, the models subdivided (PN triangles); handoff.md has its parts. Low: distance fog in the colour of the world's background, soft round shadows,
+  SSAO, contact shadows, screen-space reflections on the water and on metal and polished floors
+  (from the atlas's surface map), a voxel GI baked into the terrain and read by the reliefs too
+  (per relief chunk) and by the sprites and particles (by cell), the sprites and particles lit as
+  the rest with fire, sparks and stars above white into the bloom, volumetric fog with god rays,
+  TAA, depth of field, motion blur, grain, the atlas finer with normal and surface maps, the models
+  subdivided (PN triangles); handoff.md has its parts. The water (medium and up) is no longer its
+  2D tile: its colour and clearness from the tiles, a height field of waves in world space, Fresnel,
+  a glint, Snell's window from inside (Ultra: rippling reflections). Low: distance fog in the colour of the world's background, soft round shadows,
   the explosions, splashes and sparks as particles cut from their own sprite frames and Blupi's
   moments (dust landing and running, a splash into water, bubbles under it, stars as he teleports,
   sparks off the lava; `EffectParticles`, stepped by ticks). Medium: + ambient occlusion baked into
@@ -437,8 +451,9 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
 - 3D effects: Ultra's first frame makes the finer atlas and its maps (~2 s); Ultra not run on
-  Android or the web. The Setup's frame rate above 60 interpolates the camera and Blupi only (the
-  rest steps 60 times a second). The sun's shadow reaches 160 blocks ahead of the camera (the far
+  Android or the web. The Setup's frame rate above 60 draws the camera (and its shake), Blupi, every
+  moving object (projectiles too) and the particles between the 60 steps a second
+  (`GALAXY_INTERP_TRACE` shows it per frame). The sun's shadow reaches 160 blocks ahead of the camera (the far
   cascade drawn every third frame); the procedural materials are Ray Dream's colours and parameters over a value noise,
   not its own noise; skinned models above 56 bones (none today) would be drawn by the stock effect. The shaders, the shadow map and the glow need GLSL source (`ShaderEffect`) and
   render targets: OPENGL33 and WEBGL2 checked, Android (OPENGLES3) not run; where they do not
