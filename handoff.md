@@ -103,6 +103,12 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   from VERSION.txt), SHA256SUMS.txt; prints the glibc the program needs (2.38 today). 1.0.0-rc1
   built into `build-probe/release/`; the Linux archive (139 MB) extracted and run under Xvfb:
   SDL3 from its `lib/` (RUNPATH `$ORIGIN/lib`), the user folder as asked, the game loop reached.
+- **Android release APK fixed (2026-11-10, evening).** `-Pandroid.injected.build.abi` made a
+  test-only APK (`adb install` refused it without `-t`): one ABI is now `-PgalaxyAbis=arm64-v8a`
+  (build.gradle's abiFilters and ndk.abiFilters; both ABIs without it). The manifest's hardcoded
+  `android:debuggable="true"` overrode the release build type; removed (release not debuggable,
+  debug still is). 1.0.0-rc1 was installed on the owner's phone (24040RN64Y) with `-r -t` from the
+  test-only build: the same code; the proper APK is in `build-probe/release/`.
 - Was still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
   README/COPYING/THIRD_PARTY, release notes), the 2x sheets when ray announces them (ray and
   geultra handed that to this session).

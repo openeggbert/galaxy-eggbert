@@ -43,9 +43,8 @@ if (( android )); then
     echo "== Android APK (arm64-v8a)"
     (cd "$repo/android" &&
      JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}" ./gradlew --no-daemon assembleRelease \
-         -Pandroid.injected.build.abi=arm64-v8a)
-    # With an injected ABI the APK stays in intermediates/ (outputs/ otherwise).
-    apk="$(ls -t "$repo"/android/app/build/{outputs,intermediates}/apk/release/app-release.apk 2>/dev/null | head -n1)"
+         -PgalaxyAbis=arm64-v8a) # not android.injected.build.abi: that makes a test-only APK
+    apk="$repo/android/app/build/outputs/apk/release/app-release.apk"
     cp "$apk" "$out/GalaxyEggbert-$version-android-arm64.apk"
 fi
 

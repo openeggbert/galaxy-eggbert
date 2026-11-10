@@ -95,6 +95,9 @@ android {
         versionCode 1
         // The release's version (VERSION.txt at the repository's root), as the desktop archive's.
         versionName rootProject.file("../VERSION.txt").text.trim()
+        ndk {
+            abiFilters(*((project.findProperty("galaxyAbis") ?: "arm64-v8a,x86_64").toString().split(",")))
+        }
 
         externalNativeBuild {
             cmake {
@@ -106,7 +109,9 @@ android {
                           "-DCNA_BUILD_TESTS=OFF",
                           "-DSHARP_RUNTIME_BUILD_TESTS=OFF",
                           *nativeBuildExtraArguments
-                abiFilters 'arm64-v8a', 'x86_64'
+                // -PgalaxyAbis=arm64-v8a builds one (a release for phones); unlike Android Studio's
+                // injected ABI it does not mark the APK test-only (2026-11-10).
+                abiFilters(*((project.findProperty("galaxyAbis") ?: "arm64-v8a,x86_64").toString().split(",")))
                 // Only the game (libmain.so) and what it links; not the desktop verifiers.
                 targets "GalaxyEggbertCNA"
             }
