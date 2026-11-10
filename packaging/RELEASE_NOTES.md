@@ -1,10 +1,10 @@
 # Galaxy Eggbert 1.0.0-rc1
 
-A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Linux, Android and the web.
+A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Linux and Android.
 
 ## What you get
 
-- The whole campaign in 3D: the main hub, fourteen worlds with their missions, and the bonus
+- The whole campaign in 3D: the main hub, twelve worlds with their missions, and the bonus
   world, played as in the original (the same objects, enemies, vehicles and rules).
 - Three players, each with their own progress, and **each player's own galaxy**: a world system
   built in the 3D editor, played from the menu's Galaxy button. Galaxies can be named, exported,
