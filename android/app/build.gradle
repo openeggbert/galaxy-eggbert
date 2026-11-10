@@ -31,6 +31,9 @@ nativeBuildExtraArguments += ["-DCNA_HOME=${cnaHome}", "-DCNA_ENGINE_HOME=${cnaE
 // (src/GalaxyEggbertCNA/AndroidAssets.cpp). assets.txt lists every packaged file, its first line a
 // stamp over their names, sizes and times; a changed stamp copies them again.
 abstract class GalaxyAssetManifest extends DefaultTask {
+    // Content/icons2x and Content/backgrounds2x: the desktop's 2x sheets (TextureScale.hpp), not packaged.
+    static final List<String> SKIPPED_DIRS = ['icons2x', 'backgrounds2x']
+
     @InputFiles
     @PathSensitive(PathSensitivity.RELATIVE)
     abstract ConfigurableFileCollection getAssetTree()
@@ -47,9 +50,11 @@ abstract class GalaxyAssetManifest extends DefaultTask {
         def names = []
         root.eachFileRecurse(groovy.io.FileType.FILES) { file ->
             def name = root.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/' as char)
-            // aapt's default ignore pattern: hidden files, _directories, backups.
+            // aapt's default ignore pattern: hidden files, _directories, backups; and the 2x sheets,
+            // which Android never loads (TextureScale.cpp: 1x there), left out of the APK below.
             def parts = name.split('/')
-            if (parts.any { it.startsWith('.') } || parts[0..-2].any { it.startsWith('_') } || name.endsWith('~')) {
+            if (parts.any { it.startsWith('.') } || parts[0..-2].any { it.startsWith('_') } || name.endsWith('~') ||
+                parts[0..-2].any { it in SKIPPED_DIRS }) {
                 return
             }
             names << name
@@ -165,6 +170,12 @@ android {
     //
     // Other files at that level (src/, cmake/, etc.) are excluded by AGP because
     // the asset merger only includes directories/files reachable from assets.srcDirs.
+    // aapt's default ignore pattern plus the 2x sheets' directories (GalaxyAssetManifest.SKIPPED_DIRS).
+    androidResources {
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~:" +
+                              GalaxyAssetManifest.SKIPPED_DIRS.collect { "!<dir>${it}" }.join(':')
+    }
+
     sourceSets {
         main {
             assets.srcDirs = ['src/main/assets']
@@ -192,7 +203,9 @@ androidComponents {
     onVariants(selector().all()) { variant ->
         def manifestTask = project.tasks.register("${variant.name}GalaxyAssetManifest", GalaxyAssetManifest) {
             assetRoot.set(project.layout.projectDirectory.dir("src/main/assets"))
-            assetTree.from(project.fileTree("src/main/assets"))
+            assetTree.from(project.fileTree("src/main/assets") {
+                GalaxyAssetManifest.SKIPPED_DIRS.each { dir -> exclude "**/${dir}/**" }
+            })
             outputDir.set(project.layout.buildDirectory.dir("generated/galaxyAssetManifest/${variant.name}"))
         }
         variant.sources.assets.addGeneratedSourceDirectory(manifestTask, { it.outputDir })
