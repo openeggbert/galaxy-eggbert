@@ -3,6 +3,7 @@
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
 #include "CustomWorldStorage.hpp"
+#include "VoxelRaycast.hpp"
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <algorithm>
@@ -402,6 +403,21 @@ namespace GalaxyEggbert::Editor
             if (clip.W <= 0.05f)
             {
                 return; // behind the camera
+            }
+            // Hidden behind the world's blocks, as the axes' lines are (2026-11-10, the owner: the
+            // letters showed through the blocks in front of them): a block on the way from the camera.
+            // The last stretch is left out: the label lies just past the world's edge, whose own
+            // blocks (a floor to the bounds) would hide it from every view at a slant.
+            constexpr float kNearLabel = 2.5f;
+            const Vector3 to(at.X - camX_, at.Y - camY_, at.Z - camZ_);
+            const float distance = to.Length();
+            if (distance > kNearLabel &&
+                Raycast(world, camX_ + static_cast<float>(Game::WorldRuntime::kWorldCenterX), camY_,
+                        camZ_ + static_cast<float>(Game::WorldRuntime::kWorldCenterZ), to.X / distance,
+                        to.Y / distance, to.Z / distance, distance - kNearLabel)
+                    .hit)
+            {
+                return;
             }
             const float x = (clip.X / clip.W * 0.5f + 0.5f) * static_cast<float>(viewportWidth);
             const float y = (0.5f - clip.Y / clip.W * 0.5f) * static_cast<float>(viewportHeight);
