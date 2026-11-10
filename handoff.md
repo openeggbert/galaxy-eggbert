@@ -28,8 +28,13 @@ cmake --build build-cna-opengl3 --target GalaxyEggbertCNA VerifyNetProtocol --pa
 NET_LIVES=1 tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/bomb_host.txt tools/autoplay/net/bomb_join.txt
 tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tools/autoplay/net/laid_join.txt
 ```
-Next: the Android build (arm64 only, to spare the SSD) and a phone-PC game; the owner's look; more
-of SB2's worlds (205-212) if wanted; then the merge on acceptance, and the AI policy after it.
+Android: the arm64 release APK of the branch is built (`android/app/build/outputs/apk/release/
+app-release.apk` in the worktree, signed with the release key: `android/key.properties` there points
+at the main worktree's keystore; real networking in libmain.so, worlds 201-205 in its assets), not
+installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
+can go once that is done. Golden frames and trace pass on the branch.
+Next: a game between real machines (Q-020); the owner's look; the merge on acceptance, and the AI
+policy after it.
 
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 
