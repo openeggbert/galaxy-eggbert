@@ -991,6 +991,14 @@ if(BUILD_TESTING)
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     # Writes its round-trip copy into the build directory (its default cwd).
     add_test(NAME VerifyShippedWorlds COMMAND VerifyShippedWorlds ${CMAKE_SOURCE_DIR}/worlds3d)
+    # The 2x terrain sheet: no cube tile with a line its 1x tile lacks (tools/check_2x_sheets.py; the
+    # owner's "thick lines" of 2026-11-10). Skipped (77) without Python's numpy and Pillow.
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME Verify2xSheets COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/check_2x_sheets.py
+                 ${CMAKE_SOURCE_DIR})
+        set_tests_properties(Verify2xSheets PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
     add_test(NAME VerifyBlockDefinitionsCsv COMMAND DumpBlockDefinitions --check ${CMAKE_SOURCE_DIR}/tools/data/blocks.csv)
     # No file/working-directory dependency -- AnimDivisor() is a pure
     # function of a BlockTypes icon id (plan.md TEST-007).

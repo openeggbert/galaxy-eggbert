@@ -109,6 +109,14 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   `android:debuggable="true"` overrode the release build type; removed (release not debuggable,
   debug still is). 1.0.0-rc1 was installed on the owner's phone (24040RN64Y) with `-r -t` from the
   test-only build: the same code; the proper APK is in `build-probe/release/`.
+- **Thick lines on some 2x cubes (owner report, fixed in the assets).** Some cells ray rendered from
+  the Ray Dream scenes caught a neighbour's edge or shadow (the toy cubes enfant01-06 a dark line
+  at x 55, techno03 a bar at x 4, palace walls 389/390; techno11 lacked its painted arrows): his
+  whole-cell check let a narrow line through. Measure: the 2x tile box-reduced to 1x against the
+  1x tile, mean |RGB| per row/column over texels opaque in both; ray's builder now rejects >30
+  (fallback: per-cell edge-padded Lanczos) and aligns every scale to the 1x grid (a quarter-pixel
+  shift before). 8 files replaced; `tools/check_2x_sheets.py` = CTest `Verify2xSheets` (the old
+  sheet: 18 cube tiles over 30; the new: 0 of 140).
 - Was still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
   README/COPYING/THIRD_PARTY, release notes), the 2x sheets when ray announces them (ray and
   geultra handed that to this session).
