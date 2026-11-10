@@ -156,6 +156,7 @@ namespace GalaxyEggbert::CNA
         if (keys.action) down.insert(Keys::Space);
         if (keys.crouch) down.insert(Keys::LeftShift);
         if (keys.lookUp) down.insert(Keys::RightShift);
+        if (keys.fire) down.insert(Keys::F);
         if (keys.letter >= 'a' && keys.letter <= 'z')
             down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
         autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);

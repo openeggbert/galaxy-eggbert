@@ -88,6 +88,7 @@ namespace GalaxyEggbert::CNA
     private:
         void Subscribe();
         void FinishFind();
+        void AbandonFind();
 
         Microsoft::Xna::Framework::Game& game_;
         bool servicesStarted_ = false;

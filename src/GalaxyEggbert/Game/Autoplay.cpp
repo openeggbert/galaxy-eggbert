@@ -51,6 +51,7 @@ namespace GalaxyEggbert::Game
             else if (name == "action") keys.action = true;
             else if (name == "crouch") keys.crouch = true;
             else if (name == "lookup") keys.lookUp = true;
+            else if (name == "fire") keys.fire = true;
             else return false;
             return true;
         }

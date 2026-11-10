@@ -1001,6 +1001,11 @@ namespace GalaxyEggbert::CNA
         void NetFinishTyping(bool send);
         void NetTypedKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
         void NetLeaveLobby();
+        bool NetHostGame();
+        bool NetJoinGame(int index);
+        void NetSetReady(bool ready);
+        void NetStartAsHost();
+        void NetTestStep(); // GALAXY_NET_TEST=host|join: the screens without a pointer
         void StartNetMatch(int world);
         // Around the step: the others' changes applied and a snapshot taken; then ours sent.
         void NetBeforeStep();

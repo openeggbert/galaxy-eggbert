@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <random>
 #include <sstream>
@@ -136,6 +137,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::UpdateNet()
     {
+        NetTestStep();
         if (!net_) return;
         auto& n = *net_;
         n.session.Update();
@@ -531,31 +533,10 @@ namespace GalaxyEggbert::CNA
         switch (action)
         {
         case kJoin:
-            if (n.selected >= 0 && n.session.Join(n.selected))
-            {
-                n.lobby = Net::Lobby{};
-                n.chat.clear();
-                n.helloSent = false;
-                n.lobbySeconds = 0.0f;
-                n.message.clear();
-                n.screen = NetGame::Screen::Lobby;
-            }
-            else
-            {
-                n.message = n.session.LastError().empty() ? "Could not join that game." : n.session.LastError();
-                n.findSeconds = kFindEverySeconds;
-            }
+            NetJoinGame(n.selected);
             return;
         case kNewGame:
-            if (n.session.Host(n.contentHash, n.worlds.front()))
-            {
-                n.lobby = Net::Lobby{};
-                n.lobby.state.world = static_cast<std::uint16_t>(n.worlds.front());
-                n.chat.clear();
-                n.message.clear();
-                n.screen = NetGame::Screen::Lobby;
-            }
-            else n.message = n.session.LastError();
+            NetHostGame();
             return;
         case kUpdate:
             n.findSeconds = kFindEverySeconds;
@@ -579,33 +560,13 @@ namespace GalaxyEggbert::CNA
             }
             return;
         case kReady:
-            if (mySlot >= 0)
-            {
-                Net::Message ready;
-                ready.kind = Net::MessageKind::Ready;
-                ready.ready = !n.lobby.state.slots[static_cast<std::size_t>(mySlot)].ready;
-                if (host)
-                {
-                    n.lobby.SetReady(me, ready.ready);
-                    NetBroadcastLobby();
-                }
-                else n.session.Send(ready);
-            }
+            if (mySlot >= 0) NetSetReady(!n.lobby.state.slots[static_cast<std::size_t>(mySlot)].ready);
             return;
         case kChat:
             NetStartTyping(w, h);
             return;
         case kStart:
-            if (host && n.lobby.CanStart())
-            {
-                Net::Message start;
-                start.kind = Net::MessageKind::Start;
-                start.world = n.lobby.state.world;
-                start.worldHash = n.contentHash;
-                n.session.Send(start);
-                n.session.StartGame();
-                StartNetMatch(n.lobby.state.world);
-            }
+            NetStartAsHost();
             return;
         case kLeave:
             NetLeaveLobby();
@@ -625,6 +586,104 @@ namespace GalaxyEggbert::CNA
             if (action >= kRow0 && action < kRow0 + kListRows) n.selected = action - kRow0;
             return;
         }
+    }
+
+    bool GalaxyEggbertGame::NetHostGame()
+    {
+        auto& n = *net_;
+        if (n.worlds.empty() || !n.session.Host(n.contentHash, n.worlds.front()))
+        {
+            n.message = n.session.LastError();
+            return false;
+        }
+        n.lobby = Net::Lobby{};
+        n.lobby.state.world = static_cast<std::uint16_t>(n.worlds.front());
+        n.chat.clear();
+        n.message.clear();
+        n.screen = NetGame::Screen::Lobby;
+        return true;
+    }
+
+    bool GalaxyEggbertGame::NetJoinGame(int index)
+    {
+        auto& n = *net_;
+        if (index < 0 || !n.session.Join(index))
+        {
+            n.message = n.session.LastError().empty() ? "Could not join that game." : n.session.LastError();
+            n.findSeconds = kFindEverySeconds;
+            return false;
+        }
+        n.lobby = Net::Lobby{};
+        n.chat.clear();
+        n.helloSent = false;
+        n.lobbySeconds = 0.0f;
+        n.message.clear();
+        n.screen = NetGame::Screen::Lobby;
+        return true;
+    }
+
+    void GalaxyEggbertGame::NetSetReady(bool ready)
+    {
+        auto& n = *net_;
+        if (!n.session.HasLocalGamer() || n.lobby.SlotOf(n.session.LocalId()) < 0) return;
+        if (n.session.IsHost())
+        {
+            n.lobby.SetReady(n.session.LocalId(), ready);
+            NetBroadcastLobby();
+            return;
+        }
+        Net::Message m;
+        m.kind = Net::MessageKind::Ready;
+        m.ready = ready;
+        n.session.Send(m);
+    }
+
+    void GalaxyEggbertGame::NetStartAsHost()
+    {
+        auto& n = *net_;
+        if (!n.session.IsHost() || !n.lobby.CanStart()) return;
+        Net::Message start;
+        start.kind = Net::MessageKind::Start;
+        start.world = n.lobby.state.world;
+        start.worldHash = n.contentHash;
+        n.session.Send(start);
+        n.session.StartGame();
+        StartNetMatch(n.lobby.state.world);
+    }
+
+    void GalaxyEggbertGame::NetTestStep()
+    {
+        // GALAXY_NET_TEST=host|join (tools/net_two_players.sh): the screens gone through without a
+        // pointer -- the host makes a game, the other joins the first found, both are ready, the
+        // host starts once two are there; the match is then the --autoplay script's.
+        static const char* const mode = std::getenv("GALAXY_NET_TEST");
+        if (mode == nullptr || (std::strcmp(mode, "host") != 0 && std::strcmp(mode, "join") != 0)) return;
+        const bool host = std::strcmp(mode, "host") == 0;
+        if (!net_)
+        {
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Init && fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None &&
+                phaseTimeSeconds_ > 1.0f)
+                OpenMultiplayer();
+            return;
+        }
+        auto& n = *net_;
+        if (n.match || !n.signedIn) return;
+        if (n.screen == NetGame::Screen::Browser && !n.session.Active())
+        {
+            if (host) NetHostGame();
+            else if (!n.session.Found().empty()) NetJoinGame(0);
+            return;
+        }
+        if (n.screen != NetGame::Screen::Lobby || !n.session.HasLocalGamer()) return;
+        const int slot = n.lobby.SlotOf(n.session.LocalId());
+        if (slot < 0) return;
+        if (host && n.lobby.Present() < 2) return;
+        if (!n.lobby.state.slots[static_cast<std::size_t>(slot)].ready && !n.testReadyAsked)
+        {
+            NetSetReady(true);
+            n.testReadyAsked = true; // once; the host's next lobby shows it
+        }
+        if (host) NetStartAsHost();
     }
 
     void GalaxyEggbertGame::NetLeaveLobby()
@@ -688,7 +747,10 @@ namespace GalaxyEggbert::CNA
 
         // ... ten lives, his team's bombs, at his team's start (decblock.cpp:1349-1353).
         interaction_ = InteractionSystem();
-        interaction_.SetLives(Net::kMultiplayerLives);
+        // GALAXY_NET_LIVES (a test's short match: tools/net_two_players.sh), else the original's ten.
+        int lives = Net::kMultiplayerLives;
+        if (const char* forced = std::getenv("GALAXY_NET_LIVES")) lives = std::clamp(std::atoi(forced), 0, Net::kMultiplayerLives);
+        interaction_.SetLives(lives);
         interaction_.SetPersoTeam(n.team);
         interaction_.SeedRandom(std::random_device{}());
         blupi_ = BlupiController();
@@ -742,7 +804,13 @@ namespace GalaxyEggbert::CNA
         auto& n = *net_;
         auto& world = worldRuntime_.GetWorldMutable();
         auto& objects = worldRuntime_.GetMobileObjectsMutable();
-        for (const auto& event : n.incoming) n.replicator.Apply(event, world, objects);
+        for (const auto& event : n.incoming)
+        {
+            n.replicator.Apply(event, world, objects);
+            if (event.kind == Net::EventKind::ObjectSpawned)
+                std::cout << "GalaxyEggbertCNA: multiplayer: object " << event.a << " of another at (" << event.x << ", "
+                          << event.y << ", " << event.z << ")." << std::endl;
+        }
         n.incoming.clear();
         n.replicator.Snapshot(world, objects);
     }
@@ -751,6 +819,20 @@ namespace GalaxyEggbert::CNA
     {
         auto& n = *net_;
         const auto events = n.replicator.Diff(worldRuntime_.GetWorld(), worldRuntime_.GetMobileObjects());
+        for (const auto& event : events)
+        {
+            // What this machine changed in the world, as sent (rare: a pickup, a bomb, a wall).
+            if (event.kind == Net::EventKind::ObjectSpawned)
+                std::cout << "GalaxyEggbertCNA: multiplayer: object " << event.a << " sent from (" << event.x << ", "
+                          << event.y << ", " << event.z << ")." << std::endl;
+            else if (event.kind == Net::EventKind::ObjectRetired)
+                std::cout << "GalaxyEggbertCNA: multiplayer: object #" << event.id << " gone, sent." << std::endl;
+            else if (event.kind == Net::EventKind::SpawnRetired)
+                std::cout << "GalaxyEggbertCNA: multiplayer: object " << std::hex << event.id << std::dec << " gone, sent." << std::endl;
+            else
+                std::cout << "GalaxyEggbertCNA: multiplayer: block (" << event.a << ", " << event.b << ", " << event.c
+                          << ") sent." << std::endl;
+        }
         for (std::size_t first = 0; first < events.size(); first += Net::kMaxEvents)
         {
             Net::Message m;

@@ -44,6 +44,7 @@ namespace GalaxyEggbert::CNA
         std::string draft;
         Game::ScreenKeyboard keyboard;
         std::vector<std::pair<Microsoft::Xna::Framework::Input::Keys, bool>> typedKeys;
+        bool testReadyAsked = false; // GALAXY_NET_TEST: Ready sent
 
         // A match.
         struct Peer

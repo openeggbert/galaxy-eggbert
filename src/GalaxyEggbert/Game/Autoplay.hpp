@@ -11,7 +11,7 @@
 // -Z, 90 +X):
 //
 //   wait N                     no keys for N ticks (1/60 s each)
-//   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup
+//   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup fire
 //   type WORD                  type lowercase letters, each followed by a release tick (cheats)
 //   face DEG                   turn on the spot until facing DEG
 //   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
@@ -102,6 +102,7 @@ namespace GalaxyEggbert::Game
     {
         bool up = false, down = false, left = false, right = false;
         bool jump = false, action = false, crouch = false, lookUp = false;
+        bool fire = false; // F: the tank's shot, the helicopter's glue (2026-11-10, the network tests)
         char letter = 0;
     };
 

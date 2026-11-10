@@ -1,0 +1,14 @@
+# tools/net_two_players.sh, the one who joins (orange, world 201): takes back one of his team's
+# bombs (59, 38) with the action key (decblupi.cpp:3725-3735), lays it at (57, 42) (decblupi.cpp:
+# 2379-2401) and steps away.
+until phase = Play max 7200
+wait 30
+go 59.6 38 max 900 tol 0.1
+hold 2 action
+wait 90
+go 57 42 max 900
+hold 2 action
+wait 30
+go 59 39 max 900
+wait 900
+end

@@ -158,9 +158,26 @@ namespace GalaxyEggbert::CNA
         findResult_ = nullptr;
     }
 
+    void NetSession::AbandonFind()
+    {
+        // CNA refuses a session while a search is outstanding: it is ended first (a search lasts
+        // a fraction of a second).
+        if (findResult_ == nullptr) return;
+        try
+        {
+            (void)NetworkSession::EndFind(findResult_);
+        }
+        catch (...)
+        {
+        }
+        delete findResult_;
+        findResult_ = nullptr;
+    }
+
     bool NetSession::Host(std::uint64_t contentHash, int world)
     {
         Leave();
+        AbandonFind();
         try
         {
             session_ = NetworkSession::Create(NetworkSessionType::SystemLink, 1, Net::kMaxPlayers, 0,
@@ -182,6 +199,7 @@ namespace GalaxyEggbert::CNA
         auto collection = std::static_pointer_cast<AvailableNetworkSessionCollection>(available_);
         if (!collection || foundIndex < 0 || foundIndex >= collection->getCountProperty()) return false;
         Leave();
+        AbandonFind();
         try
         {
             const auto& sessions = *collection;
@@ -362,6 +380,7 @@ namespace GalaxyEggbert::CNA
     std::string NetSession::LocalName() const { return {}; }
     void NetSession::BeginFind(std::uint64_t) {}
     void NetSession::FinishFind() {}
+    void NetSession::AbandonFind() {}
     bool NetSession::Host(std::uint64_t, int) { return false; }
     bool NetSession::Join(int) { return false; }
     void NetSession::Subscribe() {}
