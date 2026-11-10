@@ -15,7 +15,7 @@ original: `plans/audit/behavior_differences.md` BD-0120.
    a game with other content is not listed).
 2. In the menu choose the player (A, B or C: on the network you are "Player A" and so on), then
    **Multiplayer** (in the left panel, right of Setup).
-3. One player makes a **New game**: the lobby opens with the mission (#201-#204, the host changes
+3. One player makes a **New game**: the lobby opens with the mission (#201-#205, the host changes
    it with `<` and `>`). The others see it under *Available games on the network* (the list is
    searched again every few seconds, or at **Update list**), choose it and **Join selected game**.
 4. In the lobby each player may change **Colour** (yellow, orange, blue, green: the start and the

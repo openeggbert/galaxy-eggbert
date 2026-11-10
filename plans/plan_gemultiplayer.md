@@ -17,7 +17,7 @@ first version. What is done, as recommended in §7 (option A over CNA SystemLink
   12, 21, 32, 33; another team's bomb kills, one's own is taken back with the action key); the
   replication (§7.5) in `NetReplication`; poses with the model's transform; Android's permissions
   and multicast lock.
-- Worlds 201-204 (`tools/worlds/world201-204.py`, briefs).
+- Worlds 201-205 (`tools/worlds/world201-205.py`, briefs).
 - Tests: `VerifyNetProtocol` in CTest; `tools/net_two_players.sh` with four scenarios
   (`tools/autoplay/net/`), all passing; the differences in BD-0120; the player's guide with ZeroTier
   `docs/handbook/09-multiplayer.md`.

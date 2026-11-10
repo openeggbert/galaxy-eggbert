@@ -67,7 +67,7 @@ content-authoring UX, but not new gameplay mechanics.
   lobby (colour, ready, the host's mission and Start, chat), SB2's rules (ten lives, team starts
   and bombs, the crates/goals/enemy Blupis out, restart at the last safe place, the last present
   wins, a pause for everyone), the others drawn in their colours, world changes replicated, worlds
-  201-204. Guide with ZeroTier: `docs/handbook/09-multiplayer.md`; differences: BD-0120; tests:
+  201-205. Guide with ZeroTier: `docs/handbook/09-multiplayer.md`; differences: BD-0120; tests:
   `VerifyNetProtocol`, `tools/net_two_players.sh` (bomb, laid, shot, vehicle: PASS). Not yet run
   between two real machines.
 - The player's files in the system's user folder (2026-11-10, the owner's request before a

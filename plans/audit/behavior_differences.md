@@ -1674,8 +1674,8 @@ Differences:
   materials (the editor's starts' RecolorPlayerStartPixel); each team's bombs likewise.
 - Galaxy's own screens: the Multiplayer button in the menu's left panel, the games' list and the
   lobby as panels with the original's texts, "(host)" and "(you)" marks and a status line.
-- Mobile Eggbert has no network game: the four multiplayer worlds 201-204 are Galaxy's 3D halls
-  with SB2's missions' identity (plans/briefs/world201-204.md).
+- Mobile Eggbert has no network game: the five multiplayer worlds 201-205 are Galaxy's 3D halls
+  with SB2's missions' identity (plans/briefs/world201-205.md).
 
 Validation: VerifyNetProtocol (messages and their refusal of damaged packets, the lobby, the
 rules, a two-machine replication round); tools/net_two_players.sh, two instances on one machine

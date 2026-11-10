@@ -17,7 +17,7 @@ Where: branch `multiplayer`, worktree `../galaxy-eggbert-multiplayer` (its own b
 
 Done: the protocol, the lobby, the CNA session, the screens (games on the network, lobby with chat),
 the match (SB2's rules), poses and world replication, team colours, Android permissions and
-multicast lock, worlds 201-204, `VerifyNetProtocol`, `tools/net_two_players.sh` with the scenarios
+multicast lock, worlds 201-205, `VerifyNetProtocol`, `tools/net_two_players.sh` with the scenarios
 bomb/laid/shot/vehicle (all PASS), CTest 117/117 (single player unchanged).
 
 How to check it:
