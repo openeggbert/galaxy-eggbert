@@ -20,6 +20,8 @@
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
+#include <GalaxyEggbert/Game/FocusNavigator.hpp>
+#include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
 #include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
 #include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
@@ -958,6 +960,33 @@ namespace GalaxyEggbert::CNA
         void HandleDemoSlotClick(int slot);
         void ToggleDemoImport();
         [[nodiscard]] std::string DemoImportPrompt() const;
+        // The goodbye on quitting from the menu (2026-11-10, as Speedy Blupi's WM_PHASE_BYE): Exit and
+        // Escape show it over the title scene; a new press of anything closes the game.
+        bool goodbyeShown_ = false;
+        float goodbyeSeconds_ = 0.0f;
+        GalaxyEggbert::Game::DemoLiveInput goodbyeInputWas_;
+        void StartGoodbye();
+        // Naming a recording (2026-11-10): Name (mode 4), then a recorded position; the keyboard on
+        // the screen (or the real one) types it; OK, Enter or a click off the keyboard keeps it
+        // (RenameDemo()), Cancel or Escape leaves it.
+        bool demoNaming_ = false;
+        int demoNameSlot_ = 0;
+        std::string demoNameDraft_;
+        GalaxyEggbert::Game::ScreenKeyboard demoKeyboard_;
+        void StartDemoNaming(int slot);
+        void FinishDemoNaming(bool keep);
+        // Leaving the screen a step: the naming, then Export/Import/Name, then the positions.
+        void CancelDemoSlotsStep();
+        // The demo positions' buttons for the arrows, as the screen shows them now.
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> DemoSlotsFocusTargets(int viewportW,
+                                                                                            int viewportH) const;
+        // The arrows and A on the demo positions, the galaxy screen and the world screen (2026-11-10,
+        // FocusNavigator.hpp): what they chose (drawn lit), and the keys as they were last update.
+        GalaxyEggbert::Game::FocusNavigator focusNavigator_;
+        std::optional<GalaxyEggbert::Game::QuadBatch::Rect> focusHighlight_;
+        unsigned focusKeysWas_ = 0;
+        int focusMouseX_ = -1, focusMouseY_ = -1;
+        bool focusPadBWas_ = false;
 
         // The web's xnjttjpo edits undone (2026-11-09): Pause shows "Original" while the campaign
         // world played has an edit kept (CustomWorldStorage HasCampaignEdit(), only ever on the web);

@@ -945,9 +945,23 @@ int main()
         (void)named.Update(idle, false);
         (void)tapName(GalaxyBrowserScreen::NameRect());
         named.TypeKey(Keys::Back, false);
-        (void)tapName(GalaxyBrowserScreen::WorldRect(5)); // a click elsewhere keeps it
+        (void)tapName({650.0f, 200.0f, 660.0f, 210.0f}); // a click off the keyboard keeps it
         check(cancelled && !named.Naming() && GalaxyName(kStorageSlot) == "Sky", // trimmed
               "galaxy screen: Escape leaves the name as it was; a click elsewhere keeps the one typed");
+        // The keyboard on the screen (2026-11-10): its keys type, OK keeps the name.
+        (void)tapName(GalaxyBrowserScreen::NameRect());
+        const auto& keys = named.Keyboard().Keys();
+        const auto keyRect = [&](GalaxyEggbert::Game::ScreenKeyboard::Kind kind, char c) {
+            for (const auto& key : keys)
+                if (key.kind == kind && key.c == c) return key.rect;
+            return keys.front().rect;
+        };
+        using Kind = GalaxyEggbert::Game::ScreenKeyboard::Kind;
+        (void)tapName(keyRect(Kind::Space, ' '));
+        (void)tapName(keyRect(Kind::Char, '3'));
+        (void)tapName(keyRect(Kind::Done, 0));
+        check(!named.Naming() && GalaxyName(kStorageSlot) == "Sky 3",
+              "galaxy screen: the keyboard on the screen types (Space, 3) and OK keeps the name");
         std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
         std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
         std::filesystem::remove(SharedWorldsDir(), error);

@@ -731,16 +731,10 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Wait)
             {
-                if (titleSceneActive_)
-                {
-                    inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                                phaseTimeSeconds_);
-                }
-                else
-                {
-                    inputPad_.DrawWait(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                       phaseTimeSeconds_);
-                }
+                // Galaxy's own loading screen from the first frame: over the title scene once it is
+                // up, before that (and without it) over the logo; never Mobile Eggbert's wait.png.
+                inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                            phaseTimeSeconds_, titleSceneActive_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {
@@ -760,9 +754,18 @@ namespace GalaxyEggbert::CNA
                     gamers[static_cast<std::size_t>(g)].galaxyName = galaxyNames_[static_cast<std::size_t>(g)];
                 }
                 galaxyNamesStale_ = false;
-                inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
-                                   /*overTitleScene=*/titleSceneActive_, graphics_ && graphics_->getIsFullScreenProperty());
+                if (goodbyeShown_)
+                {
+                    inputPad_.DrawGoodbye(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                          goodbyeSeconds_, titleSceneActive_);
+                }
+                else
+                {
+                    inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                       phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
+                                       /*overTitleScene=*/titleSceneActive_,
+                                       graphics_ && graphics_->getIsFullScreenProperty());
+                }
                 if (demoSlotsShown_)
                 {
                     // Over the pause screen's own picture, as from Pause (the menu's buttons hidden).

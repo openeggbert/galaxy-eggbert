@@ -215,6 +215,20 @@ namespace GalaxyEggbert::CNA
                 }
                 return;
             }
+            if (demoNaming_ && demoSlotsShown_ && browserTypedKeys_.size() < 64)
+            {
+                // A demo's name being typed (the demo positions over Pause or from the menu).
+                if (key == Keys::LeftShift || key == Keys::RightShift)
+                {
+                    typedShiftPending_ = true;
+                    return;
+                }
+                const auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
+                browserTypedKeys_.emplace_back(key, typedShiftPending_ || keys.IsKeyDown(Keys::LeftShift) ||
+                                                        keys.IsKeyDown(Keys::RightShift));
+                typedShiftPending_ = false;
+                return;
+            }
             if (!GalaxyEggbert::Game::kCheatsEnabled || phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
             if (key >= Keys::A && key <= Keys::Z && pendingCheatLetters_.size() < 256)
                 pendingCheatLetters_.push_back(static_cast<char>('a' + int(key) - int(Keys::A)));

@@ -53,12 +53,25 @@ namespace GalaxyEggbert::Game
     // SharedDemoDir() (UserDemoDir()/shared; downloaded on the web as well), an import copies a
     // .gdemo from there (the web's file picker writes it there) into a position.
     [[nodiscard]] std::string SharedDemoDir();
-    // "A-demo-5.gdemo" (players A-C), "player7-demo-5.gdemo" otherwise.
-    [[nodiscard]] std::string DemoExportName(int gamer, int slot);
-    // Copies @p source (a position's demo) into SharedDemoDir() as DemoExportName(), numbered when
-    // that is taken (A-demo-5-2.gdemo ...: an earlier export stays); its path, or empty when there is
-    // no such file or the copy failed.
+    // "A-demo-5.gdemo" (players A-C), "player7-demo-5.gdemo" otherwise; a demo with a name of its
+    // own (@p title, not the automatic one) "<its name>.gdemo", spaces as '-'.
+    [[nodiscard]] std::string DemoExportName(int gamer, int slot, const std::string& title = {});
+    // Copies @p source (a position's demo) into SharedDemoDir() as DemoExportName() (with the
+    // demo's own title), numbered when that is taken (A-demo-5-2.gdemo ...: an earlier export
+    // stays); its path, or empty when there is no such file or the copy failed.
     [[nodiscard]] std::string ExportDemo(const std::string& source, int gamer, int slot);
+
+    // A demo's name (2026-11-10, the owner: a recording named as a galaxy is): the title kept in
+    // its file. A recording starts with an automatic one ("Recorded by player A: mission 11");
+    // the player can give it a name of letters, digits, spaces, '-' and '\'', kDemoNameMax at most.
+    inline constexpr std::size_t kDemoNameMax = 24;
+    [[nodiscard]] std::string SanitizeDemoName(const std::string& name);
+    [[nodiscard]] bool IsAutomaticDemoTitle(const std::string& title) noexcept;
+    // The title of the demo in @p path; empty when it is not a demo this game reads.
+    [[nodiscard]] std::string DemoTitle(const std::string& path);
+    // Writes @p name (SanitizeDemoName(), not empty) as the title of the demo in @p path, the rest
+    // of the file as it was; false when it is not a demo this game reads or the write failed.
+    bool RenameDemo(const std::string& path, const std::string& name);
     // The .gdemo files in SharedDemoDir(), the newest first.
     [[nodiscard]] std::vector<std::string> ListSharedDemos();
 

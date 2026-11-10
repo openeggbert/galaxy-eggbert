@@ -335,6 +335,13 @@ EditorDeviceControls::Result EditorDeviceControls::Update(
         const bool a = pad.a && !ignorePadA_;
         if (!editing_ || pointerMode_)
         {
+            // The mouse goes on working with a gamepad plugged in (2026-11-10): moving it takes the
+            // pad's cursor there, and its button clicks as A does.
+            if (mouse.getXProperty() != realMouseX_ || mouse.getYProperty() != realMouseY_)
+            {
+                cursorX_ = static_cast<float>(mouse.getXProperty());
+                cursorY_ = static_cast<float>(mouse.getYProperty());
+            }
             const float dx = Axis(std::abs(pad.rightX) > .18f ? pad.rightX : pad.leftX) +
                              float(pad.dpadRight) - float(pad.dpadLeft);
             const float dy = Axis(std::abs(pad.rightY) > .18f ? pad.rightY : pad.leftY) + float(pad.dpadUp) -
@@ -361,7 +368,7 @@ EditorDeviceControls::Result EditorDeviceControls::Update(
             }
             mx = int(cursorX_);
             my = int(cursorY_);
-            left = a && !consumeMouse;
+            left = (a || mouse.getLeftButtonProperty() == ButtonState::Pressed) && !consumeMouse;
         }
         else
         {
@@ -405,6 +412,8 @@ EditorDeviceControls::Result EditorDeviceControls::Update(
     }
     yWasDown_ = pad.y;
     backWasDown_ = pad.back;
+    realMouseX_ = mouse.getXProperty();
+    realMouseY_ = mouse.getYProperty();
     if (selecting_)
         keys.insert(Keys::LeftShift);
     nav.selecting = selecting_;

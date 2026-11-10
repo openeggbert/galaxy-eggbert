@@ -3,6 +3,8 @@
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
+#include <GalaxyEggbert/Game/FocusNavigator.hpp>
+#include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
@@ -171,10 +173,15 @@ int main()
             const auto importButton = pause.UpdateDemoSlots(mouse(ix, iy, false), 800, 480, slots);
             const auto cancelBox = InputPad::DemoCancelRect(800, 480);
             const auto exportRect = InputPad::DemoExportRect(800, 480), importRect = InputPad::DemoImportRect(800, 480);
+            const auto nameRect = InputPad::DemoNameRect(800, 480);
+            const auto [nx, ny] = at(nameRect);
+            (void)pause.UpdateDemoSlots(mouse(nx, ny, true), 800, 480, slots);
+            const auto nameButton = pause.UpdateDemoSlots(mouse(nx, ny, false), 800, 480, slots);
             check(exportButton.exportPressed && !exportButton.importPressed && !exportButton.cancelPressed &&
-                      importButton.importPressed && !importButton.exportPressed && exportRect.x1 <= cancelBox.x0 &&
-                      cancelBox.x1 <= importRect.x0 && exportRect.x0 >= 400.0f - 320.0f && importRect.x1 <= 400.0f + 320.0f,
-                  "Demo positions: Export and Import beside Cancel, inside the panel");
+                      importButton.importPressed && !importButton.exportPressed && nameButton.namePressed &&
+                      !nameButton.cancelPressed && exportRect.x1 <= importRect.x0 && importRect.x1 <= nameRect.x0 &&
+                      nameRect.x1 <= cancelBox.x0 && exportRect.x0 >= 400.0f - 320.0f && cancelBox.x1 <= 400.0f + 320.0f,
+                  "Demo positions: Export, Import, Name and Cancel in a row, inside the panel");
             {
                 const auto [ox, oy] = at(InputPad::PauseOriginalRect(800, 480));
                 InputPad pad;
@@ -1129,6 +1136,78 @@ int main()
               "debug preserves three velocity components, wraps yaw and labels slow speed accurately");
         check(has("mode: air heli") && has("keys: 2  touches: 3") && has("gamepad: on  accel: off"),
               "debug reports current modes and input devices");
+    }
+    {
+        // The keyboard on the screen (2026-11-10): five rows, Shift for a capital at the start,
+        // Del, OK and Cancel; the arrows' navigator over its keys.
+        using GalaxyEggbert::Game::ScreenKeyboard;
+        using GalaxyEggbert::Game::FocusNavigator;
+        using Microsoft::Xna::Framework::Input::Keys;
+        ScreenKeyboard keyboard;
+        keyboard.Layout({100.0f, 118.0f, 700.0f, 372.0f});
+        check(keyboard.Keys().size() == 42, "the screen's keyboard has 42 keys (10+10+10+9+3)");
+        const auto keyAt = [&](char c) {
+            for (std::size_t i = 0; i < keyboard.Keys().size(); ++i)
+                if (keyboard.Keys()[i].kind == ScreenKeyboard::Kind::Char && keyboard.Keys()[i].c == c) return static_cast<int>(i);
+            return -1;
+        };
+        const auto kindAt = [&](ScreenKeyboard::Kind kind) {
+            for (std::size_t i = 0; i < keyboard.Keys().size(); ++i)
+                if (keyboard.Keys()[i].kind == kind) return static_cast<int>(i);
+            return -1;
+        };
+        std::string text;
+        keyboard.Begin(text);
+        keyboard.Press(keyAt('s'), text, 24);
+        keyboard.Press(keyAt('k'), text, 24);
+        keyboard.Press(kindAt(ScreenKeyboard::Kind::Space), text, 24);
+        keyboard.Press(keyAt('7'), text, 24);
+        check(text == "Sk 7", "Shift is on at the start, a letter turns it off: Sk 7");
+        keyboard.Press(kindAt(ScreenKeyboard::Kind::Backspace), text, 24);
+        check(text == "Sk ", "Del deletes the last character");
+        check(keyboard.Press(kindAt(ScreenKeyboard::Kind::Done), text, 24) == ScreenKeyboard::Result::Done &&
+                  keyboard.Press(kindAt(ScreenKeyboard::Kind::Cancel), text, 24) == ScreenKeyboard::Result::Cancel,
+              "OK is Done, Cancel is Cancel");
+        std::string full(24, 'a');
+        keyboard.Press(keyAt('b'), full, 24);
+        check(full.size() == 24, "a full name takes no more");
+        const auto& r = keyboard.Keys()[static_cast<std::size_t>(keyAt('g'))].rect;
+        check(keyboard.KeyAt((r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f) == keyAt('g') && keyboard.KeyAt(10, 10) < 0 &&
+                  !keyboard.Holds(10, 10),
+              "a key is found under its centre, nothing off the keyboard");
+        std::string typed;
+        ScreenKeyboard::TypeKey(Keys::R, true, typed, 24);
+        ScreenKeyboard::TypeKey(Keys::D7, false, typed, 24);
+        ScreenKeyboard::TypeKey(Keys::OemMinus, false, typed, 24);
+        check(typed == "R7-" && ScreenKeyboard::TypeKey(Keys::Enter, false, typed, 24) == ScreenKeyboard::Result::Done,
+              "real keys type letters, digits and '-'; Enter is Done");
+
+        const auto targets = keyboard.Rects();
+        const int space = kindAt(ScreenKeyboard::Kind::Space), ok = kindAt(ScreenKeyboard::Kind::Done);
+        check(FocusNavigator::Neighbour(targets, space, 1, 0) == ok,
+              "Right from Space is OK in the same row, not a letter just above it");
+        check(FocusNavigator::Neighbour(targets, keyAt('y'), 0, 1) == keyAt('h') &&
+                  FocusNavigator::Neighbour(targets, keyAt('h'), 0, -1) == keyAt('y'),
+              "Down and Up keep the column");
+        check(FocusNavigator::Neighbour(targets, keyAt('1'), -1, 0) == keyAt('1'), "no key left of the first: it stays");
+        FocusNavigator navigator;
+        FocusNavigator::Input in;
+        in.right = true;
+        auto out = navigator.Update(targets, in);
+        check(out.active && out.focused == 0 && !out.pressed, "the first arrow only shows the choice, on the first target");
+        out = navigator.Update(targets, in);
+        check(out.focused == 1, "the next one moves it");
+        in = {};
+        in.confirm = true;
+        out = navigator.Update(targets, in);
+        const auto& two = targets[1];
+        check(out.pressed && out.x == (two.x0 + two.x1) * 0.5f, "A presses the chosen key at its centre");
+        out = navigator.Update(targets, FocusNavigator::Input{});
+        check(out.active && !out.pressed, "and lets it go the next update");
+        in = {};
+        in.pointer = true;
+        out = navigator.Update(targets, in);
+        check(!out.active && !navigator.Active(), "the mouse moved: the choice is gone, the real mouse again");
     }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

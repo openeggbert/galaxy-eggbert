@@ -61,7 +61,7 @@ namespace GalaxyEggbert::Editor
         {
             const auto galaxy = galaxyScreen_.Update(mouse, backPressed);
             BrowserRequest request;
-            request.galaxyImported = galaxy.imported;
+            request.galaxyImported = galaxy.imported || galaxy.deleted;
             if (galaxy.action == GalaxyBrowserScreen::Action::Back)
             {
                 galaxyView_ = false; // back to the slots

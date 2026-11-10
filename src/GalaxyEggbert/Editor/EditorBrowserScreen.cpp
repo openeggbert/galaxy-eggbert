@@ -161,6 +161,21 @@ namespace GalaxyEggbert::Editor
                 cell.y0 - 8.0f + kDeleteButtonSize};
     }
 
+    std::vector<GalaxyEggbert::Game::QuadBatch::Rect> EditorBrowserScreen::FocusTargets() const
+    {
+        std::vector<GalaxyEggbert::Game::QuadBatch::Rect> targets;
+        for (int i = 0; i < kCustomWorldSlotCount; ++i)
+        {
+            targets.push_back(SlotRect(i));
+            if (static_cast<std::size_t>(i) < slotUsed_.size() && slotUsed_[static_cast<std::size_t>(i)])
+                targets.push_back(DeleteButtonRect(i));
+        }
+        for (int i = 0; i < static_cast<int>(older_.size()) && i < kOlderRowsShown; ++i) targets.push_back(OlderRect(i));
+        for (const GalaxyEggbert::Game::QuadBatch::Rect& r : {RestoreModeRect(), ExportModeRect(), ImportRect(), GalaxyRect(), BackButtonRect()})
+            targets.push_back(r);
+        return targets;
+    }
+
     GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::OlderRect(int index) noexcept
     {
         const float y0 = kOlderY0 + static_cast<float>(index) * kOlderRowStep;
@@ -496,6 +511,14 @@ namespace GalaxyEggbert::Editor
                                                                                                       : 1.0f);
         }
 
+        if (focus_)
+        {
+            // The arrows' choice: lit over the button, a little larger.
+            std::vector<Quad> lit;
+            addIcon(lit, {focus_->x0 - 4.0f, focus_->y0 - 4.0f, focus_->x1 + 4.0f, focus_->y1 + 4.0f}, kIconBlank);
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *padEffect_, padRenderer_, lit, viewportWidth,
+                                                       viewportHeight, kPressedOpacity);
+        }
         const float textSheetW = Game::LogicalWidth(textTexture_);
         const float textSheetH = Game::LogicalHeight(textTexture_);
         std::vector<Quad> labels;

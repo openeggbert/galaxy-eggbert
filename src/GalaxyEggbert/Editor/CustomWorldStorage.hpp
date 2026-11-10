@@ -221,6 +221,12 @@ namespace GalaxyEggbert::Editor
     // listed by the demo positions' Import: no position of the player's is overwritten. The number
     // of places imported (@p demos: of demos); -1 when the pack is not valid, nothing touched.
     int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack, int* demos = nullptr);
+    // Deletes the gamer's whole galaxy (2026-11-10, the owner: one button with a backup). It is
+    // exported first (ExportGalaxy(): a pack in SharedWorldsDir(), which Import lists, so two
+    // clicks there bring it back, its name and demos with it); then every place goes into its
+    // backups (DeleteSlotWorld()) and the name is removed. The pack's path; empty, and nothing
+    // deleted, when the galaxy has no place or the pack could not be written.
+    [[nodiscard]] std::filesystem::path DeleteGalaxy(int gamerSlot);
 
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock

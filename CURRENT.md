@@ -67,6 +67,17 @@ content-authoring UX, but not new gameplay mechanics.
   (CNA's StorageDevice root), or `--user DIR` / `GALAXY_USER_DIR` (the test scripts: their run
   folder). An earlier build's files in the working folder are copied over on the first start.
   The web keeps /save, Android its private storage.
+- The arrows and a gamepad on the demo positions, the galaxy screen and the world screen
+  (2026-11-10, `FocusNavigator.hpp`): arrows or the d-pad choose a button (drawn lit), A or Enter
+  presses it, the mouse or a touch ends the choice; B leaves the positions in Pause. With a gamepad
+  plugged in the mouse still works in the menu and the editor's screens. A keyboard on the screen
+  (`ScreenKeyboard.hpp`) names a galaxy or a demo without a keyboard. Demos have names (Name, then
+  a recorded position; shown on the position and in Import's list, exported as `<name>.gdemo`).
+  The galaxy screen's Delete galaxy (two clicks) keeps the galaxy as a pack Import brings back.
+  Live: keyboard, arrows and a virtual gamepad under Xvfb; no physical gamepad or touch screen.
+- A goodbye on quitting from the menu (2026-11-10, as Speedy Blupi's edition): thanks and credits
+  over the title scene, a key, click, button or touch closes the game. Galaxy's own loading screen
+  shows from the first frame (the logo until the title scene is up), not Mobile Eggbert's.
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
   only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x

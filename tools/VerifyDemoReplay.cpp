@@ -189,7 +189,9 @@ int main(int argc, char** argv)
         std::filesystem::remove_all(here, error);
         std::filesystem::create_directories(here, error);
         std::filesystem::current_path(here, error);
-        const std::string text = SampleDemo().Serialize();
+        auto recorded = SampleDemo();
+        recorded.title = "Recorded by player A: mission 1"; // the automatic title: exported by player and position
+        const std::string text = recorded.Serialize();
         std::filesystem::create_directories(UserDemoDir(), error);
         { std::ofstream out(UserDemoPath(4), std::ios::binary); out << text; }
         const auto exported = ExportDemo(UserDemoPath(4), 0, 4);
@@ -204,6 +206,22 @@ int main(int argc, char** argv)
         check(second == "demos/shared/A-demo-4-2.gdemo" && std::filesystem::exists(exported) && ListSharedDemos().size() == 2,
               "a second export of position 4 is numbered (A-demo-4-2.gdemo), the first stays");
         std::filesystem::remove(second, error);
+        // A demo named by the player (2026-11-10): its title in the file, its export by the name.
+        check(SanitizeDemoName("  Fast:  Run!! 2 ") == "Fast Run 2" && IsAutomaticDemoTitle("Recorded by player B: mission 3") &&
+                  !IsAutomaticDemoTitle("Fast Run") && DemoTitle(UserDemoPath(4)) == recorded.title,
+              "demo names: letters, digits, spaces and '-' kept; the automatic title told apart");
+        const bool renamed = RenameDemo(UserDemoPath(4), "Fast Run");
+        DemoRecording reread;
+        std::ifstream renamedFile(UserDemoPath(4), std::ios::binary);
+        const std::string renamedText((std::istreambuf_iterator<char>(renamedFile)), {});
+        check(renamed && !RenameDemo(UserDemoPath(4), "  ") && !RenameDemo(UserDemoPath(9), "Gone") &&
+                  ParseDemo(renamedText, kDemoSimulationRevision, reread) == DemoLoadStatus::Ok &&
+                  reread.title == "Fast Run" && reread.log.TickCount() == recorded.log.TickCount() &&
+                  reread.endSignature == recorded.endSignature,
+              "RenameDemo writes the name as the title, the rest as it was (an empty name or no file: nothing)");
+        const auto named = ExportDemo(UserDemoPath(4), 0, 4);
+        check(named == "demos/shared/Fast-Run.gdemo", "a named demo exports as its name: Fast-Run.gdemo");
+        std::filesystem::remove(named, error);
         { std::ofstream out(SharedDemoDir() + "/broken.gdemo", std::ios::binary); out << text.substr(0, text.size() / 2); }
         const auto refused = ImportDemo(SharedDemoDir() + "/broken.gdemo", 6);
         const auto missing = ImportDemo(SharedDemoDir() + "/nothing.gdemo", 6);

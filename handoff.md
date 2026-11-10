@@ -42,6 +42,57 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   `./GalaxyEggbert` in a build folder now uses `~/.local/share/Galaxy Eggbert` (the first time it
   copies that folder's savedata.txt there). Checked live (build-probe/user-folder/): the copy
   once, the second start without a copy, `--user` over the default; CTest 120/120.
+- **Arrows and gamepad on the new screens (done, desktop verified).** `Game/FocusNavigator.hpp`:
+  the screen gives the rects of what can be pressed; the arrows (keyboard; the d-pad, which in
+  Pause comes as the arrows) choose one, A or Enter presses it (a mouse at its centre, pressed one
+  update, released the next), the mouse, a touch or the gamepad's stick ends the choice. Wired in
+  `UpdateTickScreens`: the demo positions (Pause and the menu's Demos:
+  `DemoSlotsFocusTargets()`), the galaxy screen and the world screen
+  (`GalaxyBrowserScreen/EditorBrowserScreen::FocusTargets()`, drawn lit with
+  `SetFocusHighlight`). In the editor and the menu the d-pad chooses instead of moving the pad's
+  cursor and A goes to the choice while there is one; B in Pause leaves the positions a step.
+  `EditorDeviceControls`: with a gamepad plugged in the real mouse works again (it moves the pad's
+  cursor, its button clicks as A; before, the pad's cursor replaced the mouse in the menu).
+  Neighbour: the nearest that way, a target in the same row/column always first.
+- **Keyboard on the screen (done).** `Game/ScreenKeyboard.hpp`: digits, QWERTY, '-', Shift (on at
+  an empty name's start), Del, Cancel, Space, OK; `TypeKey()` for the real keyboard. The galaxy's
+  name (its keys over the worlds and places while naming; a click off it keeps the name) and a
+  demo's name.
+- **Demo names (done).** The positions' bottom row is Export, Import, Name, Cancel
+  (`InputPad::DemoNameRect`); Name then a recorded position types its name (`StartDemoNaming`,
+  the keyboard in place of the positions, real keys through `browserTypedKeys_` in Pause/Init).
+  `DemoReplay`: `SanitizeDemoName` (24, letters/digits/space/'-'/'), `IsAutomaticDemoTitle`
+  ("Recorded by player "), `DemoTitle`, `RenameDemo` (the title in the file, the rest as it was);
+  a named demo shows its name on its position and in Import's list, and exports as
+  `<name>.gdemo`.
+- **Delete galaxy (done).** `CustomWorldStorage::DeleteGalaxy()`: the galaxy exported first into
+  the shared folder (Import lists it: two clicks bring it back with its name and demos), then
+  every place into its backups, the name removed; the galaxy screen's "Delete galaxy" under
+  Export/Import (two clicks), its progress started over (`UpdateResult::deleted`).
+- Live cases (build-probe/demo-live/harness/): `case_galaxy_keys.py` (keyboard on the screen,
+  arrows + Enter, Delete galaxy, Import back: 7/7), `case_demo_names.py` (5/5),
+  `case_demo_pad.py` (virtual gamepad `build-probe/controls/virtual-gamepad.so` via `extra_env`:
+  the positions from the menu by the d-pad and A, a name typed on the screen's keyboard, B: 5/5).
+  Xvfb loses the first pointer event at times: the cases move the mouse first and retry Demos.
+- **Goodbye on quitting (done).** As Speedy Blupi's `WM_PHASE_BYE` (blupi_recon `src/event.cpp`
+  1755-1777: two lines at the top, two at the bottom, a key or a click closes): the menu's Exit and
+  Escape call `StartGoodbye()` instead of `Exit()`; `InputPad::DrawGoodbye` over the title scene
+  (our own words, not the original strings), a new press of anything (`DemoNewPress`, not what
+  clicked Exit) ends the game; the idle demos wait. Closing the window still quits at once.
+  `case_goodbye.py`: 3/3.
+- **Galaxy's loading screen from the first frame (done, owner report).** Wait drew Mobile Eggbert's
+  wait.png until the title scene was up (about a second at 144 fps); now
+  `DrawGalaxyLoading(..., overTitleScene=false)` draws the Galaxy Eggbert logo with Loading and the
+  gauge until it is (checked without title.vwr).
+- **Light lines along the cells (fixed, b827fad2 + b7756ee1).** Two causes: the grass cube (107,
+  top open) was no occluder, so its neighbours' faces against it were drawn on the boundary and
+  showed through the grass plates' edges with the effects (`IsTerrainOccluderFace`, per face); and
+  the 2x stand-in sheet left in `build-cna-opengl3/Content/icons2x` (moved to
+  `build-probe/stale-2x-standins/`) had a light 2-px band and soft alpha at every tile edge
+  (Lanczos ringing; opaque tiles are now forced to alpha 255 at load, and ray fixed the builder).
+- Still to do from the goal: the release packages (Windows zip, Linux tar.gz for glibc 2.35, Android APK, checksums,
+  README/COPYING/THIRD_PARTY, release notes), the 2x sheets when ray announces them (ray and
+  geultra handed that to this session).
 
 ## 2x textures (../ray.md, 2026-11-09) — code done, the re-rendered sheets follow
 

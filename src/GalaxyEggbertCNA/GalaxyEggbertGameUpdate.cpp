@@ -470,6 +470,78 @@ namespace GalaxyEggbert::CNA
         viewport.setHeightProperty(tickInput_.viewportHeight);
 
         auto phaseMouse = CurrentMouseState();
+        GalaxyEggbert::Game::GamepadFrame pad = SuppressLiveInput() || replayingResume_ || menuInputLatched_
+                                                    ? GalaxyEggbert::Game::GamepadFrame{}
+                                                    : ReadGamepadFrame();
+        // The arrows and A on the demo positions, the galaxy screen and the world screen (2026-11-10,
+        // FocusNavigator.hpp): the arrows (the keyboard's; the gamepad's d-pad, which in Pause comes
+        // as the arrows) choose a button, A or Enter presses it. In the editor and the menu the
+        // gamepad drives a cursor: there the d-pad chooses instead of moving it, and A goes to the
+        // choice while there is one.
+        const bool editorBrowsing = phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing();
+        const bool demoSlotsUp = demoSlotsShown_ && (phase_ == GalaxyEggbert::Def::GamePhase::Pause ||
+                                                     phase_ == GalaxyEggbert::Def::GamePhase::Init);
+        const bool padCursor = phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init;
+        GalaxyEggbert::Game::FocusNavigator::Output focus;
+        if ((editorBrowsing || demoSlotsUp) && !SuppressLiveInput())
+        {
+            const bool naming = demoNaming_ || worldEditor_.WantsText();
+            unsigned now = 0;
+            const auto bit = [&now](bool on, unsigned b) { if (on) now |= b; };
+            bit(phaseKeys.IsKeyDown(Keys::Up) || (padCursor && pad.dpadUp), 1u);
+            bit(phaseKeys.IsKeyDown(Keys::Down) || (padCursor && pad.dpadDown), 2u);
+            bit(phaseKeys.IsKeyDown(Keys::Left) || (padCursor && pad.dpadLeft), 4u);
+            bit(phaseKeys.IsKeyDown(Keys::Right) || (padCursor && pad.dpadRight), 8u);
+            // Enter while a name is typed keeps the name (the typed keys), it does not press a key.
+            bit(pad.a || (!naming && phaseKeys.IsKeyDown(Keys::Enter)), 16u);
+            const unsigned pressed = now & ~focusKeysWas_;
+            focusKeysWas_ = now;
+            GalaxyEggbert::Game::FocusNavigator::Input in;
+            in.up = (pressed & 1u) != 0;
+            in.down = (pressed & 2u) != 0;
+            in.left = (pressed & 4u) != 0;
+            in.right = (pressed & 8u) != 0;
+            // A with no choice shown is the cursor's click where there is a cursor.
+            in.confirm = (pressed & 16u) != 0 && (focusNavigator_.Active() || !(padCursor && pad.a));
+            const bool mouseMoved = focusMouseX_ != tickInput_.mouseX || focusMouseY_ != tickInput_.mouseY;
+            focusMouseX_ = tickInput_.mouseX;
+            focusMouseY_ = tickInput_.mouseY;
+            const auto tilted = [](float v) { return std::fabs(v) > 0.3f; };
+            const bool stick = padCursor && (tilted(pad.leftX) || tilted(pad.leftY) || tilted(pad.rightX) || tilted(pad.rightY));
+            in.pointer = mouseMoved || (tickInput_.buttons & 1u) != 0 || !tickInput_.touches.empty() || stick;
+            const auto targets = editorBrowsing
+                                     ? worldEditor_.BrowserFocusTargets()
+                                     : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
+            focus = focusNavigator_.Update(targets, in);
+            focusHighlight_.reset();
+            if (focus.active && focus.focused >= 0 && static_cast<std::size_t>(focus.focused) < targets.size())
+                focusHighlight_ = targets[static_cast<std::size_t>(focus.focused)];
+            if (padCursor)
+            {
+                pad.dpadUp = pad.dpadDown = pad.dpadLeft = pad.dpadRight = false;
+                if (focus.active) pad.a = false;
+            }
+            // B leaves the demo positions a step in Pause (in the editor and the menu it is Escape).
+            if (demoSlotsUp && phase_ == GalaxyEggbert::Def::GamePhase::Pause && pad.b && !focusPadBWas_)
+                CancelDemoSlotsStep();
+            focusPadBWas_ = pad.b;
+        }
+        else
+        {
+            focusNavigator_.Reset();
+            focusHighlight_.reset();
+            focusKeysWas_ = 0;
+        }
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
+            worldEditor_.SetBrowserFocus(editorBrowsing ? focusHighlight_ : std::nullopt);
+        // The mouse a screen with a choice sees: at the chosen button, pressed for a confirm.
+        const auto focusMouse = [&focus](const Microsoft::Xna::Framework::Input::MouseState& real) {
+            using namespace Microsoft::Xna::Framework::Input;
+            if (!focus.active) return real;
+            return MouseState(static_cast<int>(focus.x), static_cast<int>(focus.y), real.getScrollWheelValueProperty(),
+                              focus.pressed ? ButtonState::Pressed : ButtonState::Released, ButtonState::Released,
+                              ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        };
         GalaxyEggbert::Editor::WorldEditor::Navigation editorNavigation;
         if (phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init)
         {
@@ -482,9 +554,7 @@ namespace GalaxyEggbert::CNA
                 if (state != TouchLocationState::Invalid)
                     touches.push_back({t.id,t.x,t.y,state == TouchLocationState::Pressed,state == TouchLocationState::Released});
             }
-            auto device = editorDevices_.Update(phaseKeys, phaseMouse,
-                SuppressLiveInput() || replayingResume_ || menuInputLatched_ ? GalaxyEggbert::Game::GamepadFrame{}
-                                                                            : ReadGamepadFrame(),
+            auto device = editorDevices_.Update(phaseKeys, phaseMouse, pad,
                 touches, tickInput_.touchControlsEnabled, editing,
                 editing && worldEditor_.Palette().IsPopupOpen(),
                 viewport.getWidthProperty(), viewport.getHeightProperty(), dt,
@@ -496,7 +566,7 @@ namespace GalaxyEggbert::CNA
                         viewport.getWidthProperty(),viewport.getHeightProperty());
                 });
             phaseKeys = device.keyboard;
-            phaseMouse = device.mouse;
+            phaseMouse = focusMouse(device.mouse);
             editorNavigation = device.navigation;
         }
 
@@ -525,7 +595,7 @@ namespace GalaxyEggbert::CNA
             const bool showRestart = mission != 1 && mission % 10 != 0;
             if (demoSlotsShown_)
             {
-                UpdateDemoSlotsScreen(mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                UpdateDemoSlotsScreen(focusMouse(mouse), viewport.getWidthProperty(), viewport.getHeightProperty());
             }
             else
             {
@@ -697,12 +767,31 @@ namespace GalaxyEggbert::CNA
             // MENU-006..020) -- see InputPad::UpdateInit()/
             // DrawInit()'s own class comment for full detail.
             const auto mouse = phaseMouse;
+            if (goodbyeShown_)
+            {
+                // The goodbye: a new press of anything closes the game (DemoNewPress: not a release,
+                // not what was already held when it opened).
+                goodbyeSeconds_ += dt;
+                const auto now = ReadDemoLiveInput(true);
+                if (goodbyeSeconds_ > 0.25f && GalaxyEggbert::Game::DemoNewPress(goodbyeInputWas_, now))
+                {
+                    std::cout << "GalaxyEggbertCNA: goodbye closed, the game ends." << std::endl;
+                    Exit();
+                }
+                goodbyeInputWas_ = now;
+                pauseKeyWasDown_ = phaseKeys.IsKeyDown(Keys::Escape);
+                return true;
+            }
             if (demoSlotsShown_)
             {
                 // The demo positions from the menu's Demos button: Escape closes them, not the game.
                 UpdateDemoSlotsScreen(mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 const bool escape = phaseKeys.IsKeyDown(Keys::Escape);
-                if (escape && !pauseKeyWasDown_) demoSlotsShown_ = false;
+                if (escape && !pauseKeyWasDown_)
+                {
+                    if (demoNaming_) FinishDemoNaming(false); // the name as it was
+                    else demoSlotsShown_ = false;
+                }
                 pauseKeyWasDown_ = escape;
                 return true;
             }
@@ -758,7 +847,7 @@ namespace GalaxyEggbert::CNA
             }
             if (initInput.exitPressed)
             {
-                Exit();
+                StartGoodbye();
                 return true;
             }
             if (initInput.playPressed)
@@ -803,8 +892,8 @@ namespace GalaxyEggbert::CNA
                 // design. NOT replicated here: this engine's own
                 // Escape binding reuses the real hardware-Back->Exit()
                 // behavior instead, which reads as the clearly
-                // intentional one.
-                Exit();
+                // intentional one. Since 2026-11-10 by way of the goodbye (StartGoodbye()).
+                StartGoodbye();
             }
         }
         else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
@@ -930,7 +1019,9 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
-                if (demoSlotsShown_)
+                if (demoSlotsShown_ && demoNaming_)
+                    FinishDemoNaming(false); // Escape leaves the name as it was
+                else if (demoSlotsShown_)
                     demoSlotsShown_ = false; // Escape closes the demo positions first
                 else
                     SetPhase(GalaxyEggbert::Def::GamePhase::Play);

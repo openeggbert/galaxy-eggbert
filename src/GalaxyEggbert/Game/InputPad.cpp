@@ -1497,18 +1497,33 @@ namespace GalaxyEggbert::Game
         return Rect{slot.x0, slot.y1 + 46.0f * s, slot.x1, slot.y1 + 76.0f * s};
     }
 
+    // The bottom row (2026-11-10, four buttons): Export, Import, Name, Cancel.
     QuadBatch::Rect InputPad::DemoCancelRect(int viewportW, int viewportH) noexcept
     {
         const float s = static_cast<float>(viewportH) / kRefH;
         const float cx = static_cast<float>(viewportW) * 0.5f;
-        return Rect{cx - 60.0f * s, 412.0f * s, cx + 60.0f * s, 466.0f * s};
+        return Rect{cx + 170.0f * s, 412.0f * s, cx + 300.0f * s, 466.0f * s};
     }
 
     QuadBatch::Rect InputPad::DemoExportRect(int viewportW, int viewportH) noexcept
     {
         const float s = static_cast<float>(viewportH) / kRefH;
         const float cx = static_cast<float>(viewportW) * 0.5f;
-        return Rect{cx - 290.0f * s, 412.0f * s, cx - 170.0f * s, 466.0f * s};
+        return Rect{cx - 300.0f * s, 412.0f * s, cx - 170.0f * s, 466.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoNameRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx + 20.0f * s, 412.0f * s, cx + 150.0f * s, 466.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoKeyboardRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx - 300.0f * s, 118.0f * s, cx + 300.0f * s, 372.0f * s};
     }
 
     QuadBatch::Rect InputPad::DemoListRowRect(int index, int viewportW, int viewportH) noexcept
@@ -1544,13 +1559,13 @@ namespace GalaxyEggbert::Game
     {
         const float s = static_cast<float>(viewportH) / kRefH;
         const float cx = static_cast<float>(viewportW) * 0.5f;
-        return Rect{cx + 170.0f * s, 412.0f * s, cx + 290.0f * s, 466.0f * s};
+        return Rect{cx - 150.0f * s, 412.0f * s, cx - 20.0f * s, 466.0f * s};
     }
 
     InputPad::DemoSlotsInput InputPad::UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                        int viewportW, int viewportH,
                                                        const std::vector<DemoSlotInfo>& slots, int listRows,
-                                                       bool paged) noexcept
+                                                       bool paged, const ScreenKeyboard* keyboard) noexcept
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         DemoSlotsInput result;
@@ -1558,7 +1573,21 @@ namespace GalaxyEggbert::Game
         const float y = static_cast<float>(mouse.getYProperty());
         const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel, 21 Export, 22 Import,
-        // 30-36 the list's rows, 40-46 their bins (the list replaces the slots), 50/51 its arrows.
+        // 23 Name, 30-36 the list's rows, 40-46 their bins (the list replaces the slots), 50/51 its
+        // arrows; while naming only the keyboard's keys, 100 and up.
+        if (keyboard != nullptr)
+        {
+            const int key = keyboard->KeyAt(x, y);
+            if (down && !mouseWasDown_) demoSlotsControl_ = key >= 0 ? 100 + key : -1;
+            if (!down && mouseWasDown_)
+            {
+                if (demoSlotsControl_ >= 100 && demoSlotsControl_ == 100 + key) result.keyboardKey = key;
+                else if (demoSlotsControl_ < 0 && !keyboard->Holds(x, y)) result.outsideClick = true;
+                demoSlotsControl_ = -1;
+            }
+            mouseWasDown_ = down;
+            return result;
+        }
         const auto over = [&]() {
             for (int i = 0; i < listRows && i < kDemoListRows; ++i)
                 if (InRect(x, y, DemoListDeleteRect(i, viewportW, viewportH))) return 40 + i;
@@ -1574,6 +1603,7 @@ namespace GalaxyEggbert::Game
             }
             if (InRect(x, y, DemoCancelRect(viewportW, viewportH))) return 20;
             if (InRect(x, y, DemoExportRect(viewportW, viewportH))) return 21;
+            if (InRect(x, y, DemoNameRect(viewportW, viewportH))) return 23;
             return InRect(x, y, DemoImportRect(viewportW, viewportH)) ? 22 : -1;
         };
         if (down && !mouseWasDown_) demoSlotsControl_ = over();
@@ -1586,6 +1616,7 @@ namespace GalaxyEggbert::Game
                 else if (demoSlotsControl_ == 20) result.cancelPressed = true;
                 else if (demoSlotsControl_ == 21) result.exportPressed = true;
                 else if (demoSlotsControl_ == 22) result.importPressed = true;
+                else if (demoSlotsControl_ == 23) result.namePressed = true;
                 else if (demoSlotsControl_ < 40) result.importRow = demoSlotsControl_ - 29;
                 else if (demoSlotsControl_ < 50) result.deleteRow = demoSlotsControl_ - 39;
                 else if (demoSlotsControl_ == 50) result.prevPage = true;
@@ -1600,7 +1631,7 @@ namespace GalaxyEggbert::Game
     void InputPad::DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                                  int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
                                  const std::string& title, int activeMode, const std::vector<std::string>* listRows,
-                                 int armedRow, const std::string& pageLabel)
+                                 int armedRow, const std::string& pageLabel, const DemoSlotsExtras& extras)
     {
         if (!loaded_)
         {
@@ -1621,6 +1652,31 @@ namespace GalaxyEggbert::Game
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
         centred(labels, title, w * 0.5f, 34.0f * s, 0.7f);
+        // A text the width of @p room at most (cut, "..." at its end).
+        const auto fit = [&](std::string text, float size, float room) {
+            if (TextMetrics::Width(text) * size * s <= room) return text;
+            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) text.pop_back();
+            return text + "...";
+        };
+        if (extras.keyboard != nullptr)
+        {
+            // Naming a recording: the name over the keyboard, in place of the positions.
+            const Rect field{w * 0.5f - 300.0f * s, 74.0f * s, w * 0.5f + 300.0f * s, 110.0f * s};
+            icon(normal, field, kInitPanelIcon);
+            AppendGamerLabel(labels, fit("Name: " + extras.draft + "_", 0.55f, field.x1 - field.x0 - 20.0f * s),
+                             field.x0 + 10.0f * s, field.y0 + 7.0f * s, 0.55f, s);
+            for (std::size_t i = 0; i < extras.keyboard->Keys().size(); ++i)
+            {
+                const auto& key = extras.keyboard->Keys()[i];
+                const bool lit = demoSlotsControl_ == 100 + static_cast<int>(i) ||
+                                 (key.kind == ScreenKeyboard::Kind::Shift && extras.keyboard->Shifted());
+                icon(lit ? pressed : normal, key.rect, 21);
+                const std::string face = extras.keyboard->Label(key);
+                const float size = face.size() == 1 ? 0.6f : 0.42f;
+                centred(labels, face, (key.rect.x0 + key.rect.x1) * 0.5f,
+                        (key.rect.y0 + key.rect.y1) * 0.5f - 16.0f * size * s, size);
+            }
+        }
         std::vector<Quad> rows; // a calm ground under each row (the panel's own picture)
         for (int i = 0; listRows != nullptr && i < static_cast<int>(listRows->size()) && i < kDemoListRows; ++i)
         {
@@ -1641,15 +1697,16 @@ namespace GalaxyEggbert::Game
             centred(labels, ">", (next.x0 + next.x1) * 0.5f, next.y0 + 6.0f * s, 0.6f);
             centred(labels, pageLabel, w * 0.5f, prev.y0 + 8.0f * s, 0.5f);
         }
-        for (int i = 0; listRows == nullptr && i < static_cast<int>(slots.size()) && i < 10; ++i)
+        for (int i = 0; listRows == nullptr && extras.keyboard == nullptr && i < static_cast<int>(slots.size()) && i < 10; ++i)
         {
             const auto& slot = slots[static_cast<std::size_t>(i)];
             const Rect r = DemoSlotRect(i, viewportW, viewportH);
             icon(demoSlotsControl_ == i ? pressed : normal, r, 21);
             const float cx = (r.x0 + r.x1) * 0.5f;
             centred(labels, std::to_string(i + 1), cx, r.y0 + 14.0f * s, 0.9f);
-            centred(slot.recorded ? labels : faint, slot.line1, cx, r.y1 + 4.0f * s, 0.42f);
-            centred(slot.recorded ? labels : faint, slot.line2, cx, r.y1 + 22.0f * s, 0.42f);
+            const float room = r.x1 - r.x0 + 12.0f * s;
+            centred(slot.recorded ? labels : faint, fit(slot.line1, 0.42f, room), cx, r.y1 + 4.0f * s, 0.42f);
+            centred(slot.recorded ? labels : faint, fit(slot.line2, 0.42f, room), cx, r.y1 + 22.0f * s, 0.42f);
             if (slot.recorded)
             {
                 const Rect o = DemoRestoreRect(i, viewportW, viewportH);
@@ -1658,14 +1715,24 @@ namespace GalaxyEggbert::Game
             }
         }
         const Rect cancel = DemoCancelRect(viewportW, viewportH);
-        icon(demoSlotsControl_ == 20 ? pressed : normal, cancel, 21);
-        centred(labels, "Cancel", (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
-        for (const auto& [control, rect, caption] :
-             {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), "Export"},
-              std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), "Import"}})
+        if (extras.keyboard == nullptr)
         {
-            icon(demoSlotsControl_ == control || activeMode == control - 20 ? pressed : normal, rect, 21);
-            centred(labels, caption, (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
+            icon(demoSlotsControl_ == 20 ? pressed : normal, cancel, 21);
+            centred(labels, "Cancel", (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
+            // activeMode: 1 Export, 2 Import, 3 Name drawn held.
+            for (const auto& [control, rect, caption] :
+                 {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), "Export"},
+                  std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), "Import"},
+                  std::tuple<int, Rect, const char*>{23, DemoNameRect(viewportW, viewportH), "Name"}})
+            {
+                icon(demoSlotsControl_ == control || activeMode == control - 20 ? pressed : normal, rect, 21);
+                centred(labels, caption, (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
+            }
+        }
+        if (extras.focus)
+        {
+            const Rect f = *extras.focus;
+            icon(pressed, Rect{f.x0 - 4.0f * s, f.y0 - 4.0f * s, f.x1 + 4.0f * s, f.y1 + 4.0f * s}, 21);
         }
         if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
@@ -2690,8 +2757,58 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawGoodbye(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                               int viewportH, float seconds, bool overTitleScene)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float w = static_cast<float>(viewportW);
+        const float h = static_cast<float>(viewportH);
+        // As Speedy Blupi's goodbye (CEvent::DrawButtons, WM_PHASE_BYE: two lines at its top, two at
+        // its bottom), in Galaxy Eggbert's own words.
+        static const char* const kTop[2] = {"Thank you for playing Galaxy Eggbert!",
+                                            "We hope Blupi's galaxy was as much fun to play as to build."};
+        static const char* const kBottom[2] = {"Speedy Blupi and Speedy Eggbert: original games by EPSITEC SA",
+                                               "Galaxy Eggbert: galaxyeggbert.openeggbert.com"};
+        std::vector<Quad> panelQuads, labelQuads, faintQuads;
+        const auto panel = [&](float y0, float y1) {
+            Quad q{w * 0.5f - 330.0f * scale, y0, w * 0.5f + 330.0f * scale, y1, 0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(kInitPanelIcon, LogicalWidth(padTexture_), LogicalHeight(padTexture_), q.u0, q.v0, q.u1, q.v1);
+            for (int layer = 0; layer < 2; ++layer) panelQuads.push_back(q);
+        };
+        // The top lines in the band of sky under the title's letters (where Loading stands).
+        const float top = h * 0.37f;
+        panel(top, top + 96.0f * scale); // the third line: how to leave
+        panel(h - 78.0f * scale, h - 10.0f * scale);
+        for (int i = 0; i < 2; ++i)
+        {
+            AppendCenteredLabel(labelQuads, kTop[i], w * 0.5f, top + (8.0f + 28.0f * static_cast<float>(i)) * scale, scale);
+            AppendCenteredLabel(labelQuads, kBottom[i], w * 0.5f, h - (70.0f - 28.0f * static_cast<float>(i)) * scale,
+                                scale);
+        }
+        // After a moment, how to leave (the original waited for the same), the text being dark on the panel.
+        if (seconds > 1.5f)
+            AppendCenteredLabel(faintQuads, "A key, a click or a button closes the game.", w * 0.5f, top + 64.0f * scale,
+                                scale);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        if (!overTitleScene)
+        {
+            const float logoW = 640.0f * scale, logoH = 160.0f * scale;
+            const std::vector<Quad> logo{Quad{(w - logoW) * 0.5f, h * 0.06f, (w + logoW) * 0.5f, h * 0.06f + logoH,
+                                              0.0f, 0.0f, 1.0f, 1.0f}};
+            FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, logo, viewportW, viewportH, 1.0f);
+        }
+        FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, kInitPanelOpacity);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *textEffect_, textRenderer_, faintQuads, viewportW, viewportH, 0.7f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                                      int viewportH, float phaseTimeSeconds)
+                                      int viewportH, float phaseTimeSeconds, bool overTitleScene)
     {
         if (!loaded_)
         {
@@ -2763,6 +2880,14 @@ namespace GalaxyEggbert::Game
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        if (!overTitleScene)
+        {
+            // No scene behind yet: the Galaxy Eggbert logo (640 x 160) on the dark of the cleared screen.
+            const float logoW = 640.0f * scale, logoH = 160.0f * scale;
+            const std::vector<Quad> logo{Quad{(w - logoW) * 0.5f, h * 0.06f, (w + logoW) * 0.5f, h * 0.06f + logoH,
+                                              0.0f, 0.0f, 1.0f, 1.0f}};
+            FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, logo, viewportW, viewportH, 1.0f);
+        }
         FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, kInitPanelOpacity);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);

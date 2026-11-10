@@ -757,7 +757,7 @@ namespace GalaxyEggbert::CNA
         // Only the settled main menu of the active window counts: not Play, Pause, Setup, the
         // editor, the help or a menu transition.
         const bool eligible = fadeOutPhase_ == GamePhase::None && getIsActiveProperty() && !controlsHelp_.shown &&
-                              !menuInputLatched_ && !demoSlotsShown_;
+                              !menuInputLatched_ && !demoSlotsShown_ && !goodbyeShown_;
         if (!demoIdleTimer_.Update(demoClockSeconds_, eligible, activity)) return false;
         std::cout << "GalaxyEggbertCNA: " << GalaxyEggbert::Game::kDemoIdleSeconds
                   << " s without input in the main menu: the demos play." << std::endl;
@@ -837,7 +837,9 @@ namespace GalaxyEggbert::CNA
             DemoRecording demo;
             const auto text = ReadWorldBytes(info.recorded ? own : DemoPath(slot));
             const bool ok = text && ParseDemo(*text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok;
-            info.line1 = info.recorded ? "Recorded" : ok ? "Shipped" : "Empty";
+            // A recording named by the player shows its name (2026-11-10).
+            info.line1 = info.recorded ? (ok && !IsAutomaticDemoTitle(demo.title) ? demo.title : "Recorded")
+                                       : ok ? "Shipped" : "Empty";
             if (ok)
             {
                 const int mission = demo.log.start.mission;
@@ -866,6 +868,31 @@ namespace GalaxyEggbert::CNA
         constexpr int kRows = GalaxyEggbert::Game::InputPad::kDemoListRows;
         const int pageFirst = demoImportPage_ * kRows;
         const int pageRows = std::clamp(static_cast<int>(demoImports_.size()) - pageFirst, 0, kRows);
+        if (demoNaming_)
+        {
+            // The name typed on the real keyboard, then the keyboard on the screen.
+            for (const auto& [typed, shift] : browserTypedKeys_)
+                if (demoNaming_ && GalaxyEggbert::Game::ScreenKeyboard::TypeKey(typed, shift, demoNameDraft_,
+                                                                             GalaxyEggbert::Game::kDemoNameMax) ==
+                                       GalaxyEggbert::Game::ScreenKeyboard::Result::Done)
+                    FinishDemoNaming(true);
+            browserTypedKeys_.clear();
+            if (!demoNaming_) return;
+            const auto keys = inputPad_.UpdateDemoSlots(mouse, viewportW, viewportH, demoSlotInfos_, -1, false,
+                                                        &demoKeyboard_);
+            if (keys.keyboardKey >= 0)
+            {
+                const auto typed = demoKeyboard_.Press(keys.keyboardKey, demoNameDraft_, GalaxyEggbert::Game::kDemoNameMax);
+                if (typed == GalaxyEggbert::Game::ScreenKeyboard::Result::Done) FinishDemoNaming(true);
+                else if (typed == GalaxyEggbert::Game::ScreenKeyboard::Result::Cancel) FinishDemoNaming(false);
+            }
+            else if (keys.outsideClick)
+            {
+                FinishDemoNaming(true);
+            }
+            return;
+        }
+        browserTypedKeys_.clear();
         const auto slots = inputPad_.UpdateDemoSlots(
             mouse, viewportW, viewportH, demoSlotInfos_,
             demoSlotsMode_ == 3 ? pageRows : -1, demoSlotsMode_ == 3 && DemoImportPages() > 1);
@@ -877,7 +904,8 @@ namespace GalaxyEggbert::CNA
         }
         const int armedBefore = demoDeleteArmed_;
         if (slots.importRow > 0 || slots.prevPage || slots.nextPage || slots.recordSlot > 0 ||
-            slots.restoreSlot > 0 || slots.exportPressed || slots.importPressed || slots.cancelPressed)
+            slots.restoreSlot > 0 || slots.exportPressed || slots.importPressed || slots.cancelPressed ||
+            slots.namePressed)
             demoDeleteArmed_ = -1; // any other click: the bin asks again
         if (slots.deleteRow > 0 && demoSlotsMode_ == 3 && pageFirst + slots.deleteRow - 1 < static_cast<int>(demoImports_.size()))
         {
@@ -922,6 +950,11 @@ namespace GalaxyEggbert::CNA
         {
             ToggleDemoImport();
         }
+        else if (slots.namePressed)
+        {
+            demoSlotsMode_ = demoSlotsMode_ == 4 ? 0 : 4;
+            demoSlotsMessage_ = demoSlotsMode_ == 4 ? "Click a recorded position to name its demo." : "";
+        }
         else if (slots.restoreSlot > 0)
         {
             std::error_code error;
@@ -932,17 +965,106 @@ namespace GalaxyEggbert::CNA
         }
         else if (slots.cancelPressed)
         {
-            // Cancel leaves Export or Import first, then the positions.
-            if (demoSlotsMode_ != 0)
+            // Cancel leaves Export, Import or Name first, then the positions.
+            CancelDemoSlotsStep();
+        }
+    }
+
+    void GalaxyEggbertGame::StartGoodbye()
+    {
+        goodbyeShown_ = true;
+        goodbyeSeconds_ = 0.0f;
+        demoSlotsShown_ = false;
+        goodbyeInputWas_ = ReadDemoLiveInput(true); // what closed the menu is not what closes the game
+        std::cout << "GalaxyEggbertCNA: goodbye (a key, a click, a button or a touch closes the game)." << std::endl;
+    }
+
+    void GalaxyEggbertGame::CancelDemoSlotsStep()
+    {
+        if (demoNaming_)
+        {
+            FinishDemoNaming(false);
+        }
+        else if (demoSlotsMode_ != 0)
+        {
+            demoSlotsMode_ = 0;
+            demoSlotsMessage_.clear();
+        }
+        else
+        {
+            demoSlotsShown_ = false;
+        }
+    }
+
+    void GalaxyEggbertGame::StartDemoNaming(int slot)
+    {
+        using namespace GalaxyEggbert::Game;
+        const std::string title = DemoTitle(UserDemoPath(slot));
+        demoNaming_ = true;
+        demoNameSlot_ = slot;
+        demoNameDraft_ = IsAutomaticDemoTitle(title) ? std::string() : SanitizeDemoName(title);
+        browserTypedKeys_.clear();
+        typedShiftPending_ = false;
+        demoKeyboard_.Layout(InputPad::DemoKeyboardRect(tickInput_.viewportWidth, tickInput_.viewportHeight));
+        demoKeyboard_.Begin(demoNameDraft_);
+        demoSlotsMessage_ = "Type its name or use the keys: OK keeps it, Cancel leaves it.";
+    }
+
+    void GalaxyEggbertGame::FinishDemoNaming(bool keep)
+    {
+        using namespace GalaxyEggbert::Game;
+        demoNaming_ = false;
+        demoSlotsMode_ = 0;
+        const std::string position = "Position " + std::to_string(demoNameSlot_);
+        const std::string name = SanitizeDemoName(demoNameDraft_);
+        if (!keep)
+        {
+            demoSlotsMessage_.clear();
+            return;
+        }
+        if (name.empty())
+        {
+            demoSlotsMessage_ = position + ": a name needs a letter or a digit; it was left as it was.";
+            return;
+        }
+        demoSlotsMessage_ = RenameDemo(UserDemoPath(demoNameSlot_), name) ? position + " is named " + name + "."
+                                                                           : position + " could not be named.";
+        demoSlotInfos_ = DemoSlotInfos();
+        std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
+    }
+
+    std::vector<GalaxyEggbert::Game::QuadBatch::Rect> GalaxyEggbertGame::DemoSlotsFocusTargets(int w, int h) const
+    {
+        using GalaxyEggbert::Game::InputPad;
+        if (demoNaming_) return demoKeyboard_.Rects();
+        std::vector<GalaxyEggbert::Game::QuadBatch::Rect> targets;
+        if (demoSlotsMode_ == 3)
+        {
+            const int first = demoImportPage_ * InputPad::kDemoListRows;
+            for (int i = 0; i < InputPad::kDemoListRows && first + i < static_cast<int>(demoImports_.size()); ++i)
             {
-                demoSlotsMode_ = 0;
-                demoSlotsMessage_.clear();
+                targets.push_back(InputPad::DemoListRowRect(i, w, h));
+                targets.push_back(InputPad::DemoListDeleteRect(i, w, h));
             }
-            else
+            if (DemoImportPages() > 1)
             {
-                demoSlotsShown_ = false;
+                targets.push_back(InputPad::DemoListPrevRect(w, h));
+                targets.push_back(InputPad::DemoListNextRect(w, h));
             }
         }
+        else
+        {
+            for (int i = 0; i < static_cast<int>(demoSlotInfos_.size()) && i < 10; ++i)
+            {
+                targets.push_back(InputPad::DemoSlotRect(i, w, h));
+                if (demoSlotInfos_[static_cast<std::size_t>(i)].recorded)
+                    targets.push_back(InputPad::DemoRestoreRect(i, w, h));
+            }
+        }
+        for (const auto& r : {InputPad::DemoExportRect(w, h), InputPad::DemoImportRect(w, h), InputPad::DemoNameRect(w, h),
+                              InputPad::DemoCancelRect(w, h)})
+            targets.push_back(r);
+        return targets;
     }
 
     void GalaxyEggbertGame::DrawDemoSlotsScreen(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -954,15 +1076,24 @@ namespace GalaxyEggbert::CNA
         for (int i = demoPageFirst; i < static_cast<int>(demoImportRows_.size()) &&
                                     i < demoPageFirst + GalaxyEggbert::Game::InputPad::kDemoListRows; ++i)
             demoPageRows.push_back(demoImportRows_[static_cast<std::size_t>(i)]);
+        GalaxyEggbert::Game::DemoSlotsExtras extras;
+        extras.focus = focusHighlight_;
+        if (demoNaming_)
+        {
+            extras.keyboard = &demoKeyboard_;
+            extras.draft = demoNameDraft_;
+        }
         inputPad_.DrawDemoSlots(device, viewportW, viewportH,
                                     demoSlotInfos_, demoSlotsMessage_,
-                                    demoSlotsMode_ == 1   ? "Export a demo: choose its position"
+                                    demoNaming_           ? "Name the demo in position " + std::to_string(demoNameSlot_)
+                                    : demoSlotsMode_ == 4 ? "Name a demo: choose its position"
+                                    : demoSlotsMode_ == 1   ? "Export a demo: choose its position"
                                     : demoSlotsMode_ == 2 ? "Import a demo: choose its position"
                                     : demoSlotsMode_ == 3 ? "Import a demo: choose the file"
                                     : phase_ == GalaxyEggbert::Def::GamePhase::Init
                                         ? "The demo positions"
                                         : "Record a demo: choose its position",
-                                    demoSlotsMode_ == 3 ? 2 : demoSlotsMode_,
+                                    demoSlotsMode_ == 3 ? 2 : demoSlotsMode_ == 4 ? 3 : demoSlotsMode_,
                                     demoSlotsMode_ == 3 ? &demoPageRows : nullptr,
                                     demoDeleteArmed_ >= demoPageFirst &&
                                             demoDeleteArmed_ < demoPageFirst + GalaxyEggbert::Game::InputPad::kDemoListRows
@@ -970,7 +1101,8 @@ namespace GalaxyEggbert::CNA
                                         : -1,
                                     DemoImportPages() > 1 ? std::to_string(demoImportPage_ + 1) + " / " +
                                                                 std::to_string(DemoImportPages())
-                                                          : std::string());
+                                                          : std::string(),
+                                    extras);
     }
 
     std::string GalaxyEggbertGame::DemoImportPrompt() const
@@ -998,11 +1130,15 @@ namespace GalaxyEggbert::CNA
         demoImportRows_.clear();
         for (const auto& path : demoImports_)
         {
-            // The file and what it holds: its mission, a galaxy's, or why it cannot be imported.
-            std::string row = std::filesystem::path(path).filename().string() + "  -  ";
+            // The demo's name (the file's when it has none of its own) and what it holds: its
+            // mission, a galaxy's, or why it cannot be imported.
             DemoRecording demo;
             const auto text = ReadWorldBytes(path);
             const auto status = text ? ParseDemo(*text, kDemoSimulationRevision, demo) : DemoLoadStatus::Missing;
+            std::string row = (status == DemoLoadStatus::Ok && !IsAutomaticDemoTitle(demo.title)
+                                   ? demo.title
+                                   : std::filesystem::path(path).filename().string()) +
+                              "  -  ";
             if (status == DemoLoadStatus::Ok)
                 row += (demo.log.start.worldPath.find("/galaxy/world") != std::string::npos ? "galaxy " : "mission ") +
                        std::to_string(demo.log.start.mission) + ", " + std::to_string([&demo] {
@@ -1039,6 +1175,17 @@ namespace GalaxyEggbert::CNA
     {
         using namespace GalaxyEggbert::Game;
         const std::string position = "Position " + std::to_string(slot);
+        if (demoSlotsMode_ == 4)
+        {
+            std::error_code error;
+            if (!std::filesystem::exists(UserDemoPath(slot), error))
+                demoSlotsMessage_ = position + " has no recording of yours to name.";
+            else if (DemoTitle(UserDemoPath(slot)).empty())
+                demoSlotsMessage_ = position + "'s recording cannot be read.";
+            else
+                StartDemoNaming(slot);
+            return;
+        }
         if (demoSlotsMode_ == 0)
         {
             if (phase_ == GalaxyEggbert::Def::GamePhase::Init)

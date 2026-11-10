@@ -51,8 +51,14 @@ namespace GalaxyEggbert::Game
         return UserDemoDir() + "/shared";
     }
 
-    std::string DemoExportName(int gamer, int slot)
+    std::string DemoExportName(int gamer, int slot, const std::string& title)
     {
+        if (std::string named = SanitizeDemoName(title); !named.empty() && !IsAutomaticDemoTitle(title))
+        {
+            std::replace(named.begin(), named.end(), ' ', '-');
+            std::replace(named.begin(), named.end(), '\'', '-');
+            return named + ".gdemo";
+        }
         const std::string player = gamer >= 0 && gamer <= 2 ? std::string(1, static_cast<char>('A' + gamer))
                                                             : "player" + std::to_string(gamer);
         return player + "-demo-" + std::to_string(slot) + ".gdemo";
@@ -64,11 +70,65 @@ namespace GalaxyEggbert::Game
         if (!std::filesystem::is_regular_file(source, error)) return {};
         std::filesystem::create_directories(SharedDemoDir(), error);
         // An earlier export stays: A-demo-5.gdemo, A-demo-5-2.gdemo ...
-        const std::string name = DemoExportName(gamer, slot);
+        const std::string name = DemoExportName(gamer, slot, DemoTitle(source));
         const auto target = FreeFileName(SharedDemoDir(), std::filesystem::path(name).stem().string(), ".gdemo");
         if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::none, error))
             return {};
         return target.generic_string();
+    }
+
+    std::string SanitizeDemoName(const std::string& name)
+    {
+        std::string out;
+        for (const char c : name)
+        {
+            const bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == ' ' ||
+                            c == '-' || c == '\'';
+            if (!ok || (c == ' ' && (out.empty() || out.back() == ' '))) continue;
+            if (out.size() < kDemoNameMax) out += c;
+        }
+        while (!out.empty() && out.back() == ' ') out.pop_back();
+        return out;
+    }
+
+    bool IsAutomaticDemoTitle(const std::string& title) noexcept
+    {
+        return title.empty() || title.rfind("Recorded by player ", 0) == 0;
+    }
+
+    std::string DemoTitle(const std::string& path)
+    {
+        std::ifstream in(path, std::ios::binary);
+        if (!in) return {};
+        const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        DemoRecording demo;
+        return ParseDemo(text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok ? demo.title : std::string();
+    }
+
+    bool RenameDemo(const std::string& path, const std::string& name)
+    {
+        const std::string clean = SanitizeDemoName(name);
+        if (clean.empty()) return false;
+        std::string text;
+        {
+            std::ifstream in(path, std::ios::binary);
+            if (!in) return false;
+            text.assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        }
+        DemoRecording demo;
+        if (ParseDemo(text, kDemoSimulationRevision, demo) != DemoLoadStatus::Ok) return false;
+        demo.title = clean;
+        const std::string temporary = path + ".tmp";
+        {
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            out << demo.Serialize();
+            if (!out) return false;
+        }
+        std::error_code error;
+        std::filesystem::rename(temporary, path, error);
+        if (!error) return true;
+        std::filesystem::remove(temporary, error);
+        return false;
     }
 
     std::vector<std::string> ListSharedDemos()

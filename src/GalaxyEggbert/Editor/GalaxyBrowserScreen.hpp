@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/Game/QuadBatch.hpp>
+#include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
@@ -10,6 +11,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,6 +31,10 @@ namespace GalaxyEggbert::Editor
     // clicked twice replaces this galaxy with it (ImportGalaxy(), the places there now kept in their
     // backups). The list pages by eight (arrows under it), and a row's bin deletes the shared file
     // (two clicks; on the web the browser's storage is the only place a player could reach it).
+    // Delete galaxy (2026-11-10, two clicks) exports the galaxy into the shared folder first, so
+    // Import brings it back, then deletes every place into its backups (DeleteGalaxy()).
+    // The arrows and A (FocusTargets(), the host's FocusNavigator) reach every button; the name is
+    // typed on the keys or on the keyboard drawn under the title (ScreenKeyboard).
     // Raw 800x480 pixels, as EditorBrowserScreen.
     class GalaxyBrowserScreen
     {
@@ -40,14 +46,16 @@ namespace GalaxyEggbert::Editor
             int mission = 0;            // Open/New: the galaxy mission
             std::filesystem::path path; // its file
             bool imported = false;      // another galaxy replaced this one (its progress starts over)
+            bool deleted = false;       // the galaxy was deleted (its progress starts over too)
         };
 
         // Rescans which of the gamer's galaxy worlds exist (on entering, and after a creation).
         void Refresh(int gamerSlot);
 
         // Naming the galaxy (2026-11-09): a click on the title starts it; typed keys (letters, Shift
-        // for capitals, digits, space, '-', Backspace) edit it, Enter or a click elsewhere keeps it,
-        // Escape leaves the name as it was. The caller forwards the keys while Naming().
+        // for capitals, digits, space, '-', Backspace) or the keyboard drawn on the screen
+        // (2026-11-10, for touch and gamepad) edit it, Enter, OK or a click elsewhere keeps it,
+        // Escape or Cancel leaves the name as it was. The caller forwards the keys while Naming().
         [[nodiscard]] bool Naming() const noexcept { return naming_; }
         void TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
         [[nodiscard]] const std::string& Name() const noexcept { return name_; }
@@ -86,6 +94,15 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] int ImportPage() const noexcept { return importPage_; }
         [[nodiscard]] std::size_t ImportCount() const noexcept { return imports_.size(); }
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteGalaxyRect() noexcept;
+        // Where the keyboard is while naming (over the worlds and the places).
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect KeyboardRect() noexcept;
+        [[nodiscard]] const GalaxyEggbert::Game::ScreenKeyboard& Keyboard() const noexcept { return keyboard_; }
+
+        // What the arrows can choose now (the keyboard's keys while naming), and the one chosen
+        // (drawn lit; nullopt: none).
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> FocusTargets() const;
+        void SetFocusHighlight(std::optional<GalaxyEggbert::Game::QuadBatch::Rect> rect) noexcept { focus_ = rect; }
 
     private:
         struct ShownPlace
@@ -124,6 +141,11 @@ namespace GalaxyEggbert::Editor
         std::string nameDraft_;
         void ListImports();
         void KeepName();
+        void StartNaming();
+        GalaxyEggbert::Game::ScreenKeyboard keyboard_;
+        int keyboardKey_ = -1;          // the key pressed down, -1 none
+        bool armedGalaxyDelete_ = false; // Delete galaxy clicked once
+        std::optional<GalaxyEggbert::Game::QuadBatch::Rect> focus_;
         bool mouseWasDown_ = false;
         float mouseX_ = -1.0f, mouseY_ = -1.0f;
         bool backWasDown_ = false;

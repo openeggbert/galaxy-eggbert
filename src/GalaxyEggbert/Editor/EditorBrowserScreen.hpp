@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -76,6 +77,10 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportModeRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect GalaxyRect() noexcept;
+        // What the arrows can choose (2026-11-10, the host's FocusNavigator), and the one chosen
+        // (drawn lit; nullopt: none).
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> FocusTargets() const;
+        void SetFocusHighlight(std::optional<GalaxyEggbert::Game::QuadBatch::Rect> rect) noexcept { focus_ = rect; }
         // The worlds beside the slots (OlderRect rows): the shared ones, then the gamer's older ones.
         [[nodiscard]] const std::vector<std::filesystem::path>& OtherWorlds() const noexcept { return older_; }
 
@@ -114,6 +119,7 @@ namespace GalaxyEggbert::Editor
         float mouseX_ = -1.0f; // where the mouse was at the last Update(), for the held button
         float mouseY_ = -1.0f;
         bool backWasDown_ = false;
+        std::optional<GalaxyEggbert::Game::QuadBatch::Rect> focus_;
 
         bool loaded_ = false;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;

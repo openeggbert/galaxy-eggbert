@@ -85,6 +85,17 @@ namespace GalaxyEggbert::Editor
         void ShowGalaxy();
         // The galaxy screen takes typed keys while its name is being typed (GalaxyBrowserScreen).
         [[nodiscard]] bool WantsText() const noexcept { return browsing_ && galaxyView_ && galaxyScreen_.Naming(); }
+        // The browsing screen's buttons for the arrows (FocusNavigator), and the one chosen.
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> BrowserFocusTargets() const
+        {
+            return galaxyView_ ? galaxyScreen_.FocusTargets() : browserScreen_.FocusTargets();
+        }
+        void SetBrowserFocus(std::optional<GalaxyEggbert::Game::QuadBatch::Rect> rect) noexcept
+        {
+            galaxyScreen_.SetFocusHighlight(galaxyView_ ? rect : std::nullopt);
+            browserScreen_.SetFocusHighlight(galaxyView_ ? std::nullopt : rect);
+        }
+        [[nodiscard]] bool InGalaxyView() const noexcept { return galaxyView_; }
         void TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift) { galaxyScreen_.TypeKey(key, shift); }
         [[nodiscard]] bool ShowsGalaxy() const noexcept { return galaxyView_; }
         void ShowSlots() noexcept { galaxyView_ = false; }

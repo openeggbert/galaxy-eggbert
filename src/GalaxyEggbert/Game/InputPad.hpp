@@ -1,6 +1,7 @@
 #pragma once
 
 #include "QuadBatch.hpp"
+#include "ScreenKeyboard.hpp"
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Def/GamePhase.hpp>
@@ -13,6 +14,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -55,6 +57,15 @@ namespace GalaxyEggbert::Game
     // thresholded per axis into {-1,0,+1}, not a proportional joystick
     // magnitude. Ported the same way here, using this class's own
     // proportionally-scaled hit-radius instead of the real 140px one.
+    // What InputPad::DrawDemoSlots() adds (2026-11-10): the name being typed (the keyboard in place
+    // of the positions, the name above it) and the arrows' choice, drawn lit.
+    struct DemoSlotsExtras
+    {
+        const ScreenKeyboard* keyboard = nullptr;
+        std::string draft;
+        std::optional<QuadBatch::Rect> focus;
+    };
+
     class InputPad
     {
     public:
@@ -266,6 +277,9 @@ namespace GalaxyEggbert::Game
             bool cancelPressed = false;
             bool exportPressed = false;
             bool importPressed = false;
+            bool namePressed = false; // Name (2026-11-10): a click on a position names its recording
+            int keyboardKey = -1;     // naming: the keyboard's key pressed (ScreenKeyboard index)
+            bool outsideClick = false; // naming: a click off the keyboard (keeps the name)
             int importRow = 0; // 1-kDemoListRows: a file of the list chosen (the list shown)
             int deleteRow = 0; // 1-kDemoListRows: the bin of that row
             bool prevPage = false, nextPage = false;
@@ -275,11 +289,13 @@ namespace GalaxyEggbert::Game
         static constexpr int kDemoListRows = 7;
         // @p listRows >= 0: the list's page of that many files is shown instead of the positions
         // (@p paged: with its arrows).
+        // @p keyboard: a name being typed (only its keys answer; a click elsewhere is outsideClick).
         [[nodiscard]] DemoSlotsInput UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                      int viewportW, int viewportH,
                                                      const std::vector<DemoSlotInfo>& slots, int listRows = -1,
-                                                     bool paged = false) noexcept;
-        // @p activeMode: 0 recording, 1 Export on, 2 Import on (its button drawn held).
+                                                     bool paged = false,
+                                                     const ScreenKeyboard* keyboard = nullptr) noexcept;
+        // @p activeMode: 0 recording, 1 Export on, 2 Import on, 3 Name on (its button drawn held).
         // @p listRows: the page of Import's file list, drawn in place of the positions (nullptr: the
         // positions); @p armedRow its row whose bin was clicked once (-1 none); @p pageLabel "p / n"
         // with the arrows (empty: one page).
@@ -287,12 +303,15 @@ namespace GalaxyEggbert::Game
                            int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
                            const std::string& title = "Record a demo: choose its position", int activeMode = 0,
                            const std::vector<std::string>* listRows = nullptr, int armedRow = -1,
-                           const std::string& pageLabel = {});
+                           const std::string& pageLabel = {}, const DemoSlotsExtras& extras = {});
         [[nodiscard]] static QuadBatch::Rect DemoSlotRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoRestoreRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoCancelRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoExportRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoImportRect(int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoNameRect(int viewportW, int viewportH) noexcept;
+        // Where the keyboard is while a demo is named (over the positions).
+        [[nodiscard]] static QuadBatch::Rect DemoKeyboardRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListRowRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListDeleteRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListPrevRect(int viewportW, int viewportH) noexcept;
@@ -637,9 +656,16 @@ namespace GalaxyEggbert::Game
         // Galaxy's own loading screen (OR-0009, 2026-11-02): drawn over the 3D title scene
         // (title.vwr, whose tile letters are the title) instead of Mobile Eggbert's wait.png --
         // "Loading" and the gauge (the same waitTable fill) on a menu panel between the letters
-        // and Blupi. DrawWait() stays the fallback.
+        // and Blupi. @p overTitleScene false (2026-11-10, the owner: Mobile Eggbert's loading screen
+        // showed for a second at every start): before the scene is up, or without it, the Galaxy
+        // Eggbert logo stands where its letters would. DrawWait() is no longer drawn at start.
         void DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                               int viewportH, float phaseTimeSeconds);
+                               int viewportH, float phaseTimeSeconds, bool overTitleScene = true);
+        // The goodbye on quitting (2026-11-10, the owner: as Speedy Blupi's edition says goodbye,
+        // WM_PHASE_BYE): two lines at the top, two at the bottom over the title scene (without it
+        // over the logo), until a key, a click, a button or a touch closes the game.
+        void DrawGoodbye(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                         float seconds, bool overTitleScene);
         void DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds);
 

@@ -90,6 +90,7 @@ class EditorDeviceControls
     int mouseControl_ = -1, quietFrames_ = 0;
     int uiTouch_ = -1, lookTouch_ = -1;
     float cursorX_ = 0, cursorY_ = 0, lookX_ = 0, lookY_ = 0;
+    int realMouseX_ = -1, realMouseY_ = -1; // the real mouse at the last update
     float lookStartX_ = 0, lookStartY_ = 0;
     bool touchCenteredAim_ = false, lookMoved_ = false;
     std::map<int, int> touchControls_;

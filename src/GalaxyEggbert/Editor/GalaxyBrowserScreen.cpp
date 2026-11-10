@@ -7,6 +7,7 @@
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #include <algorithm>
+#include <utility>
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
@@ -109,6 +110,54 @@ namespace GalaxyEggbert::Editor
     // The title, top left of the places' panel.
     Rect GalaxyBrowserScreen::NameRect() noexcept { return {16.0f, 10.0f, 366.0f, 44.0f}; }
 
+    // Under Export and Import, on their dark ground.
+    Rect GalaxyBrowserScreen::DeleteGalaxyRect() noexcept { return {380.0f, 102.0f, 588.0f, 132.0f}; }
+
+    Rect GalaxyBrowserScreen::KeyboardRect() noexcept { return {22.0f, 150.0f, 582.0f, 436.0f}; }
+
+    void GalaxyBrowserScreen::StartNaming()
+    {
+        naming_ = true;
+        nameDraft_ = name_;
+        keyboard_.Layout(KeyboardRect());
+        keyboard_.Begin(nameDraft_);
+        keyboardKey_ = -1;
+        armedGalaxyDelete_ = false;
+        message_ = "Type its name or use the keys: OK keeps it, Cancel leaves it as it was.";
+    }
+
+    std::vector<Rect> GalaxyBrowserScreen::FocusTargets() const
+    {
+        if (naming_) return keyboard_.Rects();
+        std::vector<Rect> targets{NameRect(), ExportRect(), ImportRect(), DeleteGalaxyRect(), MainHubRect(), BonusRect()};
+        if (!restoreMode_)
+            for (const auto& s : std::vector<ShownPlace>{{1, MainHubRect()}, {kGalaxyBonusMission, BonusRect()}})
+                if (Exists(s.mission)) targets.push_back(DeleteRect(s.rect));
+        for (int world = 1; world <= kGalaxyWorldCount; ++world) targets.push_back(WorldRect(world));
+        for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place)
+        {
+            targets.push_back(PlaceRect(place));
+            if (!restoreMode_ && Exists(selectedWorld_ * 10 + place)) targets.push_back(DeleteRect(PlaceRect(place)));
+        }
+        if (importMode_)
+        {
+            for (int i = 0; i < kImportRowsShown; ++i)
+            {
+                if (importPage_ * kImportRowsShown + i >= static_cast<int>(imports_.size())) break;
+                targets.push_back(ImportRowRect(i));
+                targets.push_back(ImportDeleteRect(i));
+            }
+            if (imports_.size() > static_cast<std::size_t>(kImportRowsShown))
+            {
+                targets.push_back(ImportPrevRect());
+                targets.push_back(ImportNextRect());
+            }
+        }
+        targets.push_back(BackupsRect());
+        targets.push_back(BackButtonRect());
+        return targets;
+    }
+
     void GalaxyBrowserScreen::ListImports()
     {
         imports_ = ListSharedGalaxies();
@@ -128,31 +177,10 @@ namespace GalaxyEggbert::Editor
 
     void GalaxyBrowserScreen::TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift)
     {
-        using Microsoft::Xna::Framework::Input::Keys;
         if (!naming_) return;
-        const int k = static_cast<int>(key);
-        if (key == Keys::Enter)
-        {
+        if (GalaxyEggbert::Game::ScreenKeyboard::TypeKey(key, shift, nameDraft_, kGalaxyNameMax) ==
+            GalaxyEggbert::Game::ScreenKeyboard::Result::Done)
             KeepName();
-            return;
-        }
-        if (key == Keys::Back)
-        {
-            if (!nameDraft_.empty()) nameDraft_.pop_back();
-            return;
-        }
-        char c = 0;
-        if (k >= static_cast<int>(Keys::A) && k <= static_cast<int>(Keys::Z))
-            c = static_cast<char>((shift ? 'A' : 'a') + (k - static_cast<int>(Keys::A)));
-        else if (k >= static_cast<int>(Keys::D0) && k <= static_cast<int>(Keys::D9))
-            c = static_cast<char>('0' + (k - static_cast<int>(Keys::D0)));
-        else if (k >= static_cast<int>(Keys::NumPad0) && k <= static_cast<int>(Keys::NumPad9))
-            c = static_cast<char>('0' + (k - static_cast<int>(Keys::NumPad0)));
-        else if (key == Keys::Space)
-            c = ' ';
-        else if (key == Keys::OemMinus || key == Keys::Subtract)
-            c = '-';
-        if (c != 0 && nameDraft_.size() < kGalaxyNameMax) nameDraft_ += c;
     }
 
     Rect GalaxyBrowserScreen::ImportPrevRect() noexcept { return {604.0f, 312.0f, 664.0f, 342.0f}; }
@@ -286,6 +314,33 @@ namespace GalaxyEggbert::Editor
             mouseWasDown_ = down;
             return result;
         }
+        if (naming_)
+        {
+            // The keyboard's keys type (pressed and released on the same key); a click elsewhere
+            // keeps the name, as Enter does.
+            if (down && !mouseWasDown_) keyboardKey_ = keyboard_.KeyAt(x, y);
+            if (!down && mouseWasDown_)
+            {
+                const int key = keyboard_.KeyAt(x, y);
+                if (keyboardKey_ >= 0 && key == keyboardKey_)
+                {
+                    const auto typed = keyboard_.Press(key, nameDraft_, kGalaxyNameMax);
+                    if (typed == GalaxyEggbert::Game::ScreenKeyboard::Result::Done) KeepName();
+                    else if (typed == GalaxyEggbert::Game::ScreenKeyboard::Result::Cancel)
+                    {
+                        naming_ = false;
+                        message_.clear();
+                    }
+                }
+                else if (keyboardKey_ < 0 && !keyboard_.Holds(x, y))
+                {
+                    KeepName();
+                }
+                keyboardKey_ = -1;
+            }
+            mouseWasDown_ = down;
+            return result;
+        }
         if (backTriggered)
         {
             result.action = Action::Back;
@@ -293,18 +348,9 @@ namespace GalaxyEggbert::Editor
             mouseWasDown_ = down;
             return result;
         }
-        if (!down && mouseWasDown_ && naming_)
-        {
-            // A click ends the naming: the name is kept (the title's own click too).
-            KeepName();
-            mouseWasDown_ = down;
-            return result;
-        }
         if (!down && mouseWasDown_ && InRect(x, y, NameRect()))
         {
-            naming_ = true;
-            nameDraft_ = name_;
-            message_ = "Type its name: Enter keeps it, Escape leaves it as it was.";
+            StartNaming();
             mouseWasDown_ = down;
             return result;
         }
@@ -312,7 +358,39 @@ namespace GalaxyEggbert::Editor
         {
             int armed = 0;
             bool handled = false;
-            if (InRect(x, y, BackButtonRect()))
+            const bool galaxyDeleteWasArmed = std::exchange(armedGalaxyDelete_, false);
+            if (InRect(x, y, DeleteGalaxyRect()))
+            {
+                handled = true;
+                bool any = false;
+                for (int mission = 1; mission < 200 && !any; ++mission) any = Exists(mission);
+                if (!any)
+                {
+                    message_ = "The galaxy has no place to delete.";
+                }
+                else if (!galaxyDeleteWasArmed)
+                {
+                    armedGalaxyDelete_ = true;
+                    message_ = "Delete the whole galaxy? Click again (Import brings it back).";
+                }
+                else
+                {
+                    const auto kept = DeleteGalaxy(gamerSlot_);
+                    Refresh(gamerSlot_);
+                    restoreMode_ = false;
+                    if (kept.empty())
+                    {
+                        message_ = "The galaxy could not be kept first: nothing was deleted.";
+                    }
+                    else
+                    {
+                        result.deleted = true;
+                        if (importMode_) ListImports();
+                        message_ = "Galaxy deleted, kept as " + kept.filename().string() + " (Import brings it back).";
+                    }
+                }
+            }
+            else if (InRect(x, y, BackButtonRect()))
             {
                 result.action = Action::Back;
                 handled = true;
@@ -495,11 +573,15 @@ namespace GalaxyEggbert::Editor
         button(BackButtonRect(), kIconReturn);
         icon(restoreMode_ ? buttons : panels, BackupsRect(), restoreMode_ ? kIconBlank : kIconPanel);
         // Export and Import on a dark ground of their own: they lie over the title scene's logo.
-        const Rect ground{ExportRect().x0 - 8.0f, ExportRect().y0 - 6.0f, ImportRect().x1 + 6.0f, ImportRect().y1 + 6.0f};
+        const Rect ground{ExportRect().x0 - 8.0f, ExportRect().y0 - 6.0f, ImportRect().x1 + 6.0f, DeleteGalaxyRect().y1 + 6.0f};
         for (int layer = 0; layer < 3; ++layer) icon(panels, ground, kIconPanel);
         icon(held && InRect(mouseX_, mouseY_, ExportRect()) ? buttons : panels, ExportRect(),
              held && InRect(mouseX_, mouseY_, ExportRect()) ? kIconBlank : kIconPanel);
         icon(importMode_ ? buttons : panels, ImportRect(), importMode_ ? kIconBlank : kIconPanel);
+        {
+            const bool lit = armedGalaxyDelete_ || (held && InRect(mouseX_, mouseY_, DeleteGalaxyRect()));
+            icon(lit ? buttons : panels, DeleteGalaxyRect(), lit ? kIconBlank : kIconPanel);
+        }
         const int importPages = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
         if (importMode_)
         {
@@ -518,22 +600,45 @@ namespace GalaxyEggbert::Editor
         }
         button(MainHubRect(), kIconBlank);
         button(BonusRect(), kIconBlank);
-        for (int world = 1; world <= kGalaxyWorldCount; ++world)
+        for (int world = 1; world <= kGalaxyWorldCount && !naming_; ++world)
         {
             const Rect r = WorldRect(world);
             if (world == selectedWorld_) icon(panels, {r.x0 - 6.0f, r.y0 - 6.0f, r.x1 + 6.0f, r.y1 + 22.0f}, kIconPanel);
             button(r, kIconBlank);
         }
-        for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place) button(PlaceRect(place), kIconBlank);
+        for (int place = 0; place <= kGalaxyMissionsPerWorld && !naming_; ++place) button(PlaceRect(place), kIconBlank);
         const auto shown = Shown();
         if (!restoreMode_)
         {
             for (const auto& s : shown)
-                if (Exists(s.mission)) button(DeleteRect(s.rect), armedDelete_ == s.mission ? kIconConfirm : kIconTrash);
+                if (Exists(s.mission) && (!naming_ || s.mission == 1 || s.mission == kGalaxyBonusMission))
+                    button(DeleteRect(s.rect), armedDelete_ == s.mission ? kIconConfirm : kIconTrash);
         }
+        // While naming, the keyboard lies over the worlds and the places, on a dark ground.
+        std::vector<Quad> keyGround, keys;
+        if (naming_)
+        {
+            const Rect area = KeyboardRect();
+            for (int layer = 0; layer < 4; ++layer)
+                icon(keyGround, {area.x0 - 8.0f, area.y0 - 8.0f, area.x1 + 8.0f, area.y1 + 8.0f}, kIconPanel);
+            for (std::size_t i = 0; i < keyboard_.Keys().size(); ++i)
+            {
+                const auto& key = keyboard_.Keys()[i];
+                const bool lit = (held && keyboardKey_ == static_cast<int>(i)) ||
+                                 (key.kind == GalaxyEggbert::Game::ScreenKeyboard::Kind::Shift && keyboard_.Shifted());
+                icon(lit ? pressed : keys, key.rect, kIconBlank);
+            }
+        }
+        // The arrows' choice: lit over the button, a little larger.
+        std::vector<Quad> focus;
+        if (focus_)
+            icon(focus, {focus_->x0 - 4.0f, focus_->y0 - 4.0f, focus_->x1 + 4.0f, focus_->y1 + 4.0f}, kIconBlank);
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportWidth, viewportHeight, kPanelOpacity);
         FlushQuads(device, *padEffect_, padRenderer_, buttons, viewportWidth, viewportHeight, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, keyGround, viewportWidth, viewportHeight, kPanelOpacity);
+        FlushQuads(device, *padEffect_, padRenderer_, keys, viewportWidth, viewportHeight, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, pressed, viewportWidth, viewportHeight, kPressedOpacity);
+        FlushQuads(device, *padEffect_, padRenderer_, focus, viewportWidth, viewportHeight, kPressedOpacity);
 
         const std::string player = std::string(" - Player ") + static_cast<char>('A' + gamerSlot_);
         if (naming_)
@@ -559,21 +664,33 @@ namespace GalaxyEggbert::Editor
         };
         place(MainHubRect(), 1, "Hub", "Main hub");
         place(BonusRect(), kGalaxyBonusMission, "199", "Bonus");
-        text(labels, "Worlds (a click selects one)", 22.0f, 146.0f, 0.45f);
-        for (int world = 1; world <= kGalaxyWorldCount; ++world)
+        if (naming_)
         {
-            const Rect r = WorldRect(world);
-            auto& bucket = WorldHasAny(world) ? labels : faint;
-            const std::string number = std::to_string(world);
-            centred(bucket, number, r, (r.y0 + r.y1 - kGlyphCellPx * 0.8f) * 0.5f, 0.8f);
-            centred(bucket, "World " + number, r, r.y1 + 3.0f, 0.38f);
+            for (const auto& key : keyboard_.Keys())
+            {
+                const std::string face = keyboard_.Label(key);
+                const float scale = face.size() == 1 ? 0.6f : 0.42f;
+                centred(labels, face, key.rect, (key.rect.y0 + key.rect.y1 - kGlyphCellPx * scale) * 0.5f, scale);
+            }
         }
-        text(labels, "World " + std::to_string(selectedWorld_) + ": its hub and missions", 22.0f, 340.0f, 0.45f);
-        for (int p = 0; p <= kGalaxyMissionsPerWorld; ++p)
+        else
         {
-            const int mission = selectedWorld_ * 10 + p;
-            place(PlaceRect(p), mission, p == 0 ? "Hub" : std::to_string(p),
-                  p == 0 ? "Hub " + std::to_string(mission) : std::to_string(mission));
+            text(labels, "Worlds (a click selects one)", 22.0f, 146.0f, 0.45f);
+            for (int world = 1; world <= kGalaxyWorldCount; ++world)
+            {
+                const Rect r = WorldRect(world);
+                auto& bucket = WorldHasAny(world) ? labels : faint;
+                const std::string number = std::to_string(world);
+                centred(bucket, number, r, (r.y0 + r.y1 - kGlyphCellPx * 0.8f) * 0.5f, 0.8f);
+                centred(bucket, "World " + number, r, r.y1 + 3.0f, 0.38f);
+            }
+            text(labels, "World " + std::to_string(selectedWorld_) + ": its hub and missions", 22.0f, 340.0f, 0.45f);
+            for (int p = 0; p <= kGalaxyMissionsPerWorld; ++p)
+            {
+                const int mission = selectedWorld_ * 10 + p;
+                place(PlaceRect(p), mission, p == 0 ? "Hub" : std::to_string(p),
+                      p == 0 ? "Hub " + std::to_string(mission) : std::to_string(mission));
+            }
         }
         const char* help[] = {
             "Your own galaxy, played",
@@ -639,6 +756,8 @@ namespace GalaxyEggbert::Editor
             centred(labels, caption, rect, (rect.y0 + rect.y1 - kGlyphCellPx * 0.45f) * 0.5f, 0.45f);
         centred(labels, "Backups", BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
                 0.4f);
+        centred(labels, armedGalaxyDelete_ ? "Delete all? Again" : "Delete galaxy", DeleteGalaxyRect(),
+                (DeleteGalaxyRect().y0 + DeleteGalaxyRect().y1 - kGlyphCellPx * 0.4f) * 0.5f, 0.4f);
         if (!message_.empty()) text(labels, message_, 22.0f, 446.0f, 0.4f);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportWidth, viewportHeight, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, faint, viewportWidth, viewportHeight, kFaintOpacity);

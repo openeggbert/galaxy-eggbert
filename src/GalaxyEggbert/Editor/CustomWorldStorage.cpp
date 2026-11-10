@@ -776,6 +776,20 @@ namespace GalaxyEggbert::Editor
         return target;
     }
 
+    std::filesystem::path DeleteGalaxy(int gamerSlot)
+    {
+        const auto kept = ExportGalaxy(gamerSlot);
+        if (kept.empty()) return {};
+        std::error_code ec;
+        for (int mission = 1; mission < 200; ++mission)
+        {
+            const auto path = GalaxyWorldPath(gamerSlot, mission);
+            if (IsGalaxyMission(mission) && std::filesystem::exists(path, ec)) (void)DeleteSlotWorld(path);
+        }
+        (void)SetGalaxyName(gamerSlot, "");
+        return kept;
+    }
+
     std::vector<std::filesystem::path> ListSharedGalaxies()
     {
         std::vector<std::pair<std::filesystem::file_time_type, std::filesystem::path>> found;
