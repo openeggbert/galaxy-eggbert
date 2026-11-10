@@ -1975,6 +1975,16 @@ int main(int argc, char** argv)
         }
         check(!shieldedSwimmer.JustDrowned() && shieldedSwimmer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the water gauge never depletes while Shield is active (real !m_blupiShield gate)");
+        // And with the megablupi cheat (the same real gate's !m_bSuperBlupi; the owner 2026-11-10).
+        BlupiController megaSwimmer;
+        megaSwimmer.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
+        megaSwimmer.SetCheatSuperBlupi(true);
+        for (int i = 0; i < 600; ++i) // 600 * 0.05s = 30s, past the whole ~25s gauge
+        {
+            diveWithWaterDetection(megaSwimmer, synthetic, kDrownDt);
+        }
+        check(!megaSwimmer.JustDrowned() && megaSwimmer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
+              "the water gauge never depletes with megablupi (real !m_bSuperBlupi gate)");
 
         // Resurfacing resets the gauge -- a few seconds of genuine Nage
         // (not to exhaustion), then Surf, confirms the gauge snaps back to

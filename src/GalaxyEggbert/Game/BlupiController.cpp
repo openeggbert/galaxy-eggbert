@@ -1713,8 +1713,11 @@ namespace GalaxyEggbert::Game
             // decrement itself) -- this engine previously decremented unconditionally, a
             // previously-documented "not modeled" gap, now closed.
             const bool wasAboveZero = m_waterGaugeLevel > 0;
+            // And the megablupi cheat (`!m_bSuperBlupi`, the same condition; the owner 2026-11-10: the
+            // gauge went down under water with megablupi on).
             const bool shieldOrHideImmune =
-                m_secretPower == GalaxyEggbert::Def::SecretPower::Shield || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide;
+                m_secretPower == GalaxyEggbert::Def::SecretPower::Shield || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide ||
+                m_cheatSuperBlupi;
             m_waterGaugeTimer += dt;
             while (m_waterGaugeTimer >= kWaterGaugeTickSeconds && m_waterGaugeLevel > 0)
             {
