@@ -156,9 +156,10 @@ textureScale=0</code></pre>
     otherwise the 1x one is kept, and all texture coordinates are computed from the logical 1x size. Auto picks 2x
     on the desktop when Ultra is on and the display is at least 1000 pixels tall, since only Ultra draws the world at
     the window's pixels. The web and Android always use 1x; the APK leaves the 2x folders out.</p>
-  <div class="warn"><strong>2x sheets not yet in the repository.</strong> As of 2026-11-10 the re-rendered 2x sheets
-    (from the original Ray Dream scenes) are still being made and are not committed. Until they are, 2x finds no
-    sheets and the game stays at 1x.</div>
+  <div class="note"><strong>Where the 2x sheets come from</strong> The 2x sheets (9 icon sheets and 39 backgrounds,
+    in the repository since 2026-11-10) were rendered from the original Ray Dream scenes at 8x and reduced, where
+    that render passed verification; the remaining cells are an edge-padded Lanczos upscale of the 1x pixels.
+    Opaque tiles are made wholly opaque at load at either scale.</div>
 
   <h2>Fullscreen and window</h2>
   <p>The main menu's upper-left button switches between fullscreen and a window and always names the other mode;
