@@ -823,7 +823,14 @@ namespace GalaxyEggbert::CNA
                                                 obj.posStartZ + WorldRuntime::kWorldCenterZ);
             ObjectTextureSource sheet{};
             int icon = 0;
-            const ObjectModelPose* pose = ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
+            const bool sprite = ObjectSprite(obj, sheet, icon);
+            // A network game's bombs each in its team's colour (SB2 draws them on channel 2 and
+            // CHBLUPI1-3, decmove.cpp:747-765): the yellow one turned orange, blue or green. Alone
+            // 201-203 stay Mobile Eggbert's blupi1.png ones.
+            const int typeNumber = static_cast<int>(obj.type);
+            const int teamBomb = NetMatchActive() && typeNumber >= 201 && typeNumber <= 203 ? typeNumber - 200 : 0;
+            if (teamBomb != 0 && sheet == ObjectTextureSource::Blupi1) sheet = ObjectTextureSource::Blupi;
+            const ObjectModelPose* pose = sprite ? objectModelTable_.Find(sheet, icon) : nullptr;
             if (pose != nullptr && sheet == ObjectTextureSource::ObjectM && GalaxyEggbert::Game::IsClayBridgeIcon(icon))
             {
                 // ObjectType52 writes every visible frame to the grid, including 367-372. Its terrain
@@ -865,7 +872,12 @@ namespace GalaxyEggbert::CNA
                     turn += 1.57079632f *
                             static_cast<float>(CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
                 }
-                drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ, turn);
+                auto& drawn = drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ, turn);
+                if (teamBomb != 0 && drawn.model != nullptr)
+                {
+                    drawn.partTextures.clear();
+                    for (const auto& part : drawn.model->Parts) drawn.partTextures.push_back(TeamTexture(teamBomb, part.Texture));
+                }
                 if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56 && dynamiteSparks_.count(icon) != 0)
                 {
                     // Centre of the terminal ring in the shipped dynamite_rd_6e6e00 mesh at Frames=0
