@@ -36,9 +36,9 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] int LoadedCount() const noexcept;
 
         // Conflict policy matches mobile-eggbert Sound.cpp: a channel
-        // already playing is not restarted, except
-        // channel 10. A channel with no loaded file (missing WAV) is a
-        // silent no-op, not an error.
+        // already playing is not restarted, except channel 10, whose
+        // plays overlap (up to 10). A channel with no loaded file (missing
+        // WAV) is a silent no-op, not an error.
         void Play(GalaxyEggbert::Def::SoundChannel channel, bool loop = false);
         // As Play(), past the hidden-Blupi filter below: the original's sounds played by
         // m_sound->PlayImage directly, not through Decor::PlaySound (the voyages' arrival, 3).
@@ -151,7 +151,11 @@ namespace GalaxyEggbert::Game
         {
             std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> effect;
             std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> instance;
+            // Channel 10 only: its explosions overlap, each its own instance (PlayChannel).
+            std::vector<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>> overlapping;
         };
+        // The original's Sound::PlayImage keeps a list of 10 plays (Sound.cpp:241-253).
+        static constexpr std::size_t kMaxOverlapping = 10;
 
         std::array<Channel, kNumChannels> channels_;
         bool enabled_ = true;
@@ -161,6 +165,11 @@ namespace GalaxyEggbert::Game
         float listenerY_ = 0.0f;
         float listenerZ_ = 0.0f;
         bool replayMuted_ = false;
+        // GALAXY_SOUND_LOG=1 (read by LoadContent()): a line per sound asked for ("sound request N")
+        // and per sound started ("sound N at T ms", T since the first) -- to see a sound fired again
+        // and again (2026-11-11; tools/verify_death_sounds.sh).
+        bool logPlays_ = false;
+        void LogPlay(int channel) const;
         std::vector<MadeSound>* outbox_ = nullptr;
         std::array<std::chrono::steady_clock::time_point, kNumChannels> notedUntil_{};
         void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 
 namespace GalaxyEggbert::Game
@@ -41,6 +42,10 @@ namespace GalaxyEggbert::Game
     void Sound::LoadContent()
     {
         using Microsoft::Xna::Framework::Audio::SoundEffect;
+        if (const char* log = std::getenv("GALAXY_SOUND_LOG"); log != nullptr && *log != '\0' && *log != '0')
+        {
+            logPlays_ = true;
+        }
 
         for (int i = 0; i < kNumChannels; ++i)
         {
@@ -125,6 +130,9 @@ namespace GalaxyEggbert::Game
 
     void Sound::PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound)
     {
+        // Every request, played or not (a channel still sounding is not started again): what
+        // tools/verify_death_sounds.sh counts, as fast-stepping runs outpace the sounds themselves.
+        if (logPlays_) std::printf("GalaxyEggbertCNA: sound request %d\n", static_cast<int>(GalaxyEggbert::Def::ToRaw(channel)));
         if (replayMuted_) return;
         if (decorSound && blupiHidden_ && MutedWhileHidden(channel))
         {
@@ -148,10 +156,32 @@ namespace GalaxyEggbert::Game
             return; // no WAV file for this channel -- silent no-op
         }
 
-        // Channel 10 always restarts; every other channel doesn't interrupt
-        // itself if already playing, matching mobile-eggbert Sound.cpp.
-        if (channel != GalaxyEggbert::Def::SoundChannel::SoundChannel10 && !loop &&
-            ch.instance && ch.instance->getStateProperty() == SoundState::Playing)
+        // A channel already playing is not started again, as mobile-eggbert's Sound::PlayImage
+        // (Sound.cpp:232-239) -- except channel 10, the small explosion: there each call is a new
+        // play beside those still sounding (Sound.cpp:241-256), not the one instance cut and
+        // restarted, which stuttered explosions in quick succession (2026-11-11). The finished
+        // ones are dropped; with 10 still sounding the oldest gives way (the original's list of 10
+        // grew past it instead).
+        if (channel == GalaxyEggbert::Def::SoundChannel::SoundChannel10 && !loop)
+        {
+            auto& plays = ch.overlapping;
+            plays.erase(std::remove_if(plays.begin(), plays.end(),
+                                       [](const std::unique_ptr<SoundEffectInstance>& play)
+                                       { return play->getStateProperty() != SoundState::Playing; }),
+                        plays.end());
+            if (plays.size() >= kMaxOverlapping)
+            {
+                plays.front()->Stop();
+                plays.erase(plays.begin());
+            }
+            plays.push_back(std::make_unique<SoundEffectInstance>(ch.effect->CreateInstance()));
+            plays.back()->setVolumeProperty(kVolumePitch[static_cast<std::size_t>(idx) * 2] * effectsVolume_);
+            plays.back()->setPitchProperty(std::max(0.0f, kVolumePitch[static_cast<std::size_t>(idx) * 2 + 1]));
+            plays.back()->Play();
+            LogPlay(idx);
+            return;
+        }
+        if (!loop && ch.instance && ch.instance->getStateProperty() == SoundState::Playing)
         {
             return;
         }
@@ -189,6 +219,17 @@ namespace GalaxyEggbert::Game
         ch.instance->setVolumeProperty(volume);
         ch.instance->setPitchProperty(pitch);
         ch.instance->Play();
+        LogPlay(idx);
+    }
+
+    void Sound::LogPlay(int channel) const
+    {
+        if (logPlays_)
+        {
+            static const auto first = std::chrono::steady_clock::now();
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - first);
+            std::printf("GalaxyEggbertCNA: sound %d at %lld ms\n", channel, static_cast<long long>(ms.count()));
+        }
     }
 
     void Sound::Stop(GalaxyEggbert::Def::SoundChannel channel)
@@ -210,6 +251,8 @@ namespace GalaxyEggbert::Game
         {
             ch.instance->Stop();
         }
+        for (auto& play : ch.overlapping) play->Stop();
+        ch.overlapping.clear();
     }
 
     void Sound::StopAll()
@@ -220,6 +263,8 @@ namespace GalaxyEggbert::Game
             {
                 ch.instance->Stop();
             }
+            for (auto& play : ch.overlapping) play->Stop();
+            ch.overlapping.clear();
         }
     }
 
