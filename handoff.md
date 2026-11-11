@@ -6,9 +6,18 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (packages 0.1.0 for Windows, Linux and the web built, not published; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## Packages 0.1.0 for Windows x64, Linux and the web (2026-11-11, the owner) — built, not published
+## Release 0.1.0 (2026-11-11, the owner) — tagged and published
+
+`v0.1.0` (annotated) on the release commit; the GitHub release "Galaxy Eggbert 0.1.0" of
+openeggbert/galaxy-eggbert carries the Windows, Linux, Android and web packages, SHA256SUMS.txt and
+packaging/RELEASE_NOTES.md as its text. The packages were rebuilt from the release commit into
+`build-probe/release/0.1.0/` (the APK too: `make_release.sh` without `--no-android`). CHANGELOG.md
+has `## [0.1.0] — 2026-11-11` and an empty `[Unreleased]`. Android's next published APK needs
+versionCode 2. The website (`web/`) still names 1.0.0-rc1 on several pages: not changed here.
+
+## Packages 0.1.0 for Windows x64, Linux and the web (2026-11-11, the owner) — built, then published (above)
 
 In `build-probe/release/0.1.0/` (`docs/releasing.md` step 3 has the commands and checks):
 `GalaxyEggbert-0.1.0-windows-x86_64.zip` (166 MB), `-linux-x86_64.tar.gz` (163 MB, glibc 2.38+),

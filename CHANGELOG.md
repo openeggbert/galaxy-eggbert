@@ -9,9 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
-Version **0.1.0**, the first numbered version (the owner, 2026-11-11). It is not released yet:
-no tag, no published packages. The packages built on 2026-11-10 as "1.0.0-rc1" were built before
-the numbering was decided; 0.1.0 replaces that number.
+## [0.1.0] — 2026-11-11
+
+The first release: packages for Windows (x86-64), Linux (x86-64), Android (arm64) and the web
+browser on GitHub (tag `v0.1.0`). The packages built on 2026-11-10 as "1.0.0-rc1" were built before
+the numbering was decided and were never published; 0.1.0 replaces that number.
 
 ### Added
 
@@ -42,4 +44,5 @@ the numbering was decided; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/commits/develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.0...develop
+[0.1.0]: https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.1.0

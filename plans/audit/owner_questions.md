@@ -356,6 +356,8 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
    Windows, Linux and the web are built (`build-probe/release/0.1.0/`, 2026-11-11); the 1.0.0-rc1
    Windows zip is not used.
 4. **Where to publish** (GitHub release of openeggbert/galaxy-eggbert? the web build on the site?).
+   **Answered 2026-11-11: a GitHub release, `v0.1.0`, with the Windows, Linux, Android and web
+   packages** (the site's question stays open).
    Nothing is pushed or published yet.
 
 ## Q-019 — multiplayer: the owner's decisions (2026-11-10, asked interactively) — ANSWERED

@@ -1,6 +1,6 @@
 # Galaxy Eggbert 0.1.0
 
-A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux and the web browser.
+A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
 
 ## What you get
 
@@ -14,8 +14,8 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux and th
 - **Demos**: ten in the main menu (they play after 40 s without input); the player records
   their own in a mission (Pause > Record), names, exports and imports them.
 - **Multiplayer** after Speedy Blupi 2's network game: 2 to 4 players on a local network (or a
-  virtual one such as ZeroTier), its rules and multiplayer worlds, a lobby with chat (Windows and
-  Linux; not in the web browser).
+  virtual one such as ZeroTier), its rules and multiplayer worlds, a lobby with chat (Windows,
+  Linux and Android; not in the web browser).
 - Optional 3D effects (Setup: off, low, medium, high, Ultra), 2x textures, a frame rate up to
   240 fps, full screen, a gamepad, touch controls and the original cheats.
 - The game is saved in your user folder (Windows: `%LOCALAPPDATA%\Galaxy Eggbert`, Linux:
@@ -29,6 +29,7 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux and th
 |---|---|
 | `GalaxyEggbert-0.1.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
 | `GalaxyEggbert-0.1.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.1.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
 | `GalaxyEggbert-0.1.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
@@ -38,6 +39,7 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux and th
   distribution's FFmpeg; an archive for older systems (glibc 2.35) needs a build on such a system.
 - **Windows:** a cross-build from Linux, played under wine but not yet on Windows itself; it needs
   OpenGL 3.3.
+- **Android:** gamepads have had little testing on real devices.
 - **Web:** it must be served over HTTP(S) (opening the file from disk does not work) to a browser
   with WebGL 2; the first start downloads about 100 MB. No multiplayer.
 - **Multiplayer:** played between several instances on one machine and under wine, not yet between

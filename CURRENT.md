@@ -101,15 +101,16 @@ content-authoring UX, but not new gameplay mechanics.
   2.38 and the system's FFmpeg) and the release-signed Android APK (arm64), with SHA256SUMS.txt.
   1.0.0-rc1 built and the archive run; not published. Windows and a glibc 2.35 archive are open
   (Q-018).
-- Version (2026-11-11, the owner): **0.1.0, not released yet**. `VERSION.txt` is the one place
+- Version (2026-11-11, the owner): **0.1.0, released 2026-11-11** (tag `v0.1.0`, GitHub release). `VERSION.txt` is the one place
   (CMake splits it as CNA does and generates `GalaxyEggbert/Version.hpp`; Android's versionName
   and the release script read it); the main menu shows "Version 0.1.0" left of Play and the build's
   date and time under it (`cmake/BuildStamp.cmake`: made again only when the game is relinked).
   `CHANGELOG.md`, `docs/releasing.md`.
-- Packages 0.1.0 (2026-11-11, the owner; not published): `build-probe/release/0.1.0/` holds the
-  Windows zip (MinGW cross-build, `build-probe/windows`), the Linux archive and the web zip
-  (`tools/release/make_web_zip.sh`), RELEASE_NOTES.md and SHA256SUMS.txt; no APK this time. Each
-  was unpacked and started: Linux from a read-only folder, Windows under wine, the web in Chrome
+- Packages 0.1.0 (2026-11-11, the owner; published as the GitHub release `v0.1.0`):
+  `build-probe/release/0.1.0/` holds the Windows zip (MinGW cross-build, `build-probe/windows`), the
+  Linux archive, the Android APK (arm64, release key, versionCode 1) and the web zip
+  (`tools/release/make_web_zip.sh`), RELEASE_NOTES.md and SHA256SUMS.txt. The desktop and web ones
+  were unpacked and started: Linux from a read-only folder, Windows under wine, the web in Chrome
   over HTTP; all three show "Version 0.1.0" and their build time left of Play.
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
@@ -531,10 +532,9 @@ BD-0119) are done too. What is left:_
 
 ### Waiting on the owner
 
-- **Publishing a release** (Q-018): the version is 0.1.0 (the owner, 2026-11-11), not released
-  yet; packages are made by `tools/release/make_release.sh` (1.0.0-rc1 was built into
-  `build-probe/release/` before the number was decided). Open are the Windows package, an archive
-  for glibc 2.35 and where to publish (the web build too?).
+- **After release 0.1.0** (Q-018): published 2026-11-11 on GitHub. Open: an archive for glibc
+  2.35, a run on Windows itself, whether the web build goes on the site, and the website's pages
+  (they still name 1.0.0-rc1).
 - **Multiplayer**: merged into `develop` 2026-11-11; not yet played between two real machines
   (Q-020 item 1).
 - Optional: a human play pass (MR-0004 lists what to try); the owner judged the automated

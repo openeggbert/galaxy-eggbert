@@ -1,6 +1,7 @@
 # Versioning and releasing Galaxy Eggbert
 
-*Current version: 0.1.0, not released yet (the owner, 2026-11-11).*
+*Current release: 0.1.0 (2026-11-11), tag `v0.1.0`, published as a GitHub release of
+openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages.*
 
 Galaxy Eggbert follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), set up
 after CNA's own scheme (`../cna/docs/releasing.md`): the version is decided in one place,
@@ -80,6 +81,13 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
 4. **Commit** the version-bearing files by name (`VERSION.txt`, `CHANGELOG.md`,
    `packaging/RELEASE_NOTES.md`, `android/app/build.gradle` when `versionCode` changed).
 5. **Tag** with a `v` prefix, annotated: `git tag -a v0.1.0 -m "Galaxy Eggbert 0.1.0"`.
-6. **Push and publish only when the owner asks** (`git push origin HEAD`, `git push origin v0.1.0`;
-   where the packages go is Q-018 in `plans/audit/owner_questions.md`).
+6. **Push and publish only when the owner asks** (`git push origin HEAD`, `git push origin v0.1.0`),
+   then a GitHub release of the tag with the packages, SHA256SUMS.txt and the notes (Q-018):
+
+   ```bash
+   gh release create v0.1.0 --repo openeggbert/galaxy-eggbert --title "Galaxy Eggbert 0.1.0" \
+       --notes-file packaging/RELEASE_NOTES.md --verify-tag <out-dir>/GalaxyEggbert-0.1.0-* <out-dir>/SHA256SUMS.txt
+   ```
+
+   Android's `versionCode` was 1 for 0.1.0: the next published APK needs 2.
 7. **Open the next cycle** with an empty `## [Unreleased]` section in `CHANGELOG.md`.
