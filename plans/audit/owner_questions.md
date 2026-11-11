@@ -471,3 +471,12 @@ Questions:
 - (c) Who creates the accounts, for which players?
 
 Until then the work goes on with the loopback server.
+
+**Q-022's open points, ANSWERED (2026-11-11, asked interactively).**
+
+- **SB1's worlds:** none built as such. Instead five more multiplayer worlds of Galaxy's own design,
+  213-217 (101-110 stay free).
+- **The internet server:** prepare its deployment, a guide and a script for a Linux server (TLS,
+  systemd, the title, the accounts). The owner runs it on a machine of his; its address comes later.
+- **Windows:** a zip to try on a real Windows machine.
+- **The branch:** it still waits for the owner's own test (Q-020).
