@@ -39,7 +39,8 @@ original: `plans/audit/behavior_differences.md` BD-0120.
    left (it stops while anyone pauses); when it runs out, the one with the most lives left wins,
    then the most kills, then the fewest deaths (a tie shares the first place). Who got whom shows
    among the notices ("Ann got Ben !"). **Enter** types a chat line over the play (Enter sends,
-   Escape gives it up; your Blupi stands meanwhile, the game goes on).
+   Escape gives it up; your Blupi stands meanwhile, the game goes on); on a touch screen Pause's
+   **Message** opens the screen's keyboard for it.
    Knocked out, **left / right** (or a touch at the screen's left or right edge) on the lost screen
    watch the others still playing; **Space** goes back to the results.
 6. Pause (Escape) stops everyone's game until it goes on. Pause's **Menu** leaves the game (the

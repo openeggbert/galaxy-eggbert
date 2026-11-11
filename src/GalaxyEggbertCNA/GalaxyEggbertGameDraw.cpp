@@ -739,10 +739,14 @@ namespace GalaxyEggbert::CNA
                 const int mission = worldRuntime_.GetMissionNumber();
                 const bool showBack = mission != 1 && !NetMatchActive();
                 const bool showRestart = mission != 1 && mission % 10 != 0 && !NetMatchActive();
-                inputPad_.DrawPause(
-                    device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                    phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
-                    CanRevertWorld() && !demoSlotsShown_, revertArmed_ ? "Sure?" : "Original");
+                if (NetTypingInMatch())
+                    DrawNetMatchKeyboard(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                else
+                    inputPad_.DrawPause(
+                        device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
+                        phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
+                        (CanRevertWorld() || NetMatchActive()) && !demoSlotsShown_,
+                        NetMatchActive() ? "Message" : revertArmed_ ? "Sure?" : "Original");
                 if (demoSlotsShown_)
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 else if (demoNoticeSeconds_ > 0.0f)

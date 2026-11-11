@@ -1006,6 +1006,10 @@ namespace GalaxyEggbert::CNA
         void NetFinishTyping(bool send);
         void NetStartMatchTyping();     // Enter in a match: a chat line typed over the play (Q-022)
         void NetSay(const std::string& text); // that line typed and sent (autoplay's `say`)
+        // Pause's "Message" in a match (touch screens: no Enter): the line on the screen's keyboard.
+        void NetStartPauseTyping(int viewportW, int viewportH);
+        void NetUpdateMatchKeyboard(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW, int viewportH);
+        void DrawNetMatchKeyboard(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
         // The spectator (Q-022): on the Lost screen, watching another player still in the match.
         [[nodiscard]] bool NetSpectating() const noexcept;
         void NetWatch(int step);        // start watching, or the next (+1) / previous (-1) player

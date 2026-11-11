@@ -2279,4 +2279,43 @@ namespace GalaxyEggbert::CNA
         n.message = server.empty() ? "No server: the local network only (from the next start)."
                                    : "The server " + server + " is used from the game's next start.";
     }
+
+    void GalaxyEggbertGame::NetStartPauseTyping(int w, int h)
+    {
+        auto& n = *net_;
+        NetStartMatchTyping();
+        n.keyboard.Layout(InputPad::PanelRect(20.0f, 64.0f, 620.0f, 254.0f, w, h), false);
+        n.keyboard.Begin(n.draft, true);
+    }
+
+    void GalaxyEggbertGame::NetUpdateMatchKeyboard(const Microsoft::Xna::Framework::Input::MouseState& mouse, int, int)
+    {
+        auto& n = *net_;
+        const auto input = inputPad_.UpdatePanel(mouse, {}, &n.keyboard);
+        if (input.keyboardKey >= 0)
+        {
+            const auto result = n.keyboard.Press(input.keyboardKey, n.draft, kChatInput);
+            if (result == ScreenKeyboard::Result::Done) NetFinishTyping(true);
+            else if (result == ScreenKeyboard::Result::Cancel) NetFinishTyping(false);
+        }
+        else if (input.outsideClick)
+        {
+            NetFinishTyping(false);
+        }
+    }
+
+    void GalaxyEggbertGame::DrawNetMatchKeyboard(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h)
+    {
+        // As the lobby's Send message: the line, the last chat lines, the screen's keyboard.
+        const auto& n = *net_;
+        const float s = static_cast<float>(h) / 480.0f;
+        const float left = static_cast<float>(w) * 0.5f - 290.0f * s;
+        std::vector<PanelLine> lines;
+        lines.push_back(PanelLine{std::string(Net::kTextSendMessage) + ":  " + n.draft + "_", left, 268.0f * s, 0.5f, false, false});
+        const int shown = static_cast<int>(std::min<std::size_t>(n.chat.size(), 5));
+        for (int j = 0; j < shown; ++j)
+            lines.push_back(PanelLine{n.chat[n.chat.size() - static_cast<std::size_t>(shown - j)], left,
+                                      (296.0f + 20.0f * static_cast<float>(j)) * s, 0.42f, false, false});
+        inputPad_.DrawPanel(device, w, h, "Message", {}, lines, &net_->keyboard, focusHighlight_);
+    }
 }

@@ -1717,8 +1717,8 @@ Galaxy's additions (the owner, Q-022; none in SB2):
   is up (the ranks are his to send).
 - Messages during the match: who got whom ("Ann got Ben !", "Ann got you !", "You got Ben !") beside
   the original's notices, and a chat line typed over the play (Enter, Enter sends, Escape gives it
-  up; the game goes on and Blupi stands meanwhile; the others see it as a notice). Not on a touch
-  screen without a keyboard (the lobby's chat is).
+  up; the game goes on and Blupi stands meanwhile; the others see it as a notice), or Pause's
+  **Message** (where a shipped world's "Original" stands; touch screens) on the screen's keyboard.
 - A spectator: knocked out, left / right (the d-pad, a touch at the screen's left or right edge) on
   the Lost screen watch the others still playing from behind them (their name and lives at the
   top); Space goes back to the results, and so does the match being decided. His world goes on

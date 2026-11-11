@@ -614,12 +614,23 @@ namespace GalaxyEggbert::CNA
             {
                 UpdateDemoSlotsScreen(focusMouse(mouse), viewport.getWidthProperty(), viewport.getHeightProperty());
             }
+            else if (NetTypingInMatch())
+            {
+                // A chat line over the network game's pause, the screen's keyboard (Q-022).
+                NetUpdateMatchKeyboard(focusMouse(mouse), viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
             else
             {
+                // In a network game the slot of "Original" is "Message": a chat line (Q-022; touch
+                // screens have no Enter).
                 const auto pauseInput = inputPad_.UpdatePause(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                    CanRecordDemo(), CanRevertWorld());
-                if (pauseInput.originalPressed)
+                    CanRecordDemo(), CanRevertWorld() || NetMatchActive());
+                if (pauseInput.originalPressed && NetMatchActive())
+                {
+                    NetStartPauseTyping(viewport.getWidthProperty(), viewport.getHeightProperty());
+                }
+                else if (pauseInput.originalPressed)
                 {
                     if (revertArmed_) RevertWorld();
                     else revertArmed_ = true;
