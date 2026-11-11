@@ -391,7 +391,7 @@ the win); single player unchanged (CTest, demo replays). For the owner:
 4. **Speed and cheats:** SB2 does not restrict them in a network game (each machine its own); the
    same here. Keep it so?
 
-## Q-021 — multiplayer: the improvements after the first version (2026-11-11, asked interactively) — ANSWERED
+## Q-021 — multiplayer: the improvements after the first version (2026-11-11, asked interactively) — ANSWERED, implemented on branch `multiplayer` (BD-0120)
 
 The owner, away from the computer (the real-machine test of Q-020 waits), asked what can still be
 improved. Answers (all options taken):

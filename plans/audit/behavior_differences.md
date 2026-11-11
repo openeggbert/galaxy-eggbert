@@ -1667,8 +1667,9 @@ Differences:
   the full event queue silently dropping events; the cloud-stop's slot/team mix-up.
 - The host leaving ends the game for everyone (the owner's choice; the original never handled
   its DirectPlay host migration).
-- The original closes the network game as the win/lost screen opens; here it closes as the player
-  leaves that screen, so a host knocked out does not end the others' match at once.
+- The original closes the network game as the win/lost screen opens; here the player leaves that
+  screen back to the same game's lobby (a rematch, Galaxy's: below), so a host knocked out does not
+  end the others' match.
 - A remote Blupi is drawn from his machine's model transform, clip and time (20 a second, moved
   between the last two), not from a sprite icon; his team's colour by recolouring the yellow
   materials (the editor's starts' RecolorPlayerStartPixel); each team's bombs likewise.
@@ -1677,12 +1678,45 @@ Differences:
 - Mobile Eggbert has no network game: the five multiplayer worlds 201-205 are Galaxy's 3D halls
   with SB2's missions' identity (plans/briefs/world201-205.md).
 
+Since 2026-11-11 (the owner's Q-021), as the original too:
+- The others' sounds (PK_PLAYSOUND/PK_STOPSOUND, decnet.cpp:172-193): each sound his Blupi's step
+  plays is sent with its place and heard by the others within the original's reach (Sound::PlayAt).
+  Only the step's own (the original also sent the world's objects' sounds, which every machine plays
+  itself: heard twice there); a channel asked for every frame is sent once while it plays.
+- The host's lifts (PK_ASCENSEURSTART/END, decmove.cpp:571-630): at the start of each stop at an end
+  the host sends the lift's index; the others put theirs so. The original copied the step to every
+  lift of the same shape as well; here the host sends each of its own.
+- The others' shield, power and cloud drawn round them, a hidden one (the drink) not drawn at all
+  (m_netBlupiSec, decblock.cpp:1696-1718); a cloud electrocutes the Blupi it meets (NetPlayerCollide's
+  reach, decblupi.cpp:3838-3893: not swimming, surfing, shielded, a cloud, hidden or Super Blupi,
+  focused), who drops his vehicle, and the cloud is gone (PK_STOPCLOUD). Galaxy's Blupi model has no
+  electrocution clip (ACTION 57): he dies as by lightning (Clear1, charred) with SOUND_ELECTRO (59).
+  The original took only the first player met, cloud or not; here any cloud met.
+Galaxy's additions (the owner, Q-021):
+- The other players' names over their heads, in their colours, through walls, up to 30 cells.
+- A rematch: the win or lost screen goes back to the game's lobby; the host shows who still plays
+  and starts again once all are back and ready (XNA's EndGame lists the game again meanwhile).
+- The match's results: each machine counts the deaths, who killed whom (a shot's or a laid bomb's
+  maker, a world bomb's colour when one player has it, a cloud) and who went out when (Lost, left,
+  silent); shown on the win and lost screens and beside each player in the lobby. PK_LOST carries
+  the last death's killer.
+- A player from whom nothing came for 6 s (20 s before his first pose) is gone, as if he had left;
+  the host so, the game ends ("the host does not answer"). Poses go at least four times a second,
+  paused too.
+- A host's address (name or IPv4, ":port") searched besides the broadcast, kept in the user folder's
+  multiplayer.txt (CNA's SystemLinkDiscovery); the host's game on UDP 61191 (another when busy), so
+  a router can forward it with 61190. The original's DirectPlay TCP/IP asked for an address too.
+
 Validation: VerifyNetProtocol (messages and their refusal of damaged packets, the lobby, the
 rules, a two-machine replication round); tools/net_two_players.sh, two instances on one machine
 through the screens and their autoplay scripts in real time: bomb (another team's bombs kill, the
 knocked-out one sends LOST, the other wins), laid (a bomb taken back and laid elsewhere kills the
 other there), shot (a tank's shot kills the other there), vehicle (a tank taken and left
-elsewhere), all PASS; two instances driven by the pointer under Xvfb (list, join, colour, ready,
+elsewhere), and since 2026-11-11 cloud (world 205: the cloud electrocutes, the cloud gone) and
+rematch (NET_LIVES=0: won and lost, both back in the lobby, a second match), all PASS, and all five
+again over a bad network (NET_LOSS=0.2, NET_LATENCY=150 ms: CNA's simulated loss and latency); a
+frozen client (SIGSTOP) taken as gone after 6 s and the host winning, the host frozen ending the
+client's game; the sounds and lifts in the logs; the address search with the machine's own address; two instances driven by the pointer under Xvfb (list, join, colour, ready,
 chat, start; each sees the other in his colour). CTest 117/117 (single player unchanged:
 VerifyDemoReplays). Evidence: build-probe/mp-shots/, build-probe/net-two-players/.
 

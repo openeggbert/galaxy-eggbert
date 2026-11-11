@@ -21,6 +21,9 @@ first version. What is done, as recommended in §7 (option A over CNA SystemLink
 - Tests: `VerifyNetProtocol` in CTest; `tools/net_two_players.sh` with four scenarios
   (`tools/autoplay/net/`), all passing; the differences in BD-0120; the player's guide with ZeroTier
   `docs/handbook/09-multiplayer.md`.
+2026-11-11 (Q-021): SB2's sounds, lift synchronisation, auras and the cloud's touch; Galaxy's
+names over the players, rematch, results, silence timeout, the host's address with a fixed port
+(BD-0120); protocol 2.
 Open: the Android build and a game between a phone and a PC (not run yet); worlds 205-212 (the
 owner asked for 3-5); host migration (not wanted: the host leaving ends the game); a pause test
 in the scenarios (autoplay has no Escape).

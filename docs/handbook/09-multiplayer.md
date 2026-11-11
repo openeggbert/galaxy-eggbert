@@ -25,12 +25,27 @@ original: `plans/audit/behavior_differences.md` BD-0120.
 5. The match: ten lives each, everyone at the start of his colour. Crates, goals and enemy Blupis
    are taken out of the world. Each team has its personal bombs: beside one of your colour the action
    key takes it back (five at most), and lays it again elsewhere; another colour's bomb kills at a
-   touch (unless shielded). Tank and helicopter shots kill the other players. A death starts
-   again where you last stood safely. With no life left you are knocked out; the last player still
-   present wins ("Congratulations, you won, you're the only survivor!").
+   touch (unless shielded). Tank and helicopter shots kill the other players. A player in a cloud
+   (the charge) electrocutes whoever he touches, and his cloud is gone. You hear the others' sounds
+   near you and see their shields, powers and clouds; one hidden by the drink is not seen at all.
+   Each other player's name is over his head, in his colour. A death starts again where you last
+   stood safely. Dying with no life in reserve you are knocked out; the last player still present
+   wins ("Congratulations, you won, you're the only survivor!").
 6. Pause (Escape) stops everyone's game until it goes on. Pause's **Menu** leaves the game (the
-   others are told). Leaving the win or lost screen ends your network game. When the host leaves,
-   the game ends for everyone.
+   others are told). The win and lost screens show the match's results (place, kills, deaths);
+   leaving them takes you back to the game's lobby for another match (the others still playing are
+   marked "playing"; the host starts again when all are back and ready). When the host leaves, or
+   nothing comes from him for 6 seconds, the game ends for everyone; another player silent that long
+   is taken as having left.
+
+## Playing over the internet: the host's address
+
+**Host address** (top right of the list) searches one host directly besides the local network:
+type its IP address or name (the keyboard on the screen has `.` and `:`), OK keeps it (in the user
+folder's `multiplayer.txt`); empty means the local network only. The host's game is then listed
+like a local one. Over the internet the host's router must forward **UDP 61190** (the search) and
+**UDP 61191** (the game) to the host's machine; type the router's public address. With a virtual
+network (ZeroTier below) type the host's ZeroTier address instead: no forwarding needed.
 
 ## Playing over the internet: ZeroTier
 
@@ -48,18 +63,20 @@ need a virtual network that carries broadcasts. ZeroTier does (a free account at
 4. Every player checks that the ZeroTier interface has an address (`zerotier-cli listnetworks`,
    or the app shows it) and that the machines answer each other (`ping` the others' ZeroTier
    addresses).
-5. Then play as on a local network. Should a game not appear in the list on Linux, the broadcast
-   is leaving by the other interface: route it through ZeroTier with
+5. Then play as on a local network. Should a game not appear in the list, type the host's ZeroTier
+   address as the **Host address**. On Linux the broadcast can also be routed through ZeroTier with
    `sudo ip route add 255.255.255.255/32 dev <zerotier interface>` (the interface's name begins
    with `zt`), or turn the machine's other network off while playing.
 
 The game itself sends nothing to the internet; ZeroTier carries the same packets the local network
-would (UDP: the search on port 61190, the game on a port the host's system picks).
+would (UDP: the search on port 61190, the game on port 61191, or one the host's system picks when 61191
+is taken).
 
 ## For developers
 
 - Code: `src/GalaxyEggbert/Net/` (engine-independent: `NetProtocol` the messages and their checks,
-  `NetLobby`, `NetRules` SB2's rules and texts, `NetReplication` what a step changed in the world),
+  `NetLobby`, `NetRules` SB2's rules and texts, `NetReplication` what a step changed in the world
+  and who made which object),
   `src/GalaxyEggbertCNA/NetSession.*` (CNA's SystemLink session; a stand-in without CNA
   networking), `GalaxyEggbertGameNet.cpp` (the screens, the match), `NetGame.hpp` (its state).
 - Worlds: `tools/worlds/world201.py`-`world204.py` with `tools/worlds/arena.py`; briefs in
@@ -68,6 +85,9 @@ would (UDP: the search on port 61190, the game on a port the host's system picks
   two-machine replication round). `tools/net_two_players.sh <build> <host script> <join script>`
   runs two instances on one machine (each under its own Xvfb) through the screens
   (`GALAXY_NET_TEST=host|join`) and the match (`--autoplay`, real time); scenarios in
-  `tools/autoplay/net/`: `bomb` (with `NET_LIVES=1`), `laid`, `shot`, `vehicle`.
+  `tools/autoplay/net/`: `bomb` (with `NET_LIVES=1`), `laid`, `shot`, `vehicle`, `cloud` (with
+  `NET_WORLD=205`), `rematch` (with `NET_WORLD=205 NET_LIVES=0`). `NET_LOSS=0.2 NET_LATENCY=150`
+  makes the network a bad one (CNA's simulated loss and latency); `GALAXY_NET_ADDRESS` sets the
+  host's address.
 - Logs: the game prints `multiplayer:` lines (who joined, the match, the others seen, every world
-  change sent or received).
+  change sent or received, the first sounds and lifts of a match, the results).

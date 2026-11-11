@@ -19,6 +19,12 @@ Done: the protocol, the lobby, the CNA session, the screens (games on the networ
 the match (SB2's rules), poses and world replication, team colours, Android permissions and
 multicast lock, worlds 201-205, `VerifyNetProtocol`, `tools/net_two_players.sh` with the scenarios
 bomb/laid/shot/vehicle (all PASS), CTest 117/117 (single player unchanged).
+2026-11-11 (the owner's Q-021, everything proposed): the others' sounds, the host's lifts, the
+others' shield/power/cloud and the cloud's touch (SB2's); names over the players, a rematch back to
+the lobby, the match's results, a silent player gone after 6 s, the host's address searched (CNA's
+SystemLinkDiscovery from the `cna` session, CNA next 5d7579919) with the host on UDP 61191 (Galaxy's);
+protocol 2; scenarios cloud and rematch; all five over a bad network (NET_LOSS/NET_LATENCY) PASS.
+CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
 
 How to check it:
 ```bash
