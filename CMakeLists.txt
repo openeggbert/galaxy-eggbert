@@ -274,7 +274,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/NetSession.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGameNet.cpp
         src/GalaxyEggbert/Net/NetReplication.cpp)
-    if(TARGET CNA::Net)
+    # Not on the web (the owner's Q-019 Q4): CNA now builds CNA::Net under Emscripten too, which put
+    # the Multiplayer entry, the network and gamer-services code into the page (its .wasm 8 -> 35 MB).
+    if(TARGET CNA::Net AND NOT EMSCRIPTEN)
         target_link_libraries(GalaxyEggbertCNA PRIVATE CNA::Net)
         target_compile_definitions(GalaxyEggbertCNA PRIVATE GALAXY_EGGBERT_NET=1)
     endif()

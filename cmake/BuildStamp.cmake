@@ -2,8 +2,10 @@
 #
 # ge_add_build_stamp(<target>) adds a generated source defining GalaxyEggbert::CNA::BuildStampText()
 # (src/GalaxyEggbertCNA/BuildStamp.hpp). It is written again only when something <target> is
-# linked from changed -- one of its sources, a header under include/ or src/, or a library of its
-# link closure -- that is, when <target> is linked again anyway. A build that changes nothing keeps
+# linked from changed -- one of its sources, a header under include/ or src/, a library of its
+# link closure, or its configuration (a fingerprint file(GENERATE) rewrites only when the build type,
+# the flags or the target's definitions or options changed: such a change recompiles the game
+# without touching any of the files above) -- that is, when <target> is linked again anyway. A build that changes nothing keeps
 # the stamp and does not relink (the SSD rules of ../CLAUDE.md); __DATE__/__TIME__ in a plain
 # source would instead keep the time that source was last compiled.
 
@@ -64,9 +66,19 @@ function(ge_add_build_stamp target)
     _ge_link_closure_libraries(${target} libraries)
 
     set(stamp "${CMAKE_CURRENT_BINARY_DIR}/generated/src/GalaxyEggbertBuildStamp.cpp")
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
+    set(configuration "${CMAKE_CURRENT_BINARY_DIR}/generated/src/GalaxyEggbertBuildStamp.configuration")
+    file(GENERATE OUTPUT "${configuration}" CONTENT
+"build type: ${CMAKE_BUILD_TYPE}
+flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${build_type}} | ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${build_type}}
+definitions: $<TARGET_PROPERTY:${target},COMPILE_DEFINITIONS>
+options: $<TARGET_PROPERTY:${target},COMPILE_OPTIONS>
+link options: $<TARGET_PROPERTY:${target},LINK_OPTIONS>
+")
     add_custom_command(OUTPUT "${stamp}"
         COMMAND "${CMAKE_COMMAND}" "-DOUT=${stamp}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WriteBuildStamp.cmake"
         DEPENDS ${dependencies} ${headers} ${libraries} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WriteBuildStamp.cmake"
+                "${configuration}"
         COMMENT "Galaxy Eggbert: build stamp"
         VERBATIM)
     target_sources(${target} PRIVATE "${stamp}")
