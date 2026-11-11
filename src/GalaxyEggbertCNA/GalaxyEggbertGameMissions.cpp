@@ -127,6 +127,8 @@ namespace GalaxyEggbert::CNA
         state.dynamite = interaction_.DynamiteCount();
         state.vehicle = static_cast<int>(blupi_.GetVehicleMode());
         state.power = static_cast<int>(GalaxyEggbert::Def::ToRaw(blupi_.GetSecretPower()));
+        state.netPaused = NetRemotePaused() ? 1 : 0;
+        state.netPlayers = NetOthersPresent();
         for (const auto& object : worldRuntime_.GetMobileObjects())
         {
             if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)
@@ -148,6 +150,7 @@ namespace GalaxyEggbert::CNA
             }
         }
         const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
+        if (autoplay_->TakeHashRequest()) NetLogWorldHash();
         std::unordered_set<Keys> down;
         if (keys.up) down.insert(Keys::Up);
         if (keys.down) down.insert(Keys::Down);
@@ -158,6 +161,7 @@ namespace GalaxyEggbert::CNA
         if (keys.crouch) down.insert(Keys::LeftShift);
         if (keys.lookUp) down.insert(Keys::RightShift);
         if (keys.fire) down.insert(Keys::F);
+        if (keys.pause) down.insert(Keys::Escape);
         if (keys.letter >= 'a' && keys.letter <= 'z')
             down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
         autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);

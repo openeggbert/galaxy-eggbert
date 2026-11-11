@@ -1,0 +1,17 @@
+# tools/net_players.sh, three players (NET_LIVES=0, world 201; three.expect), the host Ann (yellow,
+# start (39, 38) facing +Z): held by Ben's pause (PK_PAUSE, event.cpp:1565-1580) she walks on the
+# spot; Cid leaves, Ben walks into her bombs, she wins.
+until phase = Play max 7200
+log the match began
+until netpause = 1 max 1800
+hold 120 up
+expect netpause = 1
+expect z < 38.5
+until netpause = 0 max 1800
+log the pause is over
+until netplayers = 1 max 3600
+expect netplayers = 1
+until phase = Win max 3600
+expect phase = Win
+wait 60
+end

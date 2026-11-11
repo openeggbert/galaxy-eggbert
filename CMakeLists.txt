@@ -784,6 +784,21 @@ target_include_directories(VerifyNetProtocol PRIVATE
 )
 add_test(NAME VerifyNetProtocol COMMAND VerifyNetProtocol)
 
+# The network game against broken and hostile packets (Q-022): random and damaged packets through the
+# decoder and the world changes it lets through into a world; tools/fuzz_net_sanitized.sh runs it
+# under ASan/UBSan. Engine-independent.
+add_executable(FuzzNetProtocol
+        tools/FuzzNetProtocol.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp
+        ${GE_SHARED_SOURCES}
+)
+target_include_directories(FuzzNetProtocol PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+add_test(NAME FuzzNetProtocol COMMAND FuzzNetProtocol)
+
 # The main menu's demos (DemoReplay.hpp): their file format and compatibility checks, the idle timer,
 # the input that stops a demo, and the order they play in; engine-independent. The shipped demos
 # themselves are checked by the VerifyDemoFiles test below (and replayed by tools/verify_demos.sh).

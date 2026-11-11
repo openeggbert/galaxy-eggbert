@@ -980,7 +980,9 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool NetMatchActive() const noexcept;
         [[nodiscard]] bool NetScreenShown() const noexcept;
         [[nodiscard]] bool NetRemotePaused() const noexcept;
+        int NetOthersPresent() const noexcept; // the other players still in the match (autoplay's netplayers)
         [[nodiscard]] static bool NetIsMovingLift(const GalaxyEggbert::Game::MobileObjSpec& obj) noexcept;
+        void NetLogWorldHash() const; // autoplay's `hash`: this machine's world, to compare with the others'
         [[nodiscard]] bool NetWantsText() const noexcept;
         [[nodiscard]] int NetTeam() const noexcept; // his team's colour in a match, 0 otherwise
         void OpenMultiplayer();

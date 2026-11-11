@@ -1918,6 +1918,7 @@ namespace GalaxyEggbert::Game
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     deathObject_ = static_cast<int>(&obj - objects.data());
+                    deathObjectType_ = obj.type;
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     // Real LoseLife()/respawn deferred to the death-lock resolution point
@@ -2155,6 +2156,7 @@ namespace GalaxyEggbert::Game
                 if (blupiFocused && !blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
                 {
                     deathObject_ = static_cast<int>(&obj - objects.data());
+                    deathObjectType_ = obj.type;
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     const bool isClear2 = RollClear2Coinflip();

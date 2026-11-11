@@ -1,0 +1,7 @@
+# NET_EXPECT for three_*.txt.
+Ann: Cid has left the game
+Ben: Cid has left the game
+Ann: Ben has been just knocked out
+Ann: result: 1st  Ann \(Yellow\)  1 kill, 0 deaths
+Ann: result: (2nd|3rd)  Ben \(Orange\)  0 kills, 1 death
+Ann: result: (2nd|3rd)  Cid \(Blue\)  0 kills, 0 deaths

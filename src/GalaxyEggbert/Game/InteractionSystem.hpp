@@ -713,6 +713,9 @@ namespace GalaxyEggbert::Game
         // The object (its index in the world) that killed him in the last Update(): a bomb of another
         // team, a shot; -1 none (the network game's statistics, who killed whom).
         [[nodiscard]] int DeathObject() const noexcept { return deathObject_; }
+        // Its type then: the slot it leaves is taken at once by the effect of its end (a bomb's pop),
+        // so the world no longer says what it was.
+        [[nodiscard]] Def::ObjectType DeathObjectType() const noexcept { return deathObjectType_; }
         // Restores a saved lives count (2026-07-13, plan.md MENU-040..045,
         // real Resume phase) -- ResumeContinue's own real equivalent, via
         // SaveData, since this engine has no `GameData`-style per-gamer
@@ -1116,6 +1119,7 @@ namespace GalaxyEggbert::Game
         int lifeEggCount_ = 0;
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int deathObject_ = -1;
+        Def::ObjectType deathObjectType_{};
         int gameOverCount_ = 0;
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         int pollutionTick_ = 0; // stands in for real m_time/m_blupiPhase, see TickPollutionPuff()'s own comment

@@ -1,0 +1,3 @@
+# NET_EXPECT for bomb_*.txt (NET_LIVES=1): both deaths on the yellow bombs are Ann's kills.
+Ann: result: 1st  Ann \(Yellow\)  2 kills, 0 deaths
+Ann: result: 2nd  Ben \(Orange\)  0 kills, 2 deaths

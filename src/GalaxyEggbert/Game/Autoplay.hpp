@@ -12,6 +12,7 @@
 //
 //   wait N                     no keys for N ticks (1/60 s each)
 //   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup fire
+//                              pause (Escape: Pause and back; 2026-11-11, the network tests)
 //   type WORD                  type lowercase letters, each followed by a release tick (cheats)
 //   face DEG                   turn on the spot until facing DEG
 //   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
@@ -42,6 +43,13 @@
 //                              autoplay_shots/, tick-numbered): a moment caught without AUTOPLAY_SHOTS
 //   mortal                     from here on a death is written to the trace, not a failure (to look at
 //                              the deaths themselves: the lock, the life-loss window, the respawn)
+//   wander N [seed S] [until COND]
+//                              play at random for N ticks (or until COND holds; no failure when the
+//                              ticks run out): every half second or so new keys, walking and turning
+//                              mostly, now and then a jump, the action key or a shot (a long network
+//                              match's play, Q-022); S picks the sequence (1 by default)
+//   hash                       have the game write a hash of its world to its log (the network tests:
+//                              every machine's world the same after a long match)
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
@@ -51,7 +59,9 @@
 // gone at 18-19) switches (the switches he has pressed this mission) saws (the saws 378 turning now: a press of a
 // switch turns those of its row off or on) crush (the crushers' place in their 10-step cycle: they squash at 0-2) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
 // the current mission's (a mission's own timing holds when it is played in a chain); phase takes a name
-// (Play, Win, Lost, Pause, Init, ...). A
+// (Play, Win, Lost, Pause, Init, ...); power (0 none, 1 shield, 2 power, 3 cloud, 4 hidden); in a network
+// game netpause (1 while another player's pause holds the game) and netplayers (the other players still
+// in the match). A
 // command that runs out of ticks, or Blupi dying (before `mortal`), ends the run as a failure.
 
 #include <GalaxyEggbert/Def/GamePhase.hpp>
@@ -92,6 +102,10 @@ namespace GalaxyEggbert::Game
         int vehicle = 0;
         // His secret power: 0 none, 1 shield, 2 power, 3 cloud, 4 hidden (Def::SecretPower).
         int power = 0;
+        // The network game: 1 while another player's pause holds this one's game (PK_PAUSE); the
+        // other players still in the match (present and not knocked out).
+        int netPaused = 0;
+        int netPlayers = 0;
         // Every active lift, as where a rider stands on it: raw x, feet y, raw z.
         std::vector<std::array<float, 3>> lifts;
         // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
@@ -105,6 +119,7 @@ namespace GalaxyEggbert::Game
         bool up = false, down = false, left = false, right = false;
         bool jump = false, action = false, crouch = false, lookUp = false;
         bool fire = false; // F: the tank's shot, the helicopter's glue (2026-11-10, the network tests)
+        bool pause = false; // Escape: Pause, and back to Play (2026-11-11, the network tests)
         char letter = 0;
     };
 
@@ -125,10 +140,17 @@ namespace GalaxyEggbert::Game
         std::string TakeLog();
         // Whether the frame of the tick just stepped should be saved (`shots N`).
         [[nodiscard]] bool WantsShot() const noexcept { return shotTicksLeft_ > 0; }
+        // Whether `hash` asked for the world's hash since the last call (once).
+        [[nodiscard]] bool TakeHashRequest() noexcept
+        {
+            const bool wanted = hashWanted_;
+            hashWanted_ = false;
+            return wanted;
+        }
 
     private:
-        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, Mortal, End };
-        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Switches, Saws, Phase, Power };
+        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, Mortal, Wander, Hash, End };
+        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Switches, Saws, Phase, Power, NetPause, NetPlayers };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {
@@ -152,6 +174,7 @@ namespace GalaxyEggbert::Game
             float radius = 0.0f;
             char lane = 0; // 'x', 'z' or 0 (a sphere)
             float tolerance = 0.25f;
+            std::uint32_t seed = 1; // wander
             Condition condition;
             bool hasCondition = false;
 
@@ -177,6 +200,11 @@ namespace GalaxyEggbert::Game
         int jumpTicksLeft_ = 0;
         int traceTicksLeft_ = 0;
         int shotTicksLeft_ = 0; // counted down as each Step() begins: N steps from the one that set it
+        bool hashWanted_ = false;
+        // wander: its random sequence, the keys held and the tick they change.
+        std::uint32_t wanderState_ = 1;
+        AutoplayKeys wanderKeys_;
+        int wanderChangeTick_ = 0;
         bool jumped_ = false;
         // A go's last position and how many ticks he has not moved from it (pressed against a wall).
         float goLastX_ = 0.0f;

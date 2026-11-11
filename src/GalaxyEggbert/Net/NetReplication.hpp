@@ -23,6 +23,8 @@ namespace GalaxyEggbert::Net
     class Replicator
     {
     public:
+        // The most objects others' events add to a world (beyond its own); more are refused.
+        static constexpr std::size_t kMaxSpawned = 1024;
         // A match begins on the world as loaded; @p slot the local player's place (0-3).
         void Begin(const std::vector<Game::MobileObjSpec>& objects, int slot);
 

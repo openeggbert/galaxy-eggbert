@@ -2,6 +2,8 @@
 
 #include "NetRules.hpp"
 
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -29,8 +31,11 @@ namespace GalaxyEggbert::Net
         {
         case EventKind::BlockChanged:
         {
+            // Inside the world, and a block the game knows (another's packet holds anything).
             const int n = static_cast<int>(world.blocksPerAxis());
-            if (event.a >= n || event.b >= n || event.c >= n)
+            if (event.a < 0 || event.b < 0 || event.c < 0 || event.a >= n || event.b >= n || event.c >= n ||
+                event.d < 0 || event.d > 0xFFFF ||
+                !BlockDefinitionRegistry::Instance().IsSupported(Worlds::Block(static_cast<std::uint16_t>(event.d)).type()))
             {
                 ++refused_;
                 return;
@@ -56,7 +61,10 @@ namespace GalaxyEggbert::Net
         }
         case EventKind::ObjectSpawned:
         {
-            if (!IsReplicatedSpawn(event.a))
+            // What a player lays or fires, and not without end (a free slot, or room for kMaxSpawned more).
+            const bool room = std::any_of(objects.begin(), objects.end(), [](const auto& o) { return !o.active; }) ||
+                              objects.size() < baseTypes_.size() + kMaxSpawned;
+            if (!IsReplicatedSpawn(event.a) || !room)
             {
                 ++refused_;
                 return;

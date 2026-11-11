@@ -280,7 +280,8 @@ namespace GalaxyEggbert::CNA
             NetBroadcastLobby();
             return;
         case Net::MessageKind::Lobby:
-            if (!host) n.lobby.state = m.lobby;
+            // The host's alone (another's would rewrite the places or start nothing of his).
+            if (!host && sender == n.session.HostId()) n.lobby.state = m.lobby;
             return;
         case Net::MessageKind::Team:
             if (!host) return;
@@ -299,7 +300,7 @@ namespace GalaxyEggbert::CNA
             while (n.chat.size() > kChatLines) n.chat.pop_front();
             return;
         case Net::MessageKind::Start:
-            if (!host && n.screen == NetGame::Screen::Lobby && !n.match) StartNetMatch(m.world);
+            if (!host && sender == n.session.HostId() && n.screen == NetGame::Screen::Lobby && !n.match) StartNetMatch(m.world);
             return;
         case Net::MessageKind::Pose:
             if (auto* p = peer(); p != nullptr && n.match && (!p->hasPose || m.pose.tick > p->pose.tick))
@@ -316,7 +317,10 @@ namespace GalaxyEggbert::CNA
             }
             return;
         case Net::MessageKind::Events:
-            if (n.match) n.incoming.insert(n.incoming.end(), m.events.begin(), m.events.end());
+            // From a player of this match (not one who joined the session meanwhile); one just knocked
+            // out too: his last step's changes come after his PK_LOST.
+            if (peer() != nullptr && n.match)
+                n.incoming.insert(n.incoming.end(), m.events.begin(), m.events.end());
             return;
         case Net::MessageKind::Lifts:
             if (!host && n.match && sender == n.hostId) n.liftsIn.insert(n.liftsIn.end(), m.lifts.begin(), m.lifts.end());
@@ -785,7 +789,8 @@ namespace GalaxyEggbert::CNA
     {
         // GALAXY_NET_TEST=host|join (tools/net_two_players.sh): the screens gone through without a
         // pointer -- the host makes a game, the other joins the first found, both are ready, the
-        // host starts once two are there; the match is then the --autoplay script's.
+        // host starts once two are there (GALAXY_NET_PLAYERS: more); the match is then the --autoplay
+        // script's.
         static const char* const mode = std::getenv("GALAXY_NET_TEST");
         if (mode == nullptr || (std::strcmp(mode, "host") != 0 && std::strcmp(mode, "join") != 0)) return;
         const bool host = std::strcmp(mode, "host") == 0;
@@ -818,7 +823,12 @@ namespace GalaxyEggbert::CNA
                     NetBroadcastLobby();
                 }
             }
-        if (host && n.lobby.Present() < 2) return;
+        // GALAXY_NET_PLAYERS: how many the test's host waits for (2-4, tools/net_players.sh), else two.
+        static const int players = [] {
+            const char* forced = std::getenv("GALAXY_NET_PLAYERS");
+            return forced != nullptr && *forced != 0 ? std::clamp(std::atoi(forced), 2, Net::kMaxPlayers) : 2;
+        }();
+        if (host && n.lobby.Present() < players) return;
         if (!n.lobby.state.slots[static_cast<std::size_t>(slot)].ready && !n.testReadyAsked)
         {
             NetSetReady(true);
@@ -1027,11 +1037,11 @@ namespace GalaxyEggbert::CNA
         // of the world the one player of its colour.
         if (const int index = interaction_.DeathObject(); index >= 0)
         {
-            const auto& objects = worldRuntime_.GetMobileObjects();
+            // Its type as it was (its slot already holds the pop of its end).
             int killer = n.replicator.OwnerOf(static_cast<std::size_t>(index));
-            if (killer < 0 && static_cast<std::size_t>(index) < objects.size())
+            if (killer < 0)
             {
-                const int type = static_cast<int>(objects[static_cast<std::size_t>(index)].type);
+                const int type = static_cast<int>(interaction_.DeathObjectType());
                 if (type >= 200 && type <= 203)
                 {
                     for (int i = 0; i < Net::kMaxPlayers; ++i)
@@ -1456,5 +1466,64 @@ namespace GalaxyEggbert::CNA
         for (const auto& peer : net_->peers)
             if (peer.present && peer.paused) return true;
         return false;
+    }
+
+    int GalaxyEggbertGame::NetOthersPresent() const noexcept
+    {
+        if (!NetMatchActive()) return 0;
+        int count = 0;
+        for (const auto& peer : net_->peers) count += peer.present ? 1 : 0;
+        return count;
+    }
+
+    void GalaxyEggbertGame::NetLogWorldHash() const
+    {
+        // What every machine of a match must agree on once play has stopped (the long match's test,
+        // Q-022): every block, and the objects that stand still -- where, of what type -- as a set
+        // (a bomb laid takes the first free place, which may differ from machine to machine). The
+        // lifts, enemies and shots move on each machine's own clock and are left out. One knocked
+        // out no longer follows the world (his step stopped): no hash.
+        if (!NetMatchActive() || net_->lost || phase_ != GalaxyEggbert::Def::GamePhase::Play)
+        {
+            std::cout << "GalaxyEggbertCNA: multiplayer: no world hash (not playing)." << std::endl;
+            return;
+        }
+        std::uint64_t hash = 1469598103934665603ULL;
+        const auto mix = [&hash](std::uint64_t v) {
+            for (int i = 0; i < 8; ++i)
+            {
+                hash ^= (v >> (8 * i)) & 0xff;
+                hash *= 1099511628211ULL;
+            }
+        };
+        const auto& world = worldRuntime_.GetWorld();
+        const int size = world.blocksPerAxis();
+        int solid = 0;
+        for (int z = 0; z < size; ++z)
+            for (int y = 0; y < size; ++y)
+                for (int x = 0; x < size; ++x)
+                {
+                    const auto raw = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                    static_cast<std::uint16_t>(z)).rawValue();
+                    solid += raw != 0;
+                    mix(raw);
+                }
+        std::vector<std::array<int, 4>> standing;
+        for (const auto& o : worldRuntime_.GetMobileObjects())
+        {
+            if (!o.active) continue;
+            const auto kind = GetObjectDefinition(o.type).semanticKind;
+            if (kind == ObjectSemanticKind::Lift || kind == ObjectSemanticKind::Enemy || kind == ObjectSemanticKind::Projectile)
+                continue;
+            standing.push_back({static_cast<int>(o.type), static_cast<int>(std::lround(o.currentX * 4.0f)),
+                                static_cast<int>(std::lround(o.currentY * 4.0f)), static_cast<int>(std::lround(o.currentZ * 4.0f))});
+        }
+        std::sort(standing.begin(), standing.end());
+        for (const auto& o : standing)
+            for (const int v : o) mix(static_cast<std::uint64_t>(static_cast<std::int64_t>(v)));
+        char text[64];
+        std::snprintf(text, sizeof(text), "%016llx", static_cast<unsigned long long>(hash));
+        std::cout << "GalaxyEggbertCNA: multiplayer: world hash " << text << " (" << solid << " blocks, " << standing.size()
+                  << " objects standing)." << std::endl;
     }
 }

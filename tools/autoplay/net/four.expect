@@ -1,0 +1,7 @@
+# NET_EXPECT for four_*.txt: the host's results (NetResultLines): her two kills, Ben's one.
+Ann: result: 1st  Ann \(Yellow\)  2 kills, 0 deaths
+Ann: result: (2nd|3rd|4th)  Ben \(Orange\)  1 kill, 1 death
+Ann: result: (2nd|3rd|4th)  Cid \(Blue\)  0 kills, 1 death
+Ann: result: (2nd|3rd|4th)  Dan \(Green\)  0 kills, 1 death
+Ann: Ben has been just knocked out
+Dan: Ben has been just knocked out

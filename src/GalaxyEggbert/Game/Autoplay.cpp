@@ -52,6 +52,7 @@ namespace GalaxyEggbert::Game
             else if (name == "crouch") keys.crouch = true;
             else if (name == "lookup") keys.lookUp = true;
             else if (name == "fire") keys.fire = true;
+            else if (name == "pause") keys.pause = true;
             else return false;
             return true;
         }
@@ -131,7 +132,8 @@ namespace GalaxyEggbert::Game
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite}, {"vehicle", Field::Vehicle},
                     {"ghost", Field::Ghost}, {"anim", Field::Anim}, {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush}, {"switches", Field::Switches}, {"saws", Field::Saws},
-                    {"phase", Field::Phase}, {"power", Field::Power}};
+                    {"phase", Field::Phase}, {"power", Field::Power},
+                    {"netpause", Field::NetPause}, {"netplayers", Field::NetPlayers}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
                                                                   {"<=", Op::Le}, {">", Op::Gt},  {">=", Op::Ge}};
                 const auto fieldIt = std::find_if(std::begin(kFields), std::end(kFields),
@@ -309,6 +311,32 @@ namespace GalaxyEggbert::Game
                     return fail("needs a tick count");
                 }
             }
+            else if (verb == "wander")
+            {
+                command.kind = Kind::Wander;
+                if (!(words >> command.ticks) || command.ticks <= 0)
+                {
+                    return fail("needs a tick count");
+                }
+                std::string option;
+                while (words >> option)
+                {
+                    if (option == "seed" && (words >> command.seed))
+                    {
+                        continue;
+                    }
+                    if (option == "until" && readCondition(command.condition))
+                    {
+                        command.hasCondition = true;
+                        continue;
+                    }
+                    return fail("needs N [seed S] [until COND]");
+                }
+            }
+            else if (verb == "hash")
+            {
+                command.kind = Kind::Hash;
+            }
             else if (verb == "log")
             {
                 command.kind = Kind::Log;
@@ -373,6 +401,8 @@ namespace GalaxyEggbert::Game
         case Field::Dynamite: value = static_cast<float>(state.dynamite); break;
         case Field::Vehicle: value = static_cast<float>(state.vehicle); break;
         case Field::Power: value = static_cast<float>(state.power); break;
+        case Field::NetPause: value = static_cast<float>(state.netPaused); break;
+        case Field::NetPlayers: value = static_cast<float>(state.netPlayers); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
         case Field::Ghost: value = state.ghost ? 1.0f : 0.0f; break;
         case Field::Anim: value = static_cast<float>(state.anim); break;
@@ -648,6 +678,40 @@ namespace GalaxyEggbert::Game
             case Kind::Until:
                 done = Holds(command.condition, state);
                 break;
+            case Kind::Wander:
+            {
+                done = elapsed >= command.ticks || (command.hasCondition && Holds(command.condition, state));
+                if (done) break;
+                if (elapsed == 0)
+                {
+                    wanderState_ = command.seed * 2654435761u + 1u;
+                    wanderChangeTick_ = 0;
+                }
+                if (elapsed >= wanderChangeTick_)
+                {
+                    // xorshift32: the same keys for the same seed on every machine and run.
+                    const auto next = [this]() {
+                        wanderState_ ^= wanderState_ << 13;
+                        wanderState_ ^= wanderState_ >> 17;
+                        wanderState_ ^= wanderState_ << 5;
+                        return wanderState_;
+                    };
+                    wanderKeys_ = {};
+                    const std::uint32_t walk = next() % 10;
+                    wanderKeys_.up = walk < 6;
+                    wanderKeys_.down = walk == 6;
+                    const std::uint32_t turn = next() % 6;
+                    wanderKeys_.left = turn == 0;
+                    wanderKeys_.right = turn == 1;
+                    const std::uint32_t extra = next() % 20;
+                    wanderKeys_.jump = extra < 3;
+                    wanderKeys_.action = extra == 3 || extra == 4;
+                    wanderKeys_.fire = extra == 5;
+                    wanderChangeTick_ = elapsed + 15 + static_cast<int>(next() % 45);
+                }
+                keys = wanderKeys_;
+                break;
+            }
             case Kind::Clear:
             case Kind::Near:
             {
@@ -702,6 +766,10 @@ namespace GalaxyEggbert::Game
                 shotTicksLeft_ = command.ticks;
                 done = true;
                 break;
+            case Kind::Hash:
+                hashWanted_ = true;
+                done = true;
+                break;
             case Kind::Mortal:
                 mortal_ = true;
                 done = true;
@@ -716,7 +784,7 @@ namespace GalaxyEggbert::Game
                 commandStartTick_ = -1;
                 continue;
             }
-            if (command.kind != Kind::Wait && command.kind != Kind::Hold && elapsed >= command.ticks)
+            if (command.kind != Kind::Wait && command.kind != Kind::Hold && command.kind != Kind::Wander && elapsed >= command.ticks)
             {
                 Fail(state, "timeout after " + std::to_string(elapsed) + " ticks: " + command.Where() + ": " +
                                 command.text);
