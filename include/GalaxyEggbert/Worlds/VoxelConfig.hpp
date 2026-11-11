@@ -47,6 +47,13 @@ struct VoxelConfig final {
     static constexpr std::uint8_t WorldChunksPerAxis = 10;
 
     /**
+     * @brief Largest number of chunks along one world axis (the owner, 2026-11-11): the size of
+     * every shipped world. A world is never made larger, and a `.vwr` that claims more is refused
+     * before anything is allocated (a header byte of 255 would otherwise ask for 255^3 chunks).
+     */
+    static constexpr std::uint8_t MaxWorldChunksPerAxis = WorldChunksPerAxis;
+
+    /**
      * @brief Default number of blocks along one world axis.
      */
     static constexpr std::uint16_t WorldBlocksPerAxis =

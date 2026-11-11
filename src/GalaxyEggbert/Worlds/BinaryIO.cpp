@@ -87,4 +87,18 @@ void readMagic(std::istream& in, char magic[4]) {
     ensureRead(in);
 }
 
+std::uint64_t remainingBytes(std::istream& in) {
+    const std::istream::pos_type here = in.tellg();
+    if (here == std::istream::pos_type(-1)) {
+        throw std::runtime_error("Cannot tell the stream's read position");
+    }
+    in.seekg(0, std::ios::end);
+    const std::istream::pos_type end = in.tellg();
+    in.seekg(here);
+    if (!in || end == std::istream::pos_type(-1) || end < here) {
+        throw std::runtime_error("Cannot measure the stream's remaining length");
+    }
+    return static_cast<std::uint64_t>(end - here);
+}
+
 } // namespace GalaxyEggbert::Worlds::binary

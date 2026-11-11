@@ -21,11 +21,16 @@ point; the owner chose what to do. Done so far:
 - R3: `VerifyShippedWorlds`' round trip compares every chunk's whole metadata list (types 1-4 only
   before; 5-8 exist), the music track, the saw-floor flag and the size; on the first world it also
   checks that a record of an unknown type (0x1234) is seen by the comparison and survives a save.
+- R1: `.vwr` loading refuses what a broken or hostile file states (World Format.md "What loading
+  refuses"): chunksPerAxis 1..`VoxelConfig::MaxWorldChunksPerAxis` (10, also in the `World`
+  constructor), the chunk table and every chunk's data within the file's bytes
+  (`Binary::remainingBytes`), no chunk listed twice, a chunk's extra-metadata size within its
+  payload, every palette index checked in `Chunk::read`. Before, a 56-byte header could ask ~4 GB.
+  Negative tests in WorldTests.cpp/ChunkTests.cpp (`*TooMany*`, `*PastTheEnd*`, `*ListedTwice*`,
+  `*LargerThanTheLimit*`, `*PaletteIndexOutside*`).
 
-Still to do (the owner's choices): R1 `.vwr` loading bounded (chunksPerAxis 1-10, sizes checked against the data before
-allocating, duplicate/missing chunks rejected, palette indices checked at load, negative tests);
-R2 the editor saves atomically (temporary file, checked close, rename) and shows a message instead
-of ending the game when a save fails.
+Still to do (the owner's choices): R2 the editor saves atomically (temporary file, checked close,
+rename) and shows a message instead of ending the game when a save fails.
 
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 

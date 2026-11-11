@@ -263,4 +263,31 @@ TEST(ChunkSerializationTests, ReadRejectsOutOfRangeExtraMetadataLocalBlockIndex)
     EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
 }
 
+// A broken chunk is refused while it is read (2026-11-11), not later in play.
+TEST(ChunkSerializationTests, ReadRejectsPaletteIndexOutsidePalette) {
+    Chunk chunk;
+    chunk.setBlock(0, 0, 0, Block::make(8));
+    chunk.setBlock(1, 0, 0, Block::make(9)); // air, 8 and 9: three entries, two bits a block
+    ASSERT_EQ(chunk.palette().size(), 3u);
+    ASSERT_EQ(chunk.bitsPerBlock(), 2);
+    std::string bytes = serializeChunk(chunk);
+    EXPECT_NO_THROW(static_cast<void>(deserializeChunk(bytes)));
+
+    const std::size_t packedOffset = 24u + chunk.palette().size() * sizeof(std::uint16_t);
+    ASSERT_GE(bytes.size(), packedOffset + 8u);
+    for (std::size_t i = 0; i < 8u; ++i) {
+        bytes[packedOffset + i] = static_cast<char>(0xFF); // index 3 in a palette of three
+    }
+    EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
+}
+
+TEST(ChunkSerializationTests, ReadRejectsExtraMetadataSizePastTheEnd) {
+    Chunk chunk;
+    chunk.setExtraMetadata(7, 3, {0x99});
+    std::string bytes = serializeChunk(chunk);
+    ASSERT_GT(readU32LE(bytes, 20), 0u);
+    writeU32LE(bytes, 20, 0xFFFFFFF0u); // asked ~4 GiB before the read could fail
+    EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
+}
+
 } // namespace GalaxyEggbert::Worlds

@@ -307,9 +307,19 @@ Chunk Chunk::read(std::istream& in) {
     for (std::size_t i = 0; i < wordCount; ++i) {
         chunk.packedIndices_.push_back(Binary::readU64LE(in));
     }
+    // Every block's palette index is checked now, so a broken chunk is refused while loading
+    // instead of throwing from getBlock() later, in the middle of play.
+    for (std::size_t i = 0; i < Volume; ++i) {
+        if (getPackedIndex(chunk.packedIndices_, i, bitsPerBlock) >= paletteCount) {
+            throw std::runtime_error("Chunk contains palette index outside of palette");
+        }
+    }
 
     chunk.extraMetadata_.clear();
     if (extraMetaSizeBytes > 0) {
+        if (extraMetaSizeBytes > Binary::remainingBytes(in)) {
+            throw std::runtime_error("Chunk extra metadata section runs past the end of the chunk data");
+        }
         std::string sectionBytes(extraMetaSizeBytes, '\0');
         in.read(sectionBytes.data(), static_cast<std::streamsize>(extraMetaSizeBytes));
         if (!in) {

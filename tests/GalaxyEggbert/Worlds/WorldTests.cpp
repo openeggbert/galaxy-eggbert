@@ -372,4 +372,72 @@ TEST(WorldSerializationTests, IndependentSawFlagIsPreservedWithoutRewritingLegac
     removeFileNoThrow(path);
 }
 
+// A broken or hostile .vwr (a shared galaxy, a file put in the custom worlds) is refused before it
+// can ask for memory its bytes do not justify (2026-11-11). Header: chunksPerAxis at 6, chunkCount
+// at 8; the chunk table at 40, 20 bytes an entry (offset u64, size u32, x/y/z/flags u16), in z, y,
+// x order.
+namespace {
+
+std::string savedBytes(const World& world) {
+    const auto path = makeTempPath(".vwr");
+    world.saveToFile(path);
+    std::string bytes = readAllBytes(path);
+    removeFileNoThrow(path);
+    return bytes;
+}
+
+World loadBytes(const std::string& bytes) {
+    std::istringstream in(bytes, std::ios::binary);
+    return World::loadFromStream(in);
+}
+
+void putU32LE(std::string& bytes, std::size_t offset, std::uint32_t value) {
+    for (std::size_t i = 0; i < 4u; ++i) {
+        bytes[offset + i] = static_cast<char>((value >> (8u * i)) & 0xFFu);
+    }
+}
+
+} // namespace
+
+TEST(WorldTests, ConstructorRejectsWorldLargerThanTheLimit) {
+    EXPECT_NO_THROW(static_cast<void>(World(VoxelConfig::MaxWorldChunksPerAxis)));
+    EXPECT_THROW(static_cast<void>(World(static_cast<std::uint8_t>(VoxelConfig::MaxWorldChunksPerAxis + 1))),
+                 std::out_of_range);
+}
+
+TEST(WorldSerializationTests, LoadRejectsHeaderAskingForTooManyChunks) {
+    std::string bytes = savedBytes(World(2));
+    EXPECT_NO_THROW(static_cast<void>(loadBytes(bytes)));
+    bytes[6] = static_cast<char>(255);
+    putU32LE(bytes, 8, 255u * 255u * 255u); // a count that matches: only the limit stops it
+    EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
+    bytes[6] = static_cast<char>(VoxelConfig::MaxWorldChunksPerAxis + 1);
+    const std::uint32_t over = VoxelConfig::MaxWorldChunksPerAxis + 1u;
+    putU32LE(bytes, 8, over * over * over);
+    EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
+}
+
+TEST(WorldSerializationTests, LoadRejectsChunkTablePastTheEnd) {
+    std::string bytes = savedBytes(World(2));
+    bytes.resize(40u + 3u * 20u); // the header and three of the eight entries
+    EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
+}
+
+TEST(WorldSerializationTests, LoadRejectsChunkDataPastTheEnd) {
+    World world(2);
+    world.setBlock(0, 0, 0, Block::make(8)); // chunk (0,0,0), the first entry, has data
+    std::string bytes = savedBytes(world);
+    EXPECT_NO_THROW(static_cast<void>(loadBytes(bytes)));
+    putU32LE(bytes, 40u + 8u, 0xFFFFFFFFu); // asked 4 GiB before the read could fail
+    EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
+}
+
+TEST(WorldSerializationTests, LoadRejectsChunkListedTwice) {
+    std::string bytes = savedBytes(World(2));
+    // The second entry is chunk (1,0,0); listing (0,0,0) again leaves (1,0,0) out.
+    ASSERT_EQ(static_cast<unsigned char>(bytes[60u + 12u]), 1u);
+    bytes[60u + 12u] = 0;
+    EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
+}
+
 } // namespace GalaxyEggbert::Worlds

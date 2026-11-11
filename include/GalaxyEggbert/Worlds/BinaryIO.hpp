@@ -100,4 +100,14 @@ void writeMagic(std::ostream& out, const char magic[4]);
  */
 void readMagic(std::istream& in, char magic[4]);
 
+/**
+ * @brief Number of bytes between the stream's read position and its end; the read position is
+ * kept. A size read from a file is checked against it before anything that size is allocated.
+ *
+ * @param in Seekable source input stream.
+ * @return The bytes still to be read.
+ * @throws std::runtime_error If the stream cannot tell its position or seek to its end.
+ */
+std::uint64_t remainingBytes(std::istream& in);
+
 } // namespace GalaxyEggbert::Worlds::Binary

@@ -392,7 +392,7 @@ Current v2 layout:
 |      0 |    4 | magic            | ASCII `VWR1`                                               |
 |      4 |    1 | version          | `2`                                                         |
 |      5 |    1 | chunkSize        | `10`                                                        |
-|      6 |    1 | chunksPerAxis    | usually `10`                                                |
+|      6 |    1 | chunksPerAxis    | `1`-`10` (`VoxelConfig::MaxWorldChunksPerAxis`, 2026-11-11); shipped worlds `10` |
 |      7 |    1 | flags            | bit0: independent saw cells; other bits reserved             |
 |      8 |    4 | chunkCount       | `chunksPerAxis³`                                            |
 |     12 |    4 | chunkTableOffset | usually `40` (the v2 header size)                           |
@@ -547,6 +547,24 @@ Each chunk table entry has 20 bytes:
 |     18 |    2 | flags  | `0x0001 = EMPTY`                          |
 
 If a chunk is empty, `flags` contains `EMPTY`, `offset = 0`, and `size = 0`.
+
+### What loading refuses (2026-11-11)
+
+A `.vwr` can come from outside (a shared galaxy, a file dropped into the custom worlds), so
+`World::loadFromStream` checks every size the file states against the bytes it really has before it
+allocates anything, and throws `std::runtime_error` for:
+
+- `chunksPerAxis` of `0` or above `VoxelConfig::MaxWorldChunksPerAxis` (`10`): a header byte of
+  `255` would otherwise ask for 255³ chunks (about 4 GB) before the table is even read. The
+  `World` constructor refuses the same sizes (`std::out_of_range`), so no larger world is made.
+- a chunk table that does not fit between `chunkTableOffset` (at least the header size) and the end
+  of the file;
+- a chunk entry whose `offset + size` runs past the end of the file;
+- a chunk listed twice (with `chunkCount = chunksPerAxis³` entries in range and none twice, every
+  chunk is listed exactly once);
+- inside a chunk payload (`Chunk::read`): an extra-metadata section longer than the payload's
+  remaining bytes, and any block whose palette index is outside the palette (checked while
+  loading, not left for `getBlock()` to throw in the middle of play).
 
 ## Runtime Architecture
 

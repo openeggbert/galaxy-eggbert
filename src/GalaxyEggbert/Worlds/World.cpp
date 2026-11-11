@@ -68,15 +68,22 @@ SerializedChunkEntry readChunkTableEntry(std::istream& in) {
     return entry;
 }
 
+// Checked before chunks_ is allocated (the member initialiser), not in the constructor's body.
+std::size_t validatedChunkCount(std::uint8_t chunksPerAxis) {
+    if (chunksPerAxis == 0) {
+        throw std::out_of_range("World must have at least one chunk per axis");
+    }
+    if (chunksPerAxis > VoxelConfig::MaxWorldChunksPerAxis) {
+        throw std::out_of_range("World is larger than VoxelConfig::MaxWorldChunksPerAxis chunks per axis");
+    }
+    return static_cast<std::size_t>(chunksPerAxis) * chunksPerAxis * chunksPerAxis;
+}
+
 } // namespace
 
 World::World(std::uint8_t chunksPerAxis)
     : chunksPerAxis_(chunksPerAxis),
-      chunks_(static_cast<std::size_t>(chunksPerAxis) * chunksPerAxis * chunksPerAxis) {
-    if (chunksPerAxis_ == 0) {
-        throw std::out_of_range("World must have at least one chunk per axis");
-    }
-}
+      chunks_(validatedChunkCount(chunksPerAxis)) {}
 
 std::uint8_t World::chunksPerAxis() const noexcept {
     return chunksPerAxis_;
@@ -342,6 +349,9 @@ World World::loadFromFile(const std::filesystem::path& path) {
 }
 
 World World::loadFromStream(std::istream& in) {
+    // Offsets in the file count from the stream's start (the seeks below are absolute); every size
+    // the file states is checked against the bytes it really has before anything is allocated.
+    const std::uint64_t streamSize = Binary::remainingBytes(in);
     char magic[4]{};
     Binary::readMagic(in, magic);
     if (std::memcmp(magic, WorldMagic, 4) != 0) {
@@ -373,6 +383,9 @@ World World::loadFromStream(std::istream& in) {
     if ((flags & ~WorldFlagIndependentSawCells) != 0) {
         throw std::runtime_error("Unsupported world flags");
     }
+    if (chunksPerAxis == 0 || chunksPerAxis > VoxelConfig::MaxWorldChunksPerAxis) {
+        throw std::runtime_error("World size outside 1..MaxWorldChunksPerAxis chunks per axis");
+    }
 
     const std::uint32_t expectedChunkCount = static_cast<std::uint32_t>(chunksPerAxis) * chunksPerAxis * chunksPerAxis;
     if (chunkCount != expectedChunkCount) {
@@ -402,6 +415,10 @@ World World::loadFromStream(std::istream& in) {
             static_cast<std::uint16_t>(encodedSpawnZ - 1));
     }
 
+    if (tableOffset < WorldHeaderSize || tableOffset > streamSize
+        || chunkCount > (streamSize - tableOffset) / ChunkTableEntrySize) {
+        throw std::runtime_error("Chunk table runs past the end of the world file");
+    }
     in.seekg(tableOffset, std::ios::beg);
     if (!in) {
         throw std::runtime_error("Cannot seek to chunk table");
@@ -413,10 +430,20 @@ World World::loadFromStream(std::istream& in) {
         table.push_back(readChunkTableEntry(in));
     }
 
+    // chunkCount == chunksPerAxis^3 entries, each in range and none twice: every chunk is listed
+    // exactly once (a duplicate would overwrite one chunk and leave another as air).
+    std::vector<bool> listed(chunkCount, false);
     for (const SerializedChunkEntry& entry : table) {
         if (entry.x >= chunksPerAxis || entry.y >= chunksPerAxis || entry.z >= chunksPerAxis) {
             throw std::runtime_error("Chunk table contains out-of-range chunk position");
         }
+        const std::size_t index = world.chunkLinearIndex(static_cast<std::uint8_t>(entry.x),
+                                                         static_cast<std::uint8_t>(entry.y),
+                                                         static_cast<std::uint8_t>(entry.z));
+        if (listed[index]) {
+            throw std::runtime_error("Chunk table lists the same chunk twice");
+        }
+        listed[index] = true;
 
         if ((entry.flags & ChunkTableFlagEmpty) != 0) {
             world.chunk(static_cast<std::uint8_t>(entry.x),
@@ -427,6 +454,9 @@ World World::loadFromStream(std::istream& in) {
 
         if (entry.size == 0) {
             throw std::runtime_error("Non-empty chunk table entry has zero size");
+        }
+        if (entry.offset > streamSize || entry.size > streamSize - entry.offset) {
+            throw std::runtime_error("Chunk data runs past the end of the world file");
         }
 
         in.seekg(static_cast<std::streamoff>(entry.offset), std::ios::beg);
