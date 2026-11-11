@@ -61,6 +61,10 @@ cmake --build build-probe/windows --target GalaxyEggbertCNA --parallel 6
     tools/net_players.sh`.
 - **Not yet tried:** a real Windows machine, a firewall's question, the DirectX 9 and SDL_GPU
   renderers.
+- **The package:** `tools/release/make_windows_zip.sh build-probe/windows build-probe/release` makes
+  `GalaxyEggbert-<version>-windows-x86_64.zip` (the exe, its DLLs, the data, LICENSE,
+  THIRD_PARTY.txt, RELEASE_NOTES.md, `packaging/README-windows-bundle.md` as README.md; some 160 MB).
+  The first one (2026-11-11, 1.0.0-rc1) was unpacked and played under wine.
 
 ### Linux / Web / Android
 

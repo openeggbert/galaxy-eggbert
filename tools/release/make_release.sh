@@ -13,8 +13,8 @@
 #
 # The version is VERSION.txt's. The glibc the Linux program needs is printed (the highest GLIBC_
 # version it and its bundled libraries ask for): an archive for an older system has to be built
-# on one. The Windows package is not made here: its cross-build has not been run yet
-# (plans/audit/owner_questions.md).
+# on one. The Windows package is made by tools/release/make_windows_zip.sh from a MinGW cross-build
+# (WINDOWS.md).
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
