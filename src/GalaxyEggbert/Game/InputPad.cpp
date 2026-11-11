@@ -1779,7 +1779,13 @@ namespace GalaxyEggbert::Game
             const Rect f = *extras.focus;
             icon(pressed, Rect{f.x0 - 4.0f * s, f.y0 - 4.0f * s, f.x1 + 4.0f * s, f.y1 + 4.0f * s}, 21);
         }
-        if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
+        if (!message.empty())
+        {
+            // Smaller when it is wider than the panel (a long file name, a longer translation).
+            const float width = TextMetrics::Width(message) * s;
+            const float size = width * 0.45f > 620.0f * s ? 620.0f * s / width : 0.45f;
+            centred(labels, message, w * 0.5f, 384.0f * s, size);
+        }
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);
         FlushQuads(device, *padEffect_, padRenderer_, rows, viewportW, viewportH, 0.6f);
