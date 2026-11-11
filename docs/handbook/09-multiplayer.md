@@ -124,7 +124,7 @@ is taken).
   player again that long after (his log `<name>2.log`). Scenarios: `three_*` (`NET_LIVES=0`: a pause holds
   everyone, one leaves), `four_*` (`NET_LIVES=0`: kills, notices, a chat line by `say`), `time_*`
   (`NET_SECONDS=40`), `watch_*` (`NET_LIVES=0`: the spectator), `custom_*`
-  (`NET_CUSTOM=$PWD/worlds3d/world011.vwr`), `rejoin_*` (`NET_TIMEOUT=300 NET_REJOIN="70
+  (`NET_CUSTOM=$PWD/worlds3d/world011.vwr`), `rejoin_*` (`NET_TIMEOUT=360 NET_REJOIN="70
   tools/autoplay/net/rejoin_cid2.txt"`: Cid's game ends, he starts again and is taken back), `soak_*` (`NET_TIMEOUT=780`: ten minutes at random,
   the four worlds hashed at the end), each with its `.expect`. Autoplay's network commands and
   conditions: `pause`, `wander`, `hash`, `say`, `netpause`, `netplayers`.

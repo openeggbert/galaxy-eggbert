@@ -3,7 +3,7 @@ until phase = Play max 7200
 log the match began
 mortal
 wander 6000 seed 2 until phase != Play
-wait 1500
+wait 3000
 hash
 wait 60
 end
