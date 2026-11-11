@@ -447,3 +447,27 @@ other numbers. Options:
   numbers.
 
 The recommendation is (a), with (b) if more worlds are wanted.
+
+**Q-022 point 3, internet play without port forwarding: what only the owner can decide (2026-11-11), OPEN.**
+CNA's PlayerMatch sessions go through the relay of `cna-gamer-services-server` (libcna), so no
+router needs forwarding. That needs:
+
+1. **A server on the internet:** a machine with a public name, a TLS certificate (Let's Encrypt or
+   similar), and the server (C++, Boost, OpenSSL, SQLite) running on one TCP port (47831 in its
+   README).
+2. **Accounts:** the server has no self-registration. The administrator creates every player's
+   account (`cna-gamer-services-admin <db> user <name> <gamertag>`, password on stdin) and a
+   title `galaxy-eggbert`.
+3. **Galaxy's side**, which can be built and tried without the public server on this machine (the
+   server on loopback, two instances):
+   - a server address in the multiplayer list beside the host address;
+   - sign-in with an account through CNA's Guide;
+   - games found and joined over the internet as on the local network.
+
+Questions:
+
+- (a) Who runs the server, and where (a VPS, a home machine with one forwarded port)?
+- (b) Its address, once there is one.
+- (c) Who creates the accounts, for which players?
+
+Until then the work goes on with the loopback server.
