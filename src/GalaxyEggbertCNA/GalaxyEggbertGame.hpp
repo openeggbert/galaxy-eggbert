@@ -980,6 +980,7 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool NetMatchActive() const noexcept;
         [[nodiscard]] bool NetScreenShown() const noexcept;
         [[nodiscard]] bool NetRemotePaused() const noexcept;
+        [[nodiscard]] static bool NetIsMovingLift(const GalaxyEggbert::Game::MobileObjSpec& obj) noexcept;
         [[nodiscard]] bool NetWantsText() const noexcept;
         [[nodiscard]] int NetTeam() const noexcept; // his team's colour in a match, 0 otherwise
         void OpenMultiplayer();

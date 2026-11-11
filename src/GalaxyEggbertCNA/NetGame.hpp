@@ -3,6 +3,7 @@
 #include "NetSession.hpp"
 
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
+#include <GalaxyEggbert/Game/Sound.hpp>
 #include <GalaxyEggbert/Net/NetLobby.hpp>
 #include <GalaxyEggbert/Net/NetProtocol.hpp>
 #include <GalaxyEggbert/Net/NetReplication.hpp>
@@ -64,10 +65,16 @@ namespace GalaxyEggbert::CNA
         int world = Net::kFirstWorld;
         int team = 0;
         int slot = 0;
+        int soundsLogged = 0, liftsLogged = 0; // the log's first few of a match
+        std::uint8_t hostId = 0; // the host's gamer (its lifts are the ones followed)
         std::uint32_t tick = 0;
         std::vector<Peer> peers;
         Net::Replicator replicator;
         std::vector<Net::WorldEvent> incoming;
+        std::vector<Game::Sound::MadeSound> soundsOut; // his Blupi's sounds of this step, to send
+        std::vector<Net::SoundEvent> soundsIn;         // the others', played before the next step
+        std::vector<int> liftSteps;                    // the host: each lift's patrol step before the step (-1 none)
+        std::vector<Net::LiftSync> liftsIn;            // a client: the host's lifts, put so before the next step
         bool localPaused = false;
         bool lost = false;   // no life left: the Lost screen, out of the match
         bool won = false;

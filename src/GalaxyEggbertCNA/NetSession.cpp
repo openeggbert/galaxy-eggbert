@@ -20,6 +20,7 @@
 #include <Microsoft/Xna/Framework/Net/SendDataOptions.hpp>
 #include <System/IAsyncResult.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -220,6 +221,23 @@ namespace GalaxyEggbert::CNA
     {
         if (session_ == nullptr) return;
         ended_ = false;
+        // A bad network for the tests (tools/net_two_players.sh NET_LOSS, NET_LATENCY): XNA's
+        // simulated loss (of the unreliable packets, the poses) and latency, on what this machine sends.
+        try
+        {
+            if (const char* loss = std::getenv("GALAXY_NET_LOSS"); loss != nullptr && *loss != 0)
+                session_->setSimulatedPacketLossProperty(static_cast<float>(std::clamp(std::atof(loss), 0.0, 1.0)));
+            if (const char* latency = std::getenv("GALAXY_NET_LATENCY"); latency != nullptr && *latency != 0)
+                session_->setSimulatedLatencyProperty(System::TimeSpan::FromMilliseconds(std::clamp(std::atof(latency), 0.0, 2000.0)));
+            if (std::getenv("GALAXY_NET_LOSS") != nullptr || std::getenv("GALAXY_NET_LATENCY") != nullptr)
+                std::cout << "GalaxyEggbertCNA: multiplayer: a simulated network: loss "
+                          << session_->getSimulatedPacketLossProperty() << ", latency "
+                          << session_->getSimulatedLatencyProperty().getTotalSecondsProperty() * 1000.0 << " ms." << std::endl;
+        }
+        catch (const std::exception& failure)
+        {
+            error_ = failure.what();
+        }
         session_->GamerJoined += [this](System::Object*, const GamerJoinedEventArgs& e) {
             if (auto* gamer = e.getGamerProperty()) joined_.emplace_back(gamer->getIdProperty(), gamer->getGamertagProperty());
         };
@@ -277,6 +295,13 @@ namespace GalaxyEggbert::CNA
         if (session_ == nullptr) return 0;
         const auto& locals = session_->getLocalGamersProperty();
         return locals.getCountProperty() > 0 ? locals[0]->getIdProperty() : 0;
+    }
+
+    std::uint8_t NetSession::HostId() const
+    {
+        if (session_ == nullptr) return 0;
+        auto* host = session_->getHostProperty();
+        return host != nullptr ? host->getIdProperty() : 0;
     }
 
     std::string NetSession::NameOf(std::uint8_t id) const
@@ -389,6 +414,7 @@ namespace GalaxyEggbert::CNA
     bool NetSession::IsHost() const { return false; }
     bool NetSession::HasLocalGamer() const { return false; }
     std::uint8_t NetSession::LocalId() const { return 0; }
+    std::uint8_t NetSession::HostId() const { return 0; }
     std::string NetSession::NameOf(std::uint8_t) const { return {}; }
     void NetSession::Update() {}
     bool NetSession::Send(const Net::Message&) { return false; }

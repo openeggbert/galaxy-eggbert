@@ -272,6 +272,13 @@ namespace GalaxyEggbert::CNA
         case Net::MessageKind::Events:
             if (n.match) n.incoming.insert(n.incoming.end(), m.events.begin(), m.events.end());
             return;
+        case Net::MessageKind::Lifts:
+            if (!host && n.match && sender == n.hostId) n.liftsIn.insert(n.liftsIn.end(), m.lifts.begin(), m.lifts.end());
+            return;
+        case Net::MessageKind::Sounds:
+            if (auto* p = peer(); p != nullptr && n.match && p->present)
+                n.soundsIn.insert(n.soundsIn.end(), m.sounds.begin(), m.sounds.end());
+            return;
         case Net::MessageKind::Die:
             if (auto* p = peer(); p != nullptr && n.match)
             {
@@ -316,6 +323,7 @@ namespace GalaxyEggbert::CNA
         const bool wasMatch = n.match;
         n.session.Leave();
         n.match = false;
+        sound_.SetOutbox(nullptr);
         n.typing = false;
         n.screen = NetGame::Screen::Browser;
         n.message = "The network game ended: " + reason + ".";
@@ -788,6 +796,12 @@ namespace GalaxyEggbert::CNA
         n.replicator.Begin(objects, slot);
         n.replicator.Snapshot(worldRuntime_.GetWorld(), objects);
         n.incoming.clear();
+        n.soundsIn.clear();
+        n.soundsOut.clear();
+        n.liftsIn.clear();
+        n.liftSteps.clear();
+        n.soundsLogged = n.liftsLogged = 0;
+        n.hostId = n.session.HostId();
         n.match = true;
         n.tick = 0;
         n.lost = n.won = false;
@@ -813,12 +827,91 @@ namespace GalaxyEggbert::CNA
                           << event.y << ", " << event.z << ")." << std::endl;
         }
         n.incoming.clear();
+        // The host's lifts (decmove.cpp:283-311, NetAscenseurSynchro): each at the start of the stop
+        // the host's has just begun, so that a lift is where the host's is on every machine. The
+        // original's copy of the step to every other lift of the same shape is not needed: the
+        // host sends each of its own.
+        for (const auto& lift : n.liftsIn)
+        {
+            if (lift.index < 0 || static_cast<std::size_t>(lift.index) >= objects.size()) continue;
+            auto& obj = objects[static_cast<std::size_t>(lift.index)];
+            if (!NetIsMovingLift(obj)) continue;
+            obj.patrolStep = lift.step;
+            obj.patrolTime = 0.0f;
+            const bool atStart = lift.step == 1;
+            obj.currentX = atStart ? obj.posStartX : obj.posEndX;
+            obj.currentY = atStart ? obj.posStartY : obj.posEndY;
+            obj.currentZ = atStart ? obj.posStartZ : obj.posEndZ;
+            if (n.liftsLogged < 8)
+            {
+                ++n.liftsLogged;
+                std::cout << "GalaxyEggbertCNA: multiplayer: lift #" << lift.index << " follows the host's (step "
+                          << static_cast<int>(lift.step) << ")." << std::endl;
+            }
+        }
+        n.liftsIn.clear();
+        if (n.session.IsHost())
+        {
+            n.liftSteps.assign(objects.size(), -1);
+            for (std::size_t i = 0; i < objects.size(); ++i)
+                if (NetIsMovingLift(objects[i])) n.liftSteps[i] = objects[i].patrolStep;
+        }
         n.replicator.Snapshot(world, objects);
+        // The others' sounds, where they made them (decmove.cpp:183-190); then his own noted.
+        for (const auto& made : n.soundsIn)
+        {
+            const auto channel = static_cast<GalaxyEggbert::Def::SoundChannel>(made.channel);
+            if (made.stop) sound_.Stop(channel);
+            else sound_.PlayRemote(channel, made.x, made.y, made.z);
+            if (n.soundsLogged < 12)
+            {
+                ++n.soundsLogged;
+                std::cout << "GalaxyEggbertCNA: multiplayer: sound " << static_cast<int>(made.channel)
+                          << (made.stop ? " stopped" : "") << " of another at (" << made.x << ", " << made.y << ", "
+                          << made.z << ")." << std::endl;
+            }
+        }
+        n.soundsIn.clear();
+        n.soundsOut.clear();
+        sound_.SetOutbox(&n.soundsOut);
     }
 
     void GalaxyEggbertGame::NetAfterStep()
     {
         auto& n = *net_;
+        sound_.SetOutbox(nullptr);
+        for (std::size_t first = 0; first < n.soundsOut.size(); first += Net::kMaxSounds)
+        {
+            Net::Message m;
+            m.kind = Net::MessageKind::Sounds;
+            for (std::size_t i = first; i < std::min(n.soundsOut.size(), first + Net::kMaxSounds); ++i)
+            {
+                const auto& made = n.soundsOut[i];
+                m.sounds.push_back({GalaxyEggbert::Def::ToRaw(made.channel), made.stop, made.x, made.y, made.z});
+            }
+            n.session.Send(m);
+        }
+        n.soundsOut.clear();
+        // The host: each lift whose stop at an end has just begun (decmove.cpp:571-579, 620-628).
+        if (n.session.IsHost())
+        {
+            const auto& objects = worldRuntime_.GetMobileObjects();
+            Net::Message lifts;
+            lifts.kind = Net::MessageKind::Lifts;
+            for (std::size_t i = 0; i < objects.size() && i < n.liftSteps.size(); ++i)
+            {
+                const int step = objects[i].patrolStep;
+                if (n.liftSteps[i] < 0 || step == n.liftSteps[i] || (step != 1 && step != 3) || !NetIsMovingLift(objects[i]))
+                    continue;
+                lifts.lifts.push_back({static_cast<std::int32_t>(i), static_cast<std::uint8_t>(step)});
+                if (lifts.lifts.size() == Net::kMaxLifts)
+                {
+                    n.session.Send(lifts);
+                    lifts.lifts.clear();
+                }
+            }
+            if (!lifts.lifts.empty()) n.session.Send(lifts);
+        }
         const auto events = n.replicator.Diff(worldRuntime_.GetWorld(), worldRuntime_.GetMobileObjects());
         for (const auto& event : events)
         {
@@ -932,6 +1025,13 @@ namespace GalaxyEggbert::CNA
         n.match = false;
         n.peers.clear();
         n.incoming.clear();
+        n.soundsIn.clear();
+        n.soundsOut.clear();
+        n.liftsIn.clear();
+        n.liftSteps.clear();
+        n.soundsLogged = n.liftsLogged = 0;
+        n.hostId = n.session.HostId();
+        sound_.SetOutbox(nullptr);
         n.notices.clear();
         n.screen = NetGame::Screen::None;
         interaction_ = InteractionSystem(); // his ten lives stay in the network game
@@ -969,6 +1069,13 @@ namespace GalaxyEggbert::CNA
             n.session.Update(); // flushed before the session goes
             LeaveNetMatch();
         }
+    }
+
+    bool GalaxyEggbertGame::NetIsMovingLift(const GalaxyEggbert::Game::MobileObjSpec& obj) noexcept
+    {
+        // The original's: a lift whose ends differ (decmove.cpp:569).
+        return obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift &&
+               (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY || obj.posStartZ != obj.posEndZ);
     }
 
     bool GalaxyEggbertGame::NetRemotePaused() const noexcept

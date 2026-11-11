@@ -8,9 +8,11 @@
 #   e.g. tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/bomb_host.txt \
 #            tools/autoplay/net/bomb_join.txt
 # NET_LIVES=<n> starts each player with n lives (GALAXY_NET_LIVES; the original's 10 by default).
+# NET_LOSS=<0-1> and NET_LATENCY=<ms> make the network a bad one (GALAXY_NET_LOSS, GALAXY_NET_LATENCY:
+# CNA's simulated loss of the unreliable packets and latency of all, on what each machine sends).
 set -u
 if [[ $# -lt 3 ]]; then
-    sed -n '2,11p' "$0" >&2
+    sed -n '2,13p' "$0" >&2
     exit 2
 fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,6 +31,7 @@ run() { # <name> <mode> <script>
     (
         cd "$dir"
         env GALAXY_USER_DIR="$dir" GALAXY_NET_TEST="$2" GALAXY_NET_NAME="$1" ${NET_LIVES:+GALAXY_NET_LIVES=$NET_LIVES} \
+            ${NET_LOSS:+GALAXY_NET_LOSS=$NET_LOSS} ${NET_LATENCY:+GALAXY_NET_LATENCY=$NET_LATENCY} \
             AUTOPLAY_REALTIME=1 SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11 \
             timeout 240 xvfb-run -a -s "-screen 0 800x600x24" ./GalaxyEggbert --autoplay "$3" > "$out/$1.log" 2>&1
         echo $? > "$out/$1.rc"

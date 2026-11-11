@@ -6,8 +6,10 @@
 #include <Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace GalaxyEggbert::Game
 {
@@ -80,6 +82,24 @@ namespace GalaxyEggbert::Game
         void StopAll();
         void SetReplayMuted(bool muted) { replayMuted_ = muted; if (muted) StopAll(); }
 
+        // The network game: while an outbox is set (the world's step of his own Blupi), each sound
+        // played as the world's (Play, PlayAt; not a loop, not PlayDirect) and each Stop is noted
+        // for the other players, at its place (Play's: Blupi's, the listener), as the original's
+        // Decor::PlaySound(..., bLocal FALSE) sends PK_PLAYSOUND and StopSound PK_STOPSOUND
+        // (blupi_recon decblock.cpp:2376-2378, decnet.cpp:172-193). Whether it is heard here does
+        // not matter (the sounds off, the channel still playing). A channel asked for again while
+        // its sound would still be playing is noted once (Galaxy asks some every frame).
+        struct MadeSound
+        {
+            GalaxyEggbert::Def::SoundChannel channel{};
+            bool stop = false;
+            float x = 0.0f, y = 0.0f, z = 0.0f;
+        };
+        void SetOutbox(std::vector<MadeSound>* outbox) noexcept { outbox_ = outbox; }
+        // Another player's sound, at his place: heard as a sound of the world (PlayAt's reach),
+        // never noted again.
+        void PlayRemote(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z);
+
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
         [[nodiscard]] bool IsEnabled() const noexcept { return enabled_; }
 
@@ -141,6 +161,9 @@ namespace GalaxyEggbert::Game
         float listenerY_ = 0.0f;
         float listenerZ_ = 0.0f;
         bool replayMuted_ = false;
+        std::vector<MadeSound>* outbox_ = nullptr;
+        std::array<std::chrono::steady_clock::time_point, kNumChannels> notedUntil_{};
         void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);
+        void Note(GalaxyEggbert::Def::SoundChannel channel, bool loop, float x, float y, float z);
     };
 }

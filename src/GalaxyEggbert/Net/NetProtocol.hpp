@@ -16,18 +16,22 @@ namespace GalaxyEggbert::Net
     // (the original applied whatever arrived; blupi_recon's validator is the model). No CNA here.
 
     inline constexpr std::uint16_t kProtocolId = 0x4547; // "GE"
-    inline constexpr std::uint8_t kProtocolVersion = 1;
+    inline constexpr std::uint8_t kProtocolVersion = 2; // 2: sounds, lifts, the aura, the cloud's touch, killers
     inline constexpr int kMaxPlayers = 4;     // the original's MAXNETPLAYER
     inline constexpr int kTeams = 4;          // yellow, orange, blue, green (the editor's starts)
     inline constexpr std::size_t kMaxName = 15;     // a CNA local profile's name
     inline constexpr std::size_t kMaxChat = 99;     // the original's chat line, its NUL taken off
     inline constexpr std::size_t kMaxEvents = 64;   // per Events packet
     inline constexpr int kMultiplayerLives = 10;    // PlayPrepare: m_nbVies = 10 in a network game
+    inline constexpr std::size_t kMaxSounds = 32;   // per Sounds packet
+    inline constexpr std::size_t kMaxLifts = 64;    // per Lifts packet
+    inline constexpr int kSoundChannels = 93;       // Content/sounds/sound000-092
+    inline constexpr std::uint8_t kNoKiller = 0xFF; // Die: no other player's doing
 
     enum class MessageKind : std::uint8_t
     {
         Hello = 1,   // a player who joined, to everyone: version, content, name
-        Lobby = 2,   // the host: the world chosen and the four places
+        Lobby = 2,   // the host: the world chosen and the four places (also during a match: who is back)
         Team = 3,    // a player's colour (0-3)
         Ready = 4,   // a player ready or not
         Chat = 5,    // a line of chat, to everyone
@@ -38,12 +42,16 @@ namespace GalaxyEggbert::Net
         Lost = 10,   // a player has no life left
         Abandon = 11, // a player left the match
         Pause = 12,  // a player paused or went on: everyone's game stops (the original's PK_PAUSE)
+        Sounds = 13, // the sounds a player's Blupi made, where (PK_PLAYSOUND / PK_STOPSOUND)
+        Lifts = 14,  // the host: lifts at the start of a stop (PK_ASCENSEURSTART / PK_ASCENSEUREND)
+        StopCloud = 15, // to one player: his cloud touched another and is gone (PK_STOPCLOUD)
     };
 
     struct LobbySlot
     {
         bool present = false;
         bool ready = false;
+        bool playing = false;     // still in the match the host started (back in the lobby: false)
         std::uint8_t team = 0;
         std::uint8_t gamerId = 0; // CNA's NetworkGamer id of whoever holds the place
         std::string name;
@@ -67,7 +75,9 @@ namespace GalaxyEggbert::Net
         std::uint8_t alpha = 255; // the drink's Hide and the like
         std::uint8_t flags = 0;   // kPoseHidden ...
         std::uint8_t lives = 0;
+        std::uint8_t aura = 0;    // his secret power (Def::SecretPower 0-4): the original's m_blupiSec
     };
+    inline constexpr std::uint8_t kAuraLimit = 4;   // SecretPower::Hide
     inline constexpr std::uint8_t kPoseHidden = 1;  // not drawn (the original's icon -1, SEC_HIDE)
     inline constexpr std::uint8_t kPoseShield = 2;
     inline constexpr std::uint8_t kPoseCharred = 4; // burnt black
@@ -91,6 +101,22 @@ namespace GalaxyEggbert::Net
         float x = 0.0f, y = 0.0f, z = 0.0f; // ObjectSpawned: where
     };
 
+    // A sound a Blupi made (or stopped), at his place: the others play it as a sound of the world.
+    struct SoundEvent
+    {
+        std::uint8_t channel = 0; // 0-92
+        bool stop = false;
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+    };
+
+    // A lift (by its index in the world) put at the start of its stop at one end (the patrol's step
+    // 1, at its start, or 3, at its end), as the host's is.
+    struct LiftSync
+    {
+        std::int32_t index = 0;
+        std::uint8_t step = 1;
+    };
+
     struct Message
     {
         MessageKind kind = MessageKind::Hello;
@@ -106,10 +132,15 @@ namespace GalaxyEggbert::Net
         bool ready = false;
         std::string text;
         std::uint8_t lives = 0;
+        std::uint8_t killer = kNoKiller; // Die: the place (0-3) of the player who killed him
+        std::uint8_t target = 0;         // StopCloud: the gamer whose cloud is gone
         // Pose
         Pose pose;
         // Events
         std::vector<WorldEvent> events;
+        // Sounds, Lifts
+        std::vector<SoundEvent> sounds;
+        std::vector<LiftSync> lifts;
     };
 
     // The bytes of a message, envelope included (protocol id, version, kind).

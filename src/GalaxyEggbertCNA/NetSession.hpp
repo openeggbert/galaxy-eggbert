@@ -65,6 +65,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool Active() const noexcept { return session_ != nullptr; }
         [[nodiscard]] bool IsHost() const;
         [[nodiscard]] std::uint8_t LocalId() const;
+        // The host's gamer id (0 with no session).
+        [[nodiscard]] std::uint8_t HostId() const;
         // Whether our gamer is in the session yet (it joins at the Update after Create or Join).
         [[nodiscard]] bool HasLocalGamer() const;
         // Whether CNA's networking is in this build (not on the web).

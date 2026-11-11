@@ -120,7 +120,7 @@ namespace GalaxyEggbert::Net
             w.U16(m.lobby.world);
             for (const auto& slot : m.lobby.slots)
             {
-                w.U8(static_cast<std::uint8_t>((slot.present ? 1 : 0) | (slot.ready ? 2 : 0)));
+                w.U8(static_cast<std::uint8_t>((slot.present ? 1 : 0) | (slot.ready ? 2 : 0) | (slot.playing ? 4 : 0)));
                 w.U8(slot.team);
                 w.U8(slot.gamerId);
                 w.Text(slot.name, kMaxName);
@@ -144,6 +144,7 @@ namespace GalaxyEggbert::Net
             w.U8(m.pose.alpha);
             w.U8(m.pose.flags);
             w.U8(m.pose.lives);
+            w.U8(m.pose.aura);
             break;
         case MessageKind::Events:
             w.U8(static_cast<std::uint8_t>(m.events.size() < kMaxEvents ? m.events.size() : kMaxEvents));
@@ -161,10 +162,34 @@ namespace GalaxyEggbert::Net
                 w.F32(e.z);
             }
             break;
-        case MessageKind::Die: w.U8(m.lives); break;
+        case MessageKind::Die:
+            w.U8(m.lives);
+            w.U8(m.killer);
+            break;
         case MessageKind::Pause: w.U8(m.ready ? 1 : 0); break;
         case MessageKind::Lost:
         case MessageKind::Abandon: break;
+        case MessageKind::Sounds:
+            w.U8(static_cast<std::uint8_t>(m.sounds.size() < kMaxSounds ? m.sounds.size() : kMaxSounds));
+            for (std::size_t i = 0; i < m.sounds.size() && i < kMaxSounds; ++i)
+            {
+                const auto& s = m.sounds[i];
+                w.U8(s.channel);
+                w.U8(s.stop ? 1 : 0);
+                w.F32(s.x);
+                w.F32(s.y);
+                w.F32(s.z);
+            }
+            break;
+        case MessageKind::Lifts:
+            w.U8(static_cast<std::uint8_t>(m.lifts.size() < kMaxLifts ? m.lifts.size() : kMaxLifts));
+            for (std::size_t i = 0; i < m.lifts.size() && i < kMaxLifts; ++i)
+            {
+                w.I32(m.lifts[i].index);
+                w.U8(m.lifts[i].step);
+            }
+            break;
+        case MessageKind::StopCloud: w.U8(m.target); break;
         }
         return w.bytes;
     }
@@ -176,7 +201,7 @@ namespace GalaxyEggbert::Net
         std::uint16_t id = 0;
         std::uint8_t version = 0, kind = 0;
         if (!r.U16(id) || id != kProtocolId || !r.U8(version) || version != kProtocolVersion || !r.U8(kind) ||
-            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::Pause))
+            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::StopCloud))
             return std::nullopt;
         Message m;
         m.kind = static_cast<MessageKind>(kind);
@@ -191,11 +216,12 @@ namespace GalaxyEggbert::Net
             for (auto& slot : m.lobby.slots)
             {
                 std::uint8_t flags = 0;
-                ok = ok && r.U8(flags) && flags <= 3 && r.U8(slot.team) && slot.team < kTeams && r.U8(slot.gamerId) &&
+                ok = ok && r.U8(flags) && flags <= 7 && r.U8(slot.team) && slot.team < kTeams && r.U8(slot.gamerId) &&
                      r.Text(slot.name, kMaxName);
                 slot.present = (flags & 1) != 0;
                 slot.ready = (flags & 2) != 0;
-                ok = ok && (slot.present || (!slot.ready && slot.name.empty()));
+                slot.playing = (flags & 4) != 0;
+                ok = ok && (slot.present || (!slot.ready && !slot.playing && slot.name.empty()));
             }
             break;
         case MessageKind::Team: ok = r.U8(m.team) && m.team < kTeams; break;
@@ -213,7 +239,8 @@ namespace GalaxyEggbert::Net
             ok = r.U32(m.pose.tick) && r.F32(m.pose.x) && r.F32(m.pose.y) && r.F32(m.pose.z);
             for (auto& v : m.pose.world) ok = ok && r.F32(v);
             ok = ok && r.U16(m.pose.clip) && r.F32(m.pose.clipSeconds) && r.U8(m.pose.alpha) && r.U8(m.pose.flags) &&
-                 r.U8(m.pose.lives) && m.pose.flags <= kPoseFlags && m.pose.lives <= kMultiplayerLives;
+                 r.U8(m.pose.lives) && r.U8(m.pose.aura) && m.pose.flags <= kPoseFlags &&
+                 m.pose.lives <= kMultiplayerLives && m.pose.aura <= kAuraLimit;
             break;
         case MessageKind::Events:
         {
@@ -235,9 +262,40 @@ namespace GalaxyEggbert::Net
             }
             break;
         }
-        case MessageKind::Die: ok = r.U8(m.lives) && m.lives <= kMultiplayerLives; break;
+        case MessageKind::Die:
+            ok = r.U8(m.lives) && m.lives <= kMultiplayerLives && r.U8(m.killer) &&
+                 (m.killer < kMaxPlayers || m.killer == kNoKiller);
+            break;
         case MessageKind::Lost:
         case MessageKind::Abandon: break;
+        case MessageKind::Sounds:
+        {
+            std::uint8_t count = 0;
+            ok = r.U8(count) && count >= 1 && count <= kMaxSounds;
+            for (int i = 0; ok && i < count; ++i)
+            {
+                SoundEvent s;
+                std::uint8_t stop = 0;
+                ok = r.U8(s.channel) && s.channel < kSoundChannels && r.U8(stop) && stop <= 1 && r.F32(s.x) &&
+                     r.F32(s.y) && r.F32(s.z);
+                s.stop = stop == 1;
+                m.sounds.push_back(s);
+            }
+            break;
+        }
+        case MessageKind::Lifts:
+        {
+            std::uint8_t count = 0;
+            ok = r.U8(count) && count >= 1 && count <= kMaxLifts;
+            for (int i = 0; ok && i < count; ++i)
+            {
+                LiftSync l;
+                ok = r.I32(l.index) && l.index >= 0 && l.index < 100000 && r.U8(l.step) && (l.step == 1 || l.step == 3);
+                m.lifts.push_back(l);
+            }
+            break;
+        }
+        case MessageKind::StopCloud: ok = r.U8(m.target); break;
         }
         if (!ok || !r.Done()) return std::nullopt;
         return m;

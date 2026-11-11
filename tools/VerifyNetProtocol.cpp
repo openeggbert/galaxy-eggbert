@@ -34,13 +34,14 @@ int main()
     Message lobby;
     lobby.kind = MessageKind::Lobby;
     lobby.lobby.world = 201;
-    lobby.lobby.slots[0] = {true, true, 2, 17, "Ann"};
-    lobby.lobby.slots[2] = {true, false, 0, 5, "Ben Two"};
+    lobby.lobby.slots[0] = {true, true, false, 2, 17, "Ann"};
+    lobby.lobby.slots[2] = {true, false, true, 0, 5, "Ben Two"};
     const auto lobbyBack = Decode(Encode(lobby));
     check(lobbyBack && lobbyBack->lobby.world == 201 && lobbyBack->lobby.slots[0].ready &&
               lobbyBack->lobby.slots[0].team == 2 && lobbyBack->lobby.slots[0].gamerId == 17 &&
-              lobbyBack->lobby.slots[2].name == "Ben Two" && !lobbyBack->lobby.slots[1].present,
-          "Lobby: the world (SB2's 201-212) and the four places come back");
+              lobbyBack->lobby.slots[2].name == "Ben Two" && lobbyBack->lobby.slots[2].playing &&
+              !lobbyBack->lobby.slots[0].playing && !lobbyBack->lobby.slots[1].present,
+          "Lobby: the world (SB2's 201-212) and the four places (who still plays) come back");
     Message start;
     start.kind = MessageKind::Start;
     start.world = 212;
@@ -62,12 +63,57 @@ int main()
     pose.pose.alpha = 77;
     pose.pose.flags = kPoseShield;
     pose.pose.lives = 6;
+    pose.pose.aura = 3; // SecretPower::Cloud
     const auto poseBack = Decode(Encode(pose));
     check(poseBack && poseBack->pose.tick == 123456u && poseBack->pose.x == -12.5f && poseBack->pose.clip == 9 &&
               poseBack->pose.world == pose.pose.world &&
               poseBack->pose.clipSeconds == 0.75f && poseBack->pose.alpha == 77 && poseBack->pose.lives == 6 &&
-              poseBack->pose.flags == kPoseShield && !IsReliable(MessageKind::Pose),
-          "Pose: position, the model's matrix, clip, opacity, flags and lives come back; poses may be lost");
+              poseBack->pose.flags == kPoseShield && poseBack->pose.aura == 3 && !IsReliable(MessageKind::Pose),
+          "Pose: position, the model's matrix, clip, opacity, flags, lives and the aura come back; poses may be lost");
+    pose.pose.aura = kAuraLimit + 1;
+    check(!Decode(Encode(pose)), "an aura past Hide is refused");
+    pose.pose.aura = 3;
+
+    Message sounds;
+    sounds.kind = MessageKind::Sounds;
+    sounds.sounds.push_back({10, false, 1.0f, 2.0f, 3.0f});
+    sounds.sounds.push_back({68, true, -4.0f, 0.5f, 7.25f});
+    const auto soundsBack = Decode(Encode(sounds));
+    check(soundsBack && soundsBack->sounds.size() == 2 && soundsBack->sounds[0].channel == 10 && !soundsBack->sounds[0].stop &&
+              soundsBack->sounds[1].stop && soundsBack->sounds[1].z == 7.25f && IsReliable(MessageKind::Sounds),
+          "Sounds: each channel, played or stopped, and its place come back (PK_PLAYSOUND / PK_STOPSOUND)");
+    sounds.sounds[0].channel = kSoundChannels;
+    check(!Decode(Encode(sounds)), "a sound channel past 92 is refused");
+    Message noSounds;
+    noSounds.kind = MessageKind::Sounds;
+    check(!Decode(Encode(noSounds)), "a Sounds packet without sounds is refused");
+
+    Message lifts;
+    lifts.kind = MessageKind::Lifts;
+    lifts.lifts.push_back({12, 1});
+    lifts.lifts.push_back({40, 3});
+    const auto liftsBack = Decode(Encode(lifts));
+    check(liftsBack && liftsBack->lifts.size() == 2 && liftsBack->lifts[0].index == 12 && liftsBack->lifts[1].step == 3,
+          "Lifts: each lift and the stop it starts come back (PK_ASCENSEURSTART / END)");
+    lifts.lifts[0].step = 2;
+    check(!Decode(Encode(lifts)), "a lift step other than a stop's start (1, 3) is refused");
+
+    Message cloud;
+    cloud.kind = MessageKind::StopCloud;
+    cloud.target = 9;
+    const auto cloudBack = Decode(Encode(cloud));
+    check(cloudBack && cloudBack->target == 9, "StopCloud: whose cloud is gone comes back");
+
+    Message die;
+    die.kind = MessageKind::Die;
+    die.lives = 4;
+    die.killer = 2;
+    const auto dieBack = Decode(Encode(die));
+    check(dieBack && dieBack->lives == 4 && dieBack->killer == 2, "Die: the lives left and the killer's place come back");
+    die.killer = kNoKiller;
+    check(Decode(Encode(die)) && Decode(Encode(die))->killer == kNoKiller, "Die: no killer comes back");
+    die.killer = 4;
+    check(!Decode(Encode(die)), "a killer's place past 3 is refused");
 
     Message pause;
     pause.kind = MessageKind::Pause;
