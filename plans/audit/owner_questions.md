@@ -487,3 +487,38 @@ Until then the work goes on with the loopback server.
   systemd, the title, the accounts). The owner runs it on a machine of his; its address comes later.
 - **Windows:** a zip to try on a real Windows machine.
 - **The branch:** it still waits for the owner's own test (Q-020).
+
+## Q-023 — the game in more languages: the minimal variant, English and French (2026-11-11, asked interactively) — ANSWERED, done on branch `localization`
+
+The owner asked how much work more languages are and whether they cost performance (none
+measurable: a text found by its key, a few instructions more per glyph for UTF-8), then had the
+minimal variant made: English and French with text.png's existing glyphs. Answers (all the
+recommended options):
+
+1. **The original's French:** copy Mobile Eggbert's French strings (MyResource::InitializeFR: the
+   buttons, the players' panel, the training hints with their accelerometer variants) into Galaxy,
+   citing the source. Galaxy's own texts (help, editor, network game, the Setup's additions) are
+   translated for Galaxy.
+2. **Choosing the language:** the system's, as the original (MyResource reads it), and a Language
+   item in the Setup (a Galaxy addition, BD-0126), saved.
+3. **Which texts:** everything the player sees, the editor and the network game included; the cheat
+   list, the debug panels and the logs stay English.
+4. **Where:** branch `localization`, worktree `../galaxy-eggbert-localization` (its own
+   `build-cna-opengl3`), merged into `develop` on the owner's acceptance; another session commits to
+   `develop` in the shared worktree meanwhile.
+
+**Open points for the owner (2026-11-11, written down, not asked):**
+
+- **(a) Acceptance and merge:** the branch is ready for the owner's own look (Setup's top-right
+  button switches English/Français). Merge into `develop` on acceptance, as Q-020.
+- **(b) Two spelling mistakes of the original's French hints were corrected:** "Prend" → "Prends"
+  (five hints), "décole" → "décolle" (one). The recommendation is to keep them corrected; say so if
+  the original's spelling is wanted, word for word.
+- **(c) A French speaker's reading:** the translations of Galaxy's own texts (about 300) were made by
+  the agent; a native speaker's proofreading is recommended before a release.
+- **(d) CNA's own notice stays English:** "Joueur A signed in" (the Guide's toast, top right of the
+  multiplayer screen) is CNA's text; a French one would be a CNA change (the `cna` session).
+- **(e) More languages next (German, Czech):** German needs its words only (ä ö ü are on the sheet;
+  ß, Ä Ö Ü are not: written "ss" and without dots). Czech needs new glyphs (č ř š ž ě ů ...) drawn on
+  text.png and its 2x sheet. Which, and when?
+

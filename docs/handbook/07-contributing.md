@@ -57,6 +57,30 @@ There is no `.clang-format` or `.editorconfig`; follow the surrounding file.
 **Shell**: `bash`, `set -u` (or `-euo pipefail`), a header comment with usage that the script prints
 when called without arguments, paths from `BASH_SOURCE`, scratch output under `build-probe/`.
 
+## Texts and languages
+
+Every text the player sees is in English and French (owner Q-023, BD-0126;
+`src/GalaxyEggbert/Game/Localization.hpp`). The English is the key:
+
+- `Tr("Continue")` shows a text where it is written;
+- `TrMark("Export")` marks a literal stored in a table or passed on, which is shown later through
+  `Tr(...)`;
+- `TrFormat("Position {0} is named {1}.", {position, name})` is a sentence with values in it, translated
+  whole so a language can put the values where its word order wants them. Never build a shown
+  sentence with `+`.
+
+A new text needs its French in `src/GalaxyEggbert/Game/TranslationsFr.cpp` (in its source's group).
+`VerifyLocalization` (CTest) reads the sources' `Tr`/`TrMark`/`TrFormat` literals and fails on one
+without a translation, on a translation no code asks for, on placeholders that differ, and on a
+character text.png cannot draw (its lower-case accented letters à â é è ë ê ï î ô ù û ä ö ü ç are on
+the sheet; capitals are drawn without their accent; write "oe" for the ligature). The training hints
+keep their French beside the English in `TrainingHints.cpp`'s table.
+
+Text is UTF-8: a layout walks it with `TextMetrics::NextGlyph` and shortens it with
+`TextMetrics::PopBack`, never byte by byte. A label on a button or in a column of fixed width is
+scaled down to its room when a translation is wider (see the help screen and the menu's buttons).
+The cheat list, the debug panels, log lines and data written to files (a demo's title) stay English.
+
 ## Commit messages
 
 The history uses conventional subjects, `type(scope): subject`, in English, usually under 95

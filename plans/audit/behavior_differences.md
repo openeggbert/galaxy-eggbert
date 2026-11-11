@@ -1640,6 +1640,27 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0126 — the game in French, and a Language button in the Setup (owner, Q-023) — FIXED_AND_VERIFIED
+
+- Original: Mobile Eggbert shows its texts in French or English, from the system's language
+  (MyResource::Init: "fr" French, anything else English); there is no choice in the game. Its
+  Text::table_char draws the 15 accented letters of its sheet (glyphs 15-29), but GetOffset hands it
+  the glyph instead of the character, so they came out as glyph 1: an evident defect, not
+  reproduced.
+- Galaxy before: English only; every byte above 127 drew glyph 1.
+- Now: every text the player sees in English or French (Localization.hpp; the French of
+  TranslationsFr.cpp, Mobile Eggbert's own where it has the text; the training hints' French in
+  their table). The language is the system's (CNA's UI culture) as in the original, or the Setup's
+  **Language** button (top right, a Galaxy addition): the language's own name on it, a press the
+  next language, saved as `language=`. Text is UTF-8: the 15 accented letters as their glyphs,
+  capitals without their accent. Two spelling mistakes of the original's French hints corrected
+  ("Prends", "décolle"; Q-023 b). The cheat list, the debug panels, the logs and a demo's title in
+  its file stay English.
+- Validation: VerifyLocalization (glyphs, UTF-8 edge cases, every marked literal translated, no
+  translation left over, placeholders kept); CTest 130/130; live in French: the menu, the Setup and
+  its Language both ways, the help, the demo positions, the network game's list, the editor, the
+  galaxy, the goodbye, mission 11's first hint, the pause (`build-probe/l10n/`).
+
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 
 - Owner (2026-11-11): a new key for a 1.5x speed. Not in the original (F5 1x, F6 2x, F7 4x and F8 8x
