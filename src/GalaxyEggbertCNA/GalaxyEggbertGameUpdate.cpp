@@ -3582,6 +3582,14 @@ namespace GalaxyEggbert::CNA
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
             }
             f6KeyWasDown_ = f6Down;
+            // F9: 1.5x (a Galaxy addition, the owner 2026-11-11: between F5's normal and F6's fast;
+            // F9 was free, F10 opens a Windows window's menu and Alt+F4 closes it).
+            const bool f9Down = phaseKeys.IsKeyDown(Keys::F9);
+            if (f9Down && !f9KeyWasDown_)
+            {
+                gameSpeed_ = GalaxyEggbert::Def::GameSpeed::OneAndHalf;
+            }
+            f9KeyWasDown_ = f9Down;
             if (quickCheatEnabled_)
             {
                 const bool f7Down = phaseKeys.IsKeyDown(Keys::F7);

@@ -15,6 +15,7 @@ enum class GameSpeed : uint8_t
     Fast      = 2,
     Faster    = 4,
     Fastest   = 8,
+    OneAndHalf = 0x20, // F9: 1.5x (Galaxy's, the owner 2026-11-11), between F5's 1x and F6's 2x
     SuperSlow = 0x40,
     UltraSlow = 0x80,
 };
@@ -25,8 +26,11 @@ constexpr GameSpeed ToGameSpeed(int v)     { return static_cast<GameSpeed>(stati
 // How many times the normal pace.
 constexpr float SpeedFactor(GameSpeed s)
 {
-    return s == GameSpeed::Slow ? 0.5f : s == GameSpeed::SuperSlow ? 0.25f : s == GameSpeed::UltraSlow ? 0.125f
-                                                                                                        : static_cast<float>(ToRaw(s));
+    return s == GameSpeed::Slow        ? 0.5f
+           : s == GameSpeed::SuperSlow  ? 0.25f
+           : s == GameSpeed::UltraSlow  ? 0.125f
+           : s == GameSpeed::OneAndHalf ? 1.5f
+                                        : static_cast<float>(ToRaw(s));
 }
 constexpr bool IsSlow(GameSpeed s) { return s == GameSpeed::Slow || s == GameSpeed::SuperSlow || s == GameSpeed::UltraSlow; }
 // F7's and F8's (the "quick" cheat's), beyond the plain Fast.
@@ -39,6 +43,12 @@ constexpr GameSpeed NextSlowSpeed(GameSpeed s)
            : s == GameSpeed::UltraSlow ? GameSpeed::Normal
                                        : GameSpeed::Slow;
 }
+
+// 1.5x is a plain speed: no cheat needed (under F6's 2x), not slow, not Tab's.
+static_assert(SpeedFactor(GameSpeed::OneAndHalf) == 1.5f && !IsBeyondFast(GameSpeed::OneAndHalf) &&
+              !IsSlow(GameSpeed::OneAndHalf) && NextSlowSpeed(GameSpeed::OneAndHalf) == GameSpeed::Slow);
+static_assert(SpeedFactor(GameSpeed::Normal) == 1.0f && SpeedFactor(GameSpeed::Fast) == 2.0f &&
+              SpeedFactor(GameSpeed::Slow) == 0.5f && SpeedFactor(GameSpeed::Fastest) == 8.0f);
 
 constexpr bool operator<(GameSpeed a, GameSpeed b)  { return ToRaw(a) <  ToRaw(b); }
 constexpr bool operator<=(GameSpeed a, GameSpeed b) { return ToRaw(a) <= ToRaw(b); }

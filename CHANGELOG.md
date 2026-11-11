@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- A 1.5x game speed on F9, between F5's normal and F6's 2x (BD-0125).
+
 ## [0.1.1] — 2026-11-11
 
 Fixes for sounds that a player of 0.1.0 reported repeating and slowing the game, nicknames for the

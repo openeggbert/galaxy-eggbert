@@ -1005,7 +1005,7 @@ namespace GalaxyEggbert::Game
                 "F1: show / hide this help",
                 "F3: first / third person",
                 "F11: full screen",
-                "F5 / F6: normal / fast speed",
+                "F5 / F9 / F6: speed 1x / 1.5x / 2x",
                 "Tab: slow / normal speed",
                 "F12: cheat menu",
                 "F7 / F8: faster (quick cheat)"};

@@ -626,6 +626,7 @@ namespace GalaxyEggbert::Game
             const std::string speedText = gameSpeed == GalaxyEggbert::Def::GameSpeed::Slow        ? "0.5x"
                                           : gameSpeed == GalaxyEggbert::Def::GameSpeed::SuperSlow ? "0.25x"
                                           : gameSpeed == GalaxyEggbert::Def::GameSpeed::UltraSlow ? "0.125x"
+                                          : gameSpeed == GalaxyEggbert::Def::GameSpeed::OneAndHalf ? "1.5x"
                                           : std::to_string(GalaxyEggbert::Def::ToRaw(gameSpeed)) + "x";
             constexpr float kSpeedTextScale = 0.55f;
             constexpr float kSpeedPadding = 3.0f;

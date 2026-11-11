@@ -160,7 +160,7 @@ Left/Right turns, S/Down turns around and then walks in the new direction. **X o
 backs up while keeping his facing. Left Ctrl jumps on foot and raises the helicopter; Left Shift lowers it.
 **F fires glue in a tank or helicopter; Left Ctrl also fires in the tank.** Right Shift can also raise the helicopter. Space acts/uses/enters/leaves, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
 Esc pauses/continues, F3 switches first/third person (third is the default), F11 toggles full screen,
-F5/F6 selects normal/fast speed, Tab toggles slow motion, F12 opens the cheat menu. Left-click menu
+F5/F9/F6 select normal, 1.5x and fast (2x) speed, Tab steps slow motion, F12 opens the cheat menu. Left-click menu
 buttons; hold the left mouse button and drag to look around. Walking returns the camera behind him.
 The main menu's **Exit** button closes the game. **Help** opens the same panel as F1; [Close]
 dismisses it by mouse/touch without activating the menu underneath. Its upper-left **Fullscreen / Window** button
