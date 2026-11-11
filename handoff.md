@@ -37,7 +37,8 @@ tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tool
 ```
 Android: the arm64 release APK of the branch is built (`android/app/build/outputs/apk/release/
 app-release.apk` in the worktree, signed with the release key: `android/key.properties` there points
-at the main worktree's keystore; real networking in libmain.so, worlds 201-205 in its assets: build it again for 206-212), not
+at the main worktree's keystore; real networking in libmain.so; rebuilt 2026-11-11 with everything of Q-021 and worlds 201-212: AGP left
+it in `app/build/intermediates/apk/release/`, copied to `outputs/`), not
 installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
 can go once that is done. Golden frames and trace pass on the branch.
 Next: a game between real machines (Q-020); the owner's look; the merge on acceptance, and the AI
