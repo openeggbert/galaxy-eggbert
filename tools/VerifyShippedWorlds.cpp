@@ -24,25 +24,24 @@ namespace
 {
     using GalaxyEggbert::Worlds::World;
 
-    bool SameMetadata(const World& a, const World& b, std::uint16_t type)
+    // Every sparse metadata record of every chunk, whatever its type (1-8 today, and any added
+    // later): the format keeps them in order, so a round trip must give the same list.
+    bool SameMetadata(const World& a, const World& b)
     {
-        auto ra = a.collectExtraMetadata(type);
-        auto rb = b.collectExtraMetadata(type);
-        const auto key = [](const World::BlockExtraMetadataRecord& r)
-        {
-            return std::tuple(r.z, r.y, r.x, r.payload);
-        };
-        const auto less = [&](const auto& l, const auto& r) { return key(l) < key(r); };
-        std::sort(ra.begin(), ra.end(), less);
-        std::sort(rb.begin(), rb.end(), less);
-        return std::equal(ra.begin(), ra.end(), rb.begin(), rb.end(),
-                          [&](const auto& l, const auto& r) { return key(l) == key(r); });
+        const std::uint8_t n = a.chunksPerAxis();
+        for (std::uint8_t z = 0; z < n; ++z)
+            for (std::uint8_t y = 0; y < n; ++y)
+                for (std::uint8_t x = 0; x < n; ++x)
+                    if (a.chunk(x, y, z).extraMetadata() != b.chunk(x, y, z).extraMetadata())
+                        return false;
+        return true;
     }
 
     bool SameWorld(const World& a, const World& b)
     {
-        if (a.missionNumber() != b.missionNumber() || a.skyRegion() != b.skyRegion() ||
-            a.hasSpawnPoint() != b.hasSpawnPoint() ||
+        if (a.chunksPerAxis() != b.chunksPerAxis() || a.missionNumber() != b.missionNumber() ||
+            a.skyRegion() != b.skyRegion() || a.musicTrack() != b.musicTrack() ||
+            a.hasLegacySawFloors() != b.hasLegacySawFloors() || a.hasSpawnPoint() != b.hasSpawnPoint() ||
             (a.hasSpawnPoint() && (a.spawnX() != b.spawnX() || a.spawnY() != b.spawnY() || a.spawnZ() != b.spawnZ())))
         {
             return false;
@@ -53,10 +52,21 @@ namespace
                 for (std::uint16_t x = 0; x < n; ++x)
                     if (a.getBlock(x, y, z) != b.getBlock(x, y, z))
                         return false;
-        for (std::uint16_t type = 1; type <= 4; ++type)
-            if (!SameMetadata(a, b, type))
-                return false;
-        return true;
+        return SameMetadata(a, b);
+    }
+
+    // The comparison itself must see a record of a type no code knows (0x1234), and such a record
+    // must survive save -> load in a real world. Returns the problem, or "".
+    std::string UnknownMetadataProblem(const World& world, const std::filesystem::path& scratch)
+    {
+        World marked = world;
+        marked.setBlockExtraMetadata(1, 2, 3, 0x1234, {0xCA, 0xFE});
+        if (SameWorld(world, marked))
+            return "the round-trip comparison does not see a metadata record of type 0x1234";
+        marked.saveToFile(scratch);
+        if (!SameWorld(marked, World::loadFromFile(scratch)))
+            return "a metadata record of type 0x1234 does not survive save -> load";
+        return "";
     }
 
     // The exhibition worlds (998 gallery, 999 showcase): a switch 384/385 turns the saws of its own
@@ -216,6 +226,10 @@ int main(int argc, char** argv)
                 {
                     problem = "load -> save -> load changed it";
                 }
+            }
+            if (problem.empty() && path == worlds.front())
+            {
+                problem = UnknownMetadataProblem(world, scratch);
             }
         }
         catch (const std::exception& e)

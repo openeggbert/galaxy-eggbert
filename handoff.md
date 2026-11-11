@@ -18,9 +18,11 @@ point; the owner chose what to do. Done so far:
   (MR-0001/MR-0010); `tools/audit/asset_sources.py` writes that note itself (`MAX_NOTE`). Do not
   regenerate the whole CSV while `build-probe/rd4-survey/scenes.csv` is missing (cleared
   2026-11-07): without it the generator blanks the survey columns of 528 Ray Dream rows.
+- R3: `VerifyShippedWorlds`' round trip compares every chunk's whole metadata list (types 1-4 only
+  before; 5-8 exist), the music track, the saw-floor flag and the size; on the first world it also
+  checks that a record of an unknown type (0x1234) is seen by the comparison and survives a save.
 
-Still to do (the owner's choices): R3 `VerifyShippedWorlds` compares every metadata type and the
-music track; R1 `.vwr` loading bounded (chunksPerAxis 1-10, sizes checked against the data before
+Still to do (the owner's choices): R1 `.vwr` loading bounded (chunksPerAxis 1-10, sizes checked against the data before
 allocating, duplicate/missing chunks rejected, palette indices checked at load, negative tests);
 R2 the editor saves atomically (temporary file, checked close, rename) and shows a message instead
 of ending the game when a save fails.
