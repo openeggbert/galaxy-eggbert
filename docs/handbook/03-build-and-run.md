@@ -326,6 +326,11 @@ Output: `GalaxyEggbert.{html,js,wasm,data}`. `Content/icons`, `Content/backgroun
 check. Saves and custom worlds go to `/save` (IndexedDB, via `-lidbfs.js`). The browser may require a
 user gesture before audio starts. Tests are disabled for this configuration.
 
+The web package (`GalaxyEggbert-<version>-web.zip`: the four files, `Content/music/`, LICENSE,
+THIRD_PARTY.txt, RELEASE_NOTES.md, `packaging/README-web-bundle.md` as README.md) is made by
+`tools/release/make_web_zip.sh build-cna-webgl2 <out-dir>`, beside the Linux and Windows packages
+(`docs/releasing.md`).
+
 ## Android
 
 Full instructions in `ANDROID.md`. Status: builds an x86_64 debug APK and starts; in the emulator it

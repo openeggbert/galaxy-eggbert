@@ -22,9 +22,13 @@ the numbering was decided; 0.1.0 replaces that number.
 - The 3D world editor: blocks, objects, paths, Blupi's starts, backgrounds and music, on the
   keyboard and mouse, a gamepad or a touch screen.
 - Demos: ten in the main menu, the player's own recordings (named, exported, imported).
+- Multiplayer after Speedy Blupi 2's network game: 2-4 players on a local network (or a virtual one),
+  its rules and worlds 201-212 with Galaxy's own 213-217, a lobby with chat (Windows, Linux,
+  Android; not the web).
 - Optional 3D effects (off, low, medium, high, Ultra), 2x textures, frame rates up to 240 fps,
   full screen, gamepad and touch controls, the original cheats.
-- Linux and Android (arm64) packages from `tools/release/make_release.sh`.
+- Packages for Windows (x86-64), Linux (x86-64) and the web browser (`tools/release/`), and an
+  Android (arm64) APK.
 - Versioning: the version is kept in `VERSION.txt` and shown left of Play on the main menu, with
   the build's date and time under it ([`docs/releasing.md`](docs/releasing.md)).
 
@@ -34,5 +38,8 @@ the numbering was decided; 0.1.0 replaces that number.
   refused before it can make the game ask for gigabytes of memory.
 - Saving a world in the editor is atomic: a full disk or a crash during the save keeps the file as
   it was, and the editor says "NOT SAVED" instead of ending the game.
+- The game no longer ends on its first frame when its folder cannot be written (installed for all
+  users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
+- The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
 [Unreleased]: https://github.com/openeggbert/galaxy-eggbert/commits/develop

@@ -32,7 +32,8 @@ live 3D run.
 ### The cross-build from Linux, with multiplayer (2026-11-11, Q-022)
 
 The cross-build is done on Linux, in the shared probe directory (no build tree of its own; Q-018
-names none):
+names none). Since the multiplayer merge (2026-11-11) the tree is the main worktree's
+`build-probe/windows`:
 
 ```bash
 export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv

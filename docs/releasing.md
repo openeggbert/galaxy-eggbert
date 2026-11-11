@@ -64,8 +64,19 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
 2. **The changelog.** Move what is under `## [Unreleased]` in `CHANGELOG.md` into
    `## [x.y.z] — YYYY-MM-DD`, add its link at the bottom, and update
    `packaging/RELEASE_NOTES.md`.
-3. **Build and test** in the existing Release tree (`../CLAUDE.md`: reuse it, at most six jobs),
-   then make the packages: `tools/release/make_release.sh <release-build-dir> <out-dir>`.
+3. **Build and test** in the existing Release trees (`../CLAUDE.md`: reuse them, at most six
+   jobs), then make the packages into one `<out-dir>` (e.g. `build-probe/release/<version>`), the
+   zips first so that the checksums cover them:
+
+   ```bash
+   tools/release/make_windows_zip.sh build-probe/windows <out-dir>      # MinGW cross-build, WINDOWS.md
+   tools/release/make_web_zip.sh build-cna-webgl2 <out-dir>             # Emscripten build
+   tools/release/make_release.sh build-cna-opengl3 <out-dir> [--no-android]   # Linux, APK, notes, SHA256SUMS
+   ```
+
+   Check each package unpacked as a player would: the Linux archive from a folder it cannot write
+   to, the Windows zip under wine (`SDL_VIDEODRIVER=windows`), the web zip served over HTTP to
+   Chrome on X11 under Xvfb (`--ozone-platform=x11`; headless Chrome gets no WebGL 2 here).
 4. **Commit** the version-bearing files by name (`VERSION.txt`, `CHANGELOG.md`,
    `packaging/RELEASE_NOTES.md`, `android/app/build.gradle` when `versionCode` changed).
 5. **Tag** with a `v` prefix, annotated: `git tag -a v0.1.0 -m "Galaxy Eggbert 0.1.0"`.

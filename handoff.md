@@ -6,7 +6,29 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (packages 0.1.0 for Windows, Linux and the web built, not published; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Packages 0.1.0 for Windows x64, Linux and the web (2026-11-11, the owner) — built, not published
+
+In `build-probe/release/0.1.0/` (`docs/releasing.md` step 3 has the commands and checks):
+`GalaxyEggbert-0.1.0-windows-x86_64.zip` (166 MB), `-linux-x86_64.tar.gz` (163 MB, glibc 2.38+),
+`-web.zip` (83 MB), RELEASE_NOTES.md (Windows, Linux, web; multiplayer), SHA256SUMS.txt over all
+three. No APK (not asked). The Windows tree is now the main worktree's `build-probe/windows`
+(configured as WINDOWS.md says; 94 % ccache hits), so the multiplayer worktree's can go with it.
+New: `tools/release/make_web_zip.sh`, `packaging/README-web-bundle.md`; `make_release.sh`'s
+checksums take the zips and no longer fail without an APK (nullglob). Found and fixed on the way:
+- The game aborted on its first frame from a folder it cannot write ("ImageLoader: failed to save
+  PNG: screenshot.png"): the startup screenshots are now skipped with a line in the log.
+- The web build linked CNA::Net (CNA builds it under Emscripten now): Multiplayer in the page and a
+  35 MB .wasm; the net is kept off under Emscripten (Q-019 Q4), 8 MB again.
+- The build stamp missed a configuration change (flags, definitions): it now also follows a
+  fingerprint `file(GENERATE)` rewrites only when those change. CMakeCache.txt is not rewritten by
+  an unchanged configure, so it could not serve.
+Checked unpacked: Linux from a read-only folder (`chmod a-w`), Windows under wine 10
+(`SDL_VIDEODRIVER=windows`), web over `python3 -m http.server` in Chrome on X11 under Xvfb
+(`env -u WAYLAND_DISPLAY google-chrome --ozone-platform=x11`; headless Chrome 155 creates no WebGL 2
+context here) with a DevTools screenshot: menu, demo after 40 s, music fetched; each shows
+"Version 0.1.0" and its build time, the web without Multiplayer. Full CTest 133/133.
 
 ## Versioning: 0.1.0, not released (2026-11-11, the owner) — done
 

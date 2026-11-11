@@ -106,6 +106,11 @@ content-authoring UX, but not new gameplay mechanics.
   and the release script read it); the main menu shows "Version 0.1.0" left of Play and the build's
   date and time under it (`cmake/BuildStamp.cmake`: made again only when the game is relinked).
   `CHANGELOG.md`, `docs/releasing.md`.
+- Packages 0.1.0 (2026-11-11, the owner; not published): `build-probe/release/0.1.0/` holds the
+  Windows zip (MinGW cross-build, `build-probe/windows`), the Linux archive and the web zip
+  (`tools/release/make_web_zip.sh`), RELEASE_NOTES.md and SHA256SUMS.txt; no APK this time. Each
+  was unpacked and started: Linux from a read-only folder, Windows under wine, the web in Chrome
+  over HTTP; all three show "Version 0.1.0" and their build time left of Play.
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
   only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x

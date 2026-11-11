@@ -14,7 +14,8 @@
 # The version is VERSION.txt's. The glibc the Linux program needs is printed (the highest GLIBC_
 # version it and its bundled libraries ask for): an archive for an older system has to be built
 # on one. The Windows package is made by tools/release/make_windows_zip.sh from a MinGW cross-build
-# (WINDOWS.md).
+# (WINDOWS.md), the web package by tools/release/make_web_zip.sh from the Emscripten build: make
+# them into the same <out-dir> first, and SHA256SUMS.txt covers them too.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -50,5 +51,10 @@ fi
 
 echo "== Notes and checksums"
 cp "$repo/packaging/RELEASE_NOTES.md" "$out/RELEASE_NOTES.md"
-(cd "$out" && sha256sum GalaxyEggbert-"$version"-*.tar.gz GalaxyEggbert-"$version"-*.apk 2>/dev/null > SHA256SUMS.txt; cat SHA256SUMS.txt)
+# Every package of this version in <out-dir>: the Windows and web zips too, when
+# make_windows_zip.sh and make_web_zip.sh put them there first.
+# nullglob: a kind of package not made (no APK with --no-android) is left out, not an error.
+(cd "$out" && shopt -s nullglob &&
+ packages=(GalaxyEggbert-"$version"-*.tar.gz GalaxyEggbert-"$version"-*.zip GalaxyEggbert-"$version"-*.apk) &&
+ sha256sum "${packages[@]}" > SHA256SUMS.txt && cat SHA256SUMS.txt)
 echo "== Done: $out"
