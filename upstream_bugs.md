@@ -285,3 +285,27 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   before the sampler collections (`GraphicsDevice.hpp:1974`, `samplerStates_` at 1991). Verified
   2026-11-09: Galaxy built against CNA `e24822397` (which contains it) starts and runs (golden frames,
   the autoplay playthroughs, CTest).
+
+## UB-011 — CNA net: a joined SystemLink client answers discovery as the session's host
+
+- **Found:** 2026-11-11, Galaxy's first four-player test (`tools/net_players.sh`, four game processes on
+  one machine, branch `multiplayer`, CNA `5c52d807a`). Read-only inspection; CNA was not modified.
+- **Symptom:**
+  - Ann hosts. Ben's search lists 1 game, Cid's 2 and Dan's 3, one for each process already in the
+    session.
+  - Dan joins the first one and gets "The requested network session could not be found." (602
+    times), so the match never starts.
+  - Two players never show it.
+- **Cause (`modules/net/src/Internal/ENetBackend.cpp`):**
+  - `ConnectToHost()` (~1789) calls `StartHosting(session)` for a pure client too.
+  - `StartHosting()` (~1644) calls `ENetDiscoveryService::RegisterHost(session, boundPort)`
+    unconditionally.
+  - The client's `ReplyToQuery()` then announces the session with its own ephemeral connect port and
+    a new host instance. The session's host is the real one and not null, so the client answers.
+  - The querier's dedupe (connect port + host instance) keeps each answer as a separate session.
+- **Expected:** only the host answers (XNA SystemLink). Host migration registers the promoted peer
+  itself (~1136).
+- **Galaxy impact:** on a real network, the third and fourth players see one false game per player
+  already joined, and joining one of them fails. No workaround in Galaxy.
+- **Status:** reported to the `cna` session 2026-11-11 (suggested fix: `RegisterHost` only when
+  `session->getIsHostProperty()`).
