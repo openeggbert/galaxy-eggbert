@@ -6,16 +6,22 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## A new editor world gets the yellow Blupi (2026-11-11, the owner) — done, not released
+## Release 0.1.1 (2026-11-11, the owner) — tagged and published
+
+`v0.1.1` on the release commit, the GitHub release "Galaxy Eggbert 0.1.1" with the four packages,
+SHA256SUMS.txt and packaging/RELEASE_NOTES.md (its "New in 0.1.1"). Holds BD-0121..0124 below.
+Android versionCode 2 (the next published APK needs 3). Packages in `build-probe/release/0.1.1/`.
+
+## A new editor world gets the yellow Blupi (2026-11-11, the owner) — done, released in 0.1.1
 
 BD-0124: CreateEditorStarterWorld sets the yellow start (51,1,50), facing -X, as Decor::InitDecor
 puts Blupi at the platform's end facing the chest and the exit. VerifyGEEditorStorage checks it.
 Note: the editor's camera starts above the world's centroid looking forward and down, so the board
 is just below the view until the camera is moved back (S) -- unchanged, not part of this fix.
 
-## Nicknames for players A, B and C (2026-11-11, the owner) — done, not released
+## Nicknames for players A, B and C (2026-11-11, the owner) — done, released in 0.1.1
 
 BD-0123. `SaveData::GetNickname/SetNickname/GetPlayerName` ("gamerN.nickname=", kept by Reset); the
 main Setup's Nickname button (top-left, `InputPad::SetupNicknameRect`) opens a panel
@@ -25,7 +31,7 @@ keys to the arrows and a gamepad's d-pad). Shown in the menu's player row, the S
 as the network game's name (`OpenMultiplayer`; GALAXY_NET_NAME still wins for tests). The panel is
 the network screens' translucent one, the Setup showing through.
 
-## Sounds repeated and stuttered (a Discord player on 0.1.0, 2026-11-11) — fixed in develop, not released
+## Sounds repeated and stuttered (a Discord player on 0.1.0, 2026-11-11) — fixed, released in 0.1.1
 
 The report (relayed by the owner and by the cna session, which analysed it read-only): "the sounds
 seem to cause severe lagging sometimes; every sound is played several times without limitation".
@@ -39,7 +45,7 @@ seem to cause severe lagging sometimes; every sound is played several times with
 - Not done: the lag's other parts (full terrain rebuild on the main thread after dynamite cuts a
   saw or drip, OR-0074; the fixed-step catch-up after it; web audio on the main thread), and the cna
   session's low-confidence list (edge-triggered Stop/Play pairs such as the crate push ch38 or the
-  vehicle motor loop) -- not reproduced. A 0.1.1 with these fixes waits for the owner.
+  vehicle motor loop) -- not reproduced. Released in 0.1.1.
 
 ## Release 0.1.0 (2026-11-11, the owner) — tagged and published
 

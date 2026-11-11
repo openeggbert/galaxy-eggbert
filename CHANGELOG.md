@@ -9,6 +9,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-11
+
+Fixes for sounds that a player of 0.1.0 reported repeating and slowing the game, nicknames for the
+players, and the yellow Blupi in a new editor world. Packages for Windows, Linux, Android and the
+web on GitHub (tag `v0.1.1`); Android's versionCode is 2.
+
 ### Added
 
 - Nicknames for players A, B and C: the main Setup's Nickname. A nickname replaces "Player A" in the
@@ -59,5 +65,6 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.0...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.1...develop
+[0.1.1]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.1.0

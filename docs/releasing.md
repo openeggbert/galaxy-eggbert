@@ -1,7 +1,8 @@
 # Versioning and releasing Galaxy Eggbert
 
-*Current release: 0.1.0 (2026-11-11), tag `v0.1.0`, published as a GitHub release of
-openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages.*
+*Current release: 0.1.1 (2026-11-11), tag `v0.1.1`, published as a GitHub release of
+openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages (0.1.0, the first, the
+same day).*
 
 Galaxy Eggbert follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), set up
 after CNA's own scheme (`../cna/docs/releasing.md`): the version is decided in one place,
@@ -28,7 +29,7 @@ Changing `VERSION.txt` reconfigures the build by itself.
 | C++ code | `#include <GalaxyEggbert/Version.hpp>` → `GalaxyEggbert::VersionString()`, `GALAXY_EGGBERT_VERSION_MAJOR`, … (generated from `cmake/templates/Version.hpp.in` into `<build>/generated/include/`; never edit the copy) |
 | The main menu | "Version 0.1.0" left of Play (`InputPad::DrawInit`) |
 | The Linux archive | its file name, `GalaxyEggbert-<version>-linux-x86_64.tar.gz` (CPack); `VERSION.txt` is in it |
-| Android | `versionName` (`android/app/build.gradle` reads `VERSION.txt`) |
+| Android | `versionName` (`android/app/build.gradle` reads `VERSION.txt`); `versionCode` is raised there by hand |
 | `tools/release/make_release.sh` | the archive's and the APK's names |
 
 Maintained by hand on a version change: `CHANGELOG.md` and `packaging/RELEASE_NOTES.md`.
@@ -89,5 +90,5 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
        --notes-file packaging/RELEASE_NOTES.md --verify-tag <out-dir>/GalaxyEggbert-0.1.0-* <out-dir>/SHA256SUMS.txt
    ```
 
-   Android's `versionCode` was 1 for 0.1.0: the next published APK needs 2.
+   Android's `versionCode`: 1 for 0.1.0, 2 for 0.1.1; the next published APK needs 3.
 7. **Open the next cycle** with an empty `## [Unreleased]` section in `CHANGELOG.md`.
