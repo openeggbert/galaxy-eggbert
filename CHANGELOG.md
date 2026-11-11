@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-11-11
+
+A 1.5x game speed. Packages for Windows, Linux, Android and the web on GitHub (tag `v0.1.2`);
+Android's versionCode is 3.
+
 ### Added
 
 - A 1.5x game speed on F9, between F5's normal and F6's 2x (BD-0125).
@@ -69,6 +74,7 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.1...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.2...develop
+[0.1.2]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.1.0

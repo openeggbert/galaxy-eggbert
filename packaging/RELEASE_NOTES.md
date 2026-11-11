@@ -1,6 +1,11 @@
-# Galaxy Eggbert 0.1.1
+# Galaxy Eggbert 0.1.2
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.1.2
+
+- **A 1.5x game speed** on **F9**, between F5's normal speed and F6's double speed. The speed shows
+  at the bottom left; F5 goes back to normal.
 
 ## New in 0.1.1
 
@@ -37,10 +42,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.1.1-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.1.1-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.1.1-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.1.1-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.1.2-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.1.2-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.1.2-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.1.2-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations

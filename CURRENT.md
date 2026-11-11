@@ -101,15 +101,15 @@ content-authoring UX, but not new gameplay mechanics.
   2.38 and the system's FFmpeg) and the release-signed Android APK (arm64), with SHA256SUMS.txt.
   1.0.0-rc1 built and the archive run; not published. Windows and a glibc 2.35 archive are open
   (Q-018).
-- Version (2026-11-11, the owner): **0.1.1, released 2026-11-11** (tag `v0.1.1`, GitHub release;
-  0.1.0 the same day). 0.1.1: the death sounds and effects once (BD-0121), overlapping explosions
+- Version (2026-11-11, the owner): **0.1.2, released 2026-11-11** (tag `v0.1.2`, GitHub release;
+  0.1.0 and 0.1.1 the same day). 0.1.2: the 1.5x speed on F9 (BD-0125). 0.1.1: the death sounds and effects once (BD-0121), overlapping explosions
   (BD-0122), nicknames (BD-0123), the yellow Blupi in a new editor world (BD-0124). `VERSION.txt` is the one place
   (CMake splits it as CNA does and generates `GalaxyEggbert/Version.hpp`; Android's versionName
   and the release script read it); the main menu shows "Version 0.1.0" left of Play and the build's
   date and time under it (`cmake/BuildStamp.cmake`: made again only when the game is relinked).
   `CHANGELOG.md`, `docs/releasing.md`.
-- Packages 0.1.1 (and 0.1.0 before them; the owner, 2026-11-11; published as GitHub releases):
-  `build-probe/release/0.1.1/` as 0.1.0's below (Android versionCode 2).
+- Packages 0.1.2 and 0.1.1 (and 0.1.0 before them; the owner, 2026-11-11; published as GitHub
+  releases): `build-probe/release/0.1.2/` and `0.1.1/` as 0.1.0's below (Android versionCode 3, 2).
 - Packages 0.1.0 (2026-11-11, the owner; published as the GitHub release `v0.1.0`):
   `build-probe/release/0.1.0/` holds the Windows zip (MinGW cross-build, `build-probe/windows`), the
   Linux archive, the Android APK (arm64, release key, versionCode 1) and the web zip
@@ -536,7 +536,7 @@ BD-0119) are done too. What is left:_
 
 ### Waiting on the owner
 
-- **After release 0.1.1** (Q-018): 0.1.0 and 0.1.1 published 2026-11-11 on GitHub. Open: an archive for glibc
+- **After release 0.1.2** (Q-018): 0.1.0, 0.1.1 and 0.1.2 published 2026-11-11 on GitHub. Open: an archive for glibc
   2.35, a run on Windows itself, whether the web build goes on the site, and the website's pages
   (they still name 1.0.0-rc1).
 - **Multiplayer**: merged into `develop` 2026-11-11; not yet played between two real machines
