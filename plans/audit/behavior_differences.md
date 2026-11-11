@@ -1640,6 +1640,141 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0120 — The network game (owner request, Speedy Blupi 2's) — IMPLEMENTED on branch `multiplayer`
+
+Owner (2026-11-10, owner_questions.md Q-019): multiplayer as Speedy Blupi 2 / Speedy Eggbert 2
+plays it (../blupi_recon reconstructs it), though Mobile Eggbert has none; LAN, Linux and Android;
+the original's evident defects not reproduced. Kind: gameplay (an approved addition).
+
+As the original (games/sb2/src): 2-4 players, the lobby of four places (colour cycling, need not
+differ; ready; the host's Start when all present are ready, two at least; the host's mission);
+the chat in the lobby ("<name> text", six lines, event.cpp:4554); ten lives and each at his team's
+start (decblock.cpp:1349); crates, goals and enemy Blupis taken out (decblock.cpp:1430); each
+team's personal bombs (his own taken back and laid, another's lethal, decblupi.cpp:2379, 3721);
+a death restarts at the last safe place (decblupi.cpp:4078); PK_DIE/LOST/ABANDON with the
+original's notices (decmove.cpp:202-232; sb2-eggbert-en.rc 257-261); the last one present wins
+(decblupi.cpp:4097, text 287); a pause stops everyone (PK_PAUSE); remote Blupis only drawn, no
+collision between players; world changes as the original's MODIFDECOR/OBJECTSTART/OBJECTDELETE
+(blocks, pickups, bombs, vehicles taken and left, dynamite, tank and helicopter shots); cheats and
+speed per machine, as the original (not gated in a network game).
+
+Differences:
+- Transport: CNA SystemLink (ENet over UDP, LAN discovery) in place of DirectPlay; a content hash
+  (the multiplayer worlds, the Blupi model's clips) in the session's properties, so only games of
+  the same content are listed (blupi_recon's port does the same).
+- Not reproduced (the original's defects, blupi_recon MULTIPLAYER_ASSESSMENT): the 32768-tick
+  clock wrap; events of an old packet applied unordered (events are reliable and ordered here);
+  the full event queue silently dropping events; the cloud-stop's slot/team mix-up.
+- The host leaving ends the game for everyone (the owner's choice; the original never handled
+  its DirectPlay host migration).
+- The original closes the network game as the win/lost screen opens; here the player leaves that
+  screen back to the same game's lobby (a rematch, Galaxy's: below), so a host knocked out does not
+  end the others' match.
+- A remote Blupi is drawn from his machine's model transform, clip and time (20 a second, moved
+  between the last two), not from a sprite icon; his team's colour by recolouring the yellow
+  materials (the editor's starts' RecolorPlayerStartPixel); each team's bombs likewise.
+- Galaxy's own screens: the Multiplayer button in the menu's left panel, the games' list and the
+  lobby as panels with the original's texts, "(host)" and "(you)" marks and a status line.
+- Mobile Eggbert has no network game: the twelve multiplayer worlds 201-212 (206-212 since
+  2026-11-11, Q-021) are Galaxy's 3D halls with SB2's missions' identity (plans/briefs/
+  world201-212.md). SB2's regions 14, 17 and 23 are not among Mobile Eggbert's backgrounds: 206
+  takes 29, 210 takes 6 and 211 takes 25 (no new assets copied).
+
+Since 2026-11-11 (the owner's Q-021), as the original too:
+- The others' sounds (PK_PLAYSOUND/PK_STOPSOUND, decnet.cpp:172-193): each sound his Blupi's step
+  plays is sent with its place and heard by the others within the original's reach (Sound::PlayAt).
+  Only the step's own (the original also sent the world's objects' sounds, which every machine plays
+  itself: heard twice there); a channel asked for every frame is sent once while it plays.
+- The host's lifts (PK_ASCENSEURSTART/END, decmove.cpp:571-630): at the start of each stop at an end
+  the host sends the lift's index; the others put theirs so. The original copied the step to every
+  lift of the same shape as well; here the host sends each of its own.
+- The others' shield, power and cloud drawn round them, a hidden one (the drink) not drawn at all
+  (m_netBlupiSec, decblock.cpp:1696-1718); a cloud electrocutes the Blupi it meets (NetPlayerCollide's
+  reach, decblupi.cpp:3838-3893: not swimming, surfing, shielded, a cloud, hidden or Super Blupi,
+  focused), who drops his vehicle, and the cloud is gone (PK_STOPCLOUD). Galaxy's Blupi model has no
+  electrocution clip (ACTION 57): he dies as by lightning (Clear1, charred) with SOUND_ELECTRO (59).
+  The original took only the first player met, cloud or not; here any cloud met.
+Galaxy's additions (the owner, Q-021):
+- The other players' names over their heads, in their colours, through walls, up to 30 cells.
+- A rematch: the win or lost screen goes back to the game's lobby; the host shows who still plays
+  and starts again once all are back and ready (XNA's EndGame lists the game again meanwhile).
+- The match's results: each machine counts the deaths, who killed whom (a shot's or a laid bomb's
+  maker, a world bomb's colour when one player has it, a cloud) and who went out when (Lost, left,
+  silent); shown on the win and lost screens and beside each player in the lobby. PK_LOST carries
+  the last death's killer.
+- A player from whom nothing came for 6 s (20 s before his first pose) is gone, as if he had left;
+  the host so, the game ends ("the host does not answer"). Poses go at least four times a second,
+  paused too.
+- A host's address (name or IPv4, ":port") searched besides the broadcast, kept in the user folder's
+  multiplayer.txt (CNA's SystemLinkDiscovery); the host's game on UDP 61191 (another when busy), so
+  a router can forward it with 61190. The original's DirectPlay TCP/IP asked for an address too.
+Galaxy's additions (the owner, Q-022; none in SB2):
+- The match's settings in the lobby: the host's lives (the original's ten, or 1-9) and a time limit
+  (none, the original's; 3, 5, 10, 15, 20 or 30 minutes). The clock stops while anyone pauses; the
+  host's decides: when it runs out, those still in rank by the lives they have left, then their
+  kills, then the fewer deaths (the same rank shared: "You share the first place"), those out after
+  them, the last out first (TimeUp). A host already out stays on his results screen until the time
+  is up (the ranks are his to send).
+- Messages during the match: who got whom ("Ann got Ben !", "Ann got you !", "You got Ben !") beside
+  the original's notices, and a chat line typed over the play (Enter, Enter sends, Escape gives it
+  up; the game goes on and Blupi stands meanwhile; the others see it as a notice), or Pause's
+  **Message** (where a shipped world's "Original" stands; touch screens) on the screen's keyboard.
+- A spectator: knocked out, left / right (the d-pad, a touch at the screen's left or right edge) on
+  the Lost screen watch the others still playing from behind them (their name and lives at the
+  top); Space goes back to the results, and so does the match being decided. His world goes on
+  (the others' changes, the lifts, the shots), his own Blupi not drawn, nothing of his sent.
+- A world of the host's editor: after the multiplayer worlds his `<` `>` go through his editor's
+  slots ("My world n"); its bytes go to the others in pieces (WorldData, 1 KB each, its hash
+  checked), who are ready once they have it whole. A team without its start in it starts at the
+  yellow one (they stand together then). SB2 had no map transfer (both had to have the map).
+- A player whose game dropped (silence, a crash, the game closed) comes back: his game, started
+  again, finds the game in progress (the session allows joining in progress) and the host takes him
+  at his place by his name, with his colour, the lives he had left, the match's statistics and
+  clock, and the world's changes since the start (Snapshot: the blocks changed, the world's objects
+  gone, the spawned ones with their makers' numbers; his new objects numbered past his old ones);
+  the others see him back ("Cid is back !"). Anyone else asking during a match is not taken; one
+  knocked out cannot come back. The original never let anyone join a game in progress.
+- Internet games without a router to set up: with a gamer services server (libcna's
+  cna-gamer-services-server, its address in **Server**), the players sign in with their accounts
+  (CNA's Guide), their gamertags their names, and the games are PlayerMatch sessions through the
+  server's relay. The local network's games stay as they were (one button switches). Whoever runs
+  the server and its accounts is the owner's to decide (owner_questions Q-022).
+- Windows: a MinGW cross-build (OPENGL33), tried under wine: its games and Linux's play together.
+- Speedy Blupi 1's network worlds 101-110 are not added: they are SB2's 201-210 (the decor and the
+  objects the same in eight, a few cells or objects in 103, 108 and 210), already here. In their
+  place five more of Galaxy's own design (the owner's choice), 213-217, each of a world of Mobile
+  Eggbert's that SB2's twelve do not use:
+  - 213, the cheese cave (world 4);
+  - 214, the slime pit with its spike traps (world 6);
+  - 215, the sky works with the vanishing saucers (world 8);
+  - 216, the station's brick hall with a moat (world 5);
+  - 217, floating islands over a meadow (the title scene).
+  Briefs in plans/briefs/world213-217.md.
+Fixed on the way: a death on a world's bomb of another team counted no kill (the bomb's slot was
+taken by its pop at once); the killing object's type is kept now.
+
+Validation: VerifyNetProtocol (messages and their refusal of damaged packets, the lobby, the
+rules, a two-machine replication round); FuzzNetProtocol and tools/fuzz_net_sanitized.sh (Q-022:
+random and damaged packets, ASan/UBSan clean; the decoder takes only exact messages, the
+replication keeps the world in bounds); tools/net_players.sh (Q-022: two to four instances) with
+three players (a pause holds everyone, one leaves, the others play on), four players (kills and
+the notices, a chat line), the time limit (ranks by lives then kills), the spectator, an editor's
+world sent, a player dropping and coming back (the three worlds hash the same at the end), a
+ten-minute match of four at random whose four worlds hash the same at its end, Windows builds
+under wine with Linux ones (bomb, laid, four with two under wine), and internet games through a
+local server (tools/net_internet.sh: bomb, and four with two under wine; the server's relays
+counted); tools/net_two_players.sh, two instances on one machine
+through the screens and their autoplay scripts in real time: bomb (another team's bombs kill, the
+knocked-out one sends LOST, the other wins), laid (a bomb taken back and laid elsewhere kills the
+other there), shot (a tank's shot kills the other there), vehicle (a tank taken and left
+elsewhere), and since 2026-11-11 cloud (world 205: the cloud electrocutes, the cloud gone) and
+rematch (NET_LIVES=0: won and lost, both back in the lobby, a second match), all PASS, and all five
+again over a bad network (NET_LOSS=0.2, NET_LATENCY=150 ms: CNA's simulated loss and latency); a
+frozen client (SIGSTOP) taken as gone after 6 s and the host winning, the host frozen ending the
+client's game; the sounds and lifts in the logs; the address search with the machine's own address; two instances driven by the pointer under Xvfb (list, join, colour, ready,
+chat, start; each sees the other in his colour). CTest 117/117 (single player unchanged:
+VerifyDemoReplays). Evidence: build-probe/mp-shots/, build-probe/net-two-players/.
+
 ## BD-0119 — Each player's own galaxy (owner request) — FIXED_AND_VERIFIED
 
 Owner (2026-11-08): each of the three players builds a world system of their own, a main hub, sub

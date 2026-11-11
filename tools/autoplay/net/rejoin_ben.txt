@@ -1,0 +1,9 @@
+# tools/net_players.sh, the rejoin, Ben: as Ann (his own seed).
+until phase = Play max 7200
+log the match began
+mortal
+wander 6000 seed 2 until phase != Play
+wait 3000
+hash
+wait 60
+end

@@ -1,8 +1,42 @@
 # Galaxy Eggbert multiplayer: analysis, options and implementation plan
 
 Written 2026-11-08 as a hand-off for the AI agent that will implement multiplayer in
-`galaxy-eggbert`. **Nothing has been implemented.** Nothing was built or run to produce this
-document. Every fact comes from reading source and documentation in the repositories named below.
+`galaxy-eggbert`. Every fact of §1-§14 comes from reading source and documentation in the
+repositories named below (before the implementation).
+
+**Status 2026-11-10: implemented on branch `multiplayer`** (worktree `../galaxy-eggbert-multiplayer`),
+**merged into `develop` 2026-11-11** on the owner's word (Q-019, Q-020). The owner's answers (Q-019): SB2's
+rules, Linux and Android, LAN with a documented ZeroTier setup, one world then 3-5 from SB2's
+201-212, the host leaving ends the game, team colours by recolouring, speed and cheats as the
+original, automatic sign-in as Player A/B/C, the original's defects not reproduced, chat in the
+first version. What is done, as recommended in §7 (option A over CNA SystemLink):
+- M1-M2: the protocol and its checks, the lobby (`src/GalaxyEggbert/Net/`, `VerifyNetProtocol`).
+- The CNA adapter `src/GalaxyEggbertCNA/NetSession.*` (a stand-in without CNA networking: no
+  Multiplayer on the web); the screens and the match in `GalaxyEggbertGameNet.cpp`.
+- The rules (§3.3, all read in SB2's source, the [NV] ones settled: PlayPrepare removes types 7,
+  12, 21, 32, 33; another team's bomb kills, one's own is taken back with the action key); the
+  replication (§7.5) in `NetReplication`; poses with the model's transform; Android's permissions
+  and multicast lock.
+- Worlds 201-212 (`tools/worlds/world201-212.py`, briefs; 206-212 since 2026-11-11).
+- Tests: `VerifyNetProtocol` in CTest; `tools/net_two_players.sh` with four scenarios
+  (`tools/autoplay/net/`), all passing; the differences in BD-0120; the player's guide with ZeroTier
+  `docs/handbook/09-multiplayer.md`.
+2026-11-11 (Q-021): SB2's sounds, lift synchronisation, auras and the cloud's touch; Galaxy's
+names over the players, rematch, results, silence timeout, the host's address with a fixed port
+(BD-0120); protocol 2.
+2026-11-11 (Q-022): tests for three and four players, the pause, broken packets (FuzzNetProtocol,
+ASan/UBSan) and a ten-minute match of four (`tools/net_players.sh`); the lobby's lives and time
+limit, who got whom and a chat line in the match, the spectator, the host's editor worlds sent, a
+dropped player back in the match (protocol 3); UB-011 found and fixed in CNA; SB1's 101-110 are
+SB2's 201-210 (not built).
+Also Q-022: Windows (MinGW cross-build, OPENGL33; under wine it plays with Linux) and internet games
+through cna-gamer-services-server's relay (PlayerMatch, accounts through CNA's Guide; tried with a
+local server, tools/net_internet.sh); five worlds of Galaxy's own design, 213-217 (in place of
+SB1's 101-110, which are SB2's 201-210); the server's deployment (tools/server, handbook 10); the
+Windows zip.
+Open: a game between a phone and a PC, and on a real Windows machine (not run yet); the public
+server and its accounts (the owner's, Q-022); host migration (not wanted: the host leaving ends
+the game).
 
 **Updated 2026-11-09** against `develop` at `c2a243b6`:
 

@@ -22,6 +22,7 @@
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Game/FocusNavigator.hpp>
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
+#include <GalaxyEggbert/Net/NetProtocol.hpp>
 #include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
 #include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
@@ -77,6 +78,8 @@ namespace GalaxyEggbert::CNA
     // indicator in the screen's bottom-right corner. F3 toggles between
     // them: it was "C" until 2026-10-25, but letters are typed cheats
     // ("ghost", "quick").
+    struct NetGame; // the network game's state (NetGame.hpp)
+
     class GalaxyEggbertGame final : public Microsoft::Xna::Framework::Game
     {
     public:
@@ -967,6 +970,125 @@ namespace GalaxyEggbert::CNA
         float goodbyeSeconds_ = 0.0f;
         GalaxyEggbert::Game::DemoLiveInput goodbyeInputWas_;
         void StartGoodbye();
+
+        // The network game (2026-11-10, the owner: Speedy Blupi 2's multiplayer;
+        // GalaxyEggbertGameNet.cpp, plans/plan_gemultiplayer.md): the menu's Multiplayer opens its
+        // screens over the menu (the games on the network, the lobby); a match is played in Play
+        // with NetMatchActive(). net_ exists once Multiplayer was opened.
+        std::unique_ptr<NetGame> net_;
+        struct NetScreenLayout;
+        [[nodiscard]] bool NetMatchActive() const noexcept;
+        [[nodiscard]] bool NetScreenShown() const noexcept;
+        [[nodiscard]] bool NetRemotePaused() const noexcept;
+        int NetOthersPresent() const noexcept; // the other players still in the match (autoplay's netplayers)
+        [[nodiscard]] static bool NetIsMovingLift(const GalaxyEggbert::Game::MobileObjSpec& obj) noexcept;
+        void NetLogWorldHash() const; // autoplay's `hash`: this machine's world, to compare with the others'
+        [[nodiscard]] bool NetWantsText() const noexcept;
+        [[nodiscard]] int NetTeam() const noexcept; // his team's colour in a match, 0 otherwise
+        void OpenMultiplayer();
+        void CloseMultiplayer();
+        void UpdateNet(); // every update: the session, what arrived, who came and went
+        void NetHandle(std::uint8_t sender, const GalaxyEggbert::Net::Message& message);
+        void NetPlayerLeft(std::uint8_t id);
+        void NetSessionEnded(const std::string& reason);
+        void NetBroadcastLobby();
+        void NetNotice(const std::string& text);
+        [[nodiscard]] std::vector<std::string> NetNotices() const;
+        [[nodiscard]] NetScreenLayout BuildNetScreen(int viewportW, int viewportH) const;
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> NetFocusTargets(int viewportW,
+                                                                                      int viewportH) const;
+        void UpdateNetScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW, int viewportH,
+                             bool escapePressed);
+        void DrawNetScreen(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
+        void NetStartTyping(int viewportW, int viewportH, bool address = false);
+        // The host's address searched beyond the local network, kept in the user folder.
+        void NetSetAddress(const std::string& address, bool save);
+        void NetFinishTyping(bool send);
+        void NetStartMatchTyping();     // Enter in a match: a chat line typed over the play (Q-022)
+        void NetSay(const std::string& text); // that line typed and sent (autoplay's `say`)
+        // Pause's "Message" in a match (touch screens: no Enter): the line on the screen's keyboard.
+        void NetStartPauseTyping(int viewportW, int viewportH);
+        void NetUpdateMatchKeyboard(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW, int viewportH);
+        void DrawNetMatchKeyboard(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
+        // The spectator (Q-022): on the Lost screen, watching another player still in the match.
+        [[nodiscard]] bool NetSpectating() const noexcept;
+        void NetWatch(int step);        // start watching, or the next (+1) / previous (-1) player
+        void NetStopWatching();
+        void NetSpectatorStep(float dt); // the world goes on under the watched one; the camera follows
+        void NetSendLiftSyncs();        // the host's lifts that began a stop this step (NetAfterStep)
+        // A world of the host's editor for the match (Q-022): chosen (index past the multiplayer
+        // worlds), sent in pieces, received.
+        void NetChooseWorld(int index);
+        // A dropped player back in the match (Q-022): the host takes him at his place, sends him the
+        // match and the world's changes; everyone has him back.
+        void NetTryRejoin(std::uint8_t gamerId, const GalaxyEggbert::Net::Message& hello);
+        void NetPeerBack(int slot, std::uint8_t gamerId);
+        void NetMarkLeft(int slot);
+        // Internet play (Q-022): the gamer services server typed and kept (used from the next start of
+        // the multiplayer), and the host's address and it saved in the user folder.
+        void NetSetServer(const std::string& typed);
+        void NetSaveAddresses() const;
+        void NetSendCustomWorld();
+        void NetReceiveWorldData(const GalaxyEggbert::Net::Message& m);
+        [[nodiscard]] bool NetHasLobbyWorld() const noexcept; // the lobby's world here (an editor's: arrived whole)
+        bool netWatchLeftWas_ = false, netWatchRightWas_ = false, netWatchTouchWas_ = false;
+        [[nodiscard]] bool NetTypingInMatch() const noexcept;
+        void NetNoticeKill(std::uint8_t killer, int victimSlot);
+        void NetTypedKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
+        void NetLeaveLobby();
+        bool NetHostGame();
+        bool NetJoinGame(int index);
+        void NetSetReady(bool ready);
+        void NetStartAsHost();
+        void NetTestStep(); // GALAXY_NET_TEST=host|join: the screens without a pointer
+        void StartNetMatch(int world);
+        // Around the step: the others' changes applied and a snapshot taken; then ours sent.
+        void NetBeforeStep();
+        void NetAfterStep();
+        void NetAgePeers(float dt);
+        void NetSendPose();
+        void NetCheckWin();
+        void NetDeclareWin();          // this player wins (the last survivor, or first when time is up)
+        [[nodiscard]] bool NetHostHoldsClock() const noexcept; // the host out, the others' time still running
+        void NetTimeUp();              // the host: the time limit reached, the ranks sent
+        void NetApplyTimeUp(const std::array<std::uint8_t, GalaxyEggbert::Net::kMaxPlayers>& places);
+        void NetSendDie(int livesLeft);
+        void NetSendLost();
+        void LeaveNetMatch();
+        void NetPhaseChanged(GalaxyEggbert::Def::GamePhase previous, GalaxyEggbert::Def::GamePhase next);
+        // Another player's aura (his shield, power or cloud, the original's m_netBlupiSec,
+        // decblock.cpp:1696-1715): where his sprite's centre is and his rank (the cloud's sparks' offset).
+        struct NetAura
+        {
+            Microsoft::Xna::Framework::Vector3 centre;
+            GalaxyEggbert::Def::SecretPower power = GalaxyEggbert::Def::SecretPower::None;
+            int rank = 0;
+        };
+        [[nodiscard]] std::vector<NetAura> NetPeerAuras() const;
+        // Between a peer's last two poses (0 the older, 1 the newer), as his Blupi is drawn.
+        [[nodiscard]] static float NetPoseBlend(const NetGame& n, std::size_t peer);
+        // His Blupi met by another's cloud (decblupi.cpp:3838-3893): electrocuted, the cloud gone.
+        void NetCheckCloudTouch();
+        // The other players' names over their heads (GalaxyEggbertGameDraw.cpp).
+        void DrawNetNames(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
+        [[nodiscard]] int NetSlotOf(std::uint8_t gamerId) const noexcept; // a gamer's lobby place, -1
+        // The match's results (Q-021): a death (and its killer's place), a player out; the lines
+        // shown on the win and lost screens and in the lobby; back to the lobby after a match.
+        void NetScoreDeath(int slot, std::uint8_t killer);
+        void NetScoreOut(int slot);
+        [[nodiscard]] std::vector<std::string> NetResultLines() const;
+        void NetLogResults() const;
+        [[nodiscard]] int NetPlaceOf(int slot) const;
+        void NetReturnToLobby();
+        // The other players' Blupis, in their colours (GalaxyEggbertGameScene.cpp).
+        void AppendSceneNetPlayers(std::vector<GalaxyEggbert::Game::SceneModel>& opaque,
+                                   std::vector<GalaxyEggbert::Game::SceneModel>& translucent);
+        // A copy of @p source in a team's colour (the editor's starts' RecolorPlayerStartPixel), cached;
+        // team 0 (yellow) is the texture itself.
+        Microsoft::Xna::Framework::Graphics::Texture2D* TeamTexture(int team,
+                                                                    Microsoft::Xna::Framework::Graphics::Texture2D* source);
+        // The real model's face for a clip at a time (BlupiFaceTexture() for his own).
+        Microsoft::Xna::Framework::Graphics::Texture2D* BlupiFaceFor(const std::string& clip, double seconds);
         // Naming a recording (2026-11-10): Name (mode 4), then a recorded position; the keyboard on
         // the screen (or the real one) types it; OK, Enter or a click off the keyboard keeps it
         // (RenameDemo()), Cancel or Escape leaves it.

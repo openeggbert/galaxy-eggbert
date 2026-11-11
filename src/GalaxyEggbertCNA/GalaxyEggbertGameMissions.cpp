@@ -126,6 +126,9 @@ namespace GalaxyEggbert::CNA
         state.keys = interaction_.Key1Count() + interaction_.Key2Count() + interaction_.Key3Count();
         state.dynamite = interaction_.DynamiteCount();
         state.vehicle = static_cast<int>(blupi_.GetVehicleMode());
+        state.power = static_cast<int>(GalaxyEggbert::Def::ToRaw(blupi_.GetSecretPower()));
+        state.netPaused = NetRemotePaused() ? 1 : 0;
+        state.netPlayers = NetOthersPresent();
         for (const auto& object : worldRuntime_.GetMobileObjects())
         {
             if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)
@@ -147,6 +150,12 @@ namespace GalaxyEggbert::CNA
             }
         }
         const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
+        if (autoplay_->TakeHashRequest()) NetLogWorldHash();
+        if (const auto said = autoplay_->TakeSayRequest(); !said.empty() && NetMatchActive())
+        {
+            NetStartMatchTyping();
+            NetSay(said);
+        }
         std::unordered_set<Keys> down;
         if (keys.up) down.insert(Keys::Up);
         if (keys.down) down.insert(Keys::Down);
@@ -156,6 +165,8 @@ namespace GalaxyEggbert::CNA
         if (keys.action) down.insert(Keys::Space);
         if (keys.crouch) down.insert(Keys::LeftShift);
         if (keys.lookUp) down.insert(Keys::RightShift);
+        if (keys.fire) down.insert(Keys::F);
+        if (keys.pause) down.insert(Keys::Escape);
         if (keys.letter >= 'a' && keys.letter <= 'z')
             down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
         autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);
@@ -670,7 +681,9 @@ namespace GalaxyEggbert::CNA
             StopVehicleMotorSound();
             pendingCheatLetters_.clear();
         }
+        const GamePhase previous = phase_;
         phase_ = next;
+        NetPhaseChanged(previous, next); // the network game's pause and abandon
         editorDevices_.Reset();
         editorCommandKeys_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)

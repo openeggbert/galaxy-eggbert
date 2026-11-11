@@ -1,0 +1,8 @@
+# tools/net_players.sh with NET_CUSTOM=<worlds3d/world011.vwr, absolute> (Q-022; custom.expect), the
+# host: plays a world of his editor (here a campaign world, not a multiplayer one), its bytes sent to
+# the other, who is ready once he has it whole; both start there (the yellow start: it has no other).
+until phase = Play max 7200
+log the match began
+wait 300
+expect phase = Play
+end

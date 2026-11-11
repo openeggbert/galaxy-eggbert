@@ -30,7 +30,8 @@ namespace GalaxyEggbert::Game
         };
         enum class Result : std::uint8_t { None, Edited, Done, Cancel };
 
-        void Layout(const QuadBatch::Rect& area)
+        // @p address: an address's keys ('.' and ':' in place of the space bar), for a host's.
+        void Layout(const QuadBatch::Rect& area, bool address = false)
         {
             keys_.clear();
             constexpr float kGap = 4.0f;
@@ -58,11 +59,15 @@ namespace GalaxyEggbert::Game
             fourth.insert(fourth.begin(), {Key{Kind::Shift, 0, {}}, 1.5f});
             fourth.push_back({Key{Kind::Backspace, 0, {}}, 1.5f});
             row(3, fourth);
-            row(4, {{Key{Kind::Cancel, 0, {}}, 2.5f}, {Key{Kind::Space, ' ', {}}, 5.0f}, {Key{Kind::Done, 0, {}}, 2.5f}});
+            if (address)
+                row(4, {{Key{Kind::Cancel, 0, {}}, 2.5f}, {Key{Kind::Char, '.', {}}, 2.5f}, {Key{Kind::Char, ':', {}}, 2.5f},
+                        {Key{Kind::Done, 0, {}}, 2.5f}});
+            else
+                row(4, {{Key{Kind::Cancel, 0, {}}, 2.5f}, {Key{Kind::Space, ' ', {}}, 5.0f}, {Key{Kind::Done, 0, {}}, 2.5f}});
         }
 
         // Starts typing @p text: Shift on when it is empty (a name begins with a capital).
-        void Begin(const std::string& text) noexcept { shift_ = text.empty(); }
+        void Begin(const std::string& text, bool capital = true) noexcept { shift_ = capital && text.empty(); }
 
         [[nodiscard]] const std::vector<Key>& Keys() const noexcept { return keys_; }
         [[nodiscard]] std::vector<QuadBatch::Rect> Rects() const
@@ -138,8 +143,9 @@ namespace GalaxyEggbert::Game
 
         // A key of the real keyboard typed into @p text: letters (@p shift: a capital), digits, the
         // number pad's, space and '-'; Backspace deletes, Enter is Done.
+        // @p address: '.' and ':' too (an address's), no space.
         static Result TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift, std::string& text,
-                              std::size_t maxLength)
+                              std::size_t maxLength, bool address = false)
         {
             using Microsoft::Xna::Framework::Input::Keys;
             const int k = static_cast<int>(key);
@@ -156,8 +162,12 @@ namespace GalaxyEggbert::Game
                 c = static_cast<char>('0' + (k - static_cast<int>(Keys::D0)));
             else if (k >= static_cast<int>(Keys::NumPad0) && k <= static_cast<int>(Keys::NumPad9))
                 c = static_cast<char>('0' + (k - static_cast<int>(Keys::NumPad0)));
-            else if (key == Keys::Space)
+            else if (key == Keys::Space && !address)
                 c = ' ';
+            else if (address && (key == Keys::OemPeriod || key == Keys::Decimal))
+                c = '.';
+            else if (address && key == Keys::OemSemicolon && shift)
+                c = ':';
             else if (key == Keys::OemMinus || key == Keys::Subtract)
                 c = '-';
             if (c == 0) return Result::None;

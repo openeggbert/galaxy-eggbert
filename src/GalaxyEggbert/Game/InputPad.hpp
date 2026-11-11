@@ -66,6 +66,34 @@ namespace GalaxyEggbert::Game
         std::optional<QuadBatch::Rect> focus;
     };
 
+    // A screen of buttons and lines of text over the menu (2026-11-10, the network game's screens:
+    // its games on the network and its lobby, plans/plan_gemultiplayer.md). Rects in screen pixels
+    // (InputPad::PanelRect() lays them out in the 640x480 reference space, centred, as the demo
+    // positions); a button drawn held while @p held, faint and dead when not @p enabled.
+    struct PanelButton
+    {
+        QuadBatch::Rect rect{0.0f, 0.0f, 0.0f, 0.0f};
+        std::string label;
+        float size = 0.6f; // the label's text scale
+        bool held = false;
+        bool enabled = true;
+        bool row = false;  // a list's row: the label at its left, on the panel's calm ground
+    };
+    struct PanelLine
+    {
+        std::string text;
+        float x = 0.0f, y = 0.0f; // screen pixels: the left (or the centre) and the top
+        float size = 0.45f;
+        bool centred = false;
+        bool faint = false;
+    };
+    struct PanelInput
+    {
+        int button = -1;         // the button released over (its index)
+        int keyboardKey = -1;    // the keyboard on the screen: its key pressed
+        bool outsideClick = false; // the keyboard up: a click off it
+    };
+
     class InputPad
     {
     public:
@@ -669,6 +697,23 @@ namespace GalaxyEggbert::Game
         void DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds);
 
+        // The network game's screens (PanelButton's comment): the panel, a title, its buttons and
+        // lines, the keyboard on the screen while a line is typed (only its keys answer then), the
+        // arrows' choice lit. Released over the same button, as the menu's.
+        [[nodiscard]] static QuadBatch::Rect PanelRect(float x0, float y0, float x1, float y1, int viewportW,
+                                                       int viewportH) noexcept;
+        [[nodiscard]] PanelInput UpdatePanel(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                             const std::vector<PanelButton>& buttons,
+                                             const ScreenKeyboard* keyboard = nullptr) noexcept;
+        void DrawPanel(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                       const std::string& title, const std::vector<PanelButton>& buttons,
+                       const std::vector<PanelLine>& lines, const ScreenKeyboard* keyboard = nullptr,
+                       std::optional<QuadBatch::Rect> focus = std::nullopt);
+        // The width of @p text at @p size, in screen pixels (for laying lines out).
+        [[nodiscard]] static float PanelTextWidth(const std::string& text, float size, int viewportH) noexcept;
+        // The menu's Multiplayer button (the network game, not on the web): shown when set.
+        void SetMultiplayerShown(bool shown) noexcept { multiplayerShown_ = shown; }
+
         // Init phase / gamer-select menu (plan.md MENU-006..020),
         // verified directly against `Game1.cpp`'s real Init rendering/
         // input dispatch (a dedicated research pass). Real init.png
@@ -742,6 +787,8 @@ namespace GalaxyEggbert::Game
             bool galaxyPressed = false;
             // Galaxy's own (2026-11-09): the demo positions from the menu (Export, Import, Original).
             bool demosPressed = false;
+            // Galaxy's own (2026-11-10, the owner's network game): the games on the network.
+            bool multiplayerPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
@@ -892,6 +939,8 @@ namespace GalaxyEggbert::Game
         // needs them.
         int activeControl_ = -1;
         int demoSlotsControl_ = -1; // the demo positions' control held down (UpdateDemoSlots)
+        int panelControl_ = -1;     // the network screens' button (or 100 + key) held down
+        bool multiplayerShown_ = false;
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;

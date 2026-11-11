@@ -1,0 +1,12 @@
+# tools/net_two_players.sh with NET_WORLD=205, the one who joins (orange, start (49, 60)): walks to
+# (52.5, 47), beside the charge, and waits there; the host comes with its cloud and he is
+# electrocuted (ACTION 57): a life lost.
+until phase = Play max 7200
+wait 30
+go 52.5 55 max 900
+go 52.5 47.5 max 900
+mortal
+until lives < 10 max 1500
+expect lives < 10
+wait 240
+end

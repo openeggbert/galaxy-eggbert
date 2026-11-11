@@ -1,0 +1,6 @@
+# tools/net_two_players.sh, the host (yellow, world 201): stands at its start while the other one
+# takes the tank (57, 46) and leaves it elsewhere: the tank taken is gone here (ObjectDelete), the
+# tank left appears here (ObjectStart), decblupi.cpp:3285-3300.
+until phase = Play max 7200
+wait 1500
+end

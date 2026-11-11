@@ -3,6 +3,7 @@
 #include <Microsoft/Xna/Framework/Audio/SoundState.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 
@@ -76,16 +77,45 @@ namespace GalaxyEggbert::Game
 
     void Sound::Play(GalaxyEggbert::Def::SoundChannel channel, bool loop)
     {
+        Note(channel, loop, listenerX_, listenerY_, listenerZ_);
         PlayChannel(channel, loop, true);
     }
 
     void Sound::PlayAt(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z, bool loop)
     {
+        Note(channel, loop, x, y, z);
         if (!Audible(x - listenerX_, y - listenerY_, z - listenerZ_))
         {
             return;
         }
         PlayChannel(channel, loop, true);
+    }
+
+    void Sound::PlayRemote(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z)
+    {
+        auto* const outbox = outbox_;
+        outbox_ = nullptr;
+        if (Audible(x - listenerX_, y - listenerY_, z - listenerZ_)) PlayChannel(channel, false, false);
+        outbox_ = outbox;
+    }
+
+    void Sound::Note(GalaxyEggbert::Def::SoundChannel channel, bool loop, float x, float y, float z)
+    {
+        if (outbox_ == nullptr || loop) return;
+        // Not what the hidden Blupi's filter keeps from playing (it is not heard here either).
+        if (blupiHidden_ && MutedWhileHidden(channel)) return;
+        const int idx = static_cast<int>(GalaxyEggbert::Def::ToRaw(channel));
+        if (idx < 0 || idx >= kNumChannels) return;
+        const Channel& ch = channels_[static_cast<std::size_t>(idx)];
+        if (!ch.effect) return;
+        const auto now = std::chrono::steady_clock::now();
+        auto& until = notedUntil_[static_cast<std::size_t>(idx)];
+        if (channel != GalaxyEggbert::Def::SoundChannel::SoundChannel10 && now < until) return;
+        // As long as it plays here: its length, shortened by the table's pitch (octaves).
+        const float pitch = std::max(0.0f, kVolumePitch[static_cast<std::size_t>(idx) * 2 + 1]);
+        const double seconds = ch.effect->getDurationProperty().getTotalSecondsProperty() / std::pow(2.0, pitch);
+        until = now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(seconds));
+        outbox_->push_back({channel, false, x, y, z});
     }
 
     void Sound::PlayDirect(GalaxyEggbert::Def::SoundChannel channel, bool loop)
@@ -167,6 +197,13 @@ namespace GalaxyEggbert::Game
         if (idx < 0 || idx >= kNumChannels)
         {
             return;
+        }
+        // Noted only for a sound noted as still playing (a loop's stop is his own, as its start).
+        auto& until = notedUntil_[static_cast<std::size_t>(idx)];
+        if (outbox_ != nullptr && std::chrono::steady_clock::now() < until)
+        {
+            until = {};
+            outbox_->push_back({channel, true, listenerX_, listenerY_, listenerZ_});
         }
         Channel& ch = channels_[static_cast<std::size_t>(idx)];
         if (ch.instance)

@@ -375,3 +375,111 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
 11. **Speed and cheats (Q11):** as the original allowed them in a network game (to be found in
     blupi_recon).
 12. **Chat:** in the first version already.
+
+## Q-020 — multiplayer: acceptance of branch `multiplayer` (2026-11-10) — item 2 ANSWERED: merged into `develop` 2026-11-11
+
+The network game is implemented on branch `multiplayer` (worktree `../galaxy-eggbert-multiplayer`;
+`docs/handbook/09-multiplayer.md`, BD-0120, `plans/plan_gemultiplayer.md`'s status). Checked on one
+machine with two instances (screens, chat, start, the rules, bombs, shots, vehicles, pause, leaving,
+the win); single player unchanged (CTest, demo replays). For the owner:
+
+1. **A game between real machines.** Two PCs on one network, or a PC and the phone (an arm64
+   release APK of the branch is built: `android/app/build/outputs/apk/release/` in the worktree;
+   it replaces the installed Galaxy Eggbert, same signature, data kept). Does it play as expected?
+2. **Merge into `develop`?** On acceptance the branch is merged (Q-019 Q10); the AI policy follows.
+   **Answered 2026-11-11: the owner had it merged into `develop`.**
+3. **More worlds?** (Answered by Q-021: 206-212 built 2026-11-11.) 201-205 exist (machine arena, machine towers, toy box, metal works, stone
+   courtyard: the five asked for). SB2 has 206-212 too (metal 206/210, stone 207/209, library 208,
+   palace 211, clods 212): add more?
+4. **Speed and cheats:** SB2 does not restrict them in a network game (each machine its own); the
+   same here. Keep it so?
+
+## Q-021 — multiplayer: the improvements after the first version (2026-11-11, asked interactively) — ANSWERED, implemented on branch `multiplayer` (BD-0120)
+
+The owner, away from the computer (the real-machine test of Q-020 waits), asked what can still be
+improved. Answers (all options taken):
+
+1. **What SB2's network game has and the first version did not** — all three:
+   - the other players' sounds (SB2 `PK_PLAYSOUND`/`PK_STOPSOUND`, decnet.cpp:172-193,
+     decblock.cpp:2378, decmove.cpp:183-190);
+   - the host's lift synchronisation (`PK_ASCENSEURSTART`/`END`, decmove.cpp:571-630, 283);
+   - the others' power and cloud shown (`m_netBlupiSec`, decblock.cpp:1696-1715) and the cloud's
+     touch (`NetPlayerCollide`, decblupi.cpp:3838-3848, `PK_STOPCLOUD`).
+2. **Worlds:** all seven more, 206-212 (Q-020 point 3 answered).
+3. **Galaxy additions (not in SB2, each a BD entry):** names above the players, a rematch with the
+   same players (back to the lobby after a match), statistics at the end.
+4. **Reliability:** a test on a bad network (simulated loss and delay), a player whose network
+   drops seen as gone after a few seconds, joining by the host's IP address. CNA changes go to the
+   `cna` Claude agent working on CNA (the owner: "na cna pracuje jiny claude agent cna. jemu posilej
+   co potrebujes v cna upravit"); CNA stays read-only for this repository.
+
+## Q-022 — multiplayer: the third round of improvements (2026-11-11, asked interactively) — ANSWERED, in progress on branch `multiplayer`
+
+The owner, still away from the computer, asked again what can be improved and was asked. Answers
+(all options taken; the branch waits for the owner's own test before any merge, Q-020):
+
+1. **Tests and reliability:** a test with three and four players (only two had ever run), a pause
+   test (autoplay to press Escape), robustness against broken packets (fuzzing the decoder), a long
+   match with random play checking that the players' worlds do not drift apart.
+2. **Galaxy additions (none in SB2, each a BD entry):** a spectator after being knocked out
+   (follow the others until the match ends), messages during the match (who killed whom, who left,
+   who lost the last life; chat during the match), match settings in the lobby (lives, a time
+   limit), the editor's own worlds (the host sends the world to the others; SB2 had no map
+   transfer).
+3. **Content and platforms:** Speedy Blupi 1's network worlds 101-110 (built like 201-212 from the
+   originals' identity), rejoining a running match after a drop, a Windows build with multiplayer,
+   internet play without port forwarding (CNA PlayerMatch with the relay server).
+4. **The branch:** wait for the owner's test; no merge into `develop`, no push.
+
+**Q-022 point 3, Speedy Blupi 1's worlds 101-110: not built (2026-11-11), open for the owner.**
+SB1's network worlds are SB2's 201-210. The comparison read Speedy Eggbert 1's
+`DATA/WORLD101-110.BLP` against SB2's `WORLD201-210.BLP`, both from `../blupi_recon/build/freeapi-*`:
+
+- **Identical in eight of ten:** the same decor cell for cell, the same objects at the same places,
+  the same four starts, the same music and region.
+- **103:** four cells differ.
+- **108:** SB2 has 23 ammunition packs, 19 helicopters and one lift fewer.
+- **210:** SB2 widened it (1154 cells) and added a shield and two bombs of each team.
+
+Galaxy's 201-210 are built from that same identity, so a "101-110" would be the same worlds under
+other numbers. Options:
+
+- (a) Leave it: SB1's worlds are already in the game as 201-210.
+- (b) More worlds of Galaxy's own design (none in SB1 or SB2), as many as wanted.
+- (c) 101-110 as variants of 201-210 (another layout of the same theme), only to have twenty-two
+  numbers.
+
+The recommendation is (a), with (b) if more worlds are wanted.
+
+**Q-022 point 3, internet play without port forwarding: what only the owner can decide (2026-11-11), OPEN.**
+CNA's PlayerMatch sessions go through the relay of `cna-gamer-services-server` (libcna), so no
+router needs forwarding. That needs:
+
+1. **A server on the internet:** a machine with a public name, a TLS certificate (Let's Encrypt or
+   similar), and the server (C++, Boost, OpenSSL, SQLite) running on one TCP port (47831 in its
+   README).
+2. **Accounts:** the server has no self-registration. The administrator creates every player's
+   account (`cna-gamer-services-admin <db> user <name> <gamertag>`, password on stdin) and a
+   title `galaxy-eggbert`.
+3. **Galaxy's side**, which can be built and tried without the public server on this machine (the
+   server on loopback, two instances):
+   - a server address in the multiplayer list beside the host address;
+   - sign-in with an account through CNA's Guide;
+   - games found and joined over the internet as on the local network.
+
+Questions:
+
+- (a) Who runs the server, and where (a VPS, a home machine with one forwarded port)?
+- (b) Its address, once there is one.
+- (c) Who creates the accounts, for which players?
+
+Until then the work goes on with the loopback server.
+
+**Q-022's open points, ANSWERED (2026-11-11, asked interactively).**
+
+- **SB1's worlds:** none built as such. Instead five more multiplayer worlds of Galaxy's own design,
+  213-217 (101-110 stay free).
+- **The internet server:** prepare its deployment, a guide and a script for a Linux server (TLS,
+  systemd, the title, the accounts). The owner runs it on a machine of his; its address comes later.
+- **Windows:** a zip to try on a real Windows machine.
+- **The branch:** it still waits for the owner's own test (Q-020).

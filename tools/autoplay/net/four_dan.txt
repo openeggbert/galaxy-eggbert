@@ -1,0 +1,12 @@
+# tools/net_players.sh, four players, Dan (green, start (61, 62)): up the hall west of the east
+# balcony (x 59) into the orange bomb (59, 38), Ben's though Ben is out by then; knocked out.
+until phase = Play max 7200
+log the match began
+wait 240
+mortal
+go 59 60 max 600
+go 59 38 max 3000 until phase = Lost
+until phase = Lost max 600
+expect phase = Lost
+wait 120
+end

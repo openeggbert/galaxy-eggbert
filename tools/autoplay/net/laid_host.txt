@@ -1,0 +1,11 @@
+# tools/net_two_players.sh, the host (yellow, world 201): once the other one has laid a bomb of his
+# team at (57, 42) -- sent to this machine as ObjectSpawned -- walks east along z 42 into it, and
+# dies of it here (another team's bomb, decblupi.cpp:3733-3745): a life lost.
+until phase = Play max 7200
+wait 600
+go 45 42 max 1200
+mortal
+go 60 42 max 1200 until lives < 10
+expect lives < 10
+wait 240
+end

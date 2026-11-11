@@ -34,6 +34,8 @@ MOVE_OBJECT_TYPE = 1
 PLATE_ROTATION_TYPE = 2
 BIG_DECOR_TYPE = 3
 HINT_ZONE_TYPE = 4
+PLAYER_START_TYPE = 7          # PlayerStart.hpp: the orange/blue/green starts' cell (a colour mask)
+PLAYER_START_HEADING_TYPE = 8  # each colour's two-bit heading at its start's cell
 
 
 # The original's creatures (../mobile-eggbert/worlds, all 1,000-odd records; BD-0016, the owner's
@@ -237,6 +239,28 @@ class World:
             for w in range(width):
                 cx, cz = x + dx * i + px * w, z + dz * i + pz * w
                 self.fill(cx, y, cz, cx, y + i, cz, block)
+
+    # ---- player starts (PlayerStart.hpp) -----------------------------------------------------
+    def start(self, color: int, x: int, y: int, z: int, turns: int = 0):
+        """A player's start: colour 0 yellow (the header's spawn, the one a game alone uses),
+        1 orange, 2 blue, 3 green (a network game's teams); `turns` quarter turns (0 faces -Z)."""
+        if not 0 <= color <= 3 or not 0 <= turns <= 3:
+            raise ValueError("start colour 0-3, turns 0-3")
+        self._check(x, y, z)
+        if color == 0:
+            self.spawn = (x, y, z)
+        else:
+            self._or_byte(x, y, z, PLAYER_START_TYPE, 1 << color)
+        if turns:
+            self._or_byte(x, y, z, PLAYER_START_HEADING_TYPE, turns << (2 * color))
+
+    def _or_byte(self, x, y, z, mtype: int, bits: int):
+        cell = self.records.setdefault((x, y, z), [])
+        for i, (t, payload) in enumerate(cell):
+            if t == mtype:
+                cell[i] = (t, bytes([payload[0] | bits]))
+                return
+        cell.append((mtype, bytes([bits])))
 
     # ---- objects --------------------------------------------------------------------------
     def _record(self, x, y, z, mtype: int, payload: bytes):

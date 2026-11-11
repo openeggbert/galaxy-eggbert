@@ -1,0 +1,8 @@
+# tools/net_players.sh, the time limit, Cid (blue): stays at his start; ten lives but no kill:
+# second when the time is up.
+until phase = Play max 7200
+log the match began
+until phase = Lost max 3600
+expect phase = Lost
+wait 120
+end

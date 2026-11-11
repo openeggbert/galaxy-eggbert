@@ -1,0 +1,11 @@
+# tools/net_two_players.sh, the one who joins (orange, world 201, GALAXY_NET_LIVES=1): walks west
+# along the north wall into the yellow team's bombs (x 41-44): another team's bomb kills at a touch
+# (decblupi.cpp:3733-3745); he starts again where he last stood safely (decblupi.cpp:4078), walks
+# on into the next one, and with no life left is knocked out (PK_LOST).
+until phase = Play max 7200
+log the match began
+wait 30
+mortal
+go 40 38 max 3000 until phase = Lost
+expect phase = Lost
+end

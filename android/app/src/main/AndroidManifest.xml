@@ -20,6 +20,11 @@
     <!-- Vibration for haptic feedback if ever needed -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- The network game (CNA SystemLink over UDP): the session itself, and the multicast lock
+         that keeps LAN discovery's broadcasts reaching the phone in Wi-Fi power save. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"

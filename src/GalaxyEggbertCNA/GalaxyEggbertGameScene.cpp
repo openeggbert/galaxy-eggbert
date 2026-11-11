@@ -4,6 +4,7 @@
 
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
+#include "NetGame.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -118,7 +119,9 @@ namespace GalaxyEggbert::CNA
             }
             // Blupi drawn opaque now, translucent (the drink's Hide, a ghost) over the finished scene.
             const bool translucentBlupi = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()) < 1.0f;
-            if (!translucentBlupi)
+            // A spectator's own Blupi is out of the match: not drawn (Q-022).
+            const bool ownBlupi = !NetSpectating();
+            if (!translucentBlupi && ownBlupi)
             {
                 AppendSceneBlupi(frame.opaqueModels);
             }
@@ -131,10 +134,12 @@ namespace GalaxyEggbert::CNA
                 AppendSceneObjectModels(frame, soulDrawnIn3D);
             }
             AppendSceneDecals(frame);
-            if (translucentBlupi)
+            if (translucentBlupi && ownBlupi)
             {
                 AppendSceneBlupi(frame.translucentModels);
             }
+            // The other players of a network game, in their colours.
+            AppendSceneNetPlayers(frame.opaqueModels, frame.translucentModels);
             AppendSceneEditorStarts(frame.editorStarts);
         }
         AppendSceneBillboards(frame);
@@ -548,6 +553,14 @@ namespace GalaxyEggbert::CNA
             body.tint = gluePuddle ? Vector3(0.20f, 0.32f, 0.03f) : Vector3(kCharredShade, kCharredShade, kCharredShade);
         }
         body.partTextures = PartTextures(*blupiModel_, BlupiFaceTexture(), blupiFacePart_);
+        if (const int team = NetTeam(); team != 0 && blupiModelIsReal_)
+        {
+            // His team's colour in a network game (SB2's coloured Blupi channels, decor.cpp:211-224).
+            Texture2D* face = BlupiFaceTexture();
+            body.partTextures.clear();
+            for (const auto& part : blupiModel_->Parts)
+                body.partTextures.push_back(TeamTexture(team, face && part.Name == blupiFacePart_ ? face : part.Texture));
+        }
         models.push_back(std::move(body));
 
         // The vehicle he rides in this clip (helicopter, jeep, tank, overcraft, skateboard): its own
@@ -812,7 +825,14 @@ namespace GalaxyEggbert::CNA
                                                 obj.posStartZ + WorldRuntime::kWorldCenterZ);
             ObjectTextureSource sheet{};
             int icon = 0;
-            const ObjectModelPose* pose = ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
+            const bool sprite = ObjectSprite(obj, sheet, icon);
+            // A network game's bombs each in its team's colour (SB2 draws them on channel 2 and
+            // CHBLUPI1-3, decmove.cpp:747-765): the yellow one turned orange, blue or green. Alone
+            // 201-203 stay Mobile Eggbert's blupi1.png ones.
+            const int typeNumber = static_cast<int>(obj.type);
+            const int teamBomb = NetMatchActive() && typeNumber >= 201 && typeNumber <= 203 ? typeNumber - 200 : 0;
+            if (teamBomb != 0 && sheet == ObjectTextureSource::Blupi1) sheet = ObjectTextureSource::Blupi;
+            const ObjectModelPose* pose = sprite ? objectModelTable_.Find(sheet, icon) : nullptr;
             if (pose != nullptr && sheet == ObjectTextureSource::ObjectM && GalaxyEggbert::Game::IsClayBridgeIcon(icon))
             {
                 // ObjectType52 writes every visible frame to the grid, including 367-372. Its terrain
@@ -854,7 +874,12 @@ namespace GalaxyEggbert::CNA
                     turn += 1.57079632f *
                             static_cast<float>(CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
                 }
-                drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ, turn);
+                auto& drawn = drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ, turn);
+                if (teamBomb != 0 && drawn.model != nullptr)
+                {
+                    drawn.partTextures.clear();
+                    for (const auto& part : drawn.model->Parts) drawn.partTextures.push_back(TeamTexture(teamBomb, part.Texture));
+                }
                 if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56 && dynamiteSparks_.count(icon) != 0)
                 {
                     // Centre of the terminal ring in the shipped dynamite_rd_6e6e00 mesh at Frames=0
@@ -1177,6 +1202,92 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    Texture2D* GalaxyEggbertGame::TeamTexture(int team, Texture2D* source)
+    {
+        // The editor's player starts and a network game's teams: the original yellow material in
+        // the colour (RecolorPlayerStartPixel), a copy made once per texture.
+        if (!source || team <= 0 || team > 3) return source;
+        auto& textures = editorStartTextures_[static_cast<std::size_t>(team - 1)];
+        if (const auto found = textures.find(source); found != textures.end()) return found->second.get();
+        using Microsoft::Xna::Framework::Color;
+        const int width = source->getWidthProperty(), height = source->getHeightProperty();
+        std::vector<Color> pixels(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
+        source->GetData(pixels.data(), static_cast<int>(pixels.size()));
+        const auto color = static_cast<PlayerStartColor>(team);
+        for (auto& pixel : pixels)
+        {
+            std::uint8_t r = pixel.getRProperty(), g = pixel.getGProperty(), b = pixel.getBProperty();
+            GalaxyEggbert::Editor::RecolorPlayerStartPixel(color, r, g, b);
+            pixel = Color(r, g, b, pixel.getAProperty());
+        }
+        auto texture = std::make_unique<Texture2D>(getGraphicsDeviceProperty(), width, height);
+        texture->SetData(pixels.data(), static_cast<int>(pixels.size()));
+        auto* result = texture.get();
+        textures.emplace(source, std::move(texture));
+        return result;
+    }
+
+    void GalaxyEggbertGame::AppendSceneNetPlayers(std::vector<SceneModel>& opaque, std::vector<SceneModel>& translucent)
+    {
+        // A network game's other Blupis (the original draws them only, decblock.cpp:1252-1282): each
+        // as his own machine draws him (Pose: his model's matrix, clip and time), moved between his
+        // last two poses, in his team's colour, with the vehicle he rides.
+        if (!NetMatchActive() || !blupiModelLoaded_ || !blupiEffect_ || !blupiModel_ ||
+            phase_ == GalaxyEggbert::Def::GamePhase::Editor)
+            return;
+        const auto& n = *net_;
+        for (std::size_t index = 0; index < n.peers.size(); ++index)
+        {
+            const auto& peer = n.peers[index];
+            const auto& p = peer.pose;
+            // Hidden by the drink, he is not drawn on the others' screens at all (SEC_HIDE,
+            // decblock.cpp:1696).
+            if (!peer.present || !peer.hasPose || (p.flags & GalaxyEggbert::Net::kPoseHidden) != 0 ||
+                p.aura == GalaxyEggbert::Def::ToRaw(GalaxyEggbert::Def::SecretPower::Hide) || p.clip >= n.clipNames.size())
+                continue;
+            const std::string& clip = n.clipNames[p.clip];
+            if (blupiModel_->Clips.count(clip) == 0) continue;
+            const auto& q = peer.previous;
+            const float t = NetPoseBlend(n, index);
+            const auto lerp = [t](float a, float b) { return a + (b - a) * t; };
+            SceneModel body;
+            body.model = blupiModel_.get();
+            body.clip = clip;
+            body.seconds = static_cast<double>(p.clipSeconds) + std::min(peer.age, 0.25f);
+            body.world = Matrix(p.world[0], p.world[1], p.world[2], 0.0f, p.world[3], p.world[4], p.world[5], 0.0f,
+                                p.world[6], p.world[7], p.world[8], 0.0f, lerp(q.world[9], p.world[9]),
+                                lerp(q.world[10], p.world[10]), lerp(q.world[11], p.world[11]), 1.0f);
+            body.alpha = static_cast<float>(p.alpha) / 255.0f;
+            body.translucent = body.alpha < 1.0f;
+            if ((p.flags & (GalaxyEggbert::Net::kPoseCharred | GalaxyEggbert::Net::kPoseGlued)) != 0)
+            {
+                body.tinted = true;
+                body.tint = (p.flags & GalaxyEggbert::Net::kPoseGlued) != 0 ? Vector3(0.20f, 0.32f, 0.03f)
+                                                                            : Vector3(0.07f, 0.07f, 0.07f);
+            }
+            Texture2D* face = BlupiFaceFor(clip, body.seconds);
+            for (const auto& part : blupiModel_->Parts)
+                body.partTextures.push_back(TeamTexture(peer.team, face && part.Name == blupiFacePart_ ? face : part.Texture));
+            auto& bucket = body.translucent ? translucent : opaque;
+            const Matrix world = body.world;
+            const float alpha = body.alpha;
+            const double seconds = body.seconds;
+            bucket.push_back(std::move(body));
+            for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+            {
+                if (vehicle->Clips.find(clip) == vehicle->Clips.end()) continue;
+                SceneModel ride;
+                ride.model = vehicle.get();
+                ride.clip = clip;
+                ride.seconds = seconds;
+                ride.world = world;
+                ride.alpha = alpha;
+                ride.translucent = alpha < 1.0f;
+                bucket.push_back(std::move(ride));
+            }
+        }
+    }
+
     void GalaxyEggbertGame::AppendSceneEditorStarts(std::vector<SceneModel>& models)
     {
         // The editor's player starts: Blupi standing, in the start's colour, the selected colour last.
@@ -1200,23 +1311,7 @@ namespace GalaxyEggbert::CNA
         for (const auto& start : starts)
         {
             const auto coloredTexture = [&](Texture2D* source) -> Texture2D* {
-                if (!source || start.color == PlayerStartColor::Yellow) return source;
-                auto& textures = editorStartTextures_[static_cast<int>(start.color) - 1];
-                if (const auto found = textures.find(source); found != textures.end()) return found->second.get();
-                const int width = source->getWidthProperty(), height = source->getHeightProperty();
-                std::vector<Color> pixels(static_cast<std::size_t>(width) * height);
-                source->GetData(pixels.data(), static_cast<int>(pixels.size()));
-                for (auto& pixel : pixels)
-                {
-                    std::uint8_t r = pixel.getRProperty(), g = pixel.getGProperty(), b = pixel.getBProperty();
-                    GalaxyEggbert::Editor::RecolorPlayerStartPixel(start.color, r, g, b);
-                    pixel = Color(r, g, b, pixel.getAProperty());
-                }
-                auto texture = std::make_unique<Texture2D>(device, width, height);
-                texture->SetData(pixels.data(), static_cast<int>(pixels.size()));
-                auto* result = texture.get();
-                textures.emplace(source, std::move(texture));
-                return result;
+                return TeamTexture(static_cast<int>(start.color), source);
             };
             SceneModel model;
             model.model = blupiModel_.get();
@@ -1252,9 +1347,10 @@ namespace GalaxyEggbert::CNA
         // element.png: the MoveObjects shown as billboards (ObjectDefinitionRegistry's Element source),
         // each on its per-instance phase; the pieces flying away without a model; his death sprite,
         // aura and smoke; then the drink's bubbles.
+        const auto netAuras = NetPeerAuras();
         if (objectEffect_ &&
             (!objects.empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes ||
-             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None))
+             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None || !netAuras.empty()))
         {
             SceneBillboardBatch batch;
             batch.sheet = SceneSheet::Element;
@@ -1339,6 +1435,31 @@ namespace GalaxyEggbert::CNA
                     add(kMagicLoop[auraFrame % 5], 0.0f);
                 }
             }
+            // The other players' shields and powers, every frame (decblock.cpp:1700-1710: no blink).
+            for (const auto& aura : netAuras)
+            {
+                static constexpr int kShieldBlupi[16] = {144, 145, 146, 147, 148, 149, 150, 151,
+                                                         266, 267, 268, 269, 270, 271, 272, 273};
+                static constexpr int kShieldLoop[5] = {274, 275, 276, 277, 278};
+                static constexpr int kMagicLoop[5] = {152, 153, 154, 155, 156};
+                const int auraFrame = worldRuntime_.GetAnimPhase() / 2;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const auto add = [&](int icon, float raise)
+                {
+                    batch.quads.push_back(Quad(aura.centre + behind + Vector3(0.0f, raise, 0.0f),
+                                               Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
+                                               Uv(GetElementIconUv(icon))));
+                };
+                if (aura.power == GalaxyEggbert::Def::SecretPower::Shield)
+                {
+                    add(kShieldBlupi[auraFrame % 16], 2.0f / 64.0f);
+                    add(kShieldLoop[auraFrame % 5], 0.0f);
+                }
+                else if (aura.power == GalaxyEggbert::Def::SecretPower::Power)
+                {
+                    add(kMagicLoop[auraFrame % 5], 0.0f);
+                }
+            }
             // The smoke over his heap of ash (46/47, CharredBlupi.hpp): the icon's rows above the heap,
             // its bottom where the sprite's would be over the model's feet.
             if (const auto charred = BlupiCharredShape(); charred.smokes)
@@ -1418,7 +1539,10 @@ namespace GalaxyEggbert::CNA
         }
 
         // explo.png: the explosion channel's MoveObjects, and the Cloud's sparks round him.
-        if (exploEffect_ && (!objects.empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud))
+        const bool netCloud = std::any_of(netAuras.begin(), netAuras.end(), [](const NetAura& aura) {
+            return aura.power == GalaxyEggbert::Def::SecretPower::Cloud;
+        });
+        if (exploEffect_ && (!objects.empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud || netCloud))
         {
             SceneBillboardBatch batch;
             batch.sheet = SceneSheet::Explo;
@@ -1432,6 +1556,18 @@ namespace GalaxyEggbert::CNA
                 {
                     batch.quads.push_back(Quad(centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
                                                Uv(GetExploIconUv(48 + (worldRuntime_.GetAnimPhase() + k) % 6))));
+                    batch.quads.back().glow = kShiningSpriteGlow;
+                }
+            }
+            // The other players' clouds: (i + j + m_time) % 6 + 48 (decblock.cpp:1711-1718).
+            for (const auto& aura : netAuras)
+            {
+                if (aura.power != GalaxyEggbert::Def::SecretPower::Cloud) continue;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                for (int k = 0; k < 3; ++k)
+                {
+                    batch.quads.push_back(Quad(aura.centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
+                                               Uv(GetExploIconUv(48 + (aura.rank + k + worldRuntime_.GetAnimPhase()) % 6))));
                     batch.quads.back().glow = kShiningSpriteGlow;
                 }
             }

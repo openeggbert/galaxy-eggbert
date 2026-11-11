@@ -1,0 +1,9 @@
+# tools/net_players.sh, the time limit (Galaxy's, Q-022; NET_SECONDS=40, world 201; time.expect), the
+# host Ann (yellow): stays at her start. When the time is up she and Cid have their ten lives, but she
+# has a kill (Ben on her bomb): she alone is first and wins.
+until phase = Play max 7200
+log the match began
+until phase = Win max 3600
+expect phase = Win
+wait 60
+end

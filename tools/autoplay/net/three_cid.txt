@@ -1,0 +1,10 @@
+# tools/net_players.sh, three players, Cid (blue, start (39, 62)): held by Ben's pause too, then
+# leaves the match (the game closed: the others see him gone and play on).
+until phase = Play max 7200
+log the match began
+until netpause = 1 max 1800
+expect netpause = 1
+until netpause = 0 max 1800
+wait 120
+log leaving
+end

@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
 ## Versioning: 0.1.0, not released (2026-11-11, the owner) — done
 
@@ -58,6 +58,81 @@ review of R5 (D11 models) and R6 (a human play pass), and of the licence questio
   `custom_00N.vwr.tmp` goes): Enter in the editor showed the two NOT SAVED lines, the game ran on
   and the file stayed byte for byte its backup; a new slot showed "Not created: Cannot open world
   file for writing" under the slots and stayed empty.
+
+
+## Multiplayer (2026-11-10, owner Q-019) — merged into `develop` 2026-11-11 (the owner)
+
+Where: branch `multiplayer`, worktree `../galaxy-eggbert-multiplayer` (its own build tree
+`build-cna-opengl3`). The owner had it merged into `develop` on 2026-11-11 (merge commit after
+`ed0ba050`); further work on the branch needs another merge. Design and status:
+`plans/plan_gemultiplayer.md` (its header); the player's guide and ZeroTier:
+`docs/handbook/09-multiplayer.md`; the differences from SB2: BD-0120.
+
+Done: the protocol, the lobby, the CNA session, the screens (games on the network, lobby with chat),
+the match (SB2's rules), poses and world replication, team colours, Android permissions and
+multicast lock, worlds 201-205, `VerifyNetProtocol`, `tools/net_two_players.sh` with the scenarios
+bomb/laid/shot/vehicle (all PASS), CTest 117/117 (single player unchanged).
+2026-11-11 (the owner's Q-021, everything proposed): the others' sounds, the host's lifts, the
+others' shield/power/cloud and the cloud's touch (SB2's); names over the players, a rematch back to
+the lobby, the match's results, a silent player gone after 6 s, the host's address searched (CNA's
+SystemLinkDiscovery from the `cna` session, CNA next 5d7579919) with the host on UDP 61191 (Galaxy's);
+protocol 2; scenarios cloud and rematch; all five over a bad network (NET_LOSS/NET_LATENCY) PASS;
+worlds 206-212 (briefs, `arena.check()`, which also moved two of 202's drinks off the air).
+CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
+2026-11-11 (the owner's Q-022, everything proposed; in progress):
+- **Done:**
+  - `tools/net_players.sh` for 2-4 players (NET_EXPECT, world hashes; `net_two_players.sh` wraps
+    it), with four-player (kills) and three-player (pause, a leaver) scenarios.
+  - Autoplay's `pause`, `netpause`, `netplayers`, `wander` and `hash`.
+  - FuzzNetProtocol (CTest) and `tools/fuzz_net_sanitized.sh`.
+  - Lobby and Start accepted from the host only; a hardened replication.
+  - The world bombs' kills counted (they were never counted).
+  - The four-player test found UB-011: CNA's joined clients answered discovery. Fixed in CNA
+    c1b520dc9; the build compiles against that working tree.
+- **Not built:** SB1's worlds 101-110 are SB2's 201-210 (owner_questions Q-022).
+- **Also done, all PASS:**
+  - The long match: four players for ten minutes, the worlds hash the same.
+  - The lobby's lives and time limit.
+  - Who got whom, and a chat line in the match (Enter; autoplay's `say`).
+  - The spectator (left/right on the Lost screen).
+  - The host's editor worlds sent (WorldData).
+  - A dropped player back in the match (Rejoin/Snapshot; NET_REJOIN).
+  - Protocol 3.
+  - All the scenarios: `build-probe/net_all.sh` is a local probe; each scenario's environment is in
+    its script's head.
+  - **Windows:** `build-probe/windows` (commands in `WINDOWS.md`), tried under wine against Linux
+    (`NET_WINDOWS`).
+  - **Internet games** through cna-gamer-services-server's relay. Its server is built in
+    `build-probe/gss` (out of its repository); `tools/net_internet.sh`.
+  - **CNA notes:** UB-012 (send before Dispose) is XNA's contract; Galaxy updates before leaving.
+- **After the owner's answers (Q-022, 2026-11-11):**
+  - Worlds 213-217 of Galaxy's own design; a match started in each (over the local server).
+  - The server's deployment: `tools/server/galaxy-server.sh` and `docs/handbook/10-server.md`.
+  - The Windows zip: `tools/release/make_windows_zip.sh` into `build-probe/release/`.
+  - The release APK rebuilt with `-PgalaxyAbis` (`injected.build.abi` made testOnly APKs).
+- **Next:**
+  - The owner: install the server on a host of his and make the accounts.
+  - The owner: try the Windows zip and the APK.
+  - The owner's real-machine test (Q-020).
+- **CNA's sweep, 2026-11-11 11:30-14:30:** no LAN/discovery tests (UDP 61190/61191) in that window;
+  the `cna` session asked.
+
+How to check it:
+```bash
+cd ../galaxy-eggbert-multiplayer
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA VerifyNetProtocol --parallel 6
+NET_LIVES=1 tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/bomb_host.txt tools/autoplay/net/bomb_join.txt
+tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tools/autoplay/net/laid_join.txt
+```
+Android: the arm64 release APK of the branch is built (`android/app/build/outputs/apk/release/
+app-release.apk` in the worktree, signed with the release key: `android/key.properties` there points
+at the main worktree's keystore; real networking in libmain.so; rebuilt 2026-11-11 10:41 with everything of Q-022, protocol 3, which the
+older APKs do not speak: AGP left it in `app/build/intermediates/apk/release/`, copied to `outputs/`; a
+stale merge needed `--rerun-tasks`), not installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
+can go once that is done. Golden frames and trace pass on the branch.
+Next: a game between real machines (Q-020); the owner's look. Merged into `develop` 2026-11-11 (the
+owner); the AI policy comes after it (Q-019).
 
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 

@@ -1,0 +1,15 @@
+# tools/net_two_players.sh with NET_WORLD=205, the host (yellow, start (47, 60)): takes the charge
+# at (50, 47) -- his cloud -- and walks into the other one, waiting at (52.5, 47): the cloud meets
+# him (NetPlayerCollide, decblupi.cpp:3838-3848), the other is electrocuted and our cloud is gone
+# (PK_STOPCLOUD).
+until phase = Play max 7200
+wait 420
+go 48 55 max 900
+go 48 47 max 900
+go 50 47 max 600 until power = 3
+expect power = 3
+go 52 47 max 600 until power != 3
+until power != 3 max 300
+expect power != 3
+wait 240
+end

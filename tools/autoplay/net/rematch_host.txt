@@ -1,0 +1,17 @@
+# tools/net_two_players.sh with NET_WORLD=205 NET_LIVES=0, the host: the cloud scenario's match
+# (cloud_host.txt) won -- the other electrocuted with no life in reserve -- then from the win screen back
+# to the lobby (a rematch, Q-021): both ready again (GALAXY_NET_TEST), a second match starts.
+until phase = Play max 7200
+wait 420
+go 48 55 max 900
+go 48 47 max 900
+go 50 47 max 600 until power = 3
+go 52 47 max 600 until power != 3
+until phase = Win max 1200
+expect phase = Win
+wait 120
+hold 2 action
+until phase = Play max 3600
+expect phase = Play
+wait 120
+end

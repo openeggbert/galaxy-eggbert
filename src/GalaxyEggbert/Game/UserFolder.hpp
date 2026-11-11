@@ -20,7 +20,7 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] std::string UserPathString(std::string_view relative);
 
     // The files a user folder holds, relative to it.
-    inline constexpr std::string_view kUserFiles[] = {"savedata.txt", "resume.txt"};
+    inline constexpr std::string_view kUserFiles[] = {"savedata.txt", "resume.txt", "multiplayer.txt"};
     inline constexpr std::string_view kUserFolders[] = {"demos", "customworlds"};
 
     // Copies a player's files from @p from (the working folder, where every build before

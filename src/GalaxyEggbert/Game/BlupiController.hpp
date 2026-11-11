@@ -849,6 +849,14 @@ namespace GalaxyEggbert::Game
         bool TriggerPower() noexcept;  // real gate: not already Shield
         bool TriggerCloud() noexcept;  // real gate: not already ANY power (loosest/most defensive)
         bool TriggerHide() noexcept;   // real gate: not already Shield/Cloud
+        // A network game's PK_STOPCLOUD (blupi_recon decmove.cpp:195-199): his cloud touched another
+        // player and is gone (m_blupiCloud = FALSE, its gauge hidden).
+        void StopCloud() noexcept
+        {
+            if (m_secretPower != GalaxyEggbert::Def::SecretPower::Cloud) return;
+            m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+            m_secretPowerTimer = 0.0f;
+        }
 
         [[nodiscard]] GalaxyEggbert::Def::SecretPower GetSecretPower() const noexcept { return m_secretPower; }
         [[nodiscard]] bool IsShielded() const noexcept { return m_secretPower == GalaxyEggbert::Def::SecretPower::Shield; }

@@ -1177,6 +1177,7 @@ namespace GalaxyEggbert::Game
                                       std::optional<float> blupiFireYaw)
     {
         events_.clear();
+        deathObject_ = -1;
         ridingLift_ = false;
         TickByeBye(dt);
         // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), out of the
@@ -1916,6 +1917,8 @@ namespace GalaxyEggbert::Game
                 if (!blupiInvincible && !blupiOutOfPlay && MoveObjectTouches(obj.type, bdx, bdy, bdz))
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
+                    deathObject_ = static_cast<int>(&obj - objects.data());
+                    deathObjectType_ = obj.type;
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     // Real LoseLife()/respawn deferred to the death-lock resolution point
@@ -2142,7 +2145,9 @@ namespace GalaxyEggbert::Game
             // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
             // generic-hazard list) -- but ALWAYS channel 10 + SmallShake + an ObjectType10 pop
             // effect (no fish/bird BigShake variant here, unlike the generic-hazard list).
-            if (GetObjectDefinition(obj.type).lethalDecorContactHazard)
+            // Another team's personal bomb (IsLethalPerso: 201-203 alone, the registry's
+            // lethalDecorContactHazard; in a network game every bomb but his team's).
+            if (IsLethalPerso(obj.type))
             {
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
@@ -2150,6 +2155,8 @@ namespace GalaxyEggbert::Game
                 // Not met at all while he is busy (Decor.cpp:6088 gates the block on m_blupiFocus).
                 if (blupiFocused && !blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
                 {
+                    deathObject_ = static_cast<int>(&obj - objects.data());
+                    deathObjectType_ = obj.type;
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     const bool isClear2 = RollClear2Coinflip();
@@ -2788,7 +2795,7 @@ namespace GalaxyEggbert::Game
         constexpr float kPersoRadius = 1.1f;
         for (auto& obj : objects)
         {
-            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType200)
+            if (!obj.active || !IsOwnPerso(obj.type))
             {
                 continue;
             }
@@ -2803,7 +2810,8 @@ namespace GalaxyEggbert::Game
                 }
                 obj.active = false;
                 // Real end point (0,438), Decor.cpp:6098-6100.
-                RequestVoyage(VoyageKind::Perso, 108, true, obj.currentX, obj.currentY, obj.currentZ, 0.0f, 438.0f,
+                // His team's bomb icon flies to the panel (GetIconPerso: 108 + m_team).
+                RequestVoyage(VoyageKind::Perso, 108 + persoTeam_, true, obj.currentX, obj.currentY, obj.currentZ, 0.0f, 438.0f,
                               true);
                 return true;
             }
@@ -2839,7 +2847,7 @@ namespace GalaxyEggbert::Game
         --persoCount_;
 
         MobileObjSpec decoy;
-        decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
+        decoy.type = static_cast<GalaxyEggbert::Def::ObjectType>(200 + persoTeam_); // his team's
         decoy.posStartX = decoy.posEndX = decoy.currentX = x;
         decoy.posStartY = decoy.posEndY = decoy.currentY = y;
         decoy.posStartZ = decoy.posEndZ = decoy.currentZ = z;

@@ -212,6 +212,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Game/UserFolder.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
         src/GalaxyEggbert/Editor/ObjectPathRenderer.cpp
@@ -266,8 +267,21 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     target_link_libraries(GalaxyEggbertCNA PRIVATE CnaEngine::Graphics)
 
+    # The network game (plans/plan_gemultiplayer.md): CNA's SystemLink sessions where CNA builds
+    # networking (not the web build); without it the game has no Multiplayer entry.
+    # The screens and the match are built everywhere; NetSession.cpp is a stand-in without it.
+    target_sources(GalaxyEggbertCNA PRIVATE
+        src/GalaxyEggbertCNA/NetSession.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameNet.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp)
+    if(TARGET CNA::Net)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA::Net)
+        target_compile_definitions(GalaxyEggbertCNA PRIVATE GALAXY_EGGBERT_NET=1)
+    endif()
+
     # The main menu shows the version (the generated GalaxyEggbert/Version.hpp) and the build's date
-    # and time (cmake/BuildStamp.cmake: made again only when the game is linked again).
+    # and time (cmake/BuildStamp.cmake: made again only when the game is linked again). After every
+    # source and library of the game above, so the stamp follows them all.
     target_include_directories(GalaxyEggbertCNA PRIVATE "${GALAXY_EGGBERT_GENERATED_INCLUDE_DIR}")
     target_sources(GalaxyEggbertCNA PRIVATE src/GalaxyEggbertCNA/BuildStamp.hpp)
     ge_add_build_stamp(GalaxyEggbertCNA)
@@ -784,6 +798,35 @@ target_include_directories(VerifyAutoplay PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# The network game's messages and lobby (src/GalaxyEggbert/Net/): round trips, damaged and foreign
+# packets refused, the lobby's rules. Engine-independent.
+add_executable(VerifyNetProtocol
+        tools/VerifyNetProtocol.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp
+        ${GE_SHARED_SOURCES}
+)
+target_include_directories(VerifyNetProtocol PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+add_test(NAME VerifyNetProtocol COMMAND VerifyNetProtocol)
+
+# The network game against broken and hostile packets (Q-022): random and damaged packets through the
+# decoder and the world changes it lets through into a world; tools/fuzz_net_sanitized.sh runs it
+# under ASan/UBSan. Engine-independent.
+add_executable(FuzzNetProtocol
+        tools/FuzzNetProtocol.cpp
+        src/GalaxyEggbert/Net/NetProtocol.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp
+        ${GE_SHARED_SOURCES}
+)
+target_include_directories(FuzzNetProtocol PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+add_test(NAME FuzzNetProtocol COMMAND FuzzNetProtocol)
 
 # The main menu's demos (DemoReplay.hpp): their file format and compatibility checks, the idle timer,
 # the input that stops a demo, and the order they play in; engine-independent. The shipped demos

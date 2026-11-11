@@ -2,6 +2,7 @@
 // (DrawOverlay) and the frame captures (DrawFrameCaptures). Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
 #include "BuildStamp.hpp"
+#include "NetGame.hpp"
 
 #include <GalaxyEggbert/Version.hpp>
 
@@ -69,6 +70,8 @@
 #include <set>
 #include <vector>
 #include "GameInternal.hpp"
+#include "NetGame.hpp"
+#include <GalaxyEggbert/Net/NetRules.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 
 namespace GalaxyEggbert::CNA
@@ -251,6 +254,46 @@ namespace GalaxyEggbert::CNA
             }
         }
         positionAxes_.Draw(device, camera_, false);
+        inputPad_.DrawLabels(device, viewportW, viewportH, labels);
+    }
+
+    void GalaxyEggbertGame::DrawNetNames(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                         int viewportH)
+    {
+        // The other players' names over their heads, in their colours (a Galaxy addition, the owner's
+        // Q-021: in 3D another Blupi is easily lost from sight, behind a wall or far off; BD-0120).
+        // Through walls, as far as 30 cells; not a hidden one (the drink's Hide, SEC_HIDE).
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Vector4;
+        namespace Net = GalaxyEggbert::Net;
+        if (!NetMatchActive() || viewportW <= 0 || viewportH <= 0) return;
+        const auto& n = *net_;
+        static const Vector3 kTeamColours[Net::kTeams] = {Vector3(1.0f, 0.88f, 0.15f), Vector3(1.0f, 0.55f, 0.10f),
+                                                          Vector3(0.35f, 0.60f, 1.0f), Vector3(0.35f, 0.90f, 0.35f)};
+        const auto viewProjection = camera_.ViewProjection();
+        const float s = static_cast<float>(viewportH) / 480.0f;
+        std::vector<GalaxyEggbert::Game::InputPad::ScreenLabel> labels;
+        for (std::size_t i = 0; i < n.peers.size(); ++i)
+        {
+            const auto& peer = n.peers[i];
+            const auto& p = peer.pose;
+            if (!peer.present || !peer.hasPose || (p.flags & Net::kPoseHidden) != 0 ||
+                p.aura == GalaxyEggbert::Def::ToRaw(GalaxyEggbert::Def::SecretPower::Hide))
+                continue;
+            const float t = NetPoseBlend(n, i);
+            const Vector3 at(peer.previous.x + (p.x - peer.previous.x) * t, peer.previous.y + (p.y - peer.previous.y) * t + 0.7f,
+                             peer.previous.z + (p.z - peer.previous.z) * t);
+            const float dx = at.X - blupi_.GetX(), dy = at.Y - blupi_.GetY(), dz = at.Z - blupi_.GetZ();
+            if (dx * dx + dy * dy + dz * dz > 30.0f * 30.0f) continue;
+            const Vector4 clip = Vector4::Transform(Vector4(at.X, at.Y, at.Z, 1.0f), viewProjection);
+            if (clip.W <= 0.01f) continue;
+            const float x = (clip.X / clip.W * 0.5f + 0.5f) * static_cast<float>(viewportW);
+            const float y = (0.5f - clip.Y / clip.W * 0.5f) * static_cast<float>(viewportH);
+            if (x < -50.0f || x > static_cast<float>(viewportW) + 50.0f || y < -20.0f || y > static_cast<float>(viewportH) + 20.0f)
+                continue;
+            labels.push_back({x + 1.2f * s, y + 1.2f * s, peer.name, Vector3(0.0f, 0.0f, 0.0f)});
+            labels.push_back({x, y, peer.name, kTeamColours[peer.team % Net::kTeams]});
+        }
         inputPad_.DrawLabels(device, viewportW, viewportH, labels);
     }
 
@@ -655,6 +698,7 @@ namespace GalaxyEggbert::CNA
                 // already used for the Pause-menu showRestart gate above.
                 const int hudMission = worldRuntime_.GetMissionNumber();
                 const bool showTreasureCounter = hudMission != 1 && hudMission % 10 != 0;
+                hud_.SetPersoTeam(NetTeam()); // his team's bomb icon in a network game
                 hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                           interaction_.Lives(),
                           interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
@@ -696,23 +740,62 @@ namespace GalaxyEggbert::CNA
             if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
                 const int mission = worldRuntime_.GetMissionNumber();
-                const bool showBack = mission != 1;
-                const bool showRestart = mission != 1 && mission % 10 != 0;
-                inputPad_.DrawPause(
-                    device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                    phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
-                    CanRevertWorld() && !demoSlotsShown_, revertArmed_ ? "Sure?" : "Original");
+                const bool showBack = mission != 1 && !NetMatchActive();
+                const bool showRestart = mission != 1 && mission % 10 != 0 && !NetMatchActive();
+                if (NetTypingInMatch())
+                    DrawNetMatchKeyboard(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                else
+                    inputPad_.DrawPause(
+                        device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
+                        phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
+                        (CanRevertWorld() || NetMatchActive()) && !demoSlotsShown_,
+                        NetMatchActive() ? "Message" : revertArmed_ ? "Sure?" : "Original");
                 if (demoSlotsShown_)
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});
             }
+            else if (NetSpectating())
+            {
+                // The spectator (Q-022): the world under the one watched, his name, the notices.
+                const auto& watched = net_->peers[static_cast<std::size_t>(net_->watched)];
+                std::vector<std::string> lines{"Watching " + watched.name + "  (" + std::to_string(watched.lives) +
+                                                   (watched.lives == 1 ? " life)" : " lives)"),
+                                               "Left / right: another player.  Space: the results."};
+                const auto notices = NetNotices();
+                lines.insert(lines.end(), notices.begin(), notices.end());
+                inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
+                DrawNetNames(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Win || phase_ == GalaxyEggbert::Def::GamePhase::Lost)
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::Def::GamePhase::Win, phaseTimeSeconds_);
-                if (demoNoticeSeconds_ > 0.0f)
+                if (NetMatchActive())
+                {
+                    // The match's results under the original's text (Q-021).
+                    std::vector<std::string> lines;
+                    const bool won = phase_ == GalaxyEggbert::Def::GamePhase::Win;
+                    if (net_->timeUp)
+                    {
+                        // The time limit's end (Q-022): a first place alone or shared.
+                        int firsts = 0;
+                        for (const auto place : net_->finalPlaces) firsts += place == 1;
+                        lines.emplace_back(!won ? GalaxyEggbert::Net::kTextTimeUp
+                                                : firsts > 1 ? GalaxyEggbert::Net::kTextTimeUpShared
+                                                             : GalaxyEggbert::Net::kTextTimeUpWon);
+                    }
+                    else if (won) lines.emplace_back(GalaxyEggbert::Net::kTextWon);
+                    if (NetHostHoldsClock())
+                        lines.push_back("The others play on: time left " +
+                                        GalaxyEggbert::Net::ClockText(net_->limitSeconds - net_->matchSeconds) +
+                                        " (the host waits for the end).");
+                    const auto results = NetResultLines();
+                    lines.insert(lines.end(), results.begin(), results.end());
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
+                }
+                else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});
             }
@@ -778,6 +861,13 @@ namespace GalaxyEggbert::CNA
                                         phaseTimeSeconds_, GalaxyEggbert::Def::GamePhase::None, false, false);
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 }
+                else if (NetScreenShown())
+                {
+                    // The network game's screens, over the same picture.
+                    inputPad_.DrawPause(device, viewport.getWidthProperty(), viewport.getHeightProperty(), false, false,
+                                        phaseTimeSeconds_, GalaxyEggbert::Def::GamePhase::None, false, false);
+                    DrawNetScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                }
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
@@ -795,13 +885,15 @@ namespace GalaxyEggbert::CNA
                 {
                     // Speedy Blupi's TX_DEMOREC ("REC") while the player records a demo (BD-0116), and
                     // what the last recording became.
-                    std::vector<std::string> names;
+                    // The network game's notices (the original's NotifPush) and another player's pause.
+                    std::vector<std::string> names = NetNotices();
                     if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
                     const auto cheats = ActiveCheatNames();
                     names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                    DrawNetNames(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                     if (std::find(activeCheats_.begin(), activeCheats_.end(), "position") != activeCheats_.end())
                     {
                         const auto list = GalaxyEggbert::Game::InputPad::ActiveCheatsRect(names, viewport.getHeightProperty());

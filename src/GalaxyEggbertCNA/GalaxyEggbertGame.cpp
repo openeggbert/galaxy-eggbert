@@ -1,6 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
 #include "GameHelpers.hpp"
+#include "NetGame.hpp"
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
@@ -187,6 +188,8 @@ namespace GalaxyEggbert::CNA
         saveData_.Load();
         graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
+        // The network game where CNA has networking (not the web): the menu's Multiplayer.
+        inputPad_.SetMultiplayerShown(NetSession::Available());
         keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
             using Microsoft::Xna::Framework::Input::Keys;
             // A demo or the menu's idle timer sees presses shorter than an update (DemoLiveInput);
@@ -213,6 +216,25 @@ namespace GalaxyEggbert::CNA
                                                             keys.IsKeyDown(Keys::RightShift));
                     typedShiftPending_ = false;
                 }
+                return;
+            }
+            if (key == Keys::Enter && NetMatchActive() && !NetWantsText() &&
+                phase_ == GalaxyEggbert::Def::GamePhase::Play && !autoplay_)
+            {
+                NetStartMatchTyping(); // a chat line over the play (Q-022)
+                return;
+            }
+            if (NetWantsText())
+            {
+                // A line of the network game's chat being typed (the lobby, or over a match's play).
+                if (key == Keys::LeftShift || key == Keys::RightShift)
+                {
+                    typedShiftPending_ = true;
+                    return;
+                }
+                const auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
+                NetTypedKey(key, typedShiftPending_ || keys.IsKeyDown(Keys::LeftShift) || keys.IsKeyDown(Keys::RightShift));
+                typedShiftPending_ = false;
                 return;
             }
             if (demoNaming_ && demoSlotsShown_ && browserTypedKeys_.size() < 64)
@@ -448,11 +470,16 @@ namespace GalaxyEggbert::CNA
     Microsoft::Xna::Framework::Graphics::Texture2D* GalaxyEggbertGame::BlupiFaceTexture()
     {
         // The real model's face for this frame of the active clip.
+        return BlupiFaceFor(blupiActiveClipName_, blupiClipTimeSeconds_);
+    }
+
+    Microsoft::Xna::Framework::Graphics::Texture2D* GalaxyEggbertGame::BlupiFaceFor(const std::string& clip, double seconds)
+    {
         Microsoft::Xna::Framework::Graphics::Texture2D* face = nullptr;
-        if (const auto faces = blupiClipFaces_.find(blupiActiveClipName_);
+        if (const auto faces = blupiClipFaces_.find(clip);
             blupiModelIsReal_ && faces != blupiClipFaces_.end() && !faces->second.empty())
         {
-            const auto frame = static_cast<std::size_t>(blupiClipTimeSeconds_ * blupiFaceRate_)
+            const auto frame = static_cast<std::size_t>(std::max(0.0, seconds) * blupiFaceRate_)
                 % faces->second.size();
             const int index = faces->second[frame];
             if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
@@ -502,7 +529,9 @@ namespace GalaxyEggbert::CNA
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank);
         if (!SuppressLiveInput() && phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             keys = editorCommandKeys_.Next(keys);
-        for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
+        // The match's chat line takes the keyboard (Q-022): Blupi stands, Escape does not pause.
+        if (!NetTypingInMatch())
+            for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
         tickInput_.mouseX = mouse.getXProperty();
@@ -1108,7 +1137,9 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        if (shouldRespawn)
+        // In a network game every death starts again where he last stood safely (decblupi.cpp:4078,
+        // `if (m_blupiRestart || m_bMulti)`).
+        if (shouldRespawn || NetMatchActive())
         {
             PlaceBlupi(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
         }
@@ -1146,6 +1177,8 @@ namespace GalaxyEggbert::CNA
         }
         interaction_.BeginVoyage(worldRuntime_, GalaxyEggbert::Game::InteractionSystem::VoyageKind::LifeLoss, 48,
                                  false, startX, kLivesY, endX, endY, sound_);
+        // PK_DIE with the lives left (decblupi.cpp:4086), after VoyageInit's decrement.
+        NetSendDie(interaction_.Lives());
     }
 
     const GalaxyEggbert::Game::InteractionSystem::Event* GalaxyEggbertGame::FindInteractionEvent(

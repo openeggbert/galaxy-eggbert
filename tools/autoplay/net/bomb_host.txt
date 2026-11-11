@@ -1,0 +1,7 @@
+# tools/net_two_players.sh, the host (yellow, world 201): waits at its start while the other one
+# walks into its bombs, and wins when he is knocked out (decblupi.cpp:4097, the last one present).
+until phase = Play max 7200
+log the match began
+until phase = Win max 3600
+expect phase = Win
+end

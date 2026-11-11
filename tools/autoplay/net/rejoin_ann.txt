@@ -1,0 +1,11 @@
+# tools/net_players.sh with NET_REJOIN="70 rejoin_cid2.txt" (Q-022; NET_TIMEOUT=360, world 201;
+# rejoin.expect), the host Ann: plays at random for a hundred seconds while Cid's game drops (his script ends)
+# and he comes back, then stands still and hashes her world: the same as Ben's and the Cid back's.
+until phase = Play max 7200
+log the match began
+mortal
+wander 6000 seed 1 until phase != Play
+wait 3000
+hash
+wait 60
+end

@@ -1,8 +1,10 @@
 package org.openeggbert.speedyblupi;
 
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
@@ -29,6 +31,11 @@ import org.libsdl.app.SDLActivity;
  *   - We also enforce it in onCreate/onResume/onConfigurationChanged for safety.
  */
 public class SpeedyBlupiActivity extends SDLActivity {
+
+    // The network game's LAN discovery (CNA SystemLink, a UDP broadcast): many devices drop
+    // broadcast packets in Wi-Fi power save, so while the game is in the foreground it holds a
+    // multicast lock (as ../blupi_recon's port does), and a phone hosting a game is found.
+    private WifiManager.MulticastLock multicastLock;
 
     /**
      * Returns the name of the native shared library to load.
@@ -62,6 +69,21 @@ public class SpeedyBlupiActivity extends SDLActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         super.onResume();
         hideSystemBars();
+        WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifi != null && multicastLock == null) {
+            multicastLock = wifi.createMulticastLock("galaxy-eggbert-lan-discovery");
+            multicastLock.setReferenceCounted(false);
+            multicastLock.acquire();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (multicastLock != null) {
+            multicastLock.release();
+            multicastLock = null;
+        }
+        super.onPause();
     }
 
     /**

@@ -443,7 +443,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy, demos;
+            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy, demos, multiplayer;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -479,6 +479,9 @@ namespace GalaxyEggbert::Game
             // The demo positions (Export, Import, Original) without a mission first (2026-11-09):
             // left of Exit, over Galaxy.
             l.demos = Rect{w - 250.0f * s, 15.0f * s, w - 140.0f * s, 69.0f * s};
+            // The network game (2026-11-10): in the left panel, right of Setup's label (the free
+            // corner; over the title's letters it hid them).
+            l.multiplayer = Rect{165.0f * s, h - 20.0f * s - f2 * 0.5f, 255.0f * s, h - 20.0f * s};
             l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
             l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
             l.scale = s;
@@ -544,6 +547,7 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlDemo = 9;
         constexpr int kInitControlGalaxy = 10;
         constexpr int kInitControlDemos = 11;
+        constexpr int kInitControlMultiplayer = 12;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -1749,6 +1753,138 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressed, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, faint, viewportW, viewportH, 0.6f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    QuadBatch::Rect InputPad::PanelRect(float x0, float y0, float x1, float y1, int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx + (x0 - 320.0f) * s, y0 * s, cx + (x1 - 320.0f) * s, y1 * s};
+    }
+
+    float InputPad::PanelTextWidth(const std::string& text, float size, int viewportH) noexcept
+    {
+        return TextMetrics::Width(text) * size * static_cast<float>(viewportH) / kRefH;
+    }
+
+    PanelInput InputPad::UpdatePanel(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                     const std::vector<PanelButton>& buttons, const ScreenKeyboard* keyboard) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+        PanelInput result;
+        const float x = static_cast<float>(mouse.getXProperty());
+        const float y = static_cast<float>(mouse.getYProperty());
+        const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+        if (keyboard != nullptr)
+        {
+            // A line being typed: only the keyboard's keys (100 and up), a click off it is the screen's.
+            const int key = keyboard->KeyAt(x, y);
+            if (down && !mouseWasDown_) panelControl_ = key >= 0 ? 100 + key : -1;
+            if (!down && mouseWasDown_)
+            {
+                if (panelControl_ >= 100 && panelControl_ == 100 + key) result.keyboardKey = key;
+                else if (panelControl_ < 0 && !keyboard->Holds(x, y)) result.outsideClick = true;
+                panelControl_ = -1;
+            }
+            mouseWasDown_ = down;
+            return result;
+        }
+        const auto over = [&]() {
+            for (std::size_t i = 0; i < buttons.size(); ++i)
+                if (buttons[i].enabled && InRect(x, y, buttons[i].rect)) return static_cast<int>(i);
+            return -1;
+        };
+        if (down && !mouseWasDown_) panelControl_ = over();
+        if (!down && mouseWasDown_)
+        {
+            if (panelControl_ >= 0 && panelControl_ == over()) result.button = panelControl_;
+            panelControl_ = -1;
+        }
+        mouseWasDown_ = down;
+        return result;
+    }
+
+    void InputPad::DrawPanel(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                             const std::string& title, const std::vector<PanelButton>& buttons,
+                             const std::vector<PanelLine>& lines, const ScreenKeyboard* keyboard,
+                             std::optional<QuadBatch::Rect> focus)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float w = static_cast<float>(viewportW);
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
+        std::vector<Quad> panels, rows, normal, pressed, dead, labels, faint;
+        const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
+            Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(index, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            bucket.push_back(q);
+        };
+        // A text the width of @p room at most (cut, "..." at its end).
+        const auto fit = [&](std::string text, float size, float room) {
+            if (TextMetrics::Width(text) * size * s <= room) return text;
+            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) text.pop_back();
+            return text + "...";
+        };
+        const auto centred = [&](std::vector<Quad>& bucket, const std::string& text, float cx, float top, float size) {
+            AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
+        };
+        icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
+        centred(labels, fit(title, 0.7f, 600.0f * s), w * 0.5f, 34.0f * s, 0.7f);
+        for (std::size_t i = 0; i < buttons.size(); ++i)
+        {
+            const auto& b = buttons[i];
+            const bool held = b.held || (keyboard == nullptr && panelControl_ == static_cast<int>(i));
+            auto& text = b.enabled ? labels : faint;
+            if (b.row)
+            {
+                icon(held ? pressed : rows, b.rect, held ? 21 : kInitPanelIcon);
+                AppendGamerLabel(text, fit(b.label, b.size, b.rect.x1 - b.rect.x0 - 20.0f * s), b.rect.x0 + 10.0f * s,
+                                 (b.rect.y0 + b.rect.y1) * 0.5f - 15.0f * b.size * s, b.size, s);
+                continue;
+            }
+            icon(held ? pressed : b.enabled ? normal : dead, b.rect, 21);
+            centred(text, fit(b.label, b.size, b.rect.x1 - b.rect.x0 - 8.0f * s), (b.rect.x0 + b.rect.x1) * 0.5f,
+                    (b.rect.y0 + b.rect.y1) * 0.5f - 15.0f * b.size * s, b.size);
+        }
+        for (const auto& line : lines)
+        {
+            auto& bucket = line.faint ? faint : labels;
+            if (line.centred) centred(bucket, fit(line.text, line.size, 600.0f * s), line.x, line.y, line.size);
+            else AppendGamerLabel(bucket, fit(line.text, line.size, w * 0.5f + 310.0f * s - line.x), line.x, line.y,
+                                  line.size, s);
+        }
+        if (keyboard != nullptr)
+        {
+            for (std::size_t i = 0; i < keyboard->Keys().size(); ++i)
+            {
+                const auto& key = keyboard->Keys()[i];
+                const bool lit = panelControl_ == 100 + static_cast<int>(i) ||
+                                 (key.kind == ScreenKeyboard::Kind::Shift && keyboard->Shifted());
+                icon(lit ? pressed : normal, key.rect, 21);
+                const std::string face = keyboard->Label(key);
+                const float size = face.size() == 1 ? 0.6f : 0.42f;
+                centred(labels, face, (key.rect.x0 + key.rect.x1) * 0.5f,
+                        (key.rect.y0 + key.rect.y1) * 0.5f - 16.0f * size * s, size);
+            }
+        }
+        if (focus)
+        {
+            const Rect f = *focus;
+            icon(pressed, Rect{f.x0 - 4.0f * s, f.y0 - 4.0f * s, f.x1 + 4.0f * s, f.y1 + 4.0f * s}, 21);
+        }
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);
+        FlushQuads(device, *padEffect_, padRenderer_, rows, viewportW, viewportH, 0.6f);
+        FlushQuads(device, *padEffect_, padRenderer_, normal, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, dead, viewportW, viewportH, 0.45f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressed, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *textEffect_, textRenderer_, faint, viewportW, viewportH, 0.55f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
@@ -3000,6 +3136,7 @@ namespace GalaxyEggbert::Game
         const bool overDemo = InRect(mouseX, mouseY, layout.demo);
         const bool overGalaxy = InRect(mouseX, mouseY, layout.galaxy);
         const bool overDemos = InRect(mouseX, mouseY, layout.demos);
+        const bool overMultiplayer = multiplayerShown_ && InRect(mouseX, mouseY, layout.multiplayer);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -3015,6 +3152,7 @@ namespace GalaxyEggbert::Game
             else if (overDemo) activeControl_ = kInitControlDemo;
             else if (overGalaxy) activeControl_ = kInitControlGalaxy;
             else if (overDemos) activeControl_ = kInitControlDemos;
+            else if (overMultiplayer) activeControl_ = kInitControlMultiplayer;
             else activeControl_ = -1;
         }
 
@@ -3036,6 +3174,7 @@ namespace GalaxyEggbert::Game
                 case kInitControlDemo: result.demoPressed = overDemo; break;
                 case kInitControlGalaxy: result.galaxyPressed = overGalaxy; break;
                 case kInitControlDemos: result.demosPressed = overDemos; break;
+                case kInitControlMultiplayer: result.multiplayerPressed = overMultiplayer; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -3247,6 +3386,13 @@ namespace GalaxyEggbert::Game
             appendIconQuad(activeControl_ == kInitControlDemos ? pressedQuads : normalQuads, layout.demos, 21);
             AppendCenteredLabel(labelQuads, "Demos", (layout.demos.x0 + layout.demos.x1) * 0.5f,
                                 (layout.demos.y0 + layout.demos.y1) * 0.5f - 12.0f * s, s);
+            if (multiplayerShown_)
+            {
+                appendIconQuad(activeControl_ == kInitControlMultiplayer ? pressedQuads : normalQuads,
+                               layout.multiplayer, 21);
+                AppendCenteredLabel(labelQuads, "Multiplayer", (layout.multiplayer.x0 + layout.multiplayer.x1) * 0.5f,
+                                    (layout.multiplayer.y0 + layout.multiplayer.y1) * 0.5f - 8.0f * s, 0.68f * s);
+            }
 
             // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
             // Setup (Game1::DrawButtonsText()); the editor's label under its

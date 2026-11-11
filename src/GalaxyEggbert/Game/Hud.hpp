@@ -62,6 +62,9 @@ namespace GalaxyEggbert::Game
     class Hud
     {
     public:
+        // The personal bombs' icon: button.png 108 + his team (SB2's GetIconPerso, 0x6c + m_team,
+        // decblock.cpp:1554: 108 yellow, 109 orange, 110 blue, 111 green); 108 alone.
+        void SetPersoTeam(int team) noexcept { persoIcon_ = 108 + (team >= 0 && team < 4 ? team : 0); }
         // Loads this class's own texture instances (blupi.png/element.png
         // again, plus text.png/pad.png which nothing else loads) -- kept
         // separate from GalaxyEggbertGame's own instances of the same
@@ -178,6 +181,7 @@ namespace GalaxyEggbert::Game
                                                           float& outX, float& outY);
 
     private:
+        int persoIcon_ = 108;
         struct Quad
         {
             float x0, y0, x1, y1; // pixel-space corners (reference 640x480 layout, pre-scaled by caller)

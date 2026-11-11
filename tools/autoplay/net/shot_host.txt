@@ -1,0 +1,11 @@
+# tools/net_two_players.sh, the host (yellow, world 201): walks to (57, 40), north of the tank at
+# (57, 46), and waits there until the other one's shot, sent to this machine as his (ObjectStart
+# ..., TRUE), kills it here (decblupi.cpp:3514): a life lost.
+until phase = Play max 7200
+go 57 40 max 1200
+face 180
+mortal
+until lives < 10 max 3600
+expect lives < 10
+wait 240
+end

@@ -48,7 +48,7 @@ namespace GalaxyEggbert::Game
         constexpr float kPersoX = 0.0f, kPersoY = 438.0f;
         constexpr float kPersoTextX = 32.0f, kPersoTextY = 452.0f;
         constexpr float kPersoTextScale = 0.7f;
-        constexpr int kPersoIcon = 108; // button.png, same as DrawInfo
+        // The personal bombs' icon: Hud::persoIcon_ (button.png 108 + his team), as DrawInfo.
 
         // jauge.png: 124x88px, 4 stacked 22px-tall rows (JaugeMode Empty=0/
         // Red=1/Blue=2/Yellow=3 -- Jauge.hpp). Real Jauge::Draw() is a
@@ -506,7 +506,7 @@ namespace GalaxyEggbert::Game
             icon.y0 = refToScreenY(kPersoY);
             icon.x1 = icon.x0 + kButtonTilePx * scale;
             icon.y1 = icon.y0 + kButtonTilePx * scale;
-            IconUv(kPersoIcon, buttonSheetW, buttonSheetH, icon.u0, icon.v0, icon.u1, icon.v1,
+            IconUv(persoIcon_, buttonSheetW, buttonSheetH, icon.u0, icon.v0, icon.u1, icon.v1,
                    kButtonTilePx, kButtonCols);
             buttonQuads.push_back(icon);
 
