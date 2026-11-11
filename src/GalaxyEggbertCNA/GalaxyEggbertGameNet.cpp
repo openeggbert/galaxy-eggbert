@@ -37,6 +37,13 @@ namespace GalaxyEggbert::CNA
         constexpr std::size_t kChatInput = 60;     // what may be typed (the line takes "<name> " too)
         constexpr float kAcceptSeconds = 8.0f;     // a client the host never put in its lobby gives up
         constexpr int kListRows = 6;
+        // A player from whom nothing came for so long is gone (his network fell, his game stopped):
+        // the others are told as if he had left; the host so, the game ends. One who never sent a
+        // pose (his machine still loading the world) has longer. A pose is sent at least this often,
+        // paused too.
+        constexpr float kSilentSeconds = 6.0f;
+        constexpr float kSilentBeforePoseSeconds = 20.0f;
+        constexpr float kAliveEverySeconds = 0.25f;
 
         // The screens' actions (NetScreenLayout's buttons).
         enum Action : int
@@ -197,6 +204,29 @@ namespace GalaxyEggbert::CNA
         }
         for (auto& received : n.session.TakeReceived()) NetHandle(received.sender, received.message);
         if (!net_ || !n.session.Active()) return;
+        if (n.match)
+        {
+            // Our sign of life while the step does not run (a pause, ours or another's).
+            n.poseSeconds += dt;
+            if (n.poseSeconds >= kAliveEverySeconds && !n.lost && n.session.HasLocalGamer()) NetSendPose();
+            // Who is silent too long is gone (a hitch of our own does not count: a frame adds 0.25 s at most).
+            for (auto& peer : n.peers)
+            {
+                if (!peer.present) continue;
+                peer.silence += std::min(dt, 0.25f);
+                if (peer.silence < (peer.hasPose ? kSilentSeconds : kSilentBeforePoseSeconds)) continue;
+                std::cout << "GalaxyEggbertCNA: multiplayer: nothing from " << peer.name << " for "
+                          << static_cast<int>(peer.silence) << " s." << std::endl;
+                if (peer.id == n.hostId)
+                {
+                    NetSessionEnded("the host does not answer");
+                    return;
+                }
+                peer.present = false;
+                peer.paused = false;
+                NetNotice(Net::LeftNotice(peer.name));
+            }
+        }
 
         // A client the host does not take (another version, a full game) leaves after a while.
         if (n.screen == NetGame::Screen::Lobby && !n.session.IsHost() && !n.match)
@@ -221,6 +251,7 @@ namespace GalaxyEggbert::CNA
                 if (p.id == sender) return &p;
             return nullptr;
         };
+        if (auto* p = peer()) p->silence = 0.0f;
         switch (m.kind)
         {
         case Net::MessageKind::Hello:
@@ -968,6 +999,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::NetSendPose()
     {
         auto& n = *net_;
+        n.poseSeconds = 0.0f;
         Net::Message m;
         m.kind = Net::MessageKind::Pose;
         auto& pose = m.pose;

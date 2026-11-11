@@ -60,6 +60,7 @@ namespace GalaxyEggbert::CNA
             float interval = 0.05f; // between the last two poses
             int lives = Net::kMultiplayerLives;
             bool paused = false; // his pause stops everyone's game (PK_PAUSE) while he is there
+            float silence = 0.0f; // seconds since anything came from him (gone after a while)
         };
         bool match = false;
         int world = Net::kFirstWorld;
@@ -68,6 +69,7 @@ namespace GalaxyEggbert::CNA
         int soundsLogged = 0, liftsLogged = 0; // the log's first few of a match
         std::uint8_t hostId = 0; // the host's gamer (its lifts are the ones followed)
         std::uint32_t tick = 0;
+        float poseSeconds = 0.0f; // since our last pose (sent paused too, a sign of life)
         std::vector<Peer> peers;
         Net::Replicator replicator;
         std::vector<Net::WorldEvent> incoming;
