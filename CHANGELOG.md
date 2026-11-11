@@ -9,6 +9,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Fixed
+
+- A death played its sound again and again while Blupi lay in the lava, the saw or the trap, and
+  the saw and the trap spawned their effects every tick (hundreds per death), which also slowed the
+  game; the large creature caught a dying Blupi again and again (BD-0121).
+- Small explosions in quick succession cut each other off and stuttered; they now overlap as in
+  the original (BD-0122).
+
 ## [0.1.0] — 2026-11-11
 
 The first release: packages for Windows (x86-64), Linux (x86-64), Android (arm64) and the web

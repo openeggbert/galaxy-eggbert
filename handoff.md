@@ -6,7 +6,23 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Sounds repeated and stuttered (a Discord player on 0.1.0, 2026-11-11) — fixed in develop, not released
+
+The report (relayed by the owner and by the cna session, which analysed it read-only): "the sounds
+seem to cause severe lagging sometimes; every sound is played several times without limitation".
+- BD-0121: the hazards ran every tick of the death lock (Decor.cpp:5494 skips them while dying):
+  the death's sound again each time it ended, the soul's voyage restarted, the trap's tentacle and
+  the saw's burst spawned every tick; the large creature caught a dying Blupi every tick. Gated on
+  `dying` / `blupiOutOfPlay`. Test: `tools/verify_death_sounds.sh` (CTest VerifyDeathSounds; it
+  fails on the old code: 27/331/301 requests instead of 1).
+- BD-0122: channel 10 restarted one instance; now overlapping instances as the original.
+- `GALAXY_SOUND_LOG=1` prints every sound asked for and started (the test counts the requests).
+- Not done: the lag's other parts (full terrain rebuild on the main thread after dynamite cuts a
+  saw or drip, OR-0074; the fixed-step catch-up after it; web audio on the main thread), and the cna
+  session's low-confidence list (edge-triggered Stop/Play pairs such as the crate push ch38 or the
+  vehicle motor loop) -- not reproduced. A 0.1.1 with these fixes waits for the owner.
 
 ## Release 0.1.0 (2026-11-11, the owner) — tagged and published
 

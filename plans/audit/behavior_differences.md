@@ -1640,6 +1640,46 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0122 — channel 10 (small explosion) cut and restarted instead of overlapping (gameplay) — FIXED_AND_VERIFIED
+
+- Report (2026-11-11, a Discord player on 0.1.0, relayed by the owner and the cna session): "every
+  sound is played several times without limitation, one sound many times per split second".
+- Original: Sound::PlayImage (mobile-eggbert Sound.cpp:232-256) starts every channel-10 call as a new
+  play beside those still sounding (a list it prunes of finished plays at 10); other channels are not
+  started again while they sound.
+- Galaxy before: Sound::PlayChannel kept one instance per channel and, for channel 10, stopped it and
+  played it again from the start (its comment claimed the original did so): explosions in quick
+  succession cut each other's attack and stuttered.
+- Fix: channel 10 keeps a list of instances; finished ones are dropped, a new one is started per
+  call; with 10 still sounding the oldest stops (the original's list grew past 10). Stop/StopAll stop
+  them all.
+- Validation: mission 014's autoplay (dynamite) passes with GALAXY_SOUND_LOG=1, its two explosions
+  started as separate plays; CTest 134/134.
+
+## BD-0121 — hazards caught a dying Blupi again every tick: the death's sound, voyage and effects repeated (gameplay) — FIXED_AND_VERIFIED
+
+- Report: as BD-0122 (the player hears sounds "played several times", and the game lags).
+- Original: Decor::BlupiStep skips the whole hazard block (lava, traps, drips, saws, lightning,
+  crushers, teleporters, switches) while m_blupiAction is a Clear* (Decor.cpp:5494-5495), and
+  m_blupiFocus, which the traps, drips, saws and the large creature need, is false while dying.
+- Galaxy before: UpdateTickActions ran the hazards every tick of the death lock, which leaves Blupi in
+  the hazard. `triggerDeath` played the death's channel before TriggerDeathLock refused the second
+  death, so the channel was asked for every tick and started again each time it ended; lava and the
+  fall began the soul's voyage again (channel 74, its animation reset), the trap spawned a tentacle
+  (ObjectType53) and the saw its burst (3 ObjectType41 and channel 75) every tick: some 1000 effects
+  by the end of a saw's 5.5 s lock. The large creature (ObjectType54) caught him again every tick
+  (channel 51 or 10 and a tentacle), its gate being BlupiFocused() (which counts the air).
+- Fix: the fall, lava, trap, drip, lightning, crusher and saw checks need `!dying` (IsDeathLocked()
+  or IsDeathHidden()); the creature's contact needs `!blupiOutOfPlay` (dying, gone, Bye, Win).
+- Validation: `tools/verify_death_sounds.sh` (CTest VerifyDeathSounds): Blupi put over lava, a saw
+  and a trap of world 999 dies once and is back with 2 lives, the death's channel asked for once
+  (before: 27, 331 and 301 times); the demos replay equal (VerifyDemoReplays), golden trace and
+  frames unchanged. Live: the lava death starts channels 8 and 74 once each (before 2 and 3), the
+  saw's 75 once (before 4).
+- Not done: the lag the report also names has other parts too: a full terrain rebuild on the main
+  thread when dynamite cuts a saw or drip (OR-0074), then the fixed-step catch-up firing several
+  ticks' sounds at once, and on the web the audio running on the main thread between frames.
+
 ## BD-0120 — The network game (owner request, Speedy Blupi 2's) — IMPLEMENTED on branch `multiplayer`
 
 Owner (2026-11-10, owner_questions.md Q-019): multiplayer as Speedy Blupi 2 / Speedy Eggbert 2

@@ -1089,6 +1089,9 @@ if(BUILD_TESTING)
     if(GE_XVFB_RUN AND TARGET GalaxyEggbertCNA AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT WIN32)
         add_test(NAME VerifyDemoReplays COMMAND ${CMAKE_SOURCE_DIR}/tools/verify_demos.sh ${CMAKE_BINARY_DIR})
         set_tests_properties(VerifyDemoReplays PROPERTIES ENVIRONMENT "DEMO_RUN=${CMAKE_BINARY_DIR}/verify-demos")
+        # A death plays its sound once (lava, saw, spike trap of world 999; tools/verify_death_sounds.sh).
+        add_test(NAME VerifyDeathSounds COMMAND ${CMAKE_SOURCE_DIR}/tools/verify_death_sounds.sh ${CMAKE_BINARY_DIR})
+        set_tests_properties(VerifyDeathSounds PROPERTIES ENVIRONMENT "DEATH_RUN=${CMAKE_BINARY_DIR}/verify-death-sounds")
     endif()
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).

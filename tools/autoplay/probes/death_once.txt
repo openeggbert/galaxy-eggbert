@@ -1,0 +1,9 @@
+# One death, from where tools/verify_death_sounds.sh puts Blupi (--spawn over a hazard): he dies,
+# the lock runs out, the life-loss window passes and he is back with a life less. The runner then
+# counts how often the death's sound was asked for: once (before 2026-11-11, every tick of the lock).
+mortal
+until dead = 1 max 600
+until dead = 0 max 900
+wait 180
+expect lives = 2
+end

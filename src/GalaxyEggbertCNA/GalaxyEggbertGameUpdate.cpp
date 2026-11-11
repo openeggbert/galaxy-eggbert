@@ -2061,7 +2061,13 @@ namespace GalaxyEggbert::CNA
         // above) -- verified live at 3.417s (down from the previously
         // live-verified 6.72s), i.e. almost exactly half.
         constexpr float kFallDeathY = -27.0f;
-        if (blupi_.GetY() < kFallDeathY)
+        // No hazard while he dies or is gone after it (Decor.cpp:5494-5495: the whole block is
+        // skipped while m_blupiAction is a Clear*; m_blupiFocus is false then too). Without this,
+        // the death lock left him in the lava, the saw or the trap, and each tick played its sound
+        // again as soon as the last one ended, began the soul's voyage again and spawned the saw's
+        // burst or the trap's tentacle anew (a Discord player's report, 2026-11-11).
+        const bool dying = blupi_.IsDeathLocked() || blupi_.IsDeathHidden();
+        if (!dying && blupi_.GetY() < kFallDeathY)
         {
             const float deathX = blupi_.GetX();
             const float deathY = blupi_.GetY();
@@ -2088,7 +2094,7 @@ namespace GalaxyEggbert::CNA
         // task (E3D-MIG-142..144) instead of one generic "hazard" check.
         // The lava pool's actual wave surface, not the invisible top of its voxel:
         // the collision and contact query share the height field with the renderer.
-        if (!blupi_.IsInvincible() && blupi_.IsTouchingLava(worldRuntime_.GetWorld()))
+        if (!dying && !blupi_.IsInvincible() && blupi_.IsTouchingLava(worldRuntime_.GetWorld()))
         {
             const float deathX = blupi_.GetX();
             const float deathY = blupi_.GetY();
@@ -2117,7 +2123,7 @@ namespace GalaxyEggbert::CNA
         // 3D collision has no sub-tile position within a cell to test
         // against; the whole tile is lethal here.
         // m_blupiFocus too (Decor.cpp:5504-5505): busy, he is not caught.
-        if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+        if (!dying && !blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
             blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
         {
             // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510);
@@ -2138,7 +2144,7 @@ namespace GalaxyEggbert::CNA
         // His own cell, as IsGoutte(m_blupiPos) (no +60 as IsPiege has; BD-0033): the drip
         // hangs under a ceiling, he dies going into it.
         // m_blupiFocus too (Decor.cpp:5513-5514; BD-0066): busy, he is not caught.
-        if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+        if (!dying && !blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
             blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
         {
             // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
@@ -2166,7 +2172,7 @@ namespace GalaxyEggbert::CNA
         // as well as under his feet where worlds lay them as floor.
         const auto blockHere = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
         const auto blockUnder = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
-        if (!blupi_.IsInvincible() &&
+        if (!dying && !blupi_.IsInvincible() &&
             (blockUnder == GalaxyEggbert::BlockTypes::Blitz || blockHere == GalaxyEggbert::BlockTypes::Blitz) &&
             WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
         {
@@ -2186,7 +2192,7 @@ namespace GalaxyEggbert::CNA
         // Blupi's own cell, as IsEcraseur(m_blupiPos) (BD-0032): the crusher hangs in the cell
         // he walks through, not in the floor.
         // m_blupiFocus too (Decor.cpp:5551-5552; BD-0066).
-        if (!blupi_.IsInvincible() && BlupiFocused() &&
+        if (!dying && !blupi_.IsInvincible() && BlupiFocused() &&
             blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
             WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
             blupi_.TriggerCrush())
@@ -2213,7 +2219,7 @@ namespace GalaxyEggbert::CNA
         // authored; TryActivateSwitch() below is what flips it between
         // the two.
         // m_blupiFocus too (Decor.cpp:5521-5522; BD-0066).
-        if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+        if (!dying && !blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
             blupi_.IsTouchingSawBlade(worldRuntime_.GetWorld(), stepStartFeetY))
         {
             const float deathX = blupi_.GetX();

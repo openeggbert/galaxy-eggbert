@@ -1991,8 +1991,11 @@ namespace GalaxyEggbert::Game
             // the creature calls for is MockeryDetect()'s (Mockeryp, BD-0044).
             if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {
-                // m_blupiFocus too (Decor.cpp:5867-5868): busy, he is not caught.
-                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible && blupiFocused)
+                // m_blupiFocus too (Decor.cpp:5867-5868): busy, he is not caught -- nor dying, gone, waving
+                // goodbye or cheering (blupiOutOfPlay; m_blupiFocus is false then): caught already,
+                // the creature took him again every tick, its sound and tentacle with it (2026-11-11).
+                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible && blupiFocused &&
+                    !blupiOutOfPlay)
                 {
                     const float gdx = obj.currentX - blupiX;
                     const float gdy = obj.currentY - blupiY;
