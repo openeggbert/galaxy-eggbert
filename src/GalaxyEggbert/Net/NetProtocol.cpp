@@ -167,7 +167,7 @@ namespace GalaxyEggbert::Net
             w.U8(m.killer);
             break;
         case MessageKind::Pause: w.U8(m.ready ? 1 : 0); break;
-        case MessageKind::Lost:
+        case MessageKind::Lost: w.U8(m.killer); break;
         case MessageKind::Abandon: break;
         case MessageKind::Sounds:
             w.U8(static_cast<std::uint8_t>(m.sounds.size() < kMaxSounds ? m.sounds.size() : kMaxSounds));
@@ -266,7 +266,7 @@ namespace GalaxyEggbert::Net
             ok = r.U8(m.lives) && m.lives <= kMultiplayerLives && r.U8(m.killer) &&
                  (m.killer < kMaxPlayers || m.killer == kNoKiller);
             break;
-        case MessageKind::Lost:
+        case MessageKind::Lost: ok = r.U8(m.killer) && (m.killer < kMaxPlayers || m.killer == kNoKiller); break;
         case MessageKind::Abandon: break;
         case MessageKind::Sounds:
         {

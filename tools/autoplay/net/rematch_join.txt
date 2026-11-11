@@ -1,0 +1,16 @@
+# tools/net_two_players.sh with NET_WORLD=205 NET_LIVES=0, the one who joins: electrocuted by the
+# host's cloud with no life in reserve (cloud_join.txt), the lost screen, back to the lobby, the second
+# match.
+until phase = Play max 7200
+wait 30
+go 52.5 55 max 900
+go 52.5 47.5 max 900
+mortal
+until phase = Lost max 1800
+expect phase = Lost
+wait 60
+hold 2 action
+until phase = Play max 3600
+expect phase = Play
+wait 120
+end

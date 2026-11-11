@@ -62,6 +62,8 @@ namespace GalaxyEggbert::CNA
         void Leave();
         // The host's match begins: the game is no longer listed or joined (XNA's StartGame).
         void StartGame();
+        // The host back in the lobby: the game listed and joined again (XNA's EndGame).
+        void EndGame();
         [[nodiscard]] bool Active() const noexcept { return session_ != nullptr; }
         [[nodiscard]] bool IsHost() const;
         [[nodiscard]] std::uint8_t LocalId() const;

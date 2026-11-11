@@ -9,6 +9,7 @@
 #include <GalaxyEggbert/Net/NetReplication.hpp>
 #include <GalaxyEggbert/Net/NetRules.hpp>
 
+#include <array>
 #include <cstdint>
 #include <deque>
 #include <string>
@@ -82,5 +83,21 @@ namespace GalaxyEggbert::CNA
         bool lost = false;   // no life left: the Lost screen, out of the match
         bool won = false;
         std::deque<std::pair<std::string, float>> notices; // the original's NotifPush, with their seconds
+
+        // The match's results (a Galaxy addition, Q-021), by lobby place: what each machine heard of
+        // the deaths (Die: who killed), who went out when (Lost, left, gone silent) and who won.
+        struct Score
+        {
+            bool played = false;
+            std::string name;
+            int team = 0;
+            int deaths = 0;
+            int kills = 0;
+            int out = 0;      // 0 still in; else the order he went out in (1 the first)
+            bool won = false;
+        };
+        std::array<Score, Net::kMaxPlayers> scores{};
+        int outCount = 0;
+        bool scored = false; // a match has been played: its results in the lobby
     };
 }

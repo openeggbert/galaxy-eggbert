@@ -281,6 +281,19 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void NetSession::EndGame()
+    {
+        if (session_ == nullptr || !session_->getIsHostProperty()) return;
+        try
+        {
+            if (session_->getSessionStateProperty() == NetworkSessionState::Playing) session_->EndGame();
+        }
+        catch (const std::exception& failure)
+        {
+            error_ = failure.what();
+        }
+    }
+
     bool NetSession::IsHost() const { return session_ != nullptr && session_->getIsHostProperty(); }
 
     bool NetSession::Available() noexcept { return true; }
@@ -411,6 +424,7 @@ namespace GalaxyEggbert::CNA
     void NetSession::Subscribe() {}
     void NetSession::Leave() {}
     void NetSession::StartGame() {}
+    void NetSession::EndGame() {}
     bool NetSession::IsHost() const { return false; }
     bool NetSession::HasLocalGamer() const { return false; }
     std::uint8_t NetSession::LocalId() const { return 0; }

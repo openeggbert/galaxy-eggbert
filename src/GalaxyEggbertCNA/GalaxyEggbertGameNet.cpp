@@ -225,6 +225,7 @@ namespace GalaxyEggbert::CNA
                 peer.present = false;
                 peer.paused = false;
                 NetNotice(Net::LeftNotice(peer.name));
+                NetScoreOut(NetSlotOf(peer.id));
             }
         }
 
@@ -269,13 +270,14 @@ namespace GalaxyEggbert::CNA
             if (!host) n.lobby.state = m.lobby;
             return;
         case Net::MessageKind::Team:
-            if (!host || n.match) return;
+            if (!host) return;
             if (const int slot = n.lobby.SlotOf(sender); slot >= 0 && !n.lobby.state.slots[static_cast<std::size_t>(slot)].ready)
                 n.lobby.SetTeam(sender, m.team);
             NetBroadcastLobby();
             return;
         case Net::MessageKind::Ready:
-            if (!host || n.match) return;
+            if (!host) return;
+            n.lobby.Back(sender); // a player's Ready says he is in the lobby (back from a match)
             n.lobby.SetReady(sender, m.ready);
             NetBroadcastLobby();
             return;
@@ -322,6 +324,7 @@ namespace GalaxyEggbert::CNA
             {
                 p->lives = m.lives;
                 NetNotice(Net::DieNotice(p->name, m.lives));
+                NetScoreDeath(NetSlotOf(sender), m.killer);
             }
             return;
         case Net::MessageKind::Lost:
@@ -330,6 +333,8 @@ namespace GalaxyEggbert::CNA
             {
                 p->present = false;
                 NetNotice(m.kind == Net::MessageKind::Lost ? Net::LostNotice(p->name) : Net::LeftNotice(p->name));
+                if (m.kind == Net::MessageKind::Lost) NetScoreDeath(NetSlotOf(sender), m.killer);
+                NetScoreOut(NetSlotOf(sender));
             }
             return;
         case Net::MessageKind::Pause:
@@ -342,7 +347,8 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::NetPlayerLeft(std::uint8_t id)
     {
         auto& n = *net_;
-        if (n.session.IsHost() && !n.match && n.lobby.SlotOf(id) >= 0)
+        const int slot = n.lobby.SlotOf(id);
+        if (n.session.IsHost() && slot >= 0)
         {
             n.lobby.Remove(id);
             NetBroadcastLobby();
@@ -352,6 +358,7 @@ namespace GalaxyEggbert::CNA
             if (p.id != id || !p.present) continue;
             p.present = false;
             NetNotice(Net::LeftNotice(p.name));
+            if (n.match) NetScoreOut(slot);
         }
     }
 
@@ -474,7 +481,17 @@ namespace GalaxyEggbert::CNA
             if (i == mySlot) who += "  (you)";
             line(who, left + 10.0f * s, y);
             line(Net::kTeamNames[slot.team % Net::kTeams], centre + 40.0f * s, y);
-            line(slot.ready ? "Ready" : "...", centre + 170.0f * s, y, 0.45f, !slot.ready);
+            if (slot.playing) line("playing", centre + 170.0f * s, y, 0.45f, true);
+            else line(slot.ready ? "Ready" : "...", centre + 170.0f * s, y, 0.45f, !slot.ready);
+            // The last match (Q-021): his place, kills / deaths.
+            if (const auto& score = n.scores[static_cast<std::size_t>(i)]; n.scored && score.played && score.name == slot.name)
+            {
+                static const char* const kPlaces[] = {"-", "1st", "2nd", "3rd", "4th"};
+                const int place = NetPlaceOf(i);
+                line(std::string(kPlaces[place >= 0 && place <= 4 ? place : 0]) + " " + std::to_string(score.kills) + "/" +
+                         std::to_string(score.deaths),
+                     centre + 235.0f * s, y, 0.42f, true);
+            }
         }
         line(std::string(Net::kTextChatZone), left, 204.0f);
         for (std::size_t j = 0; j < n.chat.size(); ++j)
@@ -689,6 +706,8 @@ namespace GalaxyEggbert::CNA
     {
         auto& n = *net_;
         if (!n.session.IsHost() || !n.lobby.CanStart()) return;
+        n.lobby.MatchStarted();
+        NetBroadcastLobby();
         Net::Message start;
         start.kind = Net::MessageKind::Start;
         start.world = n.lobby.state.world;
@@ -779,9 +798,20 @@ namespace GalaxyEggbert::CNA
         n.team = n.lobby.state.slots[static_cast<std::size_t>(slot)].team;
         n.world = worldNumber;
         n.peers.clear();
+        n.scores = {};
+        n.outCount = 0;
+        n.scored = true;
+        n.killer = Net::kNoKiller;
         for (int i = 0; i < Net::kMaxPlayers; ++i)
         {
             const auto& s = n.lobby.state.slots[static_cast<std::size_t>(i)];
+            if (s.present)
+            {
+                auto& score = n.scores[static_cast<std::size_t>(i)];
+                score.played = true;
+                score.name = s.name;
+                score.team = s.team;
+            }
             if (!s.present || i == slot) continue;
             NetGame::Peer peer;
             peer.id = s.gamerId;
@@ -929,6 +959,27 @@ namespace GalaxyEggbert::CNA
     {
         auto& n = *net_;
         NetCheckCloudTouch();
+        // Who killed him (the statistics): the maker of the shot or of the bomb he met, or for a bomb
+        // of the world the one player of its colour.
+        if (const int index = interaction_.DeathObject(); index >= 0)
+        {
+            const auto& objects = worldRuntime_.GetMobileObjects();
+            int killer = n.replicator.OwnerOf(static_cast<std::size_t>(index));
+            if (killer < 0 && static_cast<std::size_t>(index) < objects.size())
+            {
+                const int type = static_cast<int>(objects[static_cast<std::size_t>(index)].type);
+                if (type >= 200 && type <= 203)
+                {
+                    for (int i = 0; i < Net::kMaxPlayers; ++i)
+                    {
+                        const auto& score = n.scores[static_cast<std::size_t>(i)];
+                        if (!score.played || i == n.slot || score.team != type - 200) continue;
+                        killer = killer < 0 ? i : -2; // two of that colour: nobody's in particular
+                    }
+                }
+            }
+            if (killer >= 0 && killer < Net::kMaxPlayers && killer != n.slot) n.killer = static_cast<std::uint8_t>(killer);
+        }
         sound_.SetOutbox(nullptr);
         for (std::size_t first = 0; first < n.soundsOut.size(); first += Net::kMaxSounds)
         {
@@ -1039,6 +1090,8 @@ namespace GalaxyEggbert::CNA
         if (!Net::LastSurvivor(present)) return;
         // decblupi.cpp:4097-4125: sound 14, ACTION_WIN, and at its end the win screen.
         n.won = true;
+        n.scores[static_cast<std::size_t>(n.slot)].won = true;
+        NetLogResults();
         NetNotice(std::string(Net::kTextWon));
         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel14);
         if (blupi_.IsInVehicle()) blupi_.TriggerDismount();
@@ -1060,6 +1113,7 @@ namespace GalaxyEggbert::CNA
         m.lives = static_cast<std::uint8_t>(std::clamp(livesLeft, 0, Net::kMultiplayerLives));
         m.killer = net_->killer;
         net_->killer = Net::kNoKiller;
+        NetScoreDeath(net_->slot, m.killer);
         net_->session.Send(m);
     }
 
@@ -1069,7 +1123,12 @@ namespace GalaxyEggbert::CNA
         net_->lost = true;
         Net::Message m;
         m.kind = Net::MessageKind::Lost;
+        m.killer = net_->killer;
+        net_->killer = Net::kNoKiller;
         net_->session.Send(m);
+        NetScoreDeath(net_->slot, m.killer); // the last death (PK_LOST alone, no PK_DIE)
+        NetScoreOut(net_->slot);
+        NetLogResults();
     }
 
     void GalaxyEggbertGame::LeaveNetMatch()
@@ -1206,6 +1265,113 @@ namespace GalaxyEggbert::CNA
             std::cout << "GalaxyEggbertCNA: multiplayer: " << peer.name << "'s cloud electrocutes us." << std::endl;
             return;
         }
+    }
+
+    void GalaxyEggbertGame::NetScoreDeath(int slot, std::uint8_t killer)
+    {
+        if (!net_ || slot < 0 || slot >= Net::kMaxPlayers) return;
+        auto& n = *net_;
+        ++n.scores[static_cast<std::size_t>(slot)].deaths;
+        if (killer < Net::kMaxPlayers && killer != slot && n.scores[killer].played) ++n.scores[killer].kills;
+    }
+
+    void GalaxyEggbertGame::NetScoreOut(int slot)
+    {
+        if (!net_ || slot < 0 || slot >= Net::kMaxPlayers) return;
+        auto& score = net_->scores[static_cast<std::size_t>(slot)];
+        if (score.played && score.out == 0 && !score.won) score.out = ++net_->outCount;
+    }
+
+    std::vector<std::string> GalaxyEggbertGame::NetResultLines() const
+    {
+        // "1st  Ann (Yellow)   2 kills, 3 deaths": the winner, then who went out last, ...; those still
+        // playing (seen from the Lost screen) first, without a place.
+        std::vector<std::string> lines;
+        if (!net_ || !net_->scored) return lines;
+        const auto& n = *net_;
+        std::vector<std::pair<int, int>> order; // (place, slot); place 0: still playing
+        for (int i = 0; i < Net::kMaxPlayers; ++i)
+            if (n.scores[static_cast<std::size_t>(i)].played) order.emplace_back(NetPlaceOf(i), i);
+        std::sort(order.begin(), order.end());
+        static const char* const kPlaces[] = {"", "1st", "2nd", "3rd", "4th"};
+        for (const auto& [place, i] : order)
+        {
+            const auto& score = n.scores[static_cast<std::size_t>(i)];
+            std::string line = place > 0 && place <= 4 ? kPlaces[place] : "playing";
+            line += "  " + score.name + " (" + Net::kTeamNames[score.team % Net::kTeams] + ")  " + std::to_string(score.kills) +
+                    (score.kills == 1 ? " kill, " : " kills, ") + std::to_string(score.deaths) +
+                    (score.deaths == 1 ? " death" : " deaths");
+            lines.push_back(line);
+        }
+        return lines;
+    }
+
+    int GalaxyEggbertGame::NetPlaceOf(int slot) const
+    {
+        // The winner 1; who went out last 2, ...; 0 still playing (or no match).
+        if (!net_ || slot < 0 || slot >= Net::kMaxPlayers || !net_->scores[static_cast<std::size_t>(slot)].played) return 0;
+        const auto& n = *net_;
+        int played = 0, in = 0, lastIn = -1;
+        for (int i = 0; i < Net::kMaxPlayers; ++i)
+        {
+            const auto& score = n.scores[static_cast<std::size_t>(i)];
+            if (!score.played) continue;
+            ++played;
+            if (score.out == 0)
+            {
+                ++in;
+                lastIn = i;
+            }
+        }
+        const auto& score = n.scores[static_cast<std::size_t>(slot)];
+        if (score.won || (in == 1 && slot == lastIn && played > 1)) return 1;
+        return score.out > 0 ? played - score.out + 1 : 0;
+    }
+
+    void GalaxyEggbertGame::NetLogResults() const
+    {
+        for (const auto& line : NetResultLines()) std::cout << "GalaxyEggbertCNA: multiplayer: result: " << line << std::endl;
+    }
+
+    void GalaxyEggbertGame::NetReturnToLobby()
+    {
+        // A rematch (a Galaxy addition, Q-021): from the win or lost screen back to the lobby of the
+        // same game, the others' places kept, to choose a mission and play again. The original closed
+        // the network game there (event.cpp:2688-2700).
+        if (!net_) return;
+        auto& n = *net_;
+        n.match = false;
+        n.peers.clear();
+        n.incoming.clear();
+        n.soundsIn.clear();
+        n.soundsOut.clear();
+        n.liftsIn.clear();
+        sound_.SetOutbox(nullptr);
+        n.notices.clear();
+        n.localPaused = false;
+        n.typing = false;
+        n.message.clear();
+        n.lobbySeconds = 0.0f;
+        n.testReadyAsked = false;
+        n.screen = NetGame::Screen::Lobby;
+        interaction_ = InteractionSystem();
+        StopVehicleMotorSound();
+        const std::uint8_t me = n.session.LocalId();
+        if (n.session.IsHost())
+        {
+            n.lobby.Back(me);
+            n.lobby.SetReady(me, false);
+            n.session.EndGame();
+            NetBroadcastLobby();
+        }
+        else
+        {
+            Net::Message ready;
+            ready.kind = Net::MessageKind::Ready;
+            ready.ready = false;
+            n.session.Send(ready);
+        }
+        std::cout << "GalaxyEggbertCNA: multiplayer: back in the lobby." << std::endl;
     }
 
     int GalaxyEggbertGame::NetSlotOf(std::uint8_t gamerId) const noexcept

@@ -1177,6 +1177,7 @@ namespace GalaxyEggbert::Game
                                       std::optional<float> blupiFireYaw)
     {
         events_.clear();
+        deathObject_ = -1;
         ridingLift_ = false;
         TickByeBye(dt);
         // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), out of the
@@ -1916,6 +1917,7 @@ namespace GalaxyEggbert::Game
                 if (!blupiInvincible && !blupiOutOfPlay && MoveObjectTouches(obj.type, bdx, bdy, bdz))
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
+                    deathObject_ = static_cast<int>(&obj - objects.data());
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     // Real LoseLife()/respawn deferred to the death-lock resolution point
@@ -2152,6 +2154,7 @@ namespace GalaxyEggbert::Game
                 // Not met at all while he is busy (Decor.cpp:6088 gates the block on m_blupiFocus).
                 if (blupiFocused && !blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
                 {
+                    deathObject_ = static_cast<int>(&obj - objects.data());
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     const bool isClear2 = RollClear2Coinflip();

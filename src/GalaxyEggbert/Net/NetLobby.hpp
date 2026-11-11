@@ -48,6 +48,20 @@ namespace GalaxyEggbert::Net
         {
             for (auto& slot : state.slots) slot.ready = false;
         }
+        // A match begins: every player present plays it, nobody ready for the next one.
+        void MatchStarted()
+        {
+            for (auto& slot : state.slots)
+            {
+                slot.ready = false;
+                slot.playing = slot.present;
+            }
+        }
+        // A player back in the lobby from the match (a rematch, Galaxy's: Q-021).
+        void Back(std::uint8_t gamerId)
+        {
+            if (const int slot = SlotOf(gamerId); slot >= 0) state.slots[static_cast<std::size_t>(slot)].playing = false;
+        }
         [[nodiscard]] int SlotOf(std::uint8_t gamerId) const noexcept
         {
             for (int i = 0; i < kMaxPlayers; ++i)
@@ -63,8 +77,8 @@ namespace GalaxyEggbert::Net
         }
         [[nodiscard]] bool CanStart() const noexcept
         {
-            return Present() >= 2 &&
-                   std::all_of(state.slots.begin(), state.slots.end(), [](const auto& s) { return !s.present || s.ready; });
+            return Present() >= 2 && std::all_of(state.slots.begin(), state.slots.end(),
+                                                 [](const auto& s) { return !s.present || (s.ready && !s.playing); });
         }
 
         LobbyState state;

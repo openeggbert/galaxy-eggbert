@@ -39,7 +39,7 @@ namespace GalaxyEggbert::Net
         Pose = 7,    // a player's Blupi, unreliable, about 20 a second
         Events = 8,  // the changes a player's Blupi made to the world, reliable
         Die = 9,     // a player lost a life (the lives left)
-        Lost = 10,   // a player has no life left
+        Lost = 10,   // a player died with no life in reserve: out of the match (and who killed him)
         Abandon = 11, // a player left the match
         Pause = 12,  // a player paused or went on: everyone's game stops (the original's PK_PAUSE)
         Sounds = 13, // the sounds a player's Blupi made, where (PK_PLAYSOUND / PK_STOPSOUND)
@@ -132,7 +132,7 @@ namespace GalaxyEggbert::Net
         bool ready = false;
         std::string text;
         std::uint8_t lives = 0;
-        std::uint8_t killer = kNoKiller; // Die: the place (0-3) of the player who killed him
+        std::uint8_t killer = kNoKiller; // Die, Lost: the place (0-3) of the player who killed him
         std::uint8_t target = 0;         // StopCloud: the gamer whose cloud is gone
         // Pose
         Pose pose;

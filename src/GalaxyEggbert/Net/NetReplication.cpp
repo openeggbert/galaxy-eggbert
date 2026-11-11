@@ -19,6 +19,7 @@ namespace GalaxyEggbert::Net
         activeBefore_.clear();
         typeBefore_.clear();
         spawnIds_.clear();
+        owners_.clear();
         applied_ = refused_ = missed_ = 0;
     }
 
@@ -96,6 +97,7 @@ namespace GalaxyEggbert::Net
             for (auto it = spawnIds_.begin(); it != spawnIds_.end();)
                 it = it->first == index ? spawnIds_.erase(it) : std::next(it);
             if (IsPersistentSpawn(event.a)) spawnIds_[index] = event.id;
+            owners_[index] = static_cast<int>((static_cast<std::uint32_t>(event.id) >> 24) & 0x7f);
             ++applied_;
             return;
         }
@@ -197,6 +199,7 @@ namespace GalaxyEggbert::Net
                 }
                 events.push_back(e);
                 if (IsPersistentSpawn(e.a)) spawnIds_[i] = e.id;
+                owners_.erase(i); // ours now
             }
         }
         Snapshot(world, objects);

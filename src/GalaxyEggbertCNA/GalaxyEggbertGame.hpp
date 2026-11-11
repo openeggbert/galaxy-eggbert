@@ -1034,6 +1034,14 @@ namespace GalaxyEggbert::CNA
         // The other players' names over their heads (GalaxyEggbertGameDraw.cpp).
         void DrawNetNames(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
         [[nodiscard]] int NetSlotOf(std::uint8_t gamerId) const noexcept; // a gamer's lobby place, -1
+        // The match's results (Q-021): a death (and its killer's place), a player out; the lines
+        // shown on the win and lost screens and in the lobby; back to the lobby after a match.
+        void NetScoreDeath(int slot, std::uint8_t killer);
+        void NetScoreOut(int slot);
+        [[nodiscard]] std::vector<std::string> NetResultLines() const;
+        void NetLogResults() const;
+        [[nodiscard]] int NetPlaceOf(int slot) const;
+        void NetReturnToLobby();
         // The other players' Blupis, in their colours (GalaxyEggbertGameScene.cpp).
         void AppendSceneNetPlayers(std::vector<GalaxyEggbert::Game::SceneModel>& opaque,
                                    std::vector<GalaxyEggbert::Game::SceneModel>& translucent);

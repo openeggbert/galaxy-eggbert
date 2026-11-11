@@ -114,6 +114,11 @@ int main()
     check(Decode(Encode(die)) && Decode(Encode(die))->killer == kNoKiller, "Die: no killer comes back");
     die.killer = 4;
     check(!Decode(Encode(die)), "a killer's place past 3 is refused");
+    Message lost;
+    lost.kind = MessageKind::Lost;
+    lost.killer = 1;
+    const auto lostBack = Decode(Encode(lost));
+    check(lostBack && lostBack->kind == MessageKind::Lost && lostBack->killer == 1, "Lost: the last death's killer comes back");
 
     Message pause;
     pause.kind = MessageKind::Pause;
@@ -181,6 +186,15 @@ int main()
     host.SetReady(2, true);
     host.SetTeam(2, 0);
     check(host.CanStart() && host.state.slots[1].team == 0, "two ready: start; colours may be the same (as the original)");
+    host.MatchStarted();
+    check(!host.CanStart() && host.state.slots[0].playing && !host.state.slots[0].ready,
+          "a match begins: everyone plays it, nobody is ready for the next");
+    host.Back(1);
+    host.SetReady(1, true);
+    check(!host.CanStart(), "a rematch: one back and ready, the other still playing: no start");
+    host.Back(2);
+    host.SetReady(2, true);
+    check(host.CanStart() && !host.state.slots[1].playing, "both back in the lobby and ready: the rematch may start");
     host.Add(3, "Cid");
     check(!host.CanStart(), "a third player not ready yet holds the start");
     host.Remove(3);

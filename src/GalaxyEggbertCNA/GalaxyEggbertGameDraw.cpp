@@ -753,9 +753,15 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::Def::GamePhase::Win, phaseTimeSeconds_);
-                if (NetMatchActive() && phase_ == GalaxyEggbert::Def::GamePhase::Win)
-                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                               {std::string(GalaxyEggbert::Net::kTextWon)});
+                if (NetMatchActive())
+                {
+                    // The match's results under the original's text (Q-021).
+                    std::vector<std::string> lines;
+                    if (phase_ == GalaxyEggbert::Def::GamePhase::Win) lines.emplace_back(GalaxyEggbert::Net::kTextWon);
+                    const auto results = NetResultLines();
+                    lines.insert(lines.end(), results.begin(), results.end());
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
+                }
                 else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});

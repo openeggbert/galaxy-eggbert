@@ -1147,9 +1147,9 @@ namespace GalaxyEggbert::CNA
             const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || confirmDown || mouseReturnPressed;
             if (returnPressed && !phaseReturnKeyWasDown_ && NetMatchActive())
             {
-                // The network game is over for him (event.cpp:2688-2700 closes it as the phase
-                // changes): out of the session, back to the menu.
-                LeaveNetMatch();
+                // The match is over for him: back to the game's lobby for another (a rematch, Q-021;
+                // the original closed the network game here, event.cpp:2688-2700).
+                NetReturnToLobby();
                 SetPhase(GalaxyEggbert::Def::GamePhase::Init, /*bypassFade=*/true);
             }
             else if (returnPressed && !phaseReturnKeyWasDown_)

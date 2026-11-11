@@ -32,6 +32,13 @@ namespace GalaxyEggbert::Net
                                                    const std::vector<Game::MobileObjSpec>& objects);
 
         // Events applied, and those refused (out of the world, an object that is not there).
+        // The place (0-3) of the player who made the object at @p index (another's bomb, his shot),
+        // -1 for the world's own and ours.
+        [[nodiscard]] int OwnerOf(std::size_t index) const
+        {
+            const auto it = owners_.find(index);
+            return it != owners_.end() ? it->second : -1;
+        }
         [[nodiscard]] int Applied() const noexcept { return applied_; }
         [[nodiscard]] int Refused() const noexcept { return refused_; }
         // The block changes lost to an overflow of the world's journal (none expected: 256 a step).
@@ -45,6 +52,7 @@ namespace GalaxyEggbert::Net
         std::vector<bool> activeBefore_;
         std::vector<Def::ObjectType> typeBefore_;
         std::unordered_map<std::size_t, std::int32_t> spawnIds_; // object index -> net id (bombs)
+        std::unordered_map<std::size_t, int> owners_;           // object index -> the maker's place (another's)
         int applied_ = 0, refused_ = 0, missed_ = 0;
     };
 }
