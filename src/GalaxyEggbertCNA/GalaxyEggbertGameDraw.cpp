@@ -1,6 +1,7 @@
 // GalaxyEggbertGame's frame: the 3D world (DrawWorld), the HUD, menus and editor over it
 // (DrawOverlay) and the frame captures (DrawFrameCaptures). Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
+#include "NetGame.hpp"
 
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
@@ -66,6 +67,7 @@
 #include <set>
 #include <vector>
 #include "GameInternal.hpp"
+#include "NetGame.hpp"
 #include <GalaxyEggbert/Net/NetRules.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 
@@ -249,6 +251,46 @@ namespace GalaxyEggbert::CNA
             }
         }
         positionAxes_.Draw(device, camera_, false);
+        inputPad_.DrawLabels(device, viewportW, viewportH, labels);
+    }
+
+    void GalaxyEggbertGame::DrawNetNames(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                         int viewportH)
+    {
+        // The other players' names over their heads, in their colours (a Galaxy addition, the owner's
+        // Q-021: in 3D another Blupi is easily lost from sight, behind a wall or far off; BD-0120).
+        // Through walls, as far as 30 cells; not a hidden one (the drink's Hide, SEC_HIDE).
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Vector4;
+        namespace Net = GalaxyEggbert::Net;
+        if (!NetMatchActive() || viewportW <= 0 || viewportH <= 0) return;
+        const auto& n = *net_;
+        static const Vector3 kTeamColours[Net::kTeams] = {Vector3(1.0f, 0.88f, 0.15f), Vector3(1.0f, 0.55f, 0.10f),
+                                                          Vector3(0.35f, 0.60f, 1.0f), Vector3(0.35f, 0.90f, 0.35f)};
+        const auto viewProjection = camera_.ViewProjection();
+        const float s = static_cast<float>(viewportH) / 480.0f;
+        std::vector<GalaxyEggbert::Game::InputPad::ScreenLabel> labels;
+        for (std::size_t i = 0; i < n.peers.size(); ++i)
+        {
+            const auto& peer = n.peers[i];
+            const auto& p = peer.pose;
+            if (!peer.present || !peer.hasPose || (p.flags & Net::kPoseHidden) != 0 ||
+                p.aura == GalaxyEggbert::Def::ToRaw(GalaxyEggbert::Def::SecretPower::Hide))
+                continue;
+            const float t = NetPoseBlend(n, i);
+            const Vector3 at(peer.previous.x + (p.x - peer.previous.x) * t, peer.previous.y + (p.y - peer.previous.y) * t + 0.7f,
+                             peer.previous.z + (p.z - peer.previous.z) * t);
+            const float dx = at.X - blupi_.GetX(), dy = at.Y - blupi_.GetY(), dz = at.Z - blupi_.GetZ();
+            if (dx * dx + dy * dy + dz * dz > 30.0f * 30.0f) continue;
+            const Vector4 clip = Vector4::Transform(Vector4(at.X, at.Y, at.Z, 1.0f), viewProjection);
+            if (clip.W <= 0.01f) continue;
+            const float x = (clip.X / clip.W * 0.5f + 0.5f) * static_cast<float>(viewportW);
+            const float y = (0.5f - clip.Y / clip.W * 0.5f) * static_cast<float>(viewportH);
+            if (x < -50.0f || x > static_cast<float>(viewportW) + 50.0f || y < -20.0f || y > static_cast<float>(viewportH) + 20.0f)
+                continue;
+            labels.push_back({x + 1.2f * s, y + 1.2f * s, peer.name, Vector3(0.0f, 0.0f, 0.0f)});
+            labels.push_back({x, y, peer.name, kTeamColours[peer.team % Net::kTeams]});
+        }
         inputPad_.DrawLabels(device, viewportW, viewportH, labels);
     }
 
@@ -810,6 +852,7 @@ namespace GalaxyEggbert::CNA
                     const auto cheats = ActiveCheatNames();
                     names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                    DrawNetNames(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                     if (std::find(activeCheats_.begin(), activeCheats_.end(), "position") != activeCheats_.end())
                     {
                         const auto list = GalaxyEggbert::Game::InputPad::ActiveCheatsRect(names, viewport.getHeightProperty());

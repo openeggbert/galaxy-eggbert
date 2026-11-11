@@ -1031,6 +1031,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] static float NetPoseBlend(const NetGame& n, std::size_t peer);
         // His Blupi met by another's cloud (decblupi.cpp:3838-3893): electrocuted, the cloud gone.
         void NetCheckCloudTouch();
+        // The other players' names over their heads (GalaxyEggbertGameDraw.cpp).
+        void DrawNetNames(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
         [[nodiscard]] int NetSlotOf(std::uint8_t gamerId) const noexcept; // a gamer's lobby place, -1
         // The other players' Blupis, in their colours (GalaxyEggbertGameScene.cpp).
         void AppendSceneNetPlayers(std::vector<GalaxyEggbert::Game::SceneModel>& opaque,

@@ -22,6 +22,7 @@ host_script="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
 join_script="$(cd "$(dirname "$3")" && pwd)/$(basename "$3")"
 out="${4:-$repo/build-probe/net-two-players}"
 mkdir -p "$out"
+out="$(cd "$out" && pwd)" # the instances run in their own directories
 
 run() { # <name> <mode> <script>
     local dir="$repo/build-probe/net-run-$1"
