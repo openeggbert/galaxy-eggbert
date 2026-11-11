@@ -8,6 +8,23 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## An outside review of 2026-11-07, checked against the code (2026-11-11) — in progress
+
+An external review (written against `300041de`, a commit no longer on develop) was checked point by
+point; the owner chose what to do. Done so far:
+
+- R7: the Android accelerometer fix (86017658) confirmed by the owner on the phone (CURRENT.md).
+- R4: the 56 `.max` rows of `plans/audit/asset_sources.csv` now say why they are NOT_APPLICABLE
+  (MR-0001/MR-0010); `tools/audit/asset_sources.py` writes that note itself (`MAX_NOTE`). Do not
+  regenerate the whole CSV while `build-probe/rd4-survey/scenes.csv` is missing (cleared
+  2026-11-07): without it the generator blanks the survey columns of 528 Ray Dream rows.
+
+Still to do (the owner's choices): R3 `VerifyShippedWorlds` compares every metadata type and the
+music track; R1 `.vwr` loading bounded (chunksPerAxis 1-10, sizes checked against the data before
+allocating, duplicate/missing chunks rejected, palette indices checked at load, negative tests);
+R2 the editor saves atomically (temporary file, checked close, rename) and shows a message instead
+of ending the game when a save fails.
+
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 
 At medium and up the terrain's cubes (`m_occluded`), the grass plates (`LitWith`) and the cutouts are

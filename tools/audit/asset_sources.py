@@ -31,6 +31,9 @@ EXTS = {".rd4", ".rds", ".rd3", ".max", ".a3d", ".3ds", ".dxf", ".wrl", ".glb", 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(REPO, "plans", "audit", "asset_sources.csv")
 NOTES = os.path.join(REPO, "plans", "audit", "asset_sources.notes.csv")
+# Why a .max row is NOT_APPLICABLE (the owner's decision, plans/audit/manual_review.md).
+MAX_NOTE = ("3D Studio MAX scene, no open reader (Blender does not import .max); not converted by the owner's "
+            "decision (MR-0001, closed as MR-0010 2026-11-06), see plans/audit/manual_review.md")
 FIELDS = ["id", "path", "ext", "format", "bytes", "sha1", "duplicate_of", "folder", "survey",
           "runtime_use", "opened", "runtime", "verified", "status", "notes", "next_action"]
 
@@ -160,6 +163,7 @@ def main():
                 survey_text, opened = "a3d: " + str(exc), "partial"
         else:
             survey_text, opened = "", "no"
+        note = ""
         if dup != rel:
             status = "NOT_APPLICABLE"
             next_action = "duplicate of " + dup
@@ -171,6 +175,7 @@ def main():
             # their Ray Dream twins are what the game converts.
             status = "NOT_APPLICABLE"
             next_action = ""
+            note = MAX_NOTE
         elif ext == ".a3d":
             status = "UNREVIEWED"
             next_action = "classify; a .rds of the same object is the richer source when one exists (materials, cameras)"
@@ -181,7 +186,7 @@ def main():
             "id": ident, "path": rel, "ext": ext, "format": fmt, "bytes": os.path.getsize(full), "sha1": digest[:12],
             "duplicate_of": "" if dup == rel else dup, "folder": os.path.dirname(rel), "survey": survey_text,
             "runtime_use": " ".join(uses), "opened": opened, "runtime": "yes" if uses else "no", "verified": "",
-            "status": status, "notes": "", "next_action": next_action,
+            "status": status, "notes": note, "next_action": next_action,
         }
         hand = notes.get(ident)
         if hand:
