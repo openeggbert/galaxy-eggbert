@@ -742,6 +742,15 @@ namespace GalaxyEggbert::Game
         QuadBatch::FlushQuads(device, effect, renderer, quads, viewportW, viewportH, alpha);
     }
 
+    // The scale (at most @p scale) at which @p text, drawn as AppendCenteredLabel draws it, fits the
+    // blank face @p face with a little margin: a translation can be wider than the English.
+    float InputPad::FaceLabelScale(std::string_view text, const Rect& face, float scale) noexcept
+    {
+        const float room = face.x1 - face.x0 - 8.0f * scale;
+        const float width = TextMetrics::Width(text) * kPauseLabelScale * scale;
+        return width > room && width > 0.0f ? scale * room / width : scale;
+    }
+
     void InputPad::AppendCenteredLabel(std::vector<Quad>& quads, std::string_view text,
                                         float centerX, float topY, float viewportScale) const
     {
@@ -2075,8 +2084,10 @@ namespace GalaxyEggbert::Game
                 Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
                 PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == kPauseControlRecord ? pressedQuads : normalQuads).push_back(q);
-                AppendCenteredLabel(labelQuads, Tr("Record"), (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * scale,
-                                    scale);
+                const std::string_view record = Tr("Record");
+                const float fitted = FaceLabelScale(record, r, scale);
+                AppendCenteredLabel(labelQuads, record, (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * fitted,
+                                    fitted);
             }
             if (showOriginal)
             {
@@ -2085,8 +2096,10 @@ namespace GalaxyEggbert::Game
                 Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
                 PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == kPauseControlOriginal ? pressedQuads : normalQuads).push_back(q);
-                AppendCenteredLabel(labelQuads, Tr(originalLabel), (r.x0 + r.x1) * 0.5f,
-                                    (r.y0 + r.y1) * 0.5f - 12.0f * scale, scale);
+                const std::string_view original = Tr(originalLabel);
+                const float fitted = FaceLabelScale(original, r, scale);
+                AppendCenteredLabel(labelQuads, original, (r.x0 + r.x1) * 0.5f,
+                                    (r.y0 + r.y1) * 0.5f - 12.0f * fitted, fitted);
             }
         }
 

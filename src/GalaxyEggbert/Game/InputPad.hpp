@@ -842,6 +842,7 @@ namespace GalaxyEggbert::Game
         // top edge at topY, unscaled Y -- see DrawPause()'s real button-
         // label use). A member (not a free function) since text.png's
         // real pixel dimensions are only known once loaded.
+        [[nodiscard]] static float FaceLabelScale(std::string_view text, const QuadBatch::Rect& face, float scale) noexcept;
         void AppendCenteredLabel(std::vector<Quad>& quads, std::string_view text,
                                  float centerX, float topY, float scale) const;
 

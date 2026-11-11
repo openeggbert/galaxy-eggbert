@@ -537,8 +537,13 @@ namespace GalaxyEggbert::Editor
         // Text vertically centred on a band [y0, y1].
         const auto middle = [](float y0, float y1, float scale) { return (y0 + y1 - kGlyphCellPx * scale) * 0.5f; };
 
-        label(labels, Game::TrFormat("3D World Editor - Player {0}", {std::string(1, static_cast<char>('A' + gamerSlot_))}),
-              22.0f, kListPanelY0 + 8.0f, kTitleScale);
+        {
+            // Left of Import, smaller when a translation would reach it.
+            const std::string title =
+                Game::TrFormat("3D World Editor - Player {0}", {std::string(1, static_cast<char>('A' + gamerSlot_))});
+            const float scale = fitted(title, kTitleScale, ImportRect().x0 - 8.0f - 22.0f);
+            label(labels, title, 22.0f, kListPanelY0 + 8.0f + (kTitleScale - scale) * kGlyphCellPx * 0.5f, scale);
+        }
         for (int i = 0; i < kCustomWorldSlotCount; ++i)
         {
             const Rect cell = SlotRect(i);

@@ -335,7 +335,7 @@ namespace GalaxyEggbert::Game
         {"Put .vwr files in {0}/: they are listed on the right.",
          "Mets des fichiers .vwr dans {0}/ : ils apparaissent à droite."},
         {"World {0} deleted (Backups brings it back).", "Monde {0} supprimé (Sauvegardes le ramène)."},
-        {"3D World Editor - Player {0}", "Éditeur de mondes 3D - Joueur {0}"},
+        {"3D World Editor - Player {0}", "Éditeur 3D - Joueur {0}"},
         {"New world", "Nouveau monde"},
         {"Delete?", "Supprimer ?"},
         {"Restore", "Restaurer"},
