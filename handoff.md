@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-10 (multiplayer on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
 ## Multiplayer (2026-11-10, owner Q-019) — on branch `multiplayer`, not merged
 
@@ -26,6 +26,20 @@ SystemLinkDiscovery from the `cna` session, CNA next 5d7579919) with the host on
 protocol 2; scenarios cloud and rematch; all five over a bad network (NET_LOSS/NET_LATENCY) PASS;
 worlds 206-212 (briefs, `arena.check()`, which also moved two of 202's drinks off the air).
 CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
+2026-11-11 (the owner's Q-022, everything proposed; in progress):
+- **Done:**
+  - `tools/net_players.sh` for 2-4 players (NET_EXPECT, world hashes; `net_two_players.sh` wraps
+    it), with four-player (kills) and three-player (pause, a leaver) scenarios.
+  - Autoplay's `pause`, `netpause`, `netplayers`, `wander` and `hash`.
+  - FuzzNetProtocol (CTest) and `tools/fuzz_net_sanitized.sh`.
+  - Lobby and Start accepted from the host only; a hardened replication.
+  - The world bombs' kills counted (they were never counted).
+  - The four-player test found UB-011: CNA's joined clients answered discovery. Fixed in CNA
+    c1b520dc9; the build compiles against that working tree.
+- **Not built:** SB1's worlds 101-110 are SB2's 201-210 (owner_questions Q-022).
+- **Next:** the long match (`soak_*.txt`, NET_TIMEOUT=780); the lobby's lives and time limit
+  (protocol 3, `TimeUp`); messages in the match; the spectator; the editor's worlds; rejoining;
+  Windows; PlayerMatch.
 
 How to check it:
 ```bash
