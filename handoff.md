@@ -16,6 +16,13 @@ build and pages are 0.1.3. Built against CNA `46f8243ca`, where the `cna` sessio
 Debug builds (UB-013 fixed; option CNA_DEBUG_CONTEXT_HOTKEYS): in 0.1.3 F9 and F10 do nothing. The
 first 0.1.3 package build had caught CNA mid-edit (Linux, Android) and without it (Windows, web); all
 four were built again from the clean tree before the release.
+For the next release (the `cna` session, 2026-11-11): a Windows package must not be built against
+CNA `a4568ea54..ab834c8b6` -- there a search (NetworkSession::Find) as a process's first network call
+runs before WSAStartup and throws NetworkNotAvailableException. Use `518762a30` or later for any
+package (it also fixes three SystemLink QoS faults of `bee4190f1`: two upstream trains for an
+invitation around its announce, a late alias saturating the downstream rate, an unclaimed report
+credited to the only host). Those commits also fix SystemLink searches: a search no
+longer binds port 61190, so a host on the same machine as a searching instance is found again.
 
 ## The 1.5x speed moves from F9 to F4 (2026-11-11) — done, released in 0.1.3
 
