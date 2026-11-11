@@ -1,6 +1,9 @@
 // GalaxyEggbertGame's frame: the 3D world (DrawWorld), the HUD, menus and editor over it
 // (DrawOverlay) and the frame captures (DrawFrameCaptures). Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
+#include "BuildStamp.hpp"
+
+#include <GalaxyEggbert/Version.hpp>
 
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
@@ -764,7 +767,9 @@ namespace GalaxyEggbert::CNA
                     inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                        phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
                                        /*overTitleScene=*/titleSceneActive_,
-                                       graphics_ && graphics_->getIsFullScreenProperty());
+                                       graphics_ && graphics_->getIsFullScreenProperty(),
+                                       "Version " + std::string(GalaxyEggbert::VersionString()),
+                                       BuildStampText());
                 }
                 if (demoSlotsShown_)
                 {

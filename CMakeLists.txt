@@ -1,5 +1,27 @@
 cmake_minimum_required(VERSION 3.21)
-project(GalaxyEggbert LANGUAGES C CXX)
+
+# --- Version (docs/releasing.md) ------------------------------------------------------------------
+# Decided in one place, VERSION.txt: a Semantic Versioning number, "0.1.0", or "0.1.0-rc.1" for a
+# pre-release. As in CNA, the numeric part goes to project(VERSION) and the pre-release identifier
+# sits beside it; Android's versionName (android/app/build.gradle) and
+# tools/release/make_release.sh read the same file. GALAXY_EGGBERT_VERSION_STRING is the one
+# spelling the build uses (the generated GalaxyEggbert/Version.hpp, the package's file name).
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" GALAXY_EGGBERT_VERSION_STRING LIMIT_COUNT 1)
+string(STRIP "${GALAXY_EGGBERT_VERSION_STRING}" GALAXY_EGGBERT_VERSION_STRING)
+if(NOT GALAXY_EGGBERT_VERSION_STRING MATCHES "^([0-9]+\\.[0-9]+\\.[0-9]+)(-([0-9A-Za-z.-]+))?$")
+    message(FATAL_ERROR "VERSION.txt must hold a Semantic Versioning number such as 0.1.0 or "
+                        "0.1.0-rc.1, not \"${GALAXY_EGGBERT_VERSION_STRING}\"")
+endif()
+set(_ge_version_numeric "${CMAKE_MATCH_1}")
+set(GALAXY_EGGBERT_VERSION_PRERELEASE "${CMAKE_MATCH_3}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt")
+
+project(GalaxyEggbert VERSION ${_ge_version_numeric} LANGUAGES C CXX)
+message(STATUS "Galaxy Eggbert: version ${GALAXY_EGGBERT_VERSION_STRING}")
+set(GALAXY_EGGBERT_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/templates/Version.hpp.in"
+               "${GALAXY_EGGBERT_GENERATED_INCLUDE_DIR}/GalaxyEggbert/Version.hpp" @ONLY)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/BuildStamp.cmake")
 
 include(CTest)
 
@@ -243,6 +265,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
 
     target_link_libraries(GalaxyEggbertCNA PRIVATE CnaEngine::Graphics)
+
+    # The main menu shows the version (the generated GalaxyEggbert/Version.hpp) and the build's date
+    # and time (cmake/BuildStamp.cmake: made again only when the game is linked again).
+    target_include_directories(GalaxyEggbertCNA PRIVATE "${GALAXY_EGGBERT_GENERATED_INCLUDE_DIR}")
+    target_sources(GalaxyEggbertCNA PRIVATE src/GalaxyEggbertCNA/BuildStamp.hpp)
+    ge_add_build_stamp(GalaxyEggbertCNA)
 
     if(TARGET SDL3::SDL3main)
         target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
@@ -640,9 +668,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
             set(CPACK_GENERATOR "TGZ")
             set(CPACK_PACKAGE_NAME "GalaxyEggbert")
-            # The release's version (VERSION.txt) in the archive's name.
-            file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" _ge_version LIMIT_COUNT 1)
-            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbert-${_ge_version}-linux-${CMAKE_SYSTEM_PROCESSOR}")
+            # The version (VERSION.txt) in the archive's name.
+            set(CPACK_PACKAGE_FILE_NAME
+                "GalaxyEggbert-${GALAXY_EGGBERT_VERSION_STRING}-linux-${CMAKE_SYSTEM_PROCESSOR}")
             set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
             set(CPACK_COMPONENTS_ALL Runtime)
             # CPack otherwise invokes the root install with no component,

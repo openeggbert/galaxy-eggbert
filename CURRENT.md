@@ -83,6 +83,11 @@ content-authoring UX, but not new gameplay mechanics.
   2.38 and the system's FFmpeg) and the release-signed Android APK (arm64), with SHA256SUMS.txt.
   1.0.0-rc1 built and the archive run; not published. Windows and a glibc 2.35 archive are open
   (Q-018).
+- Version (2026-11-11, the owner): **0.1.0, not released yet**. `VERSION.txt` is the one place
+  (CMake splits it as CNA does and generates `GalaxyEggbert/Version.hpp`; Android's versionName
+  and the release script read it); the main menu shows "Version 0.1.0" left of Play and the build's
+  date and time under it (`cmake/BuildStamp.cmake`: made again only when the game is relinked).
+  `CHANGELOG.md`, `docs/releasing.md`.
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
   only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x
@@ -503,9 +508,10 @@ BD-0119) are done too. What is left:_
 
 ### Waiting on the owner
 
-- **Publishing release 1.0.0-rc1** (Q-018): the Linux archive and the Android APK are built
-  (`tools/release/make_release.sh`, `build-probe/release/`); open are the Windows package, an
-  archive for glibc 2.35, the version number and where to publish (the web build too?).
+- **Publishing a release** (Q-018): the version is 0.1.0 (the owner, 2026-11-11), not released
+  yet; packages are made by `tools/release/make_release.sh` (1.0.0-rc1 was built into
+  `build-probe/release/` before the number was decided). Open are the Windows package, an archive
+  for glibc 2.35 and where to publish (the web build too?).
 - **Multiplayer**: analysed in `plans/plan_gemultiplayer.md` (nothing built); its questions Q1-Q11
   are the owner's.
 - Optional: a human play pass (MR-0004 lists what to try); the owner judged the automated

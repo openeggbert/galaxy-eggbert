@@ -487,6 +487,13 @@ namespace GalaxyEggbert::Game
 
         constexpr int kInitPanelIcon = 15; // pad.png, same convention as Hud's DrawInfo panel
 
+        // The version left of Play and the build's date and time under it (Galaxy's own, the owner,
+        // 2026-11-11): the gamer rows' body size, the version a little larger.
+        constexpr float kInitVersionScale = 0.55f;
+        constexpr float kInitBuildScale = 0.45f;
+        constexpr float kInitVersionGap = 10.0f;     // reference pixels left of the right panel
+        constexpr float kInitVersionLineGap = 20.0f; // the version's top above Play's middle
+
         // Real icon indices (`Pixmap.cpp`'s pad.png dispatch): GamerA=4/16
         // (unselected/selected), GamerB=5/17, GamerC=6/18, InitSetup=19
         // (same icon as PauseSetup), InitPlay=7. InitRanking/InitBuy are
@@ -3041,7 +3048,8 @@ namespace GalaxyEggbert::Game
     void InputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, float phaseTimeSeconds, int selectedGamer,
                              const std::array<InitGamerInfo, 3>& gamers, GalaxyEggbert::Def::GamePhase fadeOutPhase,
-                             bool overTitleScene, bool fullscreen)
+                             bool overTitleScene, bool fullscreen, const std::string& versionText,
+                             const std::string& buildText)
     {
         if (!loaded_)
         {
@@ -3245,6 +3253,27 @@ namespace GalaxyEggbert::Game
             // button, on two lines like the original's two-line labels.
             AppendCenteredLabel(labelQuads, "Play", (layout.play.x0 + layout.play.x1) * 0.5f,
                                 layout.play.y1 + kPauseLabelYOffset * s, s);
+            // Galaxy's own (the owner, 2026-11-11): the version and under it the build's date and
+            // time, left of Play, right-aligned a little left of the right panel.
+            const float versionRight = layout.rightPanel.x0 - kInitVersionGap * s;
+            const float playMiddle = (layout.play.y0 + layout.play.y1) * 0.5f;
+            const float textWidth = std::max(TextMetrics::Width(versionText) * kInitVersionScale,
+                                             TextMetrics::Width(buildText) * kInitBuildScale) * s;
+            if (textWidth > 0.0f)
+            {
+                // On the menu's own translucent panel, as the buttons' groups: the 3D title scene
+                // behind it moves and would make the small letters hard to read.
+                appendIconQuad(panelQuads,
+                               Rect{versionRight - textWidth - 8.0f * s, playMiddle - (kInitVersionLineGap + 4.0f) * s,
+                                    layout.rightPanel.x0 - 4.0f * s, playMiddle + 22.0f * s},
+                               kInitPanelIcon);
+            }
+            AppendGamerLabel(labelQuads, versionText,
+                             versionRight - TextMetrics::Width(versionText) * kInitVersionScale * s,
+                             playMiddle - kInitVersionLineGap * s, kInitVersionScale, s);
+            AppendGamerLabel(labelQuads, buildText,
+                             versionRight - TextMetrics::Width(buildText) * kInitBuildScale * s, playMiddle,
+                             kInitBuildScale, s);
             AppendLeftAlignedLabel(labelQuads, "Setup", layout.setup.x1 + kSetupLabelXOffset * s,
                                    (layout.setup.y0 + layout.setup.y1) * 0.5f, s);
             const float editorCenterX = (layout.editor.x0 + layout.editor.x1) * 0.5f;

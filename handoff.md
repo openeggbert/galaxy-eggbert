@@ -6,7 +6,24 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Versioning: 0.1.0, not released (2026-11-11, the owner) — done
+
+As in `../cna` (`docs/releasing.md` there): Semantic Versioning, one place for the version, a
+generated header, `CHANGELOG.md` (Keep a Changelog) and `docs/releasing.md`. The one place is
+`VERSION.txt` (it was 1.0.0-rc1, now `0.1.0`), because Android's versionName and
+`tools/release/make_release.sh` already read it: the root CMakeLists.txt validates it before
+`project()`, gives the numeric part to `project(VERSION)` and the pre-release identifier to
+`GALAXY_EGGBERT_VERSION_PRERELEASE`, and generates `<build>/generated/include/GalaxyEggbert/Version.hpp`
+(`cmake/templates/Version.hpp.in`). The main menu (`InputPad::DrawInit`) shows "Version 0.1.0"
+and under it the build's date and time, right-aligned left of Play's panel on a small panel of
+its own. The stamp (`BuildStampText()`, `src/GalaxyEggbertCNA/BuildStamp.hpp`) is a source
+`cmake/BuildStamp.cmake` writes again only when a game source, a header under include/ or src/, or
+a library of the link closure changed: a no-op build stays "no work to do" (checked), a change
+relinks with a new stamp (checked). Checked live on desktop (800x480 and 640x480) and built for
+Android arm64 (`android/app/.cxx/RelWithDebInfo/2vu174b6`, the stamp and "Version " are in
+libmain.so); no APK made. Releasing (tag `v0.1.0`, publishing) waits for the owner (Q-018).
 
 ## An outside review of 2026-11-07, checked against the code (2026-11-11) — done
 

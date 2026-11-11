@@ -1,4 +1,4 @@
-# Galaxy Eggbert 1.0.0-rc1
+# Galaxy Eggbert 0.1.0
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Linux and Android.
 
@@ -22,14 +22,14 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Linux and Android.
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-1.0.0-rc1-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-1.0.0-rc1-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.1.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.1.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations
 
 - **Linux:** this build needs glibc 2.38 or newer (Debian 13, Ubuntu 24.04 and later) and the
   distribution's FFmpeg; an archive for older systems (glibc 2.35) needs a build on such a system.
-- **Windows:** not part of this release candidate (its build has not been run and checked yet).
+- **Windows:** not part of this version (its build has not been run and checked yet).
 - **Android:** gamepads and the accelerometer have had little testing on real devices.
 - Multiplayer is not available.

@@ -761,7 +761,10 @@ namespace GalaxyEggbert::Game
                      int viewportW, int viewportH, float phaseTimeSeconds,
                      int selectedGamer, const std::array<InitGamerInfo, 3>& gamers,
                      GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
-                     bool overTitleScene = false, bool fullscreen = false);
+                     bool overTitleScene = false, bool fullscreen = false,
+                     // Galaxy's own (the owner, 2026-11-11): left of Play, the version ("Version
+                     // 0.1.0") and under it the build's date and time; nothing when empty.
+                     const std::string& versionText = {}, const std::string& buildText = {});
 
     private:
         // Alias, not a redeclaration (plan.md EDITOR-106): the real

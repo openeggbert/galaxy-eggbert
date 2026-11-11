@@ -350,7 +350,9 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
    libstdc++) and the distribution's FFmpeg; Debian 13 has no older toolchain. An archive for
    glibc 2.35 needs a build on Ubuntu 22.04 (a container or chroot: neither docker, podman nor
    debootstrap is installed). Install one of them, or accept 2.38 (Debian 13, Ubuntu 24.04+)?
-3. **The version number.** `VERSION.txt` says 1.0.0-rc1 (Android's versionName reads it). Keep it?
+3. **The version number.** `VERSION.txt` said 1.0.0-rc1 (Android's versionName reads it). Keep it?
+   **Answered 2026-11-11: 0.1.0, not released yet**; versioned as CNA is (`docs/releasing.md`), the
+   main menu shows the version and the build's date and time left of Play.
 4. **Where to publish** (GitHub release of openeggbert/galaxy-eggbert? the web build on the site?).
    Nothing is pushed or published yet.
 

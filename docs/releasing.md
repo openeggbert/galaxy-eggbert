@@ -1,0 +1,74 @@
+# Versioning and releasing Galaxy Eggbert
+
+*Current version: 0.1.0, not released yet (the owner, 2026-11-11).*
+
+Galaxy Eggbert follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), set up
+after CNA's own scheme (`../cna/docs/releasing.md`): the version is decided in one place,
+everything else derives from it, and a release is a reviewed commit with an annotated tag and a
+`CHANGELOG.md` entry.
+
+## Where the version lives
+
+In exactly **one** place, the first line of `VERSION.txt` at the repository's root:
+
+```text
+0.1.0          a final version
+0.1.0-rc.1     a pre-release (alpha.N, beta.N, rc.N)
+```
+
+No leading `v` (only the Git tag carries one). The root `CMakeLists.txt` reads the file before
+`project()`, refuses anything that is not a Semantic Versioning number, and splits it as CNA does:
+the numeric part goes to `project(GalaxyEggbert VERSION …)`, the pre-release identifier to
+`GALAXY_EGGBERT_VERSION_PRERELEASE`, and `GALAXY_EGGBERT_VERSION_STRING` is the whole spelling.
+Changing `VERSION.txt` reconfigures the build by itself.
+
+| Consumer | How it gets the version |
+|---|---|
+| C++ code | `#include <GalaxyEggbert/Version.hpp>` → `GalaxyEggbert::VersionString()`, `GALAXY_EGGBERT_VERSION_MAJOR`, … (generated from `cmake/templates/Version.hpp.in` into `<build>/generated/include/`; never edit the copy) |
+| The main menu | "Version 0.1.0" left of Play (`InputPad::DrawInit`) |
+| The Linux archive | its file name, `GalaxyEggbert-<version>-linux-x86_64.tar.gz` (CPack); `VERSION.txt` is in it |
+| Android | `versionName` (`android/app/build.gradle` reads `VERSION.txt`) |
+| `tools/release/make_release.sh` | the archive's and the APK's names |
+
+Maintained by hand on a version change: `CHANGELOG.md` and `packaging/RELEASE_NOTES.md`.
+
+## The build's date and time
+
+Under the version, the main menu shows when the build was made, `YYYY-MM-DD HH:MM` in the build
+machine's local time (`GalaxyEggbert::CNA::BuildStampText()`, `src/GalaxyEggbertCNA/BuildStamp.hpp`).
+`cmake/BuildStamp.cmake` writes its source again only when something the game is linked from
+changed: one of its sources, a header under `include/` or `src/`, or a library of its link closure
+(CNA's modules, sharp-runtime, cna-engine, easy-gl, meta-gl). A build that changes nothing keeps the
+stamp and does not relink the game; `SOURCE_DATE_EPOCH`, when set, gives the stamp instead of the
+clock.
+
+## Numbers that are *not* the version
+
+- **`VoxelConfig::FormatVersion`** (2): the `.vwr` world format (`World Format.md`).
+- **`kDemoSimulationRevision`** (`DemoReplay.hpp`): which simulation a demo recording replays on.
+- **Android's `versionCode`** (`android/app/build.gradle`, 1 today): an integer the store and
+  the phone compare; it must grow with every published APK, independently of the version's
+  spelling.
+- **CNA's version** (0.2.0 today): the framework's own, in `CNA/Version.hpp`.
+
+## Pre-1.0 policy
+
+While the major version is 0, a minor version (0.2.0) may change saved games, world files, demos
+or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `alpha.N` → `beta.N`
+→ `rc.N`, ordered as Semantic Versioning orders them: `0.1.0-rc.1` precedes `0.1.0`.
+
+## Cutting a release (only when the owner asks)
+
+1. **The version.** Set `VERSION.txt` (and raise Android's `versionCode` when an APK will be
+   published).
+2. **The changelog.** Move what is under `## [Unreleased]` in `CHANGELOG.md` into
+   `## [x.y.z] — YYYY-MM-DD`, add its link at the bottom, and update
+   `packaging/RELEASE_NOTES.md`.
+3. **Build and test** in the existing Release tree (`../CLAUDE.md`: reuse it, at most six jobs),
+   then make the packages: `tools/release/make_release.sh <release-build-dir> <out-dir>`.
+4. **Commit** the version-bearing files by name (`VERSION.txt`, `CHANGELOG.md`,
+   `packaging/RELEASE_NOTES.md`, `android/app/build.gradle` when `versionCode` changed).
+5. **Tag** with a `v` prefix, annotated: `git tag -a v0.1.0 -m "Galaxy Eggbert 0.1.0"`.
+6. **Push and publish only when the owner asks** (`git push origin HEAD`, `git push origin v0.1.0`;
+   where the packages go is Q-018 in `plans/audit/owner_questions.md`).
+7. **Open the next cycle** with an empty `## [Unreleased]` section in `CHANGELOG.md`.
