@@ -1640,18 +1640,19 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
-## BD-0125 — a 1.5x game speed on F9 (owner request) — FIXED_AND_VERIFIED
+## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 
 - Owner (2026-11-11): a new key for a 1.5x speed. Not in the original (F5 1x, F6 2x, F7 4x and F8 8x
   with the quick cheat, Tab slow): a Galaxy addition.
-- F9 sets `GameSpeed::OneAndHalf` (raw 0x20, a value of its own for the demo files, SpeedFactor 1.5);
+- F4 sets `GameSpeed::OneAndHalf` (raw 0x20, a value of its own for the demo files, SpeedFactor 1.5);
   F5, F6 and Tab leave it as before. No cheat needed (under F6's 2x); the HUD shows "1.5x"; the help
-  (F1) says "F5 / F9 / F6: speed 1x / 1.5x / 2x". F9 was free in Galaxy, CNA, cna-engine, easy-gl,
-  meta-gl and mobile-eggbert (CNA's only "lose context" is an OpenGL attribute, no key); F10 opens a
-  Windows window's menu and Alt+F4 closes it, so not those. Like the other speed keys it is left out
-  of demo recordings.
+  (F1) says "F5 / F4 / F6: speed 1x / 1.5x / 2x". Like the other speed keys it is left out of demo
+  recordings.
+- 0.1.2 had it on F9, wrongly called free: CNA's Game::PollEvents takes F9 and F10 itself, its debug
+  context loss and restore, in every build (UB-013; the owner found it). On the web F9 left the game
+  without a context until F10. 0.1.3 moves it to F4 (F2 and F4 are free; Alt+F4 needs Alt).
 - Validation: static_asserts in GameSpeed.hpp (1.5, not beyond fast, not slow, Tab from it to 0.5);
-  live in mission 11: F9 "1.5x", F6 "2x", F9 "1.5x", F5 none; CTest 134/134.
+  live in mission 11 (on F9 then, F4 since): "1.5x", F6 "2x", "1.5x" again, F5 none; CTest 134/134.
 
 ## BD-0124 — a new editor world had no Blupi (editor) — FIXED_AND_VERIFIED
 

@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Fixed
+
+- The 1.5x speed is on F4 now. On F9 (0.1.2) it also set off CNA's debug simulation of a lost
+  graphics context: on the web the game stayed black until F10 (UB-013).
+
 ## [0.1.2] — 2026-11-11
 
 A 1.5x game speed. Packages for Windows, Linux, Android and the web on GitHub (tag `v0.1.2`);

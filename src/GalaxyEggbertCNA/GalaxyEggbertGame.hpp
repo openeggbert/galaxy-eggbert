@@ -1270,7 +1270,7 @@ namespace GalaxyEggbert::CNA
         bool quickCheatEnabled_ = false;
         bool f5KeyWasDown_ = false;
         bool f6KeyWasDown_ = false;
-        bool f9KeyWasDown_ = false; // F9: 1.5x (GameSpeed::OneAndHalf, the owner 2026-11-11)
+        bool f4KeyWasDown_ = false; // F4: 1.5x (GameSpeed::OneAndHalf, the owner 2026-11-11)
         bool f7KeyWasDown_ = false;
         bool f8KeyWasDown_ = false;
         bool f12KeyWasDown_ = false;

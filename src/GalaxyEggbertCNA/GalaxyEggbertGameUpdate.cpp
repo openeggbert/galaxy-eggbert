@@ -3582,14 +3582,16 @@ namespace GalaxyEggbert::CNA
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
             }
             f6KeyWasDown_ = f6Down;
-            // F9: 1.5x (a Galaxy addition, the owner 2026-11-11: between F5's normal and F6's fast;
-            // F9 was free, F10 opens a Windows window's menu and Alt+F4 closes it).
-            const bool f9Down = phaseKeys.IsKeyDown(Keys::F9);
-            if (f9Down && !f9KeyWasDown_)
+            // F4: 1.5x (a Galaxy addition, the owner 2026-11-11: between F5's normal and F6's fast).
+            // Not F9 (0.1.2 had it there): CNA's Game::PollEvents takes F9 itself, simulating a lost
+            // graphics context (on the web lost until F10, its restore), UB-013; F2 and F4 are the
+            // free ones.
+            const bool f4Down = phaseKeys.IsKeyDown(Keys::F4);
+            if (f4Down && !f4KeyWasDown_)
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::OneAndHalf;
             }
-            f9KeyWasDown_ = f9Down;
+            f4KeyWasDown_ = f4Down;
             if (quickCheatEnabled_)
             {
                 const bool f7Down = phaseKeys.IsKeyDown(Keys::F7);

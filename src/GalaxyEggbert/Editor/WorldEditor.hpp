@@ -148,8 +148,8 @@ namespace GalaxyEggbert::Editor
         // dispatch (IsBrowsing() now false) drives real editing instead.
         void ExitBrowser() noexcept { browsing_ = false; }
 
-        // Called once when entering editing (after ExitBrowser(); the old F9 debug entry is gone,
-        // F9 is the 1.5x game speed since 2026-11-11) -- resets the free-fly
+        // Called once when entering editing (after ExitBrowser(); the old F9 debug entry is gone:
+        // F9 and F10 are CNA's own, its debug context loss and restore, UB-013) -- resets the free-fly
         // camera to a sensible starting point/orientation above the loaded
         // world.
         void EnterEditing(float startX, float startY, float startZ) noexcept;

@@ -15,7 +15,7 @@ enum class GameSpeed : uint8_t
     Fast      = 2,
     Faster    = 4,
     Fastest   = 8,
-    OneAndHalf = 0x20, // F9: 1.5x (Galaxy's, the owner 2026-11-11), between F5's 1x and F6's 2x
+    OneAndHalf = 0x20, // F4: 1.5x (Galaxy's, the owner 2026-11-11), between F5's 1x and F6's 2x
     SuperSlow = 0x40,
     UltraSlow = 0x80,
 };

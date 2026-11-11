@@ -98,7 +98,7 @@ Per 1/60 s step, in the order of `GalaxyEggbertGame::UpdateTick()`:
    resume log stores exactly this record). `InputPad` handles the on-screen pad, the menus and the
    typed cheat words; the keyboard layout is: arrows to turn and walk, Left Ctrl jump, Space action,
    Left Shift crouch, Right Shift look up, Right Ctrl back up, Esc pause, F3 first/third person,
-   F5/F9/F6 game speed (1x, 1.5x, 2x), Tab slow motion, F12 cheat menu, F11 full screen.
+   F5/F4/F6 game speed (1x, 1.5x, 2x), Tab slow motion, F12 cheat menu, F11 full screen.
 2. **World clock.** `WorldRuntime::Update(dt)` advances the animation phase (20 Hz reference ticks)
    and the per-object phases; `TerrainRenderer::Update` rebuilds the small animated meshes when the
    phase changes.

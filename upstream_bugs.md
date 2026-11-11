@@ -329,3 +329,23 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   - A packet transmitted but not yet acknowledged can still be dropped by ENet's disconnect.
     XNA's own behaviour there was never measured. CNA records it as a limitation in its
     KNOWN_ISSUES.md; it does not change the teardown.
+
+## UB-013 — CNA runtime: F9 and F10 simulate a graphics context loss and restore in every build
+
+- **Found:** 2026-11-11, by the owner, after Galaxy 0.1.2 put its 1.5x speed on F9. Read-only
+  inspection of CNA `1367ddb8f`; CNA was not modified.
+- **Where:** `Game::PollEvents` (modules/runtime/src/Game.cpp, ~1482): a pressed F9 calls
+  `GetRenderer().DebugSimulateContextLoss()`, a pressed F10 `DebugRestoreContext()`, for every key
+  event, in every build, before and whatever the game does with the key.
+- **Effect on a game (EasyGL renderer, EasyGLRenderer.cpp `DebugSimulateContextLoss`):**
+  - Desktop GL: the context is destroyed and recreated at once and every tracked resource
+    (shaders, textures, buffers) reloaded -- a stall, and whatever a game keeps outside the registry
+    is at risk.
+  - Web (WebGL 2): the context is lost through `WEBGL_lose_context` and stays lost until F10: the
+    game draws nothing (`CanBeginDrawEXT` false) until the player happens to press F10.
+  A player cannot tell; a game cannot opt out (no setting, no hook).
+- **Galaxy:** the 1.5x speed moved from F9 to F4 (0.1.3); F9 and F10 stay unused by Galaxy, but a
+  player pressing them still triggers CNA's debug path.
+- **Suggestion for CNA:** gate the two hotkeys behind a debug build, an environment variable or an
+  explicit opt-in, so a released game does not lose its context on a key press.
+- **Status:** reported here; not fixed in CNA.
