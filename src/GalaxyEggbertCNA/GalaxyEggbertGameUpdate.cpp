@@ -500,15 +500,18 @@ namespace GalaxyEggbert::CNA
         const bool netScreenUp = NetScreenShown() && phase_ == GalaxyEggbert::Def::GamePhase::Init;
         const bool padCursor = phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init;
         GalaxyEggbert::Game::FocusNavigator::Output focus;
-        if ((editorBrowsing || demoSlotsUp || netScreenUp) && !SuppressLiveInput())
+        // The Setup's nickname panel: its keyboard on the screen, by the arrows and a gamepad's d-pad and A.
+        const bool nicknameUp = nicknameEditing_ && phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
+        if ((editorBrowsing || demoSlotsUp || netScreenUp || nicknameUp) && !SuppressLiveInput())
         {
-            const bool naming = demoNaming_ || worldEditor_.WantsText() || NetWantsText();
+            const bool naming = demoNaming_ || worldEditor_.WantsText() || NetWantsText() || nicknameUp;
             unsigned now = 0;
             const auto bit = [&now](bool on, unsigned b) { if (on) now |= b; };
-            bit(phaseKeys.IsKeyDown(Keys::Up) || (padCursor && pad.dpadUp), 1u);
-            bit(phaseKeys.IsKeyDown(Keys::Down) || (padCursor && pad.dpadDown), 2u);
-            bit(phaseKeys.IsKeyDown(Keys::Left) || (padCursor && pad.dpadLeft), 4u);
-            bit(phaseKeys.IsKeyDown(Keys::Right) || (padCursor && pad.dpadRight), 8u);
+            const bool dpad = padCursor || nicknameUp;
+            bit(phaseKeys.IsKeyDown(Keys::Up) || (dpad && pad.dpadUp), 1u);
+            bit(phaseKeys.IsKeyDown(Keys::Down) || (dpad && pad.dpadDown), 2u);
+            bit(phaseKeys.IsKeyDown(Keys::Left) || (dpad && pad.dpadLeft), 4u);
+            bit(phaseKeys.IsKeyDown(Keys::Right) || (dpad && pad.dpadRight), 8u);
             // Enter while a name is typed keeps the name (the typed keys), it does not press a key.
             bit(pad.a || (!naming && phaseKeys.IsKeyDown(Keys::Enter)), 16u);
             const unsigned pressed = now & ~focusKeysWas_;
@@ -528,6 +531,7 @@ namespace GalaxyEggbert::CNA
             in.pointer = mouseMoved || (tickInput_.buttons & 1u) != 0 || !tickInput_.touches.empty() || stick;
             const auto targets = editorBrowsing ? worldEditor_.BrowserFocusTargets()
                                  : netScreenUp  ? NetFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight)
+                                 : nicknameUp   ? nicknameKeyboard_.Rects()
                                                 : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
             focus = focusNavigator_.Update(targets, in);
             focusHighlight_.reset();
@@ -662,9 +666,18 @@ namespace GalaxyEggbert::CNA
             // own class comment) is the only distinction made here.
             const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
             const auto mouse = CurrentMouseState();
-            const auto setupInput = inputPad_.UpdateSetup(
-                mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup,
-                saveData_.GetAccelActive());
+            const bool escapePressed = phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_;
+            // While the nickname is typed only its panel answers; the Escape that closes it stays in Setup.
+            const bool nicknameWasEditing = nicknameEditing_;
+            if (nicknameEditing_) UpdateNicknameEditing(focusMouse(mouse), escapePressed);
+            const auto setupInput = nicknameWasEditing ? InputPad::SetupInput{}
+                                                       : inputPad_.UpdateSetup(mouse, viewport.getWidthProperty(),
+                                                                               viewport.getHeightProperty(), isMainSetup,
+                                                                               saveData_.GetAccelActive());
+            if (setupInput.nicknamePressed && isMainSetup)
+            {
+                StartNicknameEditing(viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
             if (setupInput.soundsToggled)
             {
                 // Real SetupSounds toggle -- a genuinely meaningful
@@ -763,8 +776,7 @@ namespace GalaxyEggbert::CNA
                 sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
                 ApplyMusicVolume();
             }
-            if (setupInput.returnPressed ||
-                (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
+            if (setupInput.returnPressed || (!nicknameWasEditing && escapePressed))
             {
                 // Real SetupReturn: `if (playSetup) SetPhase(Play,-1);
                 // else SetPhase(Init);` -- both branches are now
@@ -3604,6 +3616,54 @@ namespace GalaxyEggbert::CNA
             }
             f12KeyWasDown_ = f12Down;
         return false;
+    }
+
+    void GalaxyEggbertGame::StartNicknameEditing(int viewportW, int viewportH)
+    {
+        nicknameEditing_ = true;
+        nicknameDraft_ = saveData_.GetNickname(saveData_.GetSelectedGamer());
+        browserTypedKeys_.clear();
+        typedShiftPending_ = false;
+        // Where the network game's lines are typed: the keyboard over the panel's upper part.
+        nicknameKeyboard_.Layout(InputPad::PanelRect(20.0f, 64.0f, 620.0f, 254.0f, viewportW, viewportH));
+        nicknameKeyboard_.Begin(nicknameDraft_);
+    }
+
+    void GalaxyEggbertGame::UpdateNicknameEditing(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                  bool escapePressed)
+    {
+        using GalaxyEggbert::Game::ScreenKeyboard;
+        constexpr std::size_t kMax = GalaxyEggbert::Game::SaveData::kMaxNickname;
+        for (const auto& [key, shift] : browserTypedKeys_)
+        {
+            if (ScreenKeyboard::TypeKey(key, shift, nicknameDraft_, kMax) == ScreenKeyboard::Result::Done)
+            {
+                FinishNicknameEditing(true);
+                return;
+            }
+        }
+        browserTypedKeys_.clear();
+        const auto input = inputPad_.UpdatePanel(mouse, {}, &nicknameKeyboard_);
+        if (input.keyboardKey >= 0)
+        {
+            const auto typed = nicknameKeyboard_.Press(input.keyboardKey, nicknameDraft_, kMax);
+            if (typed == ScreenKeyboard::Result::Done) FinishNicknameEditing(true);
+            else if (typed == ScreenKeyboard::Result::Cancel) FinishNicknameEditing(false);
+        }
+        else if (input.outsideClick || escapePressed)
+        {
+            // A click off the keyboard keeps the name (as a demo's), Escape leaves it as it was.
+            FinishNicknameEditing(input.outsideClick && !escapePressed);
+        }
+    }
+
+    void GalaxyEggbertGame::FinishNicknameEditing(bool keep)
+    {
+        nicknameEditing_ = false;
+        browserTypedKeys_.clear();
+        if (!keep) return;
+        saveData_.SetNickname(saveData_.GetSelectedGamer(), nicknameDraft_);
+        SavePlayerData();
     }
 
 }

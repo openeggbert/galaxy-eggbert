@@ -1640,6 +1640,22 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0123 — Nicknames for players A, B and C (owner request) — FIXED_AND_VERIFIED
+
+- Owner (2026-11-11): in the settings, players A, B and C get a nickname besides their letter, shown
+  for example in the network game. Not in the original (its players are A, B and C only): a Galaxy
+  addition.
+- The main Setup (from the menu) has **Nickname** in its top-left corner (the menu's Fullscreen face):
+  a panel over the Setup, as the network game's lines, with the keyboard on the screen (arrows and a
+  gamepad's d-pad and A too) and the real keyboard; OK or Enter keeps it, Cancel or Escape leaves it.
+  At most 15 characters (the network game's name), printable ASCII, no spaces at either end; empty
+  is none.
+- Shown: the menu's player row ("Ann" in place of "Player A"), the Setup's Erase progress row ("Ann :"),
+  and the network game's name (the lobby, over the Blupi, the chat, the results). Saved as
+  `gamerN.nickname=` in savedata.txt (only when set); Erase progress (SaveData::Reset) keeps it.
+- Validation: VerifyGESaveData (round trip, cleaning, Player B by default, kept by Reset); live: typed
+  in the Setup, shown in the Setup and the menu; CTest 134/134.
+
 ## BD-0122 — channel 10 (small explosion) cut and restarted instead of overlapping (gameplay) — FIXED_AND_VERIFIED
 
 - Report (2026-11-11, a Discord player on 0.1.0, relayed by the owner and the cna session): "every

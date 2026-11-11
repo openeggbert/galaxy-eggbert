@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <string>
+#include <utility>
 #include <iosfwd>
 
 namespace GalaxyEggbert::Game
@@ -244,8 +245,42 @@ namespace GalaxyEggbert::Game
         void Reset() noexcept
         {
             const bool galaxy = galaxyMode_;
+            // The nicknames stay: the reset erases progress and settings, not who the players are.
+            auto nicknames = std::move(nicknames_);
             *this = SaveData();
             galaxyMode_ = galaxy;
+            nicknames_ = std::move(nicknames);
+        }
+
+        // Each player's nickname (the owner, 2026-11-11; the Setup's Nickname, a Galaxy addition):
+        // shown in the menu in place of "Player A" and as the player's name in the network game.
+        // Empty for none. "gamerN.nickname=" in the file, written only when set.
+        static constexpr std::size_t kMaxNickname = 15; // Net::kMaxName, the network game's
+        [[nodiscard]] const std::string& GetNickname(int gamer) const noexcept
+        {
+            return nicknames_[static_cast<std::size_t>(std::clamp(gamer, 0, kGamerCount - 1))];
+        }
+        void SetNickname(int gamer, const std::string& nickname)
+        {
+            nicknames_[static_cast<std::size_t>(std::clamp(gamer, 0, kGamerCount - 1))] = CleanNickname(nickname);
+        }
+        // The nickname, or "Player A" (B, C) without one.
+        [[nodiscard]] std::string GetPlayerName(int gamer) const
+        {
+            const std::string& nickname = GetNickname(gamer);
+            return nickname.empty() ? std::string("Player ") + static_cast<char>('A' + std::clamp(gamer, 0, kGamerCount - 1))
+                                    : nickname;
+        }
+        // What a nickname may hold: printable ASCII (the game's font), no spaces at either end, at
+        // most kMaxNickname characters.
+        [[nodiscard]] static std::string CleanNickname(const std::string& text)
+        {
+            std::string clean;
+            for (const char c : text)
+                if (c >= 0x20 && c < 0x7f && clean.size() < kMaxNickname) clean += c;
+            const auto first = clean.find_first_not_of(' ');
+            if (first == std::string::npos) return {};
+            return clean.substr(first, clean.find_last_not_of(' ') - first + 1);
         }
 
         // The player's own galaxy (BD-0119, CustomWorldStorage GalaxyDir()): while it is played the
@@ -287,6 +322,7 @@ namespace GalaxyEggbert::Game
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
         GamerSlot galaxies_[kGamerCount];
+        std::array<std::string, kGamerCount> nicknames_;
         bool galaxyMode_ = false;
         [[nodiscard]] GamerSlot& Current() noexcept
         {

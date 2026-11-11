@@ -273,6 +273,31 @@ int main()
               "galaxy: the menu counts its gates apart; an imported galaxy's progress starts over, the campaign's kept");
     }
 
+    {
+        // Nicknames (the Setup's Nickname, 2026-11-11): saved per player, cleaned, kept by Reset().
+        SaveData data;
+        data.SetNickname(0, "  Ann  ");
+        data.SetNickname(2, "A name far longer than fifteen");
+        data.Save();
+        SaveData reloaded;
+        reloaded.Load();
+        check(reloaded.GetNickname(0) == "Ann" && reloaded.GetPlayerName(0) == "Ann",
+              "nickname: saved, reloaded, spaces at the ends dropped");
+        check(reloaded.GetNickname(1).empty() && reloaded.GetPlayerName(1) == "Player B",
+              "nickname: none set, the player is Player B");
+        check(reloaded.GetNickname(2).size() == SaveData::kMaxNickname, "nickname: cut at kMaxNickname");
+        std::ostringstream written;
+        reloaded.Write(written);
+        check(written.str().find("gamer0.nickname=Ann\n") != std::string::npos &&
+                  written.str().find("gamer1.nickname") == std::string::npos,
+              "nickname: written only for a player who has one");
+        reloaded.SetLives(1);
+        reloaded.Reset();
+        check(reloaded.GetNickname(0) == "Ann" && reloaded.GetLives() == 3, "nickname: Reset() erases progress, not the nickname");
+        reloaded.SetNickname(0, "");
+        check(reloaded.GetPlayerName(0) == "Player A", "nickname: emptied, Player A again");
+    }
+
     std::remove("savedata.txt");
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

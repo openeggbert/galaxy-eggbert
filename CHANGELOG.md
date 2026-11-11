@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- Nicknames for players A, B and C: the main Setup's Nickname. A nickname replaces "Player A" in the
+  menu and is the player's name in the network game (BD-0123).
+
 ### Fixed
 
 - A death played its sound again and again while Blupi lay in the lava, the saw or the trap, and

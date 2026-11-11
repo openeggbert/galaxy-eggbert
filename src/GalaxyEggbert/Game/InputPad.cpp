@@ -221,6 +221,13 @@ namespace GalaxyEggbert::Game
             const Rect row = SetupFrameRateRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
         }
+        // "Nickname" (a Galaxy addition, the owner, 2026-11-11): the selected player's nickname, in the
+        // top-left corner as the menu's Fullscreen (the title's logo starts right of it), in the
+        // main Setup with Erase progress.
+        Rect SetupNicknameRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{20.0f * m.s, 15.0f * m.s, 150.0f * m.s, 69.0f * m.s};
+        }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -337,6 +344,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlEffects = 10;
         constexpr int kSetupControlFrameRate = 11;
         constexpr int kSetupControlTextures = 12;
+        constexpr int kSetupControlNickname = 13;
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -2230,6 +2238,7 @@ namespace GalaxyEggbert::Game
         const bool overFrameRate = InRect(mouseX, mouseY, SetupFrameRateRect(m));
         const bool overTextures = InRect(mouseX, mouseY, SetupTexturesRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
+        const bool overNickname = showReset && InRect(mouseX, mouseY, SetupNicknameRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
         const bool overMusic = InRect(mouseX, mouseY, SetupSliderRect(1, m));
@@ -2249,6 +2258,7 @@ namespace GalaxyEggbert::Game
             else if (overFrameRate) activeControl_ = kSetupControlFrameRate;
             else if (overTextures) activeControl_ = kSetupControlTextures;
             else if (overReset) activeControl_ = kSetupControlReset;
+            else if (overNickname) activeControl_ = kSetupControlNickname;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
         }
@@ -2284,6 +2294,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kSetupControlFrameRate && overFrameRate) result.frameRateToggled = true;
             else if (activeControl_ == kSetupControlTextures && overTextures) result.texturesToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
+            else if (activeControl_ == kSetupControlNickname && overNickname) result.nicknamePressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
         }
@@ -2297,7 +2308,7 @@ namespace GalaxyEggbert::Game
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
                               GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, int effectsLevel,
-                              int frameRate, int textureScale)
+                              int frameRate, int textureScale, const std::string& playerName)
     {
         if (!loaded_)
         {
@@ -2409,6 +2420,11 @@ namespace GalaxyEggbert::Game
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
+                // The blank face (the menu's Fullscreen, Help) with its label on it.
+                const Rect nickname = SetupNicknameRect(m);
+                appendButton(nickname, 21, kSetupControlNickname);
+                AppendCenteredLabel(labelQuads, "Nickname", (nickname.x0 + nickname.x1) * 0.5f,
+                                    (nickname.y0 + nickname.y1) * 0.5f - 12.0f * scale, scale);
             }
             appendButton(SetupReturnRect(m), kIconSetupReturn, kSetupControlReturn);
 
@@ -2465,8 +2481,10 @@ namespace GalaxyEggbert::Game
                 // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase
                 // progress"); it was collapsed to one line, which ran off the
                 // screen (2026-10-25).
+                // The nickname in place of "Player A" when the player has one (2026-11-11).
                 const std::string resetLabel =
-                    "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) + " :\nErase progress";
+                    (playerName.empty() ? "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) : playerName) +
+                    " :\nErase progress";
                 appendLabel(SetupResetRect(m), resetLabel);
             }
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
@@ -3327,8 +3345,8 @@ namespace GalaxyEggbert::Game
 
                 const float textLeft = r.x1 + kGamerTextXOffset * s;
                 const InitGamerInfo& info = gamers[static_cast<std::size_t>(gamer)];
-                std::string title = "Player ";
-                title += letter;
+                // The player's nickname in place of "Player A" (a Galaxy addition, 2026-11-11).
+                std::string title = info.nickname.empty() ? std::string("Player ") + letter : info.nickname;
                 AppendGamerLabel(labelQuads, title, textLeft, r.y0 + kGamerTitleYOffset * s, kGamerTitleScale, s);
                 AppendGamerLabel(labelQuads, "Main gates : " + std::to_string(info.mainGates) + "/12", textLeft,
                                 r.y0 + kGamerMDoorsYOffset * s, kGamerBodyScale, s);

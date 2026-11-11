@@ -1096,6 +1096,17 @@ namespace GalaxyEggbert::CNA
         int demoNameSlot_ = 0;
         std::string demoNameDraft_;
         GalaxyEggbert::Game::ScreenKeyboard demoKeyboard_;
+        // The Setup's Nickname (a Galaxy addition, the owner, 2026-11-11): the selected player's
+        // nickname typed on a panel over the main Setup, on the real keyboard or the one on the
+        // screen; OK or Enter keeps it (saved at once), Cancel or Escape leaves it as it was.
+        bool nicknameEditing_ = false;
+        std::string nicknameDraft_;
+        GalaxyEggbert::Game::ScreenKeyboard nicknameKeyboard_;
+        void StartNicknameEditing(int viewportW, int viewportH);
+        void UpdateNicknameEditing(const Microsoft::Xna::Framework::Input::MouseState& mouse, bool escapePressed);
+        void FinishNicknameEditing(bool keep);
+        void DrawNicknameEditing(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                 int viewportH);
         void StartDemoNaming(int slot);
         void FinishDemoNaming(bool keep);
         // Leaving the screen a step: the naming, then Export/Import/Name, then the positions.

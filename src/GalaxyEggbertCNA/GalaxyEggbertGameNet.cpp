@@ -94,11 +94,11 @@ namespace GalaxyEggbert::CNA
         n.screen = NetGame::Screen::Browser;
         n.selected = -1;
         n.message.clear();
-        // Signed in automatically as the selected player (owner Q-019 Q6); a test names itself.
+        // Signed in automatically as the selected player (owner Q-019 Q6), by the nickname set in the
+        // Setup (2026-11-11) or as "Player A"; a test names itself.
         const char* forced = std::getenv("GALAXY_NET_NAME");
-        n.name = Net::CleanText(forced != nullptr && *forced != 0
-                                    ? std::string(forced)
-                                    : std::string("Player ") + static_cast<char>('A' + saveData_.GetSelectedGamer()),
+        n.name = Net::CleanText(forced != nullptr && *forced != 0 ? std::string(forced)
+                                                                  : saveData_.GetPlayerName(saveData_.GetSelectedGamer()),
                                 Net::kMaxName);
         // What both machines must share: the multiplayer worlds (SB2's numbers) and the model's clips.
         n.worlds.clear();

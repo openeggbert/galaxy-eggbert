@@ -237,6 +237,20 @@ namespace GalaxyEggbert::CNA
                 typedShiftPending_ = false;
                 return;
             }
+            if (nicknameEditing_ && browserTypedKeys_.size() < 64)
+            {
+                // The Setup's nickname being typed.
+                if (key == Keys::LeftShift || key == Keys::RightShift)
+                {
+                    typedShiftPending_ = true;
+                    return;
+                }
+                const auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
+                browserTypedKeys_.emplace_back(key, typedShiftPending_ || keys.IsKeyDown(Keys::LeftShift) ||
+                                                        keys.IsKeyDown(Keys::RightShift));
+                typedShiftPending_ = false;
+                return;
+            }
             if (demoNaming_ && demoSlotsShown_ && browserTypedKeys_.size() < 64)
             {
                 // A demo's name being typed (the demo positions over Pause or from the menu).

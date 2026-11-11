@@ -462,6 +462,9 @@ namespace GalaxyEggbert::Game
             bool texturesToggled = false;  // Textures: auto, 1x, 2x in turn (SaveData::GetTextureScale)
             bool resetPressed = false;
             bool returnPressed = false;
+            // Nickname (a Galaxy addition, the owner, 2026-11-11): the selected player's nickname
+            // to type; shown with Erase progress, in the main Setup only.
+            bool nicknamePressed = false;
             // The volume sliders (0..100) while one is dragged, -1 otherwise; volumeReleased the
             // frame the slider is let go (save then).
             int effectsVolume = -1;
@@ -482,7 +485,10 @@ namespace GalaxyEggbert::Game
                        bool showReset, int selectedGamer, int effectsVolume, int musicVolume,
                        int accelSensitivity, float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
-                       bool terrainRelief = true, int effectsLevel = 0, int frameRate = 60, int textureScale = 0);
+                       bool terrainRelief = true, int effectsLevel = 0, int frameRate = 60, int textureScale = 0,
+                       // The selected player's name for Erase progress (SaveData::GetPlayerName: the
+                       // nickname, or "Player A"); empty: "Player A".
+                       const std::string& playerName = {});
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
@@ -803,6 +809,8 @@ namespace GalaxyEggbert::Game
             // galaxy's name when it has one.
             int galaxyGates = -1;
             std::string galaxyName;
+            // The player's nickname (SaveData::GetNickname), shown in place of "Player A"; empty: none.
+            std::string nickname;
         };
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,

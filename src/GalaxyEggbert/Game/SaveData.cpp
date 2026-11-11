@@ -109,6 +109,11 @@ namespace GalaxyEggbert::Game
                 const int gamer = key[digit] - '0';
                 if (gamer < 0 || gamer >= kGamerCount) continue;
                 const std::string field = key.substr(digit + 2);
+                if (!galaxy && field == "nickname")
+                {
+                    nicknames_[static_cast<std::size_t>(gamer)] = CleanNickname(value);
+                    continue;
+                }
                 GamerSlot& slot = galaxy ? galaxies_[gamer] : gamers_[gamer];
                 if (field == "lives")
                 {
@@ -181,6 +186,8 @@ namespace GalaxyEggbert::Game
         for (int gamer = 0; gamer < kGamerCount; ++gamer)
         {
             writeSlot("gamer", gamer, gamers_[gamer]);
+            if (!nicknames_[static_cast<std::size_t>(gamer)].empty())
+                out << "gamer" << gamer << ".nickname=" << nicknames_[static_cast<std::size_t>(gamer)] << "\n";
         }
         // A galaxy never played leaves the file as it was before galaxies existed.
         for (int gamer = 0; gamer < kGamerCount; ++gamer)

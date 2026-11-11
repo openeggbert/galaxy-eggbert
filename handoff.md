@@ -8,6 +8,16 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-11 (the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## Nicknames for players A, B and C (2026-11-11, the owner) — done, not released
+
+BD-0123. `SaveData::GetNickname/SetNickname/GetPlayerName` ("gamerN.nickname=", kept by Reset); the
+main Setup's Nickname button (top-left, `InputPad::SetupNicknameRect`) opens a panel
+(`GalaxyEggbertGame::Start/Update/Finish/DrawNicknameEditing`, the network game's PanelRect and
+ScreenKeyboard; the real keyboard's keys through browserTypedKeys_; the focus navigator gives its
+keys to the arrows and a gamepad's d-pad). Shown in the menu's player row, the Setup's Erase row and
+as the network game's name (`OpenMultiplayer`; GALAXY_NET_NAME still wins for tests). The panel is
+the network screens' translucent one, the Setup showing through.
+
 ## Sounds repeated and stuttered (a Discord player on 0.1.0, 2026-11-11) — fixed in develop, not released
 
 The report (relayed by the owner and by the cna session, which analysed it read-only): "the sounds

@@ -820,7 +820,9 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
                                     fadeOutPhase_, TerrainReliefWanted(), EffectsLevel(), saveData_.GetFrameRate(),
-                                    saveData_.GetTextureScale());
+                                    saveData_.GetTextureScale(), saveData_.GetPlayerName(saveData_.GetSelectedGamer()));
+                if (nicknameEditing_ && phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
+                    DrawNicknameEditing(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {
@@ -850,6 +852,7 @@ namespace GalaxyEggbert::CNA
                     if (galaxyNamesStale_)
                         galaxyNames_[static_cast<std::size_t>(g)] = GalaxyEggbert::Editor::GalaxyName(g);
                     gamers[static_cast<std::size_t>(g)].galaxyName = galaxyNames_[static_cast<std::size_t>(g)];
+                    gamers[static_cast<std::size_t>(g)].nickname = saveData_.GetNickname(g);
                 }
                 galaxyNamesStale_ = false;
                 if (goodbyeShown_)
@@ -1102,4 +1105,22 @@ namespace GalaxyEggbert::CNA
             }
         }
     }
+    void GalaxyEggbertGame::DrawNicknameEditing(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                                int viewportW, int viewportH)
+    {
+        // As the network game's lines typed: the keyboard above, the name and a hint under it.
+        const float s = static_cast<float>(viewportH) / 480.0f;
+        const float left = static_cast<float>(viewportW) * 0.5f - 290.0f * s;
+        const int gamer = saveData_.GetSelectedGamer();
+        const std::string player = std::string("Player ") + static_cast<char>('A' + gamer);
+        std::vector<GalaxyEggbert::Game::PanelLine> lines;
+        lines.push_back({"Nickname:  " + nicknameDraft_ + "_", left, 268.0f * s, 0.5f, false, false});
+        lines.push_back({"Shown in the menu and in the network game. Empty: " + player + ".", left, 300.0f * s, 0.42f,
+                         false, true});
+        lines.push_back({"OK or Enter keeps it, Cancel or Escape leaves it as it was.", left, 322.0f * s, 0.42f, false,
+                         true});
+        inputPad_.DrawPanel(device, viewportW, viewportH, player + "'s nickname", {}, lines, &nicknameKeyboard_,
+                            focusHighlight_);
+    }
+
 }
