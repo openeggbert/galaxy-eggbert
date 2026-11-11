@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from arena import closed_hall, starts, team_bombs  # noqa: E402
+from arena import check, closed_hall, starts, team_bombs  # noqa: E402
 from kit import MACHINE_FLOOR, O, World, lift, wall  # noqa: E402
 
 TOP = 9                 # the floor's top: walk 10
@@ -67,9 +67,10 @@ def main(argv) -> int:
         w.place(O.AMMO, x, WALK, z)
     for x, z in ((35, 44), (65, 44), (37, 56), (63, 56)):
         w.place(O.AMMO, x, UP + 1, z)
-    for x, y, z in ((48, WALK, 44), (52, WALK, 56), (39, UP + 1, 46), (61, UP + 1, 54), (50, UP + 1, Z0)):
+    for x, y, z in ((48, WALK, 44), (52, WALK, 56), (37, UP + 1, 46), (63, UP + 1, 54), (50, UP + 1, Z0)):
         w.place(O.DRINK, x, y, z)
 
+    check(w)
     w.save(out)
     print(f"wrote {out}")
     return 0

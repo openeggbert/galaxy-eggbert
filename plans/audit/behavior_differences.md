@@ -1675,8 +1675,10 @@ Differences:
   materials (the editor's starts' RecolorPlayerStartPixel); each team's bombs likewise.
 - Galaxy's own screens: the Multiplayer button in the menu's left panel, the games' list and the
   lobby as panels with the original's texts, "(host)" and "(you)" marks and a status line.
-- Mobile Eggbert has no network game: the five multiplayer worlds 201-205 are Galaxy's 3D halls
-  with SB2's missions' identity (plans/briefs/world201-205.md).
+- Mobile Eggbert has no network game: the twelve multiplayer worlds 201-212 (206-212 since
+  2026-11-11, Q-021) are Galaxy's 3D halls with SB2's missions' identity (plans/briefs/
+  world201-212.md). SB2's regions 14, 17 and 23 are not among Mobile Eggbert's backgrounds: 206
+  takes 29, 210 takes 6 and 211 takes 25 (no new assets copied).
 
 Since 2026-11-11 (the owner's Q-021), as the original too:
 - The others' sounds (PK_PLAYSOUND/PK_STOPSOUND, decnet.cpp:172-193): each sound his Blupi's step

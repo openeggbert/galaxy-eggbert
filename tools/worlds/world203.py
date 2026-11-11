@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from arena import closed_hall, starts  # noqa: E402
+from arena import check, closed_hall, starts  # noqa: E402
 from kit import O, World, lift  # noqa: E402
 from toys import BALLS, MIXED, candy, post, toy  # noqa: E402
 
@@ -75,6 +75,7 @@ def main(argv) -> int:
         w.place(O.AMMO, x, CENTRE + 1, z)
     w.place(O.CHARGE, 50, CENTRE + 1, 50)
 
+    check(w)
     w.save(out)
     print(f"wrote {out}")
     return 0

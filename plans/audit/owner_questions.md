@@ -385,7 +385,7 @@ the win); single player unchanged (CTest, demo replays). For the owner:
    release APK of the branch is built: `android/app/build/outputs/apk/release/` in the worktree;
    it replaces the installed Galaxy Eggbert, same signature, data kept). Does it play as expected?
 2. **Merge into `develop`?** On acceptance the branch is merged (Q-019 Q10); the AI policy follows.
-3. **More worlds?** 201-205 exist (machine arena, machine towers, toy box, metal works, stone
+3. **More worlds?** (Answered by Q-021: 206-212 built 2026-11-11.) 201-205 exist (machine arena, machine towers, toy box, metal works, stone
    courtyard: the five asked for). SB2 has 206-212 too (metal 206/210, stone 207/209, library 208,
    palace 211, clods 212): add more?
 4. **Speed and cheats:** SB2 does not restrict them in a network game (each machine its own); the

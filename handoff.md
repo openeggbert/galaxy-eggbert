@@ -23,7 +23,8 @@ bomb/laid/shot/vehicle (all PASS), CTest 117/117 (single player unchanged).
 others' shield/power/cloud and the cloud's touch (SB2's); names over the players, a rematch back to
 the lobby, the match's results, a silent player gone after 6 s, the host's address searched (CNA's
 SystemLinkDiscovery from the `cna` session, CNA next 5d7579919) with the host on UDP 61191 (Galaxy's);
-protocol 2; scenarios cloud and rematch; all five over a bad network (NET_LOSS/NET_LATENCY) PASS.
+protocol 2; scenarios cloud and rematch; all five over a bad network (NET_LOSS/NET_LATENCY) PASS;
+worlds 206-212 (briefs, `arena.check()`, which also moved two of 202's drinks off the air).
 CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
 
 How to check it:
@@ -36,7 +37,7 @@ tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tool
 ```
 Android: the arm64 release APK of the branch is built (`android/app/build/outputs/apk/release/
 app-release.apk` in the worktree, signed with the release key: `android/key.properties` there points
-at the main worktree's keystore; real networking in libmain.so, worlds 201-205 in its assets), not
+at the main worktree's keystore; real networking in libmain.so, worlds 201-205 in its assets: build it again for 206-212), not
 installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
 can go once that is done. Golden frames and trace pass on the branch.
 Next: a game between real machines (Q-020); the owner's look; the merge on acceptance, and the AI

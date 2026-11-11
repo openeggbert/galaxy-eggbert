@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from arena import closed_hall, starts  # noqa: E402
+from arena import check, closed_hall, starts  # noqa: E402
 from kit import O, World, lift  # noqa: E402
 from village import grass_top, stone  # noqa: E402
 
@@ -76,6 +76,7 @@ def main(argv) -> int:
     w.place(O.CHARGE, 50, TOWER + 1, Z0 + 1)
     w.place(O.CHARGE, 50, WALK, 47)
 
+    check(w)
     w.save(out)
     print(f"wrote {out}")
     return 0

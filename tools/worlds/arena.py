@@ -12,7 +12,10 @@ from __future__ import annotations
 
 from typing import Callable
 
+import struct
+
 from kit import World
+from worldkit import MOVE_OBJECT_TYPE, PLAYER_START_TYPE, ObjectType
 
 TEAM_BOMBS = (200, 201, 202, 203)  # TYPE_BOMBEPERSO1-4: each team's own bomb
 
@@ -41,3 +44,32 @@ def team_bombs(w: World, places, count: int, step):
         dx, dz = step(x, z)
         for k in range(count):
             w.place(team, x + dx * (2 + k), y, z + dz * (2 + k))
+
+
+def check(w: World):
+    """Each start and each object (but the lifts, whose cell is the floor cleared for them) in an
+    empty cell over a solid one, the starts with room for Blupi above: raises ValueError naming
+    every one that is not (a start in a stair, a bomb inside a block)."""
+    problems = []
+
+    def stands(x, y, z, what, room=1):
+        if w.get(x, y - 1, z) == 0:
+            problems.append(f"{what} at ({x}, {y}, {z}) has nothing under it")
+        for dy in range(room):
+            if w.get(x, y + dy, z) != 0:
+                problems.append(f"{what} at ({x}, {y}, {z}) is inside a block (+{dy})")
+
+    if w.spawn is None:
+        problems.append("no yellow start")
+    else:
+        stands(*w.spawn, "the yellow start", room=2)
+    for (x, y, z), records in w.records.items():
+        for mtype, payload in records:
+            if mtype == PLAYER_START_TYPE:
+                stands(x, y, z, f"start mask {payload[0]}", room=2)
+            elif mtype == MOVE_OBJECT_TYPE:
+                otype = struct.unpack_from("<B", payload)[0]
+                if otype != ObjectType.LIFT:
+                    stands(x, y, z, f"object {otype}")
+    if problems:
+        raise ValueError("; ".join(problems))

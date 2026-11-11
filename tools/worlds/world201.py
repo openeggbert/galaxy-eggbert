@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from arena import check  # noqa: E402
 from kit import MACHINE_FLOOR, O, World, lift, slab, wall  # noqa: E402
 
 TOP = 9            # the hall's floor top: Blupi walks at y 10
@@ -82,6 +83,7 @@ def main(argv) -> int:
     for x, y, z in ((45, WALK, 60), (55, WALK, 40), (53, UPPER + 1, 47)):
         w.place(O.DRINK, x, y, z)
 
+    check(w)
     w.save(out)
     print(f"wrote {out}")
     return 0
