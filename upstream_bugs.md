@@ -348,4 +348,6 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   player pressing them still triggers CNA's debug path.
 - **Suggestion for CNA:** gate the two hotkeys behind a debug build, an environment variable or an
   explicit opt-in, so a released game does not lose its context on a key press.
-- **Status:** reported here; not fixed in CNA.
+- **Status:** asked of the `cna` session on the owner's word (2026-11-11): F9 and F10 only in a debug
+  build, behind a macro set by a CMake option, never in a release build; the renderer's
+  DebugSimulateContextLoss/DebugRestoreContext stay for tests. Open until it reports the commit.

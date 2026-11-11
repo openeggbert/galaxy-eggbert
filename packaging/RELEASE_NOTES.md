@@ -1,11 +1,17 @@
-# Galaxy Eggbert 0.1.2
+# Galaxy Eggbert 0.1.3
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
 
+## New in 0.1.3
+
+- **The 1.5x speed is on F4** now. In 0.1.2 it was on F9, which also made the graphics restart: in
+  the web version the game went black until F10 was pressed. Please don't press F9 or F10 in
+  earlier versions.
+
 ## New in 0.1.2
 
-- **A 1.5x game speed** on **F9**, between F5's normal speed and F6's double speed. The speed shows
-  at the bottom left; F5 goes back to normal.
+- **A 1.5x game speed** (F4 since 0.1.3), between F5's normal speed and F6's double speed. The speed
+  shows at the bottom left; F5 goes back to normal.
 
 ## New in 0.1.1
 
@@ -42,10 +48,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.1.2-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.1.2-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.1.2-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.1.2-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.1.3-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.1.3-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.1.3-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.1.3-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations

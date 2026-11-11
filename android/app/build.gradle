@@ -92,7 +92,7 @@ android {
         // API 24: CNA's minimum (cna/docs/devices-build.md).
         minSdkVersion 24
         targetSdkVersion 35
-        versionCode 3 // 0.1.2 (0.1.0 was 1, 0.1.1 2): every published APK a higher one
+        versionCode 4 // 0.1.3 (0.1.0 was 1, 0.1.1 2, 0.1.2 3): every published APK a higher one
         // The release's version (VERSION.txt at the repository's root), as the desktop archive's.
         versionName rootProject.file("../VERSION.txt").text.trim()
         ndk {

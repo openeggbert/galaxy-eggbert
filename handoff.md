@@ -6,16 +6,21 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (release 0.1.2 with the 1.5x speed on F9; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## The 1.5x speed moves from F9 to F4 (2026-11-11) — done, not released
+## Release 0.1.3 (2026-11-11, the owner) — tagged and published
+
+`v0.1.3`: the 1.5x speed on F4 (below). GitHub release "Galaxy Eggbert 0.1.3" with the four packages,
+SHA256SUMS.txt and the notes; Android versionCode 4 (the next published APK needs 5). The site's play
+build and pages are 0.1.3. The `cna` session was asked to gate F9/F10 to debug builds (UB-013).
+
+## The 1.5x speed moves from F9 to F4 (2026-11-11) — done, released in 0.1.3
 
 The owner found that CNA's `Game::PollEvents` takes F9 and F10 itself: its debug simulation of a
 lost graphics context and its restore, in every build (UB-013; checked live: F9 logs "[CNA]
 Simulating desktop GL context loss + immediate recreate"). On the web F9 leaves the game black until
 F10, and 0.1.2 told players to press F9. My first search had cut its output at 15 lines and called
-F9 free. The speed is on F4 now (BD-0125, CHANGELOG). Released 0.1.2 and the site's play build
-(0.1.2) still have it on F9 until a 0.1.3.
+F9 free. The speed is on F4 now (BD-0125, CHANGELOG), released in 0.1.3.
 
 ## Release 0.1.2 (2026-11-11, the owner) — tagged and published
 

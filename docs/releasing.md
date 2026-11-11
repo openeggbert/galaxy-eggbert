@@ -1,8 +1,8 @@
 # Versioning and releasing Galaxy Eggbert
 
-*Current release: 0.1.2 (2026-11-11), tag `v0.1.2`, published as a GitHub release of
-openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages (0.1.0 and 0.1.1 the
-same day).*
+*Current release: 0.1.3 (2026-11-11), tag `v0.1.3`, published as a GitHub release of
+openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages (0.1.0, 0.1.1 and 0.1.2
+the same day).*
 
 Galaxy Eggbert follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), set up
 after CNA's own scheme (`../cna/docs/releasing.md`): the version is decided in one place,
@@ -90,5 +90,6 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
        --notes-file packaging/RELEASE_NOTES.md --verify-tag <out-dir>/GalaxyEggbert-0.1.0-* <out-dir>/SHA256SUMS.txt
    ```
 
-   Android's `versionCode`: 1 for 0.1.0, 2 for 0.1.1, 3 for 0.1.2; the next published APK needs 4.
+   Android's `versionCode`: 1 for 0.1.0, 2 for 0.1.1, 3 for 0.1.2, 4 for 0.1.3; the next published
+   APK needs 5.
 7. **Open the next cycle** with an empty `## [Unreleased]` section in `CHANGELOG.md`.
