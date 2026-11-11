@@ -427,3 +427,23 @@ The owner, still away from the computer, asked again what can be improved and wa
    originals' identity), rejoining a running match after a drop, a Windows build with multiplayer,
    internet play without port forwarding (CNA PlayerMatch with the relay server).
 4. **The branch:** wait for the owner's test; no merge into `develop`, no push.
+
+**Q-022 point 3, Speedy Blupi 1's worlds 101-110: not built (2026-11-11), open for the owner.**
+SB1's network worlds are SB2's 201-210. The comparison read Speedy Eggbert 1's
+`DATA/WORLD101-110.BLP` against SB2's `WORLD201-210.BLP`, both from `../blupi_recon/build/freeapi-*`:
+
+- **Identical in eight of ten:** the same decor cell for cell, the same objects at the same places,
+  the same four starts, the same music and region.
+- **103:** four cells differ.
+- **108:** SB2 has 23 ammunition packs, 19 helicopters and one lift fewer.
+- **210:** SB2 widened it (1154 cells) and added a shield and two bombs of each team.
+
+Galaxy's 201-210 are built from that same identity, so a "101-110" would be the same worlds under
+other numbers. Options:
+
+- (a) Leave it: SB1's worlds are already in the game as 201-210.
+- (b) More worlds of Galaxy's own design (none in SB1 or SB2), as many as wanted.
+- (c) 101-110 as variants of 201-210 (another layout of the same theme), only to have twenty-two
+  numbers.
+
+The recommendation is (a), with (b) if more worlds are wanted.
