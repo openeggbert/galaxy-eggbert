@@ -479,7 +479,7 @@ namespace GalaxyEggbert::Game
         {"C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror",
          "C C : copier une boîte (deux coins)  P : la coller  Q : tourner  X : miroir"},
         {"M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down",
-         "M : musique  FLÈCHES : fond  CLIC DROIT : regarder  WASD : voler  CTRL : monter  SHIFT/Z : descendre"},
+         "M : musique  FLÈCHES : fond  CLIC DROIT : vue  WASD : voler  CTRL : haut  SHIFT/Z : bas"},
         {"SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection",
          "ESPACE/POSER : poser   SHIFT + PAVÉ NUM : étendre une sélection 3D"},
         {"NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys",
