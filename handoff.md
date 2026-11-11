@@ -54,7 +54,6 @@ CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
   - **CNA notes:** UB-012 (send before Dispose) is XNA's contract; Galaxy updates before leaving.
 - **Next:**
   - The owner's answers: SB1's worlds, the public server and accounts (Q-022).
-  - A new Android APK (protocol 3: the old APK does not play with these builds).
   - The owner's real-machine test (Q-020).
 - **CNA's sweep, 2026-11-11 11:30-14:30:** no LAN/discovery tests (UDP 61190/61191) in that window;
   the `cna` session asked.
@@ -69,9 +68,9 @@ tools/net_two_players.sh build-cna-opengl3 tools/autoplay/net/laid_host.txt tool
 ```
 Android: the arm64 release APK of the branch is built (`android/app/build/outputs/apk/release/
 app-release.apk` in the worktree, signed with the release key: `android/key.properties` there points
-at the main worktree's keystore; real networking in libmain.so; rebuilt 2026-11-11 with everything of Q-021 and worlds 201-212: AGP left
-it in `app/build/intermediates/apk/release/`, copied to `outputs/`), not
-installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
+at the main worktree's keystore; real networking in libmain.so; rebuilt 2026-11-11 10:41 with everything of Q-022, protocol 3, which the
+older APKs do not speak: AGP left it in `app/build/intermediates/apk/release/`, copied to `outputs/`; a
+stale merge needed `--rerun-tasks`), not installed: the owner's phone test is Q-020. Its trees (`android/app/.cxx` 1.4 GB, `build` 0.9 GB)
 can go once that is done. Golden frames and trace pass on the branch.
 Next: a game between real machines (Q-020); the owner's look; the merge on acceptance, and the AI
 policy after it.
