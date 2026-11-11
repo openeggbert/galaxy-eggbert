@@ -5,7 +5,8 @@
 # linked from changed -- one of its sources, a header under include/ or src/, a library of its
 # link closure, or its configuration (a fingerprint file(GENERATE) rewrites only when the build type,
 # the flags or the target's definitions or options changed: such a change recompiles the game
-# without touching any of the files above) -- that is, when <target> is linked again anyway. A build that changes nothing keeps
+# without touching any of the files above), or the version (the generated GalaxyEggbert/Version.hpp,
+# rewritten only when VERSION.txt changes it) -- that is, when <target> is linked again anyway. A build that changes nothing keeps
 # the stamp and does not relink (the SSD rules of ../CLAUDE.md); __DATE__/__TIME__ in a plain
 # source would instead keep the time that source was last compiled.
 
@@ -78,7 +79,7 @@ link options: $<TARGET_PROPERTY:${target},LINK_OPTIONS>
     add_custom_command(OUTPUT "${stamp}"
         COMMAND "${CMAKE_COMMAND}" "-DOUT=${stamp}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WriteBuildStamp.cmake"
         DEPENDS ${dependencies} ${headers} ${libraries} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WriteBuildStamp.cmake"
-                "${configuration}"
+                "${configuration}" "${GALAXY_EGGBERT_GENERATED_INCLUDE_DIR}/GalaxyEggbert/Version.hpp"
         COMMENT "Galaxy Eggbert: build stamp"
         VERBATIM)
     target_sources(${target} PRIVATE "${stamp}")
