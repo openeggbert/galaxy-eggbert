@@ -64,7 +64,7 @@ network (ZeroTier below) type the host's ZeroTier address instead: no forwarding
 ## Playing over the internet: a server (no router to set up)
 
 With a **cna-gamer-services-server** on the internet (libcna's; someone runs it and makes each
-player's account, owner_questions.md Q-022), nothing has to be forwarded: every packet goes through
+player's account: `10-server.md`), nothing has to be forwarded: every packet goes through
 the server's relay. **Server** (top left of the list) takes its name or address (`:port` when it is
 not 47831); the game uses it from its next start. Then each player signs in with his account
 (CNA's Guide: name, then password) and his gamertag is his name in the games; the same button
