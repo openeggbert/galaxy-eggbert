@@ -348,6 +348,10 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   player pressing them still triggers CNA's debug path.
 - **Suggestion for CNA:** gate the two hotkeys behind a debug build, an environment variable or an
   explicit opt-in, so a released game does not lose its context on a key press.
-- **Status:** asked of the `cna` session on the owner's word (2026-11-11): F9 and F10 only in a debug
-  build, behind a macro set by a CMake option, never in a release build; the renderer's
-  DebugSimulateContextLoss/DebugRestoreContext stay for tests. Open until it reports the commit.
+- **Status:** FIXED in CNA `46f8243ca` (2026-11-11, the `cna` session on the owner's word): the cache
+  option `CNA_DEBUG_CONTEXT_HOTKEYS` (OFF, AUTO, ON; AUTO the default, on only in the Debug
+  configuration via `$<CONFIG:Debug>`) sets cna_runtime's private definition
+  `CNA_DEBUG_CONTEXT_HOTKEYS=0|1`; the check is `CNA::Internal::Runtime::ClassifyDebugContextHotkey`.
+  DebugSimulateContextLoss/DebugRestoreContext stay for tests. Galaxy 0.1.3 is built against it: all
+  four release trees have `CNA_DEBUG_CONTEXT_HOTKEYS=0`, and a Release game pressing F9 and F10 logs
+  no context loss (checked). A Debug build of Galaxy keeps them unless configured OFF.

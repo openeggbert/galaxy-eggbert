@@ -12,7 +12,10 @@ _Last updated: 2026-11-11 (release 0.1.3: the 1.5x speed on F4, F9 being CNA's d
 
 `v0.1.3`: the 1.5x speed on F4 (below). GitHub release "Galaxy Eggbert 0.1.3" with the four packages,
 SHA256SUMS.txt and the notes; Android versionCode 4 (the next published APK needs 5). The site's play
-build and pages are 0.1.3. The `cna` session was asked to gate F9/F10 to debug builds (UB-013).
+build and pages are 0.1.3. Built against CNA `46f8243ca`, where the `cna` session gated F9/F10 to
+Debug builds (UB-013 fixed; option CNA_DEBUG_CONTEXT_HOTKEYS): in 0.1.3 F9 and F10 do nothing. The
+first 0.1.3 package build had caught CNA mid-edit (Linux, Android) and without it (Windows, web); all
+four were built again from the clean tree before the release.
 
 ## The 1.5x speed moves from F9 to F4 (2026-11-11) — done, released in 0.1.3
 
