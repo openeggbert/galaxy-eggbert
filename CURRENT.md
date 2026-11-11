@@ -514,7 +514,8 @@ BD-0119) are done too. What is left:_
 ### Outside the code's reach here
 
 - Android: played by the owner on his phone (2026-11-10, 1.0.0-rc1): everything worked but the
-  accelerometer, fixed the same evening (geultra, 86017658); his word on the fix is still to come.
+  accelerometer, fixed the same evening (geultra, 86017658); the owner confirmed the fix works
+  (2026-11-11).
 - A physical gamepad on the desktop and a desktop touch screen: verified with an SDL virtual
   gamepad only (the phone's touch screen works).
 - Windows: the `SDL_GPU` path has had no fresh cross-build or live 3D run; not supported until both

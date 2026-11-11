@@ -174,8 +174,9 @@ user folder, build release packages, and a goodbye screen on quitting as in Spee
   `GALAXY_TERRAIN_RELIEF=1`: 55-145 thousand of 384 thousand pixels differ). The reliefs are off by
   default (`terrainRelief=0`): their GI shows only with the Setup's "3D terrain" on.
 
-Open (Android, owner's reports): the accelerometer did not react on the phone and the game
-sometimes freezes until the app is restarted. Neither reproduced: no device was connected. Next:
+Open (Android, owner's reports): the accelerometer did not react on the phone (fixed in 86017658,
+the owner confirmed it on the phone 2026-11-11) and the game sometimes freezes until the app is
+restarted. The freeze is not reproduced: no device was connected. Next:
 `adb logcat -s SDL SDL/APP GalaxyEggbertCNA` (or the whole logcat) with Accelerometer on in a
 mission, and after a freeze (when: after the app was in the background, during play, at Continue?).
 
