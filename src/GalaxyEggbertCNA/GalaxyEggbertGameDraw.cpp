@@ -6,6 +6,8 @@
 
 #include <GalaxyEggbert/Version.hpp>
 
+#include <exception>
+
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
@@ -624,9 +626,19 @@ namespace GalaxyEggbert::CNA
             device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
             Microsoft::Xna::Framework::Graphics::Texture2D screenshot(device, w, h);
             screenshot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
-            screenshot.SaveAsPng("screenshot.png");
-            std::cout << "GalaxyEggbertCNA: wrote screenshot.png (" << w << "x" << h << ")."
-                      << std::endl;
+            // A development aid only: a game folder that cannot be written (installed for all users,
+            // /opt, Program Files) must not end the game on its first frame (2026-11-11, the 0.1.0
+            // packages: "ImageLoader: failed to save PNG" aborted it).
+            try
+            {
+                screenshot.SaveAsPng("screenshot.png");
+                std::cout << "GalaxyEggbertCNA: wrote screenshot.png (" << w << "x" << h << ")."
+                          << std::endl;
+            }
+            catch (const std::exception& failure)
+            {
+                std::cout << "GalaxyEggbertCNA: no screenshot.png (" << failure.what() << ")." << std::endl;
+            }
         }
     }
 
@@ -1015,9 +1027,16 @@ namespace GalaxyEggbert::CNA
             device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
             Microsoft::Xna::Framework::Graphics::Texture2D hudScreenshot(device, w, h);
             hudScreenshot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
-            hudScreenshot.SaveAsPng("screenshot_hud.png");
-            std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
-                      << std::endl;
+            try // a development aid only, as screenshot.png above
+            {
+                hudScreenshot.SaveAsPng("screenshot_hud.png");
+                std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
+                          << std::endl;
+            }
+            catch (const std::exception& failure)
+            {
+                std::cout << "GalaxyEggbertCNA: no screenshot_hud.png (" << failure.what() << ")." << std::endl;
+            }
         }
 
         // A save's thumbnail (ED-0013), from the frame just drawn; the dice's play-test waits for it.
