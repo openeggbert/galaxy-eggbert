@@ -10,7 +10,7 @@ private networks to play with others.
 
 `LICENSE` applies to Galaxy Eggbert; `THIRD_PARTY.txt` lists what it is built on and where its data
 comes from, `RELEASE_NOTES.md` what this release holds. Your saved games are in
-`%APPDATA%\Galaxy Eggbert` (`--user DIR` chooses another folder).
+`%LOCALAPPDATA%\Galaxy Eggbert` (`--user DIR` chooses another folder).
 
 This build is a cross-build from Linux (MinGW-w64), tried under wine but not yet on Windows itself:
 please report anything that does not work.
