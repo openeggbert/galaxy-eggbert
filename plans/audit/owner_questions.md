@@ -390,3 +390,22 @@ the win); single player unchanged (CTest, demo replays). For the owner:
    palace 211, clods 212): add more?
 4. **Speed and cheats:** SB2 does not restrict them in a network game (each machine its own); the
    same here. Keep it so?
+
+## Q-021 — multiplayer: the improvements after the first version (2026-11-11, asked interactively) — ANSWERED
+
+The owner, away from the computer (the real-machine test of Q-020 waits), asked what can still be
+improved. Answers (all options taken):
+
+1. **What SB2's network game has and the first version did not** — all three:
+   - the other players' sounds (SB2 `PK_PLAYSOUND`/`PK_STOPSOUND`, decnet.cpp:172-193,
+     decblock.cpp:2378, decmove.cpp:183-190);
+   - the host's lift synchronisation (`PK_ASCENSEURSTART`/`END`, decmove.cpp:571-630, 283);
+   - the others' power and cloud shown (`m_netBlupiSec`, decblock.cpp:1696-1715) and the cloud's
+     touch (`NetPlayerCollide`, decblupi.cpp:3838-3848, `PK_STOPCLOUD`).
+2. **Worlds:** all seven more, 206-212 (Q-020 point 3 answered).
+3. **Galaxy additions (not in SB2, each a BD entry):** names above the players, a rematch with the
+   same players (back to the lobby after a match), statistics at the end.
+4. **Reliability:** a test on a bad network (simulated loss and delay), a player whose network
+   drops seen as gone after a few seconds, joining by the host's IP address. CNA changes go to the
+   `cna` Claude agent working on CNA (the owner: "na cna pracuje jiny claude agent cna. jemu posilej
+   co potrebujes v cna upravit"); CNA stays read-only for this repository.
