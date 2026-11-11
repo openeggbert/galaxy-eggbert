@@ -440,4 +440,70 @@ TEST(WorldSerializationTests, LoadRejectsChunkListedTwice) {
     EXPECT_THROW(static_cast<void>(loadBytes(bytes)), std::runtime_error);
 }
 
+// The save is atomic (2026-11-11): written to <path>.tmp, renamed over the file only when complete.
+TEST(WorldSerializationTests, SaveLeavesNoTemporaryFileAndMatchesSaveToStream) {
+    const auto path = makeTempPath(".vwr");
+    World world(2);
+    world.setBlock(1, 1, 1, Block::make(8));
+    world.saveToFile(path);
+    EXPECT_FALSE(std::filesystem::exists(path.string() + ".tmp"));
+    EXPECT_EQ(World::loadFromFile(path).getBlock(1, 1, 1), Block::make(8));
+    std::ostringstream out(std::ios::binary);
+    world.saveToStream(out);
+    EXPECT_EQ(out.str(), readAllBytes(path));
+    removeFileNoThrow(path);
+}
+
+TEST(WorldSerializationTests, SaveThatCannotStartKeepsTheFileAsItWas) {
+    const auto path = makeTempPath(".vwr");
+    World world(2);
+    world.saveToFile(path);
+    const std::string before = readAllBytes(path);
+    world.setBlock(1, 1, 1, Block::make(8));
+    const std::filesystem::path temporary = path.string() + ".tmp";
+    std::filesystem::create_directory(temporary); // the temporary file cannot be opened
+    EXPECT_THROW(world.saveToFile(path), std::runtime_error);
+    EXPECT_EQ(readAllBytes(path), before);
+    std::error_code ignored;
+    std::filesystem::remove(temporary, ignored);
+    removeFileNoThrow(path);
+}
+
+TEST(WorldSerializationTests, SaveThatCannotFinishWritingKeepsTheFileAsItWas) {
+#if defined(__linux__)
+    if (!std::filesystem::exists("/dev/full")) {
+        GTEST_SKIP() << "no /dev/full";
+    }
+    const auto path = makeTempPath(".vwr");
+    World world(2);
+    world.saveToFile(path);
+    const std::string before = readAllBytes(path);
+    world.setBlock(1, 1, 1, Block::make(8));
+    // A full disk: the few hundred bytes sit in the stream's buffer, so the failure shows only
+    // when the file is closed -- the case an unchecked close reported as saved.
+    const std::filesystem::path temporary = path.string() + ".tmp";
+    std::filesystem::create_symlink("/dev/full", temporary);
+    bool threw = false;
+    try {
+        world.saveToFile(path);
+    } catch (const std::runtime_error&) {
+        threw = true;
+    }
+    // A save that missed the failure renames the link over the file: never read it then (reading
+    // /dev/full never ends), only remove the links.
+    const bool replaced = std::filesystem::is_symlink(path);
+    const bool linkLeft = std::filesystem::is_symlink(temporary);
+    removeFileNoThrow(temporary);
+    if (!replaced) {
+        EXPECT_EQ(readAllBytes(path), before);
+    }
+    removeFileNoThrow(path);
+    EXPECT_TRUE(threw);
+    EXPECT_FALSE(replaced);
+    EXPECT_FALSE(linkLeft); // the failed save removed its temporary link
+#else
+    GTEST_SKIP() << "needs /dev/full";
+#endif
+}
+
 } // namespace GalaxyEggbert::Worlds

@@ -6,12 +6,13 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## An outside review of 2026-11-07, checked against the code (2026-11-11) — in progress
+## An outside review of 2026-11-07, checked against the code (2026-11-11) — done
 
 An external review (written against `300041de`, a commit no longer on develop) was checked point by
-point; the owner chose what to do. Done so far:
+point; the owner chose what to do. Not chosen (left as they are): material for the owner's own
+review of R5 (D11 models) and R6 (a human play pass), and of the licence questions (R8). Done:
 
 - R7: the Android accelerometer fix (86017658) confirmed by the owner on the phone (CURRENT.md).
 - R4: the 56 `.max` rows of `plans/audit/asset_sources.csv` now say why they are NOT_APPLICABLE
@@ -29,8 +30,17 @@ point; the owner chose what to do. Done so far:
   Negative tests in WorldTests.cpp/ChunkTests.cpp (`*TooMany*`, `*PastTheEnd*`, `*ListedTwice*`,
   `*LargerThanTheLimit*`, `*PaletteIndexOutside*`).
 
-Still to do (the owner's choices): R2 the editor saves atomically (temporary file, checked close,
-rename) and shows a message instead of ending the game when a save fails.
+- R2: `World::saveToFile` is atomic: `saveToStream` into `<file>.tmp`, close checked (a full disk
+  shows only there; before, an unchecked close let the editor mark a cut-off file saved), rename
+  over the file. `WorldEditor::SaveWorld` returns false on a failure: the file stays as it was,
+  `dirty_` stays, the status lines show "NOT SAVED: the file on disk is unchanged" and the reason,
+  and a play test is not started (it would load the older file). Creating a new world in the
+  browser that fails shows "Not created: ..." on the browser instead of ending the game
+  (`WorldEditor::ShowBrowserMessage`). Tests: WorldTests.cpp `*KeepsTheFileAsItWas*` (one via a
+  link to /dev/full), `*NoTemporaryFile*`. Checked live (tools/qa_live.sh, a directory put where
+  `custom_00N.vwr.tmp` goes): Enter in the editor showed the two NOT SAVED lines, the game ran on
+  and the file stayed byte for byte its backup; a new slot showed "Not created: Cannot open world
+  file for writing" under the slots and stayed empty.
 
 ## Lines between the cells with the 3D effects (2026-11-10, owner report) — fixed, owner confirmed
 

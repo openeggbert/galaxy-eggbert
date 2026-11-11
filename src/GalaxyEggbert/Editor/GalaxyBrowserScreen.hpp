@@ -13,6 +13,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace GalaxyEggbert::Editor
@@ -70,6 +71,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool RestoreMode() const noexcept { return restoreMode_; }
         [[nodiscard]] bool ImportMode() const noexcept { return importMode_; }
         [[nodiscard]] const std::string& Message() const noexcept { return message_; }
+        void SetMessage(std::string message) noexcept { message_ = std::move(message); }
 
         // Rects, public for the tests: the main hub, the bonus world, world n's number (1-14), the
         // bottom row's place p (0 the hub, 1-8 the missions), the bin on a place's corner, Backups,

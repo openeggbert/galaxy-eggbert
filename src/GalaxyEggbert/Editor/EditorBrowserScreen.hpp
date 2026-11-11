@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace GalaxyEggbert::Editor
@@ -97,6 +98,7 @@ namespace GalaxyEggbert::Editor
         }
         // The line under the slots: what the last click did.
         [[nodiscard]] const std::string& Message() const noexcept { return message_; }
+        void SetMessage(std::string message) noexcept { message_ = std::move(message); }
 
     private:
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);

@@ -368,6 +368,11 @@ CHUNK TABLE
 CHUNK DATA...
 ```
 
+`World::saveToFile` is atomic (2026-11-11): `World::saveToStream` writes the bytes to
+`<file>.tmp` beside the file, the stream is closed and checked (a full disk shows only there),
+and only then is `<file>.tmp` renamed over the file. A failed save throws and leaves the file as
+it was; the editor then keeps its edits unsaved and says "NOT SAVED" in its status lines.
+
 ## World Header
 
 **Breaking change (2026-07-09):** header bumped v1 -> v2 to add a world-level

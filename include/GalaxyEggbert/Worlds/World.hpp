@@ -264,10 +264,22 @@ public:
      * optional @ref hasSpawnPoint coordinates), a chunk
      * table, and serialized non-empty chunk payloads.
      *
+     * The save is atomic (2026-11-11): the bytes go to `<path>.tmp` beside it, which replaces
+     * @p path only once it is completely written and closed without an error. A failed save
+     * (a full disk, no permission) throws and leaves the file at @p path as it was.
+     *
      * @param path Destination file path.
-     * @throws std::runtime_error If file creation or serialization fails.
+     * @throws std::runtime_error If file creation, writing, closing or the final rename fails.
      */
     void saveToFile(const std::filesystem::path& path) const;
+
+    /**
+     * @brief Writes the world's `.vwr` bytes (see @ref saveToFile) to @p out, its offsets counted
+     * from the stream's position at the call (the file's start for @ref saveToFile).
+     *
+     * @throws std::runtime_error If writing fails.
+     */
+    void saveToStream(std::ostream& out) const;
 
     /**
      * @brief Loads a world from the `.vwr` binary file format.

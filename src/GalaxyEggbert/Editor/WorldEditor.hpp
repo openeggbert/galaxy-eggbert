@@ -155,7 +155,21 @@ namespace GalaxyEggbert::Editor
         void EnterEditing(float startX, float startY, float startZ) noexcept;
 
         // Sets the path used by keyboard save and play-test.
-        void SetWorldPath(std::filesystem::path path) noexcept { worldPath_ = std::move(path); }
+        void SetWorldPath(std::filesystem::path path) noexcept
+        {
+            worldPath_ = std::move(path);
+            saveError_.clear();
+        }
+
+        // A line for the browser screen on show (the slots' or the galaxy's), e.g. why a new world
+        // could not be created.
+        void ShowBrowserMessage(std::string message)
+        {
+            if (galaxyView_)
+                galaxyScreen_.SetMessage(std::move(message));
+            else
+                browserScreen_.SetMessage(std::move(message));
+        }
 
         // The path currently being edited (plan.md EDITOR-108) -- read by
         // GalaxyEggbertGame after ConsumePlayTestRequested() fires, to
@@ -507,8 +521,12 @@ namespace GalaxyEggbert::Editor
         // the file as it was (CustomWorldStorage BackUpWorld), the next ones of that visit do not.
         std::filesystem::path backedUpPath_;
         std::filesystem::path thumbnailRequest_;
-        // Saves @p world to worldPath_, backed up first when this visit has not yet.
-        void SaveWorld(const Worlds::World& world);
+        // Saves @p world to worldPath_, backed up first when this visit has not yet. A failed save
+        // (a full disk, no permission) returns false: the file on disk is as it was (the save is
+        // atomic), the edits stay unsaved and the status lines say why (saveError_).
+        bool SaveWorld(const Worlds::World& world);
+        // Why the last save of this world failed; empty once a save succeeds.
+        std::string saveError_;
 
         bool browsing_ = true;
         int gamerSlot_ = 0;

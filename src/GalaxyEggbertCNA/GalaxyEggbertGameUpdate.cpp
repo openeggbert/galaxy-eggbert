@@ -56,6 +56,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -966,10 +967,20 @@ namespace GalaxyEggbert::CNA
                     // A new world in the empty slot the player clicked -- or the galaxy's place.
                     std::error_code ec;
                     std::filesystem::create_directories(request.createPath.parent_path(), ec);
-                    (request.galaxyMission > 0 ? GalaxyEggbert::Editor::CreateGalaxyStarterWorld(request.galaxyMission)
-                                               : GalaxyEggbert::Editor::CreateEditorStarterWorld())
-                        .saveToFile(request.createPath);
-                    LoadCustomWorldForEditing(request.createPath);
+                    bool created = true;
+                    try
+                    {
+                        (request.galaxyMission > 0 ? GalaxyEggbert::Editor::CreateGalaxyStarterWorld(request.galaxyMission)
+                                                   : GalaxyEggbert::Editor::CreateEditorStarterWorld())
+                            .saveToFile(request.createPath);
+                    }
+                    catch (const std::exception& failure)
+                    {
+                        // Nothing was created (the save is atomic): the browser stays, saying why.
+                        created = false;
+                        worldEditor_.ShowBrowserMessage(std::string("Not created: ") + failure.what());
+                    }
+                    if (created) LoadCustomWorldForEditing(request.createPath);
                 }
             }
             else

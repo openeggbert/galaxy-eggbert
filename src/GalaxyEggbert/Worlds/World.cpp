@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <utility>
 
 namespace GalaxyEggbert::Worlds {
@@ -263,6 +264,33 @@ Chunk& World::chunk(std::uint8_t chunkX,
 }
 
 void World::saveToFile(const std::filesystem::path& path) const {
+    // Written beside the file and renamed over it only when complete (rename stays on one file
+    // system), so a full disk or a crash mid-save never leaves a cut-off world at path.
+    const std::filesystem::path temporary = path.string() + ".tmp";
+    std::error_code ignored;
+    try {
+        std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+        if (!out) {
+            throw std::runtime_error("Cannot open world file for writing");
+        }
+        saveToStream(out);
+        out.close(); // the last buffered bytes are written here: a full disk shows only now
+        if (out.fail()) {
+            throw std::runtime_error("Cannot finish writing the world file");
+        }
+    } catch (...) {
+        std::filesystem::remove(temporary, ignored);
+        throw;
+    }
+    std::error_code renameError;
+    std::filesystem::rename(temporary, path, renameError);
+    if (renameError) {
+        std::filesystem::remove(temporary, ignored);
+        throw std::runtime_error("Cannot replace the world file: " + renameError.message());
+    }
+}
+
+void World::saveToStream(std::ostream& out) const {
     struct ChunkBlob final {
         SerializedChunkEntry entry;
         std::string data;
@@ -304,11 +332,6 @@ void World::saveToFile(const std::filesystem::path& path) const {
                 blobs.push_back(std::move(blob));
             }
         }
-    }
-
-    std::ofstream out(path, std::ios::binary);
-    if (!out) {
-        throw std::runtime_error("Cannot open world file for writing");
     }
 
     Binary::writeMagic(out, WorldMagic);

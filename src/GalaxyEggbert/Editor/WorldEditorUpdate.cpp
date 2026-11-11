@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <utility>
 
 namespace GalaxyEggbert::Editor
@@ -686,7 +687,7 @@ namespace GalaxyEggbert::Editor
         return true;
     }
 
-    void WorldEditor::SaveWorld(const Worlds::World& world)
+    bool WorldEditor::SaveWorld(const Worlds::World& world)
     {
         if (backedUpPath_ != worldPath_)
         {
@@ -694,7 +695,16 @@ namespace GalaxyEggbert::Editor
                                                                  : BackUpWorld(worldPath_));
             backedUpPath_ = worldPath_;
         }
-        world.saveToFile(worldPath_);
+        try
+        {
+            world.saveToFile(worldPath_);
+        }
+        catch (const std::exception& failure)
+        {
+            saveError_ = failure.what(); // dirty_ stays: Stop still asks before leaving
+            return false;
+        }
+        saveError_.clear();
         if (outsideSession_ && !outsideCopyDir_.empty())
         {
             std::error_code error;
@@ -708,13 +718,14 @@ namespace GalaxyEggbert::Editor
         }
         dirty_ = false;
         stopConfirmArmed_ = false;
+        return true;
     }
 
     bool WorldEditor::HandleSessionAndHistory(const FrameInput& input, Worlds::World& world)
     {
         if (input.enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
         {
-            SaveWorld(world);
+            (void)SaveWorld(world);
             return true;
         }
         if (input.escapeHeld && !escapeKeyHeldLastFrame_ && pendingEnd_ && !boxFirstCornerPlaced_)
@@ -764,8 +775,8 @@ namespace GalaxyEggbert::Editor
         }
         if (input.palette.action == EditorPalette::Action::PlayTest && !worldPath_.empty())
         {
-            SaveWorld(world);
-            playTestRequested_ = true;
+            // The play test loads the file: an unsaved world would play its older version.
+            playTestRequested_ = SaveWorld(world);
             return true;
         }
         return false;
@@ -1046,6 +1057,11 @@ namespace GalaxyEggbert::Editor
     std::vector<std::string> WorldEditor::StatusLines() const
     {
         std::vector<std::string> lines;
+        if (!saveError_.empty())
+        {
+            lines.emplace_back("NOT SAVED: the file on disk is unchanged");
+            lines.emplace_back(saveError_);
+        }
         if (extendedSelection_)
         {
             lines.emplace_back("Selection " + std::to_string(std::abs(int(placementCellX_) - selectionAnchorX_) + 1) +
