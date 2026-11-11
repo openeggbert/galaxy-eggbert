@@ -1234,19 +1234,19 @@ namespace GalaxyEggbert::CNA
             phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             return;
         const auto& n = *net_;
-        for (const auto& peer : n.peers)
+        for (std::size_t index = 0; index < n.peers.size(); ++index)
         {
+            const auto& peer = n.peers[index];
             const auto& p = peer.pose;
+            // Hidden by the drink, he is not drawn on the others' screens at all (SEC_HIDE,
+            // decblock.cpp:1696).
             if (!peer.present || !peer.hasPose || (p.flags & GalaxyEggbert::Net::kPoseHidden) != 0 ||
-                p.clip >= n.clipNames.size())
+                p.aura == GalaxyEggbert::Def::ToRaw(GalaxyEggbert::Def::SecretPower::Hide) || p.clip >= n.clipNames.size())
                 continue;
             const std::string& clip = n.clipNames[p.clip];
             if (blupiModel_->Clips.count(clip) == 0) continue;
             const auto& q = peer.previous;
-            float t = std::clamp(peer.age / std::max(peer.interval, 0.02f), 0.0f, 1.0f);
-            const float jump = std::fabs(p.world[9] - q.world[9]) + std::fabs(p.world[10] - q.world[10]) +
-                               std::fabs(p.world[11] - q.world[11]);
-            if (jump > 3.0f) t = 1.0f; // a new life, a teleport: there at once
+            const float t = NetPoseBlend(n, index);
             const auto lerp = [t](float a, float b) { return a + (b - a) * t; };
             SceneModel body;
             body.model = blupiModel_.get();
@@ -1345,9 +1345,10 @@ namespace GalaxyEggbert::CNA
         // element.png: the MoveObjects shown as billboards (ObjectDefinitionRegistry's Element source),
         // each on its per-instance phase; the pieces flying away without a model; his death sprite,
         // aura and smoke; then the drink's bubbles.
+        const auto netAuras = NetPeerAuras();
         if (objectEffect_ &&
             (!objects.empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes ||
-             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None))
+             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None || !netAuras.empty()))
         {
             SceneBillboardBatch batch;
             batch.sheet = SceneSheet::Element;
@@ -1432,6 +1433,31 @@ namespace GalaxyEggbert::CNA
                     add(kMagicLoop[auraFrame % 5], 0.0f);
                 }
             }
+            // The other players' shields and powers, every frame (decblock.cpp:1700-1710: no blink).
+            for (const auto& aura : netAuras)
+            {
+                static constexpr int kShieldBlupi[16] = {144, 145, 146, 147, 148, 149, 150, 151,
+                                                         266, 267, 268, 269, 270, 271, 272, 273};
+                static constexpr int kShieldLoop[5] = {274, 275, 276, 277, 278};
+                static constexpr int kMagicLoop[5] = {152, 153, 154, 155, 156};
+                const int auraFrame = worldRuntime_.GetAnimPhase() / 2;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const auto add = [&](int icon, float raise)
+                {
+                    batch.quads.push_back(Quad(aura.centre + behind + Vector3(0.0f, raise, 0.0f),
+                                               Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
+                                               Uv(GetElementIconUv(icon))));
+                };
+                if (aura.power == GalaxyEggbert::Def::SecretPower::Shield)
+                {
+                    add(kShieldBlupi[auraFrame % 16], 2.0f / 64.0f);
+                    add(kShieldLoop[auraFrame % 5], 0.0f);
+                }
+                else if (aura.power == GalaxyEggbert::Def::SecretPower::Power)
+                {
+                    add(kMagicLoop[auraFrame % 5], 0.0f);
+                }
+            }
             // The smoke over his heap of ash (46/47, CharredBlupi.hpp): the icon's rows above the heap,
             // its bottom where the sprite's would be over the model's feet.
             if (const auto charred = BlupiCharredShape(); charred.smokes)
@@ -1511,7 +1537,10 @@ namespace GalaxyEggbert::CNA
         }
 
         // explo.png: the explosion channel's MoveObjects, and the Cloud's sparks round him.
-        if (exploEffect_ && (!objects.empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud))
+        const bool netCloud = std::any_of(netAuras.begin(), netAuras.end(), [](const NetAura& aura) {
+            return aura.power == GalaxyEggbert::Def::SecretPower::Cloud;
+        });
+        if (exploEffect_ && (!objects.empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud || netCloud))
         {
             SceneBillboardBatch batch;
             batch.sheet = SceneSheet::Explo;
@@ -1525,6 +1554,18 @@ namespace GalaxyEggbert::CNA
                 {
                     batch.quads.push_back(Quad(centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
                                                Uv(GetExploIconUv(48 + (worldRuntime_.GetAnimPhase() + k) % 6))));
+                    batch.quads.back().glow = kShiningSpriteGlow;
+                }
+            }
+            // The other players' clouds: (i + j + m_time) % 6 + 48 (decblock.cpp:1711-1718).
+            for (const auto& aura : netAuras)
+            {
+                if (aura.power != GalaxyEggbert::Def::SecretPower::Cloud) continue;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                for (int k = 0; k < 3; ++k)
+                {
+                    batch.quads.push_back(Quad(aura.centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
+                                               Uv(GetExploIconUv(48 + (aura.rank + k + worldRuntime_.GetAnimPhase()) % 6))));
                     batch.quads.back().glow = kShiningSpriteGlow;
                 }
             }

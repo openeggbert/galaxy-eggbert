@@ -126,6 +126,7 @@ namespace GalaxyEggbert::CNA
         state.keys = interaction_.Key1Count() + interaction_.Key2Count() + interaction_.Key3Count();
         state.dynamite = interaction_.DynamiteCount();
         state.vehicle = static_cast<int>(blupi_.GetVehicleMode());
+        state.power = static_cast<int>(GalaxyEggbert::Def::ToRaw(blupi_.GetSecretPower()));
         for (const auto& object : worldRuntime_.GetMobileObjects())
         {
             if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)

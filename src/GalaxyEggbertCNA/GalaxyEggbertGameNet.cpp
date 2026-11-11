@@ -275,6 +275,13 @@ namespace GalaxyEggbert::CNA
         case Net::MessageKind::Lifts:
             if (!host && n.match && sender == n.hostId) n.liftsIn.insert(n.liftsIn.end(), m.lifts.begin(), m.lifts.end());
             return;
+        case Net::MessageKind::StopCloud:
+            if (n.match && n.session.HasLocalGamer() && m.target == n.session.LocalId() && peer() != nullptr)
+            {
+                blupi_.StopCloud();
+                std::cout << "GalaxyEggbertCNA: multiplayer: our cloud touched another; it is gone." << std::endl;
+            }
+            return;
         case Net::MessageKind::Sounds:
             if (auto* p = peer(); p != nullptr && n.match && p->present)
                 n.soundsIn.insert(n.soundsIn.end(), m.sounds.begin(), m.sounds.end());
@@ -686,6 +693,17 @@ namespace GalaxyEggbert::CNA
         if (n.screen != NetGame::Screen::Lobby || !n.session.HasLocalGamer()) return;
         const int slot = n.lobby.SlotOf(n.session.LocalId());
         if (slot < 0) return;
+        // GALAXY_NET_WORLD: the mission the test's host chooses (one installed), else the first.
+        if (host && n.session.IsHost())
+            if (const char* forced = std::getenv("GALAXY_NET_WORLD"); forced != nullptr && *forced != 0)
+            {
+                const int world = std::atoi(forced);
+                if (world != n.lobby.state.world && std::find(n.worlds.begin(), n.worlds.end(), world) != n.worlds.end())
+                {
+                    n.lobby.state.world = static_cast<std::uint16_t>(world);
+                    NetBroadcastLobby();
+                }
+            }
         if (host && n.lobby.Present() < 2) return;
         if (!n.lobby.state.slots[static_cast<std::size_t>(slot)].ready && !n.testReadyAsked)
         {
@@ -879,6 +897,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::NetAfterStep()
     {
         auto& n = *net_;
+        NetCheckCloudTouch();
         sound_.SetOutbox(nullptr);
         for (std::size_t first = 0; first < n.soundsOut.size(); first += Net::kMaxSounds)
         {
@@ -974,6 +993,8 @@ namespace GalaxyEggbert::CNA
         pose.flags = static_cast<std::uint8_t>((hidden ? Net::kPoseHidden : 0) | (charred.charred && !glued ? Net::kPoseCharred : 0) |
                                                (glued ? Net::kPoseGlued : 0));
         pose.lives = static_cast<std::uint8_t>(std::clamp(interaction_.Lives(), 0, Net::kMultiplayerLives));
+        // m_blupiSec (decblock.cpp:1733-1778): the power he has; none while dying or teleporting.
+        pose.aura = blupi_.IsDeathLocked() || blupi_.IsTeleporting() ? 0 : GalaxyEggbert::Def::ToRaw(blupi_.GetSecretPower());
         n.session.Send(m);
     }
 
@@ -1005,6 +1026,8 @@ namespace GalaxyEggbert::CNA
         Net::Message m;
         m.kind = Net::MessageKind::Die;
         m.lives = static_cast<std::uint8_t>(std::clamp(livesLeft, 0, Net::kMultiplayerLives));
+        m.killer = net_->killer;
+        net_->killer = Net::kNoKiller;
         net_->session.Send(m);
     }
 
@@ -1069,6 +1092,93 @@ namespace GalaxyEggbert::CNA
             n.session.Update(); // flushed before the session goes
             LeaveNetMatch();
         }
+    }
+
+    float GalaxyEggbertGame::NetPoseBlend(const NetGame& n, std::size_t index)
+    {
+        const auto& peer = n.peers[index];
+        const auto& p = peer.pose;
+        const auto& q = peer.previous;
+        const float jump = std::fabs(p.world[9] - q.world[9]) + std::fabs(p.world[10] - q.world[10]) +
+                           std::fabs(p.world[11] - q.world[11]);
+        if (jump > 3.0f) return 1.0f; // a new life, a teleport: there at once
+        return std::clamp(peer.age / std::max(peer.interval, 0.02f), 0.0f, 1.0f);
+    }
+
+    std::vector<GalaxyEggbertGame::NetAura> GalaxyEggbertGame::NetPeerAuras() const
+    {
+        using GalaxyEggbert::Def::SecretPower;
+        std::vector<NetAura> auras;
+        if (!NetMatchActive() || phase_ == GalaxyEggbert::Def::GamePhase::Editor) return auras;
+        const auto& n = *net_;
+        for (std::size_t i = 0; i < n.peers.size(); ++i)
+        {
+            const auto& peer = n.peers[i];
+            const auto& p = peer.pose;
+            const auto power = GalaxyEggbert::Def::ToSecretPower(p.aura);
+            if (!peer.present || !peer.hasPose || (p.flags & Net::kPoseHidden) != 0 ||
+                (power != SecretPower::Shield && power != SecretPower::Power && power != SecretPower::Cloud))
+                continue;
+            const float t = NetPoseBlend(n, i);
+            const auto lerp = [t](float a, float b) { return a + (b - a) * t; };
+            NetAura aura;
+            aura.centre = Microsoft::Xna::Framework::Vector3(lerp(peer.previous.x, p.x),
+                                                             lerp(peer.previous.y, p.y) - 0.5f + 30.0f / 64.0f,
+                                                             lerp(peer.previous.z, p.z));
+            aura.power = power;
+            aura.rank = static_cast<int>(i);
+            auras.push_back(aura);
+        }
+        return auras;
+    }
+
+    void GalaxyEggbertGame::NetCheckCloudTouch()
+    {
+        using GalaxyEggbert::Def::SecretPower;
+        auto& n = *net_;
+        if (!n.match || n.lost || n.won || phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
+        // decblupi.cpp:3838-3841: not swimming, surfing, shielded, a cloud, hidden, Super Blupi; focused.
+        const auto mine = blupi_.GetSecretPower();
+        if (blupi_.IsNage() || blupi_.IsSurf() || mine == SecretPower::Shield || mine == SecretPower::Cloud ||
+            mine == SecretPower::Hide || blupi_.GetCheatSuperBlupi() || !BlupiFocusRaw())
+            return;
+        // NetPlayerCollide (decmove.cpp:314-345): the two Blupis' rects (28 x 47 px of his 60 px
+        // sprite) meet, the cloud's grown by 40 px each way: centres within 68 px across (here in X
+        // and in Z) and 87 px up and down. The original takes the first player met, cloud or not;
+        // here any cloud met (the order of the others is no rule of the game).
+        constexpr float kAcross = 68.0f / 64.0f;
+        constexpr float kUpDown = 87.0f / 64.0f;
+        for (std::size_t i = 0; i < n.peers.size(); ++i)
+        {
+            const auto& peer = n.peers[i];
+            if (!peer.present || !peer.hasPose || GalaxyEggbert::Def::ToSecretPower(peer.pose.aura) != SecretPower::Cloud) continue;
+            const float t = NetPoseBlend(n, i);
+            const float x = peer.previous.x + (peer.pose.x - peer.previous.x) * t;
+            const float y = peer.previous.y + (peer.pose.y - peer.previous.y) * t;
+            const float z = peer.previous.z + (peer.pose.z - peer.previous.z) * t;
+            if (std::fabs(x - blupi_.GetX()) >= kAcross || std::fabs(z - blupi_.GetZ()) >= kAcross ||
+                std::fabs(y - blupi_.GetY()) >= kUpDown)
+                continue;
+            Net::Message stop;
+            stop.kind = Net::MessageKind::StopCloud;
+            stop.target = peer.id;
+            n.session.Send(stop);
+            // ACTION 57 (the electrocuted Blupi, m_blupiRestart, a network game's restart where he
+            // stood safely): his vehicle left where he is (ObjectStart), SOUND_ELECTRO (59). Galaxy
+            // has no clip of the electrocution: he dies as by lightning (Clear1, BD-0120).
+            n.killer = static_cast<std::uint8_t>(NetSlotOf(peer.id));
+            DismountAndDepositVehicle();
+            StopVehicleMotorSound();
+            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel59);
+            blupi_.TriggerDeathLock(GalaxyEggbert::Game::BlupiController::DeathCause::Clear1, true);
+            std::cout << "GalaxyEggbertCNA: multiplayer: " << peer.name << "'s cloud electrocutes us." << std::endl;
+            return;
+        }
+    }
+
+    int GalaxyEggbertGame::NetSlotOf(std::uint8_t gamerId) const noexcept
+    {
+        return net_ ? net_->lobby.SlotOf(gamerId) : -1;
     }
 
     bool GalaxyEggbertGame::NetIsMovingLift(const GalaxyEggbert::Game::MobileObjSpec& obj) noexcept

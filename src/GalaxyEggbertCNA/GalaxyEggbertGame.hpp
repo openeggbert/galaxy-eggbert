@@ -1018,6 +1018,20 @@ namespace GalaxyEggbert::CNA
         void NetSendLost();
         void LeaveNetMatch();
         void NetPhaseChanged(GalaxyEggbert::Def::GamePhase previous, GalaxyEggbert::Def::GamePhase next);
+        // Another player's aura (his shield, power or cloud, the original's m_netBlupiSec,
+        // decblock.cpp:1696-1715): where his sprite's centre is and his rank (the cloud's sparks' offset).
+        struct NetAura
+        {
+            Microsoft::Xna::Framework::Vector3 centre;
+            GalaxyEggbert::Def::SecretPower power = GalaxyEggbert::Def::SecretPower::None;
+            int rank = 0;
+        };
+        [[nodiscard]] std::vector<NetAura> NetPeerAuras() const;
+        // Between a peer's last two poses (0 the older, 1 the newer), as his Blupi is drawn.
+        [[nodiscard]] static float NetPoseBlend(const NetGame& n, std::size_t peer);
+        // His Blupi met by another's cloud (decblupi.cpp:3838-3893): electrocuted, the cloud gone.
+        void NetCheckCloudTouch();
+        [[nodiscard]] int NetSlotOf(std::uint8_t gamerId) const noexcept; // a gamer's lobby place, -1
         // The other players' Blupis, in their colours (GalaxyEggbertGameScene.cpp).
         void AppendSceneNetPlayers(std::vector<GalaxyEggbert::Game::SceneModel>& opaque,
                                    std::vector<GalaxyEggbert::Game::SceneModel>& translucent);

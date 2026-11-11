@@ -131,7 +131,7 @@ namespace GalaxyEggbert::Game
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite}, {"vehicle", Field::Vehicle},
                     {"ghost", Field::Ghost}, {"anim", Field::Anim}, {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush}, {"switches", Field::Switches}, {"saws", Field::Saws},
-                    {"phase", Field::Phase}};
+                    {"phase", Field::Phase}, {"power", Field::Power}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
                                                                   {"<=", Op::Le}, {">", Op::Gt},  {">=", Op::Ge}};
                 const auto fieldIt = std::find_if(std::begin(kFields), std::end(kFields),
@@ -372,6 +372,7 @@ namespace GalaxyEggbert::Game
         case Field::Keys: value = static_cast<float>(state.keys); break;
         case Field::Dynamite: value = static_cast<float>(state.dynamite); break;
         case Field::Vehicle: value = static_cast<float>(state.vehicle); break;
+        case Field::Power: value = static_cast<float>(state.power); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
         case Field::Ghost: value = state.ghost ? 1.0f : 0.0f; break;
         case Field::Anim: value = static_cast<float>(state.anim); break;

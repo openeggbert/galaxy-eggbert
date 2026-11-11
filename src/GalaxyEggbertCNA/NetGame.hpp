@@ -76,6 +76,7 @@ namespace GalaxyEggbert::CNA
         std::vector<int> liftSteps;                    // the host: each lift's patrol step before the step (-1 none)
         std::vector<Net::LiftSync> liftsIn;            // a client: the host's lifts, put so before the next step
         bool localPaused = false;
+        std::uint8_t killer = Net::kNoKiller; // who caused the death being played (his lobby place)
         bool lost = false;   // no life left: the Lost screen, out of the match
         bool won = false;
         std::deque<std::pair<std::string, float>> notices; // the original's NotifPush, with their seconds
