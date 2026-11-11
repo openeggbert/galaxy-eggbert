@@ -6,6 +6,7 @@
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
+#include <GalaxyEggbert/PlayerStart.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -461,6 +462,12 @@ namespace GalaxyEggbert::Editor
         };
         placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType5, kCenter, 1, kCenter);       // chest in the centre
         placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType7, kCenter - 1, 1, kCenter);   // exit arrow at one edge
+        // The yellow Blupi at the other edge, facing the chest and the exit beyond it, as Speedy
+        // Blupi's new world (Decor::InitDecor, Decor.cpp:281-323): Blupi at the platform's one end
+        // facing right, the chest in its middle, the exit at the other end (the owner, 2026-11-11).
+        // One quarter turn faces -X (PlayerStartYaw; yaw 0 faces -Z).
+        GalaxyEggbert::SetPlayerStart(world, GalaxyEggbert::PlayerStart{GalaxyEggbert::PlayerStartColor::Yellow,
+                                                                        static_cast<std::uint16_t>(kCenter + 1), 1, kCenter, 1});
         return world;
     }
 

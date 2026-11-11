@@ -7,6 +7,7 @@
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
+#include <GalaxyEggbert/PlayerStart.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -199,6 +200,13 @@ int main()
               "the starter board has a treasure chest in its centre");
         check(contains(GalaxyEggbert::Def::ObjectType::ObjectType7, 49.0f, 50.0f),
               "the starter board has an exit arrow opposite Blupi");
+        // The yellow Blupi (2026-11-11, as Speedy Blupi's new world): at the other edge, facing -X.
+        const auto yellow = GalaxyEggbert::FindPlayerStart(starter, GalaxyEggbert::PlayerStartColor::Yellow);
+        check(yellow && yellow->x == 51 && yellow->y == 1 && yellow->z == 50 && yellow->quarterTurns == 1 &&
+                  starter.hasSpawnPoint(),
+              "the starter board has the yellow Blupi at its edge, facing the chest and the exit");
+        check(!GalaxyEggbert::FindPlayerStart(starter, GalaxyEggbert::PlayerStartColor::Orange),
+              "the starter board has no other colour's start");
     }
 
     constexpr int kBrowserSlot = 78;

@@ -1640,6 +1640,23 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0124 — a new editor world had no Blupi (editor) — FIXED_AND_VERIFIED
+
+- Owner (2026-11-11): the 3D editor's new, empty world (nine rock-pile cubes, a chest and the red exit
+  arrow) has no yellow Blupi, which Speedy Blupi's 1998 editor's new world has.
+- Original: Decor::InitDecor (Decor.cpp:263-323) fills a new world with a platform (icons 40, 38,
+  39), the chest (ObjectType5) in its middle, the exit (ObjectType7) at its right end and Blupi's
+  start at its left end facing right (m_blupiStartPos 66, m_blupiStartDir Right).
+- Galaxy before: CreateEditorStarterWorld placed the 3x3 rock pile, the chest at (50,1,50) and the
+  exit at (49,1,50), and no player start: the editor showed no Blupi and the play test used the
+  default spawn.
+- Fix: the yellow start (SetPlayerStart, colour 0) at (51,1,50), the board's other edge, one quarter
+  turn (facing -X, the chest and the exit): Blupi, chest and exit in a row as in the original. The
+  galaxy's mission starter (CreateGalaxyStarterWorld) has it too (it already spawned Blupi there).
+- Validation: VerifyGEEditorStorage (the start at (51,1,50) facing -X, no other colour's); live: a new
+  world in slot 3 shows "Yellow start X:51 Y:1 Z:50" and the yellow Blupi on the board facing the
+  chest; CTest 134/134.
+
 ## BD-0123 — Nicknames for players A, B and C (owner request) — FIXED_AND_VERIFIED
 
 - Owner (2026-11-11): in the settings, players A, B and C get a nickname besides their letter, shown

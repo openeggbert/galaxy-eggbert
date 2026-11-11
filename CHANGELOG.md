@@ -19,6 +19,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 - A death played its sound again and again while Blupi lay in the lava, the saw or the trap, and
   the saw and the trap spawned their effects every tick (hundreds per death), which also slowed the
   game; the large creature caught a dying Blupi again and again (BD-0121).
+- A new world in the 3D editor has the yellow Blupi again, as in Speedy Blupi's editor: at the edge
+  of the board, facing the chest and the exit (BD-0124).
 - Small explosions in quick succession cut each other off and stuttered; they now overlap as in
   the original (BD-0122).
 
