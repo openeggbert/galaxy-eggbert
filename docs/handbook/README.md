@@ -23,6 +23,7 @@ working logs; use them for history and evidence, and use this handbook to find y
 | [07-contributing.md](07-contributing.md) | coding conventions, commit messages, the ledgers in `plans/audit/`, upstream bugs, release status |
 | [08-backlog.md](08-backlog.md) | everything still open at the end of the agent work, who has to act, where the evidence is |
 | [09-multiplayer.md](09-multiplayer.md) | the network game (branch `multiplayer`): playing it, ZeroTier over the internet, its code and tests |
+| [10-server.md](10-server.md) | the server for internet games (cna-gamer-services-server): installing it on a Linux host, the players' accounts, keeping it |
 
 ## First hour
 
