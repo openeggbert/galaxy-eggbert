@@ -29,8 +29,12 @@ ASan/UBSan) and a ten-minute match of four (`tools/net_players.sh`); the lobby's
 limit, who got whom and a chat line in the match, the spectator, the host's editor worlds sent, a
 dropped player back in the match (protocol 3); UB-011 found and fixed in CNA; SB1's 101-110 are
 SB2's 201-210 (not built).
-Open: a game between a phone and a PC (not run yet); host migration (not wanted: the host leaving
-ends the game); Q-022's Windows and PlayerMatch (in progress).
+Also Q-022: Windows (MinGW cross-build, OPENGL33; under wine it plays with Linux) and internet games
+through cna-gamer-services-server's relay (PlayerMatch, accounts through CNA's Guide; tried with a
+local server, tools/net_internet.sh).
+Open: a game between a phone and a PC, and on a real Windows machine (not run yet); the public
+server and its accounts (the owner's, Q-022); host migration (not wanted: the host leaving ends
+the game).
 
 **Updated 2026-11-09** against `develop` at `c2a243b6`:
 

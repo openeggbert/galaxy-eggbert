@@ -47,11 +47,17 @@ CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
   - Protocol 3.
   - All the scenarios: `build-probe/net_all.sh` is a local probe; each scenario's environment is in
     its script's head.
+  - **Windows:** `build-probe/windows` (commands in `WINDOWS.md`), tried under wine against Linux
+    (`NET_WINDOWS`).
+  - **Internet games** through cna-gamer-services-server's relay. Its server is built in
+    `build-probe/gss` (out of its repository); `tools/net_internet.sh`.
+  - **CNA notes:** UB-012 (send before Dispose) is XNA's contract; Galaxy updates before leaving.
 - **Next:**
-  - Windows with multiplayer: a MinGW tree in `build-probe/` (CNA's toolchain
-    `cmake/toolchains/mingw-w64.cmake`; SDL3 prebuilt in CNA's `.sdl-prebuilt-Windows-x86_64`),
-    tried under wine against a Linux instance.
-  - PlayerMatch over the internet (cna-gamer-services-server).
+  - The owner's answers: SB1's worlds, the public server and accounts (Q-022).
+  - A new Android APK (protocol 3: the old APK does not play with these builds).
+  - The owner's real-machine test (Q-020).
+- **CNA's sweep, 2026-11-11 11:30-14:30:** no LAN/discovery tests (UDP 61190/61191) in that window;
+  the `cna` session asked.
 
 How to check it:
 ```bash

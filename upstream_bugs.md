@@ -307,8 +307,25 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   itself (~1136).
 - **Galaxy impact:** on a real network, the third and fourth players see one false game per player
   already joined, and joining one of them fails. No workaround in Galaxy.
-- **Status:** fixed in CNA `c1b520dc9` (2026-11-11, committed in CNA next, to be pushed with its next
-  batch): `StartHosting` registers a SystemLink session for discovery only when it is the host, and
+- **Status:** fixed in CNA `c1b520dc9` (2026-11-11, pushed to CNA next with `837b687c3`): `StartHosting` registers a SystemLink session for discovery only when it is the host, and
   `ReplyToQuery` stays silent once the registered session is no longer the host; regression test
   `TwoProcessLoopbackTest.AJoinedClientDoesNotAnswerDiscoveryAsAHost`. Verified the same day: Galaxy
   built against it, the three- and four-player tests find one game and pass.
+
+## UB-012 — CNA net: a session disposed right after a reliable send can drop that send
+
+- **Found:** 2026-11-11, Galaxy's first Windows (MinGW, under wine) against Linux match (scenario
+  `bomb`). Read-only inspection; CNA was not modified.
+- **Symptom:** a client sends its last message (Galaxy's Lost, ReliableInOrder) and its game ends a
+  frame or two later. The host only gets GamerLeft, so its results miss the last death.
+- **Cause:** `ENetBackend::TeardownSession` (modules/net/src/Internal/ENetBackend.cpp, ~1665)
+  disconnects each peer with `enet_peer_disconnect`. That resets the peer's queues first (ENet's
+  `enet_peer_reset_queues`), so what was queued and not yet sent is dropped.
+- **Galaxy:** `NetSession::Leave` updates the session for up to 150 ms before `Dispose()`. That
+  sends what is queued and gives it a moment to be acknowledged.
+- **Status:** not a CNA defect; XNA's contract (the `cna` session, 2026-11-11):
+  - XNA's SendData only copies the packet into the session's buffer and Update transmits it
+    (XNA 4.0 IL), so a send followed by Dispose with no Update is lost in XNA too.
+  - A packet transmitted but not yet acknowledged can still be dropped by ENet's disconnect.
+    XNA's own behaviour there was never measured. CNA records it as a limitation in its
+    KNOWN_ISSUES.md; it does not change the teardown.

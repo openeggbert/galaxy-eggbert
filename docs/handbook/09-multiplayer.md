@@ -2,7 +2,8 @@
 
 Galaxy Eggbert's multiplayer is Speedy Blupi 2's network game (the owner's choice of 2026-11-10,
 `plans/audit/owner_questions.md` Q-019), as `../blupi_recon` reconstructs it, played in Galaxy's
-3D worlds. Two to four players on one local network; Linux and Android. Not in the web build (a
+3D worlds. Two to four players on one local network or over the internet (a server's relay, or
+ZeroTier); Linux, Android and Windows (cross-built, tried under wine). Not in the web build (a
 browser cannot send the UDP broadcasts the game is found by).
 
 The design and its sources: `plans/plan_gemultiplayer.md`. The rules' differences from the
@@ -59,6 +60,16 @@ like a local one. Over the internet the host's router must forward **UDP 61190**
 **UDP 61191** (the game) to the host's machine; type the router's public address. With a virtual
 network (ZeroTier below) type the host's ZeroTier address instead: no forwarding needed.
 
+## Playing over the internet: a server (no router to set up)
+
+With a **cna-gamer-services-server** on the internet (libcna's; someone runs it and makes each
+player's account, owner_questions.md Q-022), nothing has to be forwarded: every packet goes through
+the server's relay. **Server** (top left of the list) takes its name or address (`:port` when it is
+not 47831); the game uses it from its next start. Then each player signs in with his account
+(CNA's Guide: name, then password) and his gamertag is his name in the games; the same button
+switches between the **Internet games** (the server's list) and the **Local games**. Making, joining
+and playing are as on the local network.
+
 ## Playing over the internet: ZeroTier
 
 The game finds its games by a broadcast on the local network, so over the internet the players
@@ -114,6 +125,12 @@ is taken).
   tools/autoplay/net/rejoin_cid2.txt"`: Cid's game ends, he starts again and is taken back), `soak_*` (`NET_TIMEOUT=780`: ten minutes at random,
   the four worlds hashed at the end), each with its `.expect`. Autoplay's network commands and
   conditions: `pause`, `wander`, `hash`, `say`, `netpause`, `netplayers`.
+- `tools/net_internet.sh <build> <server build> <host script> <join script>...` starts a disposable
+  cna-gamer-services-server on 127.0.0.1 (plain HTTP, `--insecure-loopback`; built out of its
+  repository, e.g. in `build-probe/gss`), makes the title and the accounts ann ... dan, and runs
+  `tools/net_players.sh` with `NET_SERVER`: everyone signs in through the Guide and plays over the
+  relay. `NET_WINDOWS=<windows build> NET_WINDOWS_PLAYERS="Ben ..."` runs those players' Windows
+  build under wine (`WINDOWS.md`).
 - Robustness: `FuzzNetProtocol` (CTest) sends random and damaged packets through the decoder and
   the replication; `tools/fuzz_net_sanitized.sh [packets] [seed]` runs it under ASan and UBSan.
 - Logs: the game prints `multiplayer:` lines (who joined, the match, the others seen, every world

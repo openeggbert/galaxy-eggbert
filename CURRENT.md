@@ -74,7 +74,10 @@ content-authoring UX, but not new gameplay mechanics.
   results, a silent player gone, a host searched by address (UDP 61190/61191). Since 2026-11-11
   (Q-022): the lobby's lives and time limit, who got whom and a chat line in the match (Enter), the
   spectator, the host's editor worlds sent, a dropped player back in the match; `tools/net_players.sh` for 2-4 players (three, four,
-  time, watch, custom, rejoin; a ten-minute match of four whose worlds hash the same), `FuzzNetProtocol`
+  time, watch, custom, rejoin; a ten-minute match of four whose worlds hash the same), Windows (a
+  MinGW cross-build, `WINDOWS.md`; under wine it plays with Linux), internet games through
+  cna-gamer-services-server's relay (`tools/net_internet.sh` with a local server; the public one is
+  the owner's to decide), `FuzzNetProtocol`
   (also under ASan/UBSan). Not yet run between two real machines.
 - The player's files in the system's user folder (2026-11-10, the owner's request before a
   release; `UserFolder.hpp`): savedata.txt, resume.txt, demos/ and customworlds/ in

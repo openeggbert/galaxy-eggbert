@@ -40,6 +40,8 @@ namespace GalaxyEggbert::CNA
         std::string message;      // a line under the list or the players
         std::string address;      // a host searched at beyond the local network (multiplayer.txt)
         bool typingAddress = false; // the keyboard types the address, not a chat line
+        bool typingServer = false;  // ... the gamer services server's, not the host's (Q-022)
+        std::string server;         // the gamer services server (multiplayer.txt's second line): host[:port]
 
         // The lobby: the host's own, a client's as the host last sent it.
         Net::Lobby lobby;

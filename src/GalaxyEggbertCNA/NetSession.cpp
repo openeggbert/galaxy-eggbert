@@ -19,6 +19,11 @@
 #include <Microsoft/Xna/Framework/Net/NetworkSessionType.hpp>
 #include <Microsoft/Xna/Framework/Net/SendDataOptions.hpp>
 #include <System/IAsyncResult.hpp>
+#if __has_include(<CNA/GamerServices/Configuration.hpp>)
+#include <CNA/GamerServices/Configuration.hpp>
+#include <Microsoft/Xna/Framework/Input/TextInputEXT.hpp>
+#define GALAXY_EGGBERT_NET_SERVER 1
+#endif
 #if __has_include(<CNA/Net/SystemLinkDiscovery.hpp>)
 #include <CNA/Net/SystemLinkDiscovery.hpp>
 #define GALAXY_EGGBERT_NET_ADDRESS 1
@@ -26,9 +31,12 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <iostream>
 #include <utility>
+#include <chrono>
+#include <thread>
 
 namespace GalaxyEggbert::CNA
 {
@@ -79,16 +87,67 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    bool NetSession::ServerSupport() noexcept
+    {
+#if defined(GALAXY_EGGBERT_NET_SERVER)
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    bool NetSession::SetServer(const std::string& endpoint)
+    {
+        if (servicesStarted_) return endpoint == server_; // the services read it once, at their start
+#if defined(GALAXY_EGGBERT_NET_SERVER)
+        if (!endpoint.empty())
+        {
+            ::CNA::GamerServices::Configuration configuration;
+            configuration.endpoint = endpoint;
+            configuration.gameId = "galaxy-eggbert";
+            // Plain HTTP only on this machine's numeric loopback (a test's server, CNA's own rule).
+            configuration.insecureLoopback = endpoint.rfind("http://127.0.0.1", 0) == 0 || endpoint.rfind("http://[::1]", 0) == 0;
+            try
+            {
+                ::CNA::GamerServices::validateConfiguration(configuration);
+            }
+            catch (const std::exception& failure)
+            {
+                error_ = failure.what();
+                return false;
+            }
+        }
+        server_ = endpoint;
+        return true;
+#else
+        return endpoint.empty();
+#endif
+    }
+
     bool NetSession::SignIn(const std::string& name)
     {
         if (!servicesStarted_)
         {
-            // CNA's local offline profile, signed in when the services start (LocalProfiles.hpp).
+            // CNA's local offline profile, signed in when the services start (LocalProfiles.hpp);
+            // with a server (SetServer) an account, through CNA's Guide.
             const std::string profile = Net::CleanText(name, Net::kMaxName);
 #if defined(_WIN32)
-            _putenv_s("CNA_GAMER_SERVICES_AUTO_SIGN_IN", profile.c_str());
+            _putenv_s("CNA_GAMER_SERVICES_AUTO_SIGN_IN", server_.empty() ? profile.c_str() : "");
 #else
-            setenv("CNA_GAMER_SERVICES_AUTO_SIGN_IN", profile.c_str(), 1);
+            if (server_.empty()) setenv("CNA_GAMER_SERVICES_AUTO_SIGN_IN", profile.c_str(), 1);
+            else unsetenv("CNA_GAMER_SERVICES_AUTO_SIGN_IN");
+#endif
+#if defined(GALAXY_EGGBERT_NET_SERVER)
+            if (!server_.empty())
+            {
+                ::CNA::GamerServices::Configuration configuration;
+                configuration.endpoint = server_;
+                configuration.gameId = "galaxy-eggbert";
+                configuration.insecureLoopback =
+                    server_.rfind("http://127.0.0.1", 0) == 0 || server_.rfind("http://[::1]", 0) == 0;
+                ::CNA::GamerServices::setConfigurationOverride(configuration);
+                online_ = true;
+            }
 #endif
             try
             {
@@ -105,7 +164,36 @@ namespace GalaxyEggbert::CNA
             servicesStarted_ = true;
         }
         GS::GamerServicesDispatcher::Update();
-        return GS::Gamer::getSignedInGamersProperty()->getCountProperty() > 0;
+        const bool signedIn = GS::Gamer::getSignedInGamersProperty()->getCountProperty() > 0;
+#if defined(GALAXY_EGGBERT_NET_SERVER)
+        if (online_ && !signedIn && !signInShown_ && !GS::Guide::getIsVisibleProperty())
+        {
+            // The account's name and password in CNA's Guide (once; Escape there gives it up).
+            signInShown_ = true;
+            try
+            {
+                GS::Guide::ShowSignIn(1, true);
+            }
+            catch (const std::exception& failure)
+            {
+                error_ = std::string("no sign-in: ") + failure.what();
+            }
+            // GALAXY_NET_ACCOUNT=name:password: a test's account typed into the Guide (a test server's
+            // disposable accounts only).
+            if (const char* account = std::getenv("GALAXY_NET_ACCOUNT"); account != nullptr && std::strchr(account, ':'))
+            {
+                const std::string text(account);
+                const auto colon = text.find(':');
+                const auto type = [](const std::string& line) {
+                    for (const unsigned char c : line) Microsoft::Xna::Framework::Input::TextInputEXT::INTERNAL_OnTextInput(c);
+                    Microsoft::Xna::Framework::Input::TextInputEXT::INTERNAL_OnTextInput(u'\r');
+                };
+                type(text.substr(0, colon));
+                type(text.substr(colon + 1));
+            }
+        }
+#endif
+        return signedIn;
     }
 
     std::string NetSession::LocalName() const
@@ -119,7 +207,8 @@ namespace GalaxyEggbert::CNA
         if (findResult_ != nullptr) return;
         try
         {
-            findResult_ = NetworkSession::BeginFind(NetworkSessionType::SystemLink, 1, Advertised(contentHash, 0), nullptr, {});
+            findResult_ = NetworkSession::BeginFind(internet_ ? NetworkSessionType::PlayerMatch : NetworkSessionType::SystemLink, 1,
+                                                    Advertised(contentHash, 0), nullptr, {});
         }
         catch (const std::exception& failure)
         {
@@ -184,7 +273,8 @@ namespace GalaxyEggbert::CNA
         Leave();
         AbandonFind();
         const auto create = [&] {
-            session_ = NetworkSession::Create(NetworkSessionType::SystemLink, 1, Net::kMaxPlayers, 0,
+            session_ = NetworkSession::Create(internet_ ? NetworkSessionType::PlayerMatch : NetworkSessionType::SystemLink, 1,
+                                              Net::kMaxPlayers, 0,
                                               Advertised(contentHash, world));
         };
         try
@@ -194,7 +284,8 @@ namespace GalaxyEggbert::CNA
             // host (docs/handbook/09-multiplayer.md); another program on it: a port of the system's.
             try
             {
-                ::CNA::Net::SystemLinkDiscovery::setHostPortProperty(kHostPort);
+                // Internet games go through the server's relay: no port of ours to forward.
+                ::CNA::Net::SystemLinkDiscovery::setHostPortProperty(internet_ ? 0 : kHostPort);
                 create();
             }
             catch (const std::exception& failure)
@@ -279,6 +370,14 @@ namespace GalaxyEggbert::CNA
         if (session_ == nullptr) return;
         try
         {
+            // What was sent last (the last death's PK_LOST, a chat line) goes out before the session
+            // closes, as XNA wants (SendData only queues; Update transmits), and has a moment to be
+            // acknowledged: the teardown drops what is still unacknowledged (UB-012). 150 ms at most.
+            for (int i = 0; i < 15; ++i)
+            {
+                session_->Update();
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
             session_->Dispose();
         }
         catch (...)
@@ -488,6 +587,8 @@ namespace GalaxyEggbert::CNA
     void NetSession::EndGame() {}
     bool NetSession::SetSearchAddress(const std::string& address) { return address.empty(); }
     bool NetSession::AddressSearch() noexcept { return false; }
+    bool NetSession::SetServer(const std::string& endpoint) { return endpoint.empty(); }
+    bool NetSession::ServerSupport() noexcept { return false; }
     bool NetSession::IsHost() const { return false; }
     bool NetSession::HasLocalGamer() const { return false; }
     std::uint8_t NetSession::LocalId() const { return 0; }

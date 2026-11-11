@@ -1020,6 +1020,10 @@ namespace GalaxyEggbert::CNA
         void NetTryRejoin(std::uint8_t gamerId, const GalaxyEggbert::Net::Message& hello);
         void NetPeerBack(int slot, std::uint8_t gamerId);
         void NetMarkLeft(int slot);
+        // Internet play (Q-022): the gamer services server typed and kept (used from the next start of
+        // the multiplayer), and the host's address and it saved in the user folder.
+        void NetSetServer(const std::string& typed);
+        void NetSaveAddresses() const;
         void NetSendCustomWorld();
         void NetReceiveWorldData(const GalaxyEggbert::Net::Message& m);
         [[nodiscard]] bool NetHasLobbyWorld() const noexcept; // the lobby's world here (an editor's: arrived whole)

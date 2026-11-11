@@ -50,6 +50,18 @@ namespace GalaxyEggbert::CNA
         // Starts the gamer services once, signed in as @p name (letters, digits, single spaces);
         // true once a gamer is signed in (a frame or two after the first call).
         bool SignIn(const std::string& name);
+        // Internet play through CNA's gamer services server (Galaxy's, Q-022): before the services
+        // start, its address ("https://host:port/cna/v1"; empty: none, the local profiles). With a
+        // server, players sign in with their accounts (CNA's Guide) and may play over the internet,
+        // every packet through its relay (no router to set up). False when the address is not one.
+        bool SetServer(const std::string& endpoint);
+        [[nodiscard]] bool Online() const noexcept { return online_; }
+        // The Guide's sign-in shown again (the player closed it without signing in).
+        void RetrySignIn() noexcept { signInShown_ = false; }
+        // Sessions over the internet (the server's PlayerMatch) or the local network (SystemLink).
+        void SetInternet(bool internet) noexcept { internet_ = internet && online_; }
+        [[nodiscard]] bool Internet() const noexcept { return internet_; }
+        [[nodiscard]] static bool ServerSupport() noexcept;
         [[nodiscard]] std::string LocalName() const;
 
         // Looking for sessions: a search in the background, its results when it is done.
@@ -104,6 +116,8 @@ namespace GalaxyEggbert::CNA
 
         Microsoft::Xna::Framework::Game& game_;
         bool servicesStarted_ = false;
+        bool online_ = false, internet_ = false, signInShown_ = false;
+        std::string server_;
         Microsoft::Xna::Framework::Net::NetworkSession* session_ = nullptr;
         System::IAsyncResult* findResult_ = nullptr;
         std::vector<FoundSession> found_;

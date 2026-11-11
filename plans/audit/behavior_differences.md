@@ -1734,6 +1734,12 @@ Galaxy's additions (the owner, Q-022; none in SB2):
   gone, the spawned ones with their makers' numbers; his new objects numbered past his old ones);
   the others see him back ("Cid is back !"). Anyone else asking during a match is not taken; one
   knocked out cannot come back. The original never let anyone join a game in progress.
+- Internet games without a router to set up: with a gamer services server (libcna's
+  cna-gamer-services-server, its address in **Server**), the players sign in with their accounts
+  (CNA's Guide), their gamertags their names, and the games are PlayerMatch sessions through the
+  server's relay. The local network's games stay as they were (one button switches). Whoever runs
+  the server and its accounts is the owner's to decide (owner_questions Q-022).
+- Windows: a MinGW cross-build (OPENGL33), tried under wine: its games and Linux's play together.
 - Speedy Blupi 1's network worlds 101-110 are not added: they are SB2's 201-210 (the decor and the
   objects the same in eight, a few cells or objects in 103, 108 and 210), already here.
 Fixed on the way: a death on a world's bomb of another team counted no kill (the bomb's slot was
@@ -1745,8 +1751,11 @@ random and damaged packets, ASan/UBSan clean; the decoder takes only exact messa
 replication keeps the world in bounds); tools/net_players.sh (Q-022: two to four instances) with
 three players (a pause holds everyone, one leaves, the others play on), four players (kills and
 the notices, a chat line), the time limit (ranks by lives then kills), the spectator, an editor's
-world sent, a player dropping and coming back (the three worlds hash the same at the end), and a
-ten-minute match of four at random whose four worlds hash the same at its end; tools/net_two_players.sh, two instances on one machine
+world sent, a player dropping and coming back (the three worlds hash the same at the end), a
+ten-minute match of four at random whose four worlds hash the same at its end, Windows builds
+under wine with Linux ones (bomb, laid, four with two under wine), and internet games through a
+local server (tools/net_internet.sh: bomb, and four with two under wine; the server's relays
+counted); tools/net_two_players.sh, two instances on one machine
 through the screens and their autoplay scripts in real time: bomb (another team's bombs kill, the
 knocked-out one sends LOST, the other wins), laid (a bomb taken back and laid elsewhere kills the
 other there), shot (a tank's shot kills the other there), vehicle (a tank taken and left

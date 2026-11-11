@@ -20,10 +20,14 @@
 # NET_TIMEOUT=<s> each instance's limit (240 by default).
 # NET_REJOIN="<seconds> <script>": that long after the last player started, he starts again (the same
 # name and folder, his log <name>2.log) with that script: one whose game dropped coming back.
+# NET_SERVER=<host:port> internet games through a gamer services server (tools/net_internet.sh starts
+# one): each player signs in as the account named after him (ann, ann-password) and plays PlayerMatch.
+# NET_WINDOWS=<windows build dir> NET_WINDOWS_PLAYERS="Ann ...": those players run the Windows build
+# (GalaxyEggbert.exe and its DLLs, a MinGW cross-build) under wine, the others the Linux one.
 # When the scripts write world hashes (autoplay's `hash`), every player's last one must be the same.
 set -u
 if [[ $# -lt 3 || $# -gt 5 ]]; then
-    sed -n '2,25p' "$0" >&2
+    sed -n '2,29p' "$0" >&2
     exit 2
 fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -42,16 +46,26 @@ run() { # <name> <mode> <script> [log name]
     local dir="$repo/build-probe/net-run-$1" log="${4:-$1}"
     mkdir -p "$dir"
     for d in Content avatars3d textures3d worlds3d; do ln -sfn "$repo/$d" "$dir/$d"; done
-    rm -f "$dir/GalaxyEggbert"
-    ln "$build/GalaxyEggbert" "$dir/GalaxyEggbert"
+    local program=(./GalaxyEggbert) userdir="$dir" video=x11 script="$3"
+    if [[ " ${NET_WINDOWS_PLAYERS:-} " == *" $1 "* ]]; then
+        for f in "$NET_WINDOWS"/GalaxyEggbert.exe "$NET_WINDOWS"/*.dll; do rm -f "$dir/$(basename "$f")"; ln "$f" "$dir/"; done
+        program=(wine GalaxyEggbert.exe)
+        userdir="Z:${dir//\//\\}"
+        script="Z:${script//\//\\}"
+        video=windows
+    else
+        rm -f "$dir/GalaxyEggbert"
+        ln "$build/GalaxyEggbert" "$dir/GalaxyEggbert"
+    fi
     (
         cd "$dir"
-        env GALAXY_USER_DIR="$dir" GALAXY_NET_TEST="$2" GALAXY_NET_NAME="$1" GALAXY_NET_PLAYERS="$count" \
+        env WINEDEBUG=-all GALAXY_USER_DIR="$userdir" GALAXY_NET_TEST="$2" GALAXY_NET_NAME="$1" GALAXY_NET_PLAYERS="$count" \
             ${NET_LIVES:+GALAXY_NET_LIVES=$NET_LIVES} ${NET_WORLD:+GALAXY_NET_WORLD=$NET_WORLD} \
             ${NET_LOSS:+GALAXY_NET_LOSS=$NET_LOSS} ${NET_LATENCY:+GALAXY_NET_LATENCY=$NET_LATENCY} \
             ${NET_SECONDS:+GALAXY_NET_SECONDS=$NET_SECONDS} ${NET_CUSTOM:+GALAXY_NET_CUSTOM=$NET_CUSTOM} \
-            AUTOPLAY_REALTIME=1 SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11 \
-            timeout "${NET_TIMEOUT:-240}" xvfb-run -a -s "-screen 0 800x600x24" ./GalaxyEggbert --autoplay "$3" \
+            ${NET_SERVER:+GALAXY_NET_SERVER=$NET_SERVER GALAXY_NET_INTERNET=1 GALAXY_NET_ACCOUNT=${1,,}:${1,,}-password} \
+            AUTOPLAY_REALTIME=1 SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=$video \
+            timeout "${NET_TIMEOUT:-240}" xvfb-run -a -s "-screen 0 800x600x24" "${program[@]}" --autoplay "$script" \
             > "$out/$log.log" 2>&1
         echo $? > "$out/$log.rc"
         cp -f autoplay_trace.txt "$out/$log.trace" 2>/dev/null
@@ -60,7 +74,14 @@ run() { # <name> <mode> <script> [log name]
 
 for ((i = 0; i < count; ++i)); do
     run "${names[$i]}" "$([[ $i == 0 ]] && echo host || echo join)" "${scripts[$i]}" &
-    sleep 2 # the lobby's places in this order
+    # The lobby's places in this order: the next starts once this one hosts or has said hello (a
+    # minute at most; one under wine starts slower).
+    sign=$([[ $i == 0 ]] && echo "${names[0]} (0) joined" || echo "hello sent to the host")
+    for ((t = 0; t < 600; ++t)); do
+        grep -aq "multiplayer: $sign" "$out/${names[$i]}.log" 2>/dev/null && break
+        sleep 0.1
+    done
+    sleep 1
 done
 logs=("${names[@]:0:$count}")
 if [[ -n "${NET_REJOIN:-}" ]]; then
