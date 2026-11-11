@@ -1,0 +1,8 @@
+# tools/net_players.sh or net_internet.sh with NET_WORLD=<a world>, the host: the match starts in that
+# world and both stand at their starts for two seconds (each world's check: tools/worlds/*.py's
+# arena.check() for where they stand, this one for the match).
+until phase = Play max 7200
+log the match began
+wait 120
+expect phase = Play
+end

@@ -16,8 +16,9 @@ original: `plans/audit/behavior_differences.md` BD-0120.
    a game with other content is not listed).
 2. In the menu choose the player (A, B or C: on the network you are "Player A" and so on), then
    **Multiplayer** (in the left panel, right of Setup).
-3. One player makes a **New game**: the lobby opens with the mission (#201-#212, the host changes
-   it with `<` and `>`; past #212 come his own worlds of the editor, "My world 1" ..., which the
+3. One player makes a **New game**: the lobby opens with the mission (#201-#212, SB2's; #213-#217,
+   Galaxy's own; the host changes
+   it with `<` and `>`; past #217 come his own worlds of the editor, "My world 1" ..., which the
    game sends to the others: they can say Ready once they have it whole). The others see it under *Available games on the network* (the list is
    searched again every few seconds, or at **Update list**), choose it and **Join selected game**.
 4. In the lobby each player may change **Colour** (yellow, orange, blue, green: the start and the
@@ -103,9 +104,10 @@ is taken).
   and who made which object),
   `src/GalaxyEggbertCNA/NetSession.*` (CNA's SystemLink session; a stand-in without CNA
   networking), `GalaxyEggbertGameNet.cpp` (the screens, the match), `NetGame.hpp` (its state).
-- Worlds: `tools/worlds/world201.py`-`world212.py` with `tools/worlds/arena.py` (its `check()`:
+- Worlds: `tools/worlds/world201.py`-`world217.py` (213-217 Galaxy's own) with `tools/worlds/arena.py` (its `check()`:
   every start and object on solid ground, run as each world is written); briefs in
-  `plans/briefs/world201.md`-`world212.md`.
+  `plans/briefs/world201.md`-`world217.md`; `tools/autoplay/net/start_*.txt` starts a match in one
+  (`NET_WORLD`).
 - Tests: `VerifyNetProtocol` (CTest: messages, damaged packets, the lobby, the rules, a
   two-machine replication round). `tools/net_two_players.sh <build> <host script> <join script>`
   runs two instances on one machine (each under its own Xvfb) through the screens

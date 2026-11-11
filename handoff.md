@@ -52,8 +52,14 @@ CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
   - **Internet games** through cna-gamer-services-server's relay. Its server is built in
     `build-probe/gss` (out of its repository); `tools/net_internet.sh`.
   - **CNA notes:** UB-012 (send before Dispose) is XNA's contract; Galaxy updates before leaving.
+- **After the owner's answers (Q-022, 2026-11-11):**
+  - Worlds 213-217 of Galaxy's own design; a match started in each (over the local server).
+  - The server's deployment: `tools/server/galaxy-server.sh` and `docs/handbook/10-server.md`.
+  - The Windows zip: `tools/release/make_windows_zip.sh` into `build-probe/release/`.
+  - The release APK rebuilt with `-PgalaxyAbis` (`injected.build.abi` made testOnly APKs).
 - **Next:**
-  - The owner's answers: SB1's worlds, the public server and accounts (Q-022).
+  - The owner: install the server on a host of his and make the accounts.
+  - The owner: try the Windows zip and the APK.
   - The owner's real-machine test (Q-020).
 - **CNA's sweep, 2026-11-11 11:30-14:30:** no LAN/discovery tests (UDP 61190/61191) in that window;
   the `cna` session asked.

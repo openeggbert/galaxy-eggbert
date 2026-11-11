@@ -67,7 +67,7 @@ content-authoring UX, but not new gameplay mechanics.
   lobby (colour, ready, the host's mission and Start, chat), SB2's rules (ten lives, team starts
   and bombs, the crates/goals/enemy Blupis out, restart at the last safe place, the last present
   wins, a pause for everyone), the others drawn in their colours, world changes replicated, worlds
-  201-212. Guide with ZeroTier: `docs/handbook/09-multiplayer.md`; differences: BD-0120; tests:
+  201-212 (SB2's) and 213-217 (Galaxy's own, Q-022). Guide with ZeroTier: `docs/handbook/09-multiplayer.md`; differences: BD-0120; tests:
   `VerifyNetProtocol`, `tools/net_two_players.sh` (bomb, laid, shot, vehicle, cloud, rematch: PASS,
   also over a simulated bad network). Since 2026-11-11 (Q-021): the others' sounds, lifts synchronised
   by the host, the others' auras and the cloud's touch, names over the players, a rematch, the

@@ -1,0 +1,6 @@
+# tools/net_players.sh or net_internet.sh with NET_WORLD=<a world>, the one who joins: as the host.
+until phase = Play max 7200
+log the match began
+wait 100
+expect phase = Play
+end

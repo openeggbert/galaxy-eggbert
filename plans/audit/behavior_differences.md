@@ -1741,7 +1741,15 @@ Galaxy's additions (the owner, Q-022; none in SB2):
   the server and its accounts is the owner's to decide (owner_questions Q-022).
 - Windows: a MinGW cross-build (OPENGL33), tried under wine: its games and Linux's play together.
 - Speedy Blupi 1's network worlds 101-110 are not added: they are SB2's 201-210 (the decor and the
-  objects the same in eight, a few cells or objects in 103, 108 and 210), already here.
+  objects the same in eight, a few cells or objects in 103, 108 and 210), already here. In their
+  place five more of Galaxy's own design (the owner's choice), 213-217, each of a world of Mobile
+  Eggbert's that SB2's twelve do not use:
+  - 213, the cheese cave (world 4);
+  - 214, the slime pit with its spike traps (world 6);
+  - 215, the sky works with the vanishing saucers (world 8);
+  - 216, the station's brick hall with a moat (world 5);
+  - 217, floating islands over a meadow (the title scene).
+  Briefs in plans/briefs/world213-217.md.
 Fixed on the way: a death on a world's bomb of another team counted no kill (the bomb's slot was
 taken by its pop at once); the killing object's type is kept now.
 

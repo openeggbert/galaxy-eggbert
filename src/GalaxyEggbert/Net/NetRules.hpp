@@ -13,9 +13,10 @@ namespace GalaxyEggbert::Net
     // 2026-11-10, owner_questions.md Q-019), as Galaxy plays them. Engine-independent.
 
     // SB2's multiplayer worlds are its missions 201-212 (event.cpp:2584, m_multi + 200); Galaxy's
-    // are worlds3d/world201.vwr ... with their identity (hand-authored in 3D, as every world).
+    // are worlds3d/world201.vwr ... with their identity (hand-authored in 3D, as every world), then
+    // 213-217 of Galaxy's own design (the owner's Q-022).
     inline constexpr int kFirstWorld = 201;
-    inline constexpr int kLastWorld = 212;
+    inline constexpr int kLastWorld = 217;
 
     // PlayPrepare (decblock.cpp:1430-1438): in a network game the crates (12), the goal (7), the
     // secret goal (21, TYPE_CLE) and the enemy Blupis with their helicopter (32) and tank (33)
