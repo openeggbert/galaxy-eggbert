@@ -409,3 +409,21 @@ improved. Answers (all options taken):
    drops seen as gone after a few seconds, joining by the host's IP address. CNA changes go to the
    `cna` Claude agent working on CNA (the owner: "na cna pracuje jiny claude agent cna. jemu posilej
    co potrebujes v cna upravit"); CNA stays read-only for this repository.
+
+## Q-022 — multiplayer: the third round of improvements (2026-11-11, asked interactively) — ANSWERED, in progress on branch `multiplayer`
+
+The owner, still away from the computer, asked again what can be improved and was asked. Answers
+(all options taken; the branch waits for the owner's own test before any merge, Q-020):
+
+1. **Tests and reliability:** a test with three and four players (only two had ever run), a pause
+   test (autoplay to press Escape), robustness against broken packets (fuzzing the decoder), a long
+   match with random play checking that the players' worlds do not drift apart.
+2. **Galaxy additions (none in SB2, each a BD entry):** a spectator after being knocked out
+   (follow the others until the match ends), messages during the match (who killed whom, who left,
+   who lost the last life; chat during the match), match settings in the lobby (lives, a time
+   limit), the editor's own worlds (the host sends the world to the others; SB2 had no map
+   transfer).
+3. **Content and platforms:** Speedy Blupi 1's network worlds 101-110 (built like 201-212 from the
+   originals' identity), rejoining a running match after a drop, a Windows build with multiplayer,
+   internet play without port forwarding (CNA PlayerMatch with the relay server).
+4. **The branch:** wait for the owner's test; no merge into `develop`, no push.
