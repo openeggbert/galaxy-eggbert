@@ -19,6 +19,10 @@
 #include <Microsoft/Xna/Framework/Net/NetworkSessionType.hpp>
 #include <Microsoft/Xna/Framework/Net/SendDataOptions.hpp>
 #include <System/IAsyncResult.hpp>
+#if __has_include(<CNA/Net/SystemLinkDiscovery.hpp>)
+#include <CNA/Net/SystemLinkDiscovery.hpp>
+#define GALAXY_EGGBERT_NET_ADDRESS 1
+#endif
 
 #include <algorithm>
 #include <cstdlib>
@@ -179,10 +183,30 @@ namespace GalaxyEggbert::CNA
     {
         Leave();
         AbandonFind();
-        try
-        {
+        const auto create = [&] {
             session_ = NetworkSession::Create(NetworkSessionType::SystemLink, 1, Net::kMaxPlayers, 0,
                                               Advertised(contentHash, world));
+        };
+        try
+        {
+#if defined(GALAXY_EGGBERT_NET_ADDRESS)
+            // The game on a fixed port beside the search's, so that a router can forward both to the
+            // host (docs/handbook/09-multiplayer.md); another program on it: a port of the system's.
+            try
+            {
+                ::CNA::Net::SystemLinkDiscovery::setHostPortProperty(kHostPort);
+                create();
+            }
+            catch (const std::exception& failure)
+            {
+                std::cout << "GalaxyEggbertCNA: multiplayer: port " << kHostPort << " busy (" << failure.what()
+                          << "); another one." << std::endl;
+                ::CNA::Net::SystemLinkDiscovery::setHostPortProperty(0);
+                create();
+            }
+#else
+            create();
+#endif
         }
         catch (const std::exception& failure)
         {
@@ -279,6 +303,37 @@ namespace GalaxyEggbert::CNA
         {
             error_ = failure.what();
         }
+    }
+
+    bool NetSession::SetSearchAddress(const std::string& address)
+    {
+#if defined(GALAXY_EGGBERT_NET_ADDRESS)
+        try
+        {
+            ::CNA::Net::SystemLinkDiscovery::setExtraSearchAddressesProperty(
+                address.empty() ? std::vector<std::string>{} : std::vector<std::string>{address});
+            std::cout << "GalaxyEggbertCNA: multiplayer: games searched "
+                      << (address.empty() ? std::string("on the local network only") : "at " + address + " too") << "."
+                      << std::endl;
+            return true;
+        }
+        catch (const std::exception& failure)
+        {
+            error_ = failure.what();
+            return false;
+        }
+#else
+        return address.empty();
+#endif
+    }
+
+    bool NetSession::AddressSearch() noexcept
+    {
+#if defined(GALAXY_EGGBERT_NET_ADDRESS)
+        return true;
+#else
+        return false;
+#endif
     }
 
     void NetSession::EndGame()
@@ -425,6 +480,8 @@ namespace GalaxyEggbert::CNA
     void NetSession::Leave() {}
     void NetSession::StartGame() {}
     void NetSession::EndGame() {}
+    bool NetSession::SetSearchAddress(const std::string& address) { return address.empty(); }
+    bool NetSession::AddressSearch() noexcept { return false; }
     bool NetSession::IsHost() const { return false; }
     bool NetSession::HasLocalGamer() const { return false; }
     std::uint8_t NetSession::LocalId() const { return 0; }

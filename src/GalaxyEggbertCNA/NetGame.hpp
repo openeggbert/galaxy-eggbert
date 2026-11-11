@@ -36,6 +36,8 @@ namespace GalaxyEggbert::CNA
         float findSeconds = 0.0f; // since the last search began (searched again every few seconds)
         int selected = -1;        // the game chosen in the list
         std::string message;      // a line under the list or the players
+        std::string address;      // a host searched at beyond the local network (multiplayer.txt)
+        bool typingAddress = false; // the keyboard types the address, not a chat line
 
         // The lobby: the host's own, a client's as the host last sent it.
         Net::Lobby lobby;

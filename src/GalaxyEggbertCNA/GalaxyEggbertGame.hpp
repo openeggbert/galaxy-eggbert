@@ -998,7 +998,9 @@ namespace GalaxyEggbert::CNA
         void UpdateNetScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW, int viewportH,
                              bool escapePressed);
         void DrawNetScreen(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
-        void NetStartTyping(int viewportW, int viewportH);
+        void NetStartTyping(int viewportW, int viewportH, bool address = false);
+        // The host's address searched beyond the local network, kept in the user folder.
+        void NetSetAddress(const std::string& address, bool save);
         void NetFinishTyping(bool send);
         void NetTypedKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
         void NetLeaveLobby();

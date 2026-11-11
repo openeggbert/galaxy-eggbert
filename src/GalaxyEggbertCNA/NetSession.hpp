@@ -64,6 +64,14 @@ namespace GalaxyEggbert::CNA
         void StartGame();
         // The host back in the lobby: the game listed and joined again (XNA's EndGame).
         void EndGame();
+        // A host searched at @p address too (a name or an IPv4 address, ":port" optional), beyond the
+        // local network's broadcast: over the internet or a virtual network. Empty: the local network
+        // only. False when the address is not one (LastError() says why).
+        bool SetSearchAddress(const std::string& address);
+        // Whether this build's CNA can search at an address (CNA's SystemLinkDiscovery).
+        [[nodiscard]] static bool AddressSearch() noexcept;
+        // The host's game port, fixed so that a router can forward it (with the search's, 61190).
+        static constexpr std::uint16_t kHostPort = 61191;
         [[nodiscard]] bool Active() const noexcept { return session_ != nullptr; }
         [[nodiscard]] bool IsHost() const;
         [[nodiscard]] std::uint8_t LocalId() const;

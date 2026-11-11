@@ -10,6 +10,7 @@
 #include <GalaxyEggbert/PlayerStart.hpp>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
+#include <GalaxyEggbert/Game/UserFolder.hpp>
 
 #include <Microsoft/Xna/Framework/Input/Keys.hpp>
 
@@ -17,6 +18,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
@@ -37,6 +39,8 @@ namespace GalaxyEggbert::CNA
         constexpr std::size_t kChatInput = 60;     // what may be typed (the line takes "<name> " too)
         constexpr float kAcceptSeconds = 8.0f;     // a client the host never put in its lobby gives up
         constexpr int kListRows = 6;
+        constexpr std::size_t kAddressInput = 63; // a host's name or address, ":port" included
+        constexpr const char* kAddressFile = "multiplayer.txt"; // in the user folder: the address
         // A player from whom nothing came for so long is gone (his network fell, his game stopped):
         // the others are told as if he had left; the host so, the game ends. One who never sent a
         // pose (his machine still loading the world) has longer. A pose is sent at least this often,
@@ -49,7 +53,7 @@ namespace GalaxyEggbert::CNA
         enum Action : int
         {
             kRow0 = 0,
-            kJoin = 10, kNewGame, kUpdate, kBack,
+            kJoin = 10, kNewGame, kUpdate, kBack, kAddress,
             kColour = 20, kReady, kChat, kStart, kLeave, kWorldPrev, kWorldNext,
         };
     }
@@ -104,6 +108,15 @@ namespace GalaxyEggbert::CNA
         else if (n.worlds.empty()) n.message = "No multiplayer world is installed.";
         n.signedIn = n.session.SignIn(n.name);
         n.findSeconds = kFindEverySeconds; // the first search at once
+        // The host's address searched too (GALAXY_NET_ADDRESS for the tests, else the one kept).
+        if (const char* forced = std::getenv("GALAXY_NET_ADDRESS"); forced != nullptr)
+            NetSetAddress(forced, false);
+        else if (std::ifstream in(GalaxyEggbert::Game::UserPath(kAddressFile)); in)
+        {
+            std::string kept;
+            std::getline(in, kept);
+            NetSetAddress(kept, false);
+        }
         std::cout << "GalaxyEggbertCNA: multiplayer: " << n.name << ", " << n.worlds.size()
                   << " worlds, content " << std::hex << n.contentHash << std::dec << "." << std::endl;
     }
@@ -410,7 +423,24 @@ namespace GalaxyEggbert::CNA
         if (n.screen == NetGame::Screen::Browser)
         {
             l.title = std::string(Net::kTextMultiplayer);
+            if (n.typing)
+            {
+                line("Host address:  " + n.draft + "_", left, 268.0f, 0.5f);
+                line("Its IP address or name (192.168.1.20, a ZeroTier address, a router's address).", left, 300.0f, 0.42f, true);
+                line("Empty: the local network only. OK keeps it.", left, 322.0f, 0.42f, true);
+                return l;
+            }
             line(n.signedIn ? "You play as " + n.name + "." : "Signing in as " + n.name + " ...", left, 62.0f);
+            if (NetSession::AddressSearch())
+            {
+                PanelButton address;
+                address.rect = rect(330.0f, 80.0f, 620.0f, 108.0f);
+                address.label = "Host address: " + (n.address.empty() ? std::string("none") : n.address);
+                address.size = 0.42f;
+                address.enabled = !n.session.Active();
+                l.buttons.push_back(address);
+                l.actions.push_back(kAddress);
+            }
             line(std::string(Net::kTextAvailableGames), left, 88.0f);
             const auto& found = n.session.Found();
             for (int i = 0; i < kListRows && i < static_cast<int>(found.size()); ++i)
@@ -518,14 +548,36 @@ namespace GalaxyEggbert::CNA
         return rects;
     }
 
-    void GalaxyEggbertGame::NetStartTyping(int w, int h)
+    void GalaxyEggbertGame::NetStartTyping(int w, int h, bool address)
     {
         auto& n = *net_;
         n.typing = true;
-        n.draft.clear();
+        n.typingAddress = address;
+        n.draft = address ? n.address : std::string();
         n.typedKeys.clear();
-        n.keyboard.Layout(InputPad::PanelRect(20.0f, 64.0f, 620.0f, 254.0f, w, h));
-        n.keyboard.Begin(n.draft);
+        n.keyboard.Layout(InputPad::PanelRect(20.0f, 64.0f, 620.0f, 254.0f, w, h), address);
+        n.keyboard.Begin(n.draft, !address);
+    }
+
+    void GalaxyEggbertGame::NetSetAddress(const std::string& typed, bool save)
+    {
+        auto& n = *net_;
+        std::string address;
+        for (const char c : typed)
+            if (c != ' ' && c >= 0x21 && c < 0x7f && address.size() < kAddressInput) address += c;
+        if (!n.session.SetSearchAddress(address))
+        {
+            n.message = "Not an address: " + address + " (" + n.session.LastError() + ").";
+            return;
+        }
+        n.address = address;
+        n.findSeconds = kFindEverySeconds; // searched again at once
+        if (save)
+        {
+            n.message = address.empty() ? "Games are searched on the local network." : "Games are searched at " + address + " too.";
+            std::ofstream out(GalaxyEggbert::Game::UserPath(kAddressFile), std::ios::trunc);
+            out << address << '\n';
+        }
     }
 
     void GalaxyEggbertGame::NetFinishTyping(bool send)
@@ -533,6 +585,13 @@ namespace GalaxyEggbert::CNA
         auto& n = *net_;
         n.typing = false;
         n.typedKeys.clear();
+        if (n.typingAddress)
+        {
+            n.typingAddress = false;
+            if (send) NetSetAddress(n.draft, true);
+            n.draft.clear();
+            return;
+        }
         const std::string text = Net::CleanText(n.draft, kChatInput);
         n.draft.clear();
         if (!send || text.empty()) return;
@@ -550,7 +609,7 @@ namespace GalaxyEggbert::CNA
         if (net_ && net_->typing && net_->typedKeys.size() < 64) net_->typedKeys.emplace_back(key, shift);
     }
 
-    bool GalaxyEggbertGame::NetWantsText() const noexcept { return net_ && net_->screen == NetGame::Screen::Lobby && net_->typing; }
+    bool GalaxyEggbertGame::NetWantsText() const noexcept { return net_ && net_->screen != NetGame::Screen::None && net_->typing; }
 
     void GalaxyEggbertGame::UpdateNetScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int w, int h,
                                             bool escapePressed)
@@ -560,7 +619,8 @@ namespace GalaxyEggbert::CNA
         {
             for (const auto& [key, shift] : n.typedKeys)
             {
-                const auto result = ScreenKeyboard::TypeKey(key, shift, n.draft, kChatInput);
+                const auto result = ScreenKeyboard::TypeKey(key, shift, n.draft, n.typingAddress ? kAddressInput : kChatInput,
+                                                            n.typingAddress);
                 if (result == ScreenKeyboard::Result::Done)
                 {
                     NetFinishTyping(true);
@@ -571,7 +631,7 @@ namespace GalaxyEggbert::CNA
             const auto input = inputPad_.UpdatePanel(mouse, {}, &n.keyboard);
             if (input.keyboardKey >= 0)
             {
-                const auto result = n.keyboard.Press(input.keyboardKey, n.draft, kChatInput);
+                const auto result = n.keyboard.Press(input.keyboardKey, n.draft, n.typingAddress ? kAddressInput : kChatInput);
                 if (result == ScreenKeyboard::Result::Done) NetFinishTyping(true);
                 else if (result == ScreenKeyboard::Result::Cancel) NetFinishTyping(false);
             }
@@ -608,6 +668,10 @@ namespace GalaxyEggbert::CNA
             return;
         case kBack:
             CloseMultiplayer();
+            return;
+        case kAddress:
+            n.message.clear();
+            NetStartTyping(w, h, true);
             return;
         case kColour:
             if (mySlot >= 0)
