@@ -307,5 +307,8 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   itself (~1136).
 - **Galaxy impact:** on a real network, the third and fourth players see one false game per player
   already joined, and joining one of them fails. No workaround in Galaxy.
-- **Status:** reported to the `cna` session 2026-11-11 (suggested fix: `RegisterHost` only when
-  `session->getIsHostProperty()`).
+- **Status:** fixed in CNA `c1b520dc9` (2026-11-11, committed in CNA next, to be pushed with its next
+  batch): `StartHosting` registers a SystemLink session for discovery only when it is the host, and
+  `ReplyToQuery` stays silent once the registered session is no longer the host; regression test
+  `TwoProcessLoopbackTest.AJoinedClientDoesNotAnswerDiscoveryAsAHost`. Verified the same day: Galaxy
+  built against it, the three- and four-player tests find one game and pass.
