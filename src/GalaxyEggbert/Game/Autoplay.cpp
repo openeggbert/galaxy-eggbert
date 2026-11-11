@@ -337,6 +337,12 @@ namespace GalaxyEggbert::Game
             {
                 command.kind = Kind::Hash;
             }
+            else if (verb == "say")
+            {
+                command.kind = Kind::Say;
+                std::getline(words >> std::ws, command.typedWord);
+                if (command.typedWord.empty()) return fail("needs a text");
+            }
             else if (verb == "log")
             {
                 command.kind = Kind::Log;
@@ -768,6 +774,10 @@ namespace GalaxyEggbert::Game
                 break;
             case Kind::Hash:
                 hashWanted_ = true;
+                done = true;
+                break;
+            case Kind::Say:
+                said_ = command.typedWord;
                 done = true;
                 break;
             case Kind::Mortal:

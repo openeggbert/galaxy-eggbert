@@ -50,6 +50,7 @@
 //                              match's play, Q-022); S picks the sequence (1 by default)
 //   hash                       have the game write a hash of its world to its log (the network tests:
 //                              every machine's world the same after a long match)
+//   say TEXT                   in a network match, send TEXT as a chat line (as typed after Enter)
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
@@ -69,6 +70,7 @@
 #include <array>
 #include <filesystem>
 #include <string>
+#include <utility>
 #include <string_view>
 #include <vector>
 
@@ -147,9 +149,11 @@ namespace GalaxyEggbert::Game
             hashWanted_ = false;
             return wanted;
         }
+        // The chat line `say` asked for since the last call (empty: none).
+        [[nodiscard]] std::string TakeSayRequest() { return std::exchange(said_, std::string()); }
 
     private:
-        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, Mortal, Wander, Hash, End };
+        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, Mortal, Wander, Hash, Say, End };
         enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Switches, Saws, Phase, Power, NetPause, NetPlayers };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
@@ -201,6 +205,7 @@ namespace GalaxyEggbert::Game
         int traceTicksLeft_ = 0;
         int shotTicksLeft_ = 0; // counted down as each Step() begins: N steps from the one that set it
         bool hashWanted_ = false;
+        std::string said_;
         // wander: its random sequence, the keys held and the tick they change.
         std::uint32_t wanderState_ = 1;
         AutoplayKeys wanderKeys_;

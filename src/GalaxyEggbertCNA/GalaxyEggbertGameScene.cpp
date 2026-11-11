@@ -119,7 +119,9 @@ namespace GalaxyEggbert::CNA
             }
             // Blupi drawn opaque now, translucent (the drink's Hide, a ghost) over the finished scene.
             const bool translucentBlupi = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()) < 1.0f;
-            if (!translucentBlupi)
+            // A spectator's own Blupi is out of the match: not drawn (Q-022).
+            const bool ownBlupi = !NetSpectating();
+            if (!translucentBlupi && ownBlupi)
             {
                 AppendSceneBlupi(frame.opaqueModels);
             }
@@ -132,7 +134,7 @@ namespace GalaxyEggbert::CNA
                 AppendSceneObjectModels(frame, soulDrawnIn3D);
             }
             AppendSceneDecals(frame);
-            if (translucentBlupi)
+            if (translucentBlupi && ownBlupi)
             {
                 AppendSceneBlupi(frame.translucentModels);
             }

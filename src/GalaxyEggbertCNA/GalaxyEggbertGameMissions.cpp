@@ -151,6 +151,11 @@ namespace GalaxyEggbert::CNA
         }
         const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
         if (autoplay_->TakeHashRequest()) NetLogWorldHash();
+        if (const auto said = autoplay_->TakeSayRequest(); !said.empty() && NetMatchActive())
+        {
+            NetStartMatchTyping();
+            NetSay(said);
+        }
         std::unordered_set<Keys> down;
         if (keys.up) down.insert(Keys::Up);
         if (keys.down) down.insert(Keys::Down);

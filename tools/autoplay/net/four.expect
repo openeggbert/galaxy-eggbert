@@ -5,3 +5,11 @@ Ann: result: (2nd|3rd|4th)  Cid \(Blue\)  0 kills, 1 death
 Ann: result: (2nd|3rd|4th)  Dan \(Green\)  0 kills, 1 death
 Ann: Ben has been just knocked out
 Dan: Ben has been just knocked out
+# Q-022: who got whom (each machine's notices), and the chat line during the match.
+Ann: You got Ben !
+Ben: Ann got you !
+Cid: Ann got you !
+Dan: Ben got you !
+Ann: Ben got Dan !
+Ben: <Ann> hello from Ann
+Dan: <Ann> hello from Ann

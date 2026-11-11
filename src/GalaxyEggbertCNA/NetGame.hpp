@@ -12,6 +12,8 @@
 #include <array>
 #include <cstdint>
 #include <deque>
+#include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -64,6 +66,7 @@ namespace GalaxyEggbert::CNA
             int lives = Net::kMultiplayerLives;
             bool paused = false; // his pause stops everyone's game (PK_PAUSE) while he is there
             float silence = 0.0f; // seconds since anything came from him (gone after a while)
+            int slot = -1;        // his lobby place (kept when he drops and comes back with another id)
         };
         bool match = false;
         int world = Net::kFirstWorld;
@@ -84,6 +87,26 @@ namespace GalaxyEggbert::CNA
         std::uint8_t killer = Net::kNoKiller; // who caused the death being played (his lobby place)
         bool lost = false;   // no life left: the Lost screen, out of the match
         bool won = false;
+        // The time limit (Galaxy's, Q-022): the time played (pauses not counted), the limit (0 none),
+        // and once the host has said it is over, each lobby place's final rank.
+        // A world of the host's editor (Galaxy's, Q-022): the host's to choose from (the selected
+        // player's slots), and the one chosen or being received, whole once `customHave` is its hash.
+        struct CustomWorld
+        {
+            std::string name;
+            std::filesystem::path path;
+        };
+        std::vector<CustomWorld> customWorlds;
+        std::vector<std::uint8_t> customBytes;
+        std::vector<bool> customGot;   // a client: the pieces arrived
+        std::uint64_t customAssembling = 0, customHave = 0;
+        // The spectator (Galaxy's, Q-022): one knocked out watches another still playing.
+        bool spectating = false;
+        int watched = -1; // in peers
+        float matchSeconds = 0.0f;
+        float limitSeconds = 0.0f;
+        bool timeUp = false;
+        std::array<std::uint8_t, Net::kMaxPlayers> finalPlaces{};
         std::deque<std::pair<std::string, float>> notices; // the original's NotifPush, with their seconds
 
         // The match's results (a Galaxy addition, Q-021), by lobby place: what each machine heard of
@@ -97,7 +120,10 @@ namespace GalaxyEggbert::CNA
             int kills = 0;
             int out = 0;      // 0 still in; else the order he went out in (1 the first)
             bool won = false;
+            bool left = false; // out by leaving or silence (he may come back: Q-022), not knocked out
         };
+        // One back in a match after his drop (Q-022): the host's Rejoin, used as his match starts.
+        std::optional<Net::Message> rejoin;
         std::array<Score, Net::kMaxPlayers> scores{};
         int outCount = 0;
         bool scored = false; // a match has been played: its results in the lobby

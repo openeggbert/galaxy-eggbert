@@ -71,8 +71,11 @@ content-authoring UX, but not new gameplay mechanics.
   `VerifyNetProtocol`, `tools/net_two_players.sh` (bomb, laid, shot, vehicle, cloud, rematch: PASS,
   also over a simulated bad network). Since 2026-11-11 (Q-021): the others' sounds, lifts synchronised
   by the host, the others' auras and the cloud's touch, names over the players, a rematch, the
-  results, a silent player gone, a host searched by address (UDP 61190/61191). Not yet run between
-  two real machines.
+  results, a silent player gone, a host searched by address (UDP 61190/61191). Since 2026-11-11
+  (Q-022): the lobby's lives and time limit, who got whom and a chat line in the match (Enter), the
+  spectator, the host's editor worlds sent, a dropped player back in the match; `tools/net_players.sh` for 2-4 players (three, four,
+  time, watch, custom, rejoin; a ten-minute match of four whose worlds hash the same), `FuzzNetProtocol`
+  (also under ASan/UBSan). Not yet run between two real machines.
 - The player's files in the system's user folder (2026-11-10, the owner's request before a
   release; `UserFolder.hpp`): savedata.txt, resume.txt, demos/ and customworlds/ in
   `~/.local/share/Galaxy Eggbert` (`$XDG_DATA_HOME`), `%LOCALAPPDATA%\Galaxy Eggbert` on Windows

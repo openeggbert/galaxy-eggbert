@@ -1,0 +1,11 @@
+# tools/net_players.sh, the rejoin, Cid started again: finds the game in progress, the host takes him
+# back at his place with the match as it is (his lives, the world's changes), plays at random until
+# the others stop, then hashes his world.
+until phase = Play max 7200
+log back in the match
+mortal
+wander 1200 seed 4 until phase != Play
+wait 1800
+hash
+wait 60
+end

@@ -218,9 +218,15 @@ namespace GalaxyEggbert::CNA
                 }
                 return;
             }
+            if (key == Keys::Enter && NetMatchActive() && !NetWantsText() &&
+                phase_ == GalaxyEggbert::Def::GamePhase::Play && !autoplay_)
+            {
+                NetStartMatchTyping(); // a chat line over the play (Q-022)
+                return;
+            }
             if (NetWantsText())
             {
-                // A line of the network game's chat being typed (the lobby).
+                // A line of the network game's chat being typed (the lobby, or over a match's play).
                 if (key == Keys::LeftShift || key == Keys::RightShift)
                 {
                     typedShiftPending_ = true;
@@ -523,7 +529,9 @@ namespace GalaxyEggbert::CNA
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank);
         if (!SuppressLiveInput() && phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             keys = editorCommandKeys_.Next(keys);
-        for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
+        // The match's chat line takes the keyboard (Q-022): Blupi stands, Escape does not pause.
+        if (!NetTypingInMatch())
+            for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
         tickInput_.mouseX = mouse.getXProperty();

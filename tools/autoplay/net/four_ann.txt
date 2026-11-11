@@ -1,10 +1,12 @@
 # tools/net_players.sh, four players (NET_LIVES=0, world 201; four.expect), the host Ann (yellow,
 # start (39, 38)): waits at her start while Ben and Cid walk into her bombs and Dan into Ben's; wins
-# when the last of them is knocked out (decblupi.cpp:4097), two kills hers, one Ben's.
+# when the last of them is knocked out (decblupi.cpp:4097), two kills hers, one Ben's. Says hello
+# first: a chat line during the match (Q-022).
 until phase = Play max 7200
 log the match began
 until netplayers = 3 max 600
 expect netplayers = 3
+say hello from Ann
 until phase = Win max 5400
 expect phase = Win
 wait 60

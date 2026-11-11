@@ -16,7 +16,10 @@ namespace GalaxyEggbert::Net
     // (the original applied whatever arrived; blupi_recon's validator is the model). No CNA here.
 
     inline constexpr std::uint16_t kProtocolId = 0x4547; // "GE"
-    inline constexpr std::uint8_t kProtocolVersion = 2; // 2: sounds, lifts, the aura, the cloud's touch, killers
+    inline constexpr std::uint8_t kProtocolVersion = 3; // 2: sounds, lifts, the aura, the cloud's touch, killers;
+                                                        // 3: the match's lives and time limit, TimeUp,
+                                                        //    a world of the host's editor sent (WorldData),
+                                                        //    a dropped player back in the match (Rejoin, Snapshot)
     inline constexpr int kMaxPlayers = 4;     // the original's MAXNETPLAYER
     inline constexpr int kTeams = 4;          // yellow, orange, blue, green (the editor's starts)
     inline constexpr std::size_t kMaxName = 15;     // a CNA local profile's name
@@ -27,6 +30,10 @@ namespace GalaxyEggbert::Net
     inline constexpr std::size_t kMaxLifts = 64;    // per Lifts packet
     inline constexpr int kSoundChannels = 93;       // Content/sounds/sound000-092
     inline constexpr std::uint8_t kNoKiller = 0xFF; // Die: no other player's doing
+    inline constexpr std::uint8_t kMaxMinutes = 60; // a match's time limit (Galaxy's, Q-022); 0 none
+    inline constexpr std::size_t kMaxWorldName = 31;          // a world of the editor's name
+    inline constexpr std::size_t kWorldChunk = 1024;          // WorldData's bytes per packet
+    inline constexpr std::uint32_t kMaxWorldBytes = 8u << 20; // a world sent, at most (a .vwr: some 40 KB)
 
     enum class MessageKind : std::uint8_t
     {
@@ -45,6 +52,11 @@ namespace GalaxyEggbert::Net
         Sounds = 13, // the sounds a player's Blupi made, where (PK_PLAYSOUND / PK_STOPSOUND)
         Lifts = 14,  // the host: lifts at the start of a stop (PK_ASCENSEURSTART / PK_ASCENSEUREND)
         StopCloud = 15, // to one player: his cloud touched another and is gone (PK_STOPCLOUD)
+        TimeUp = 16, // the host: the match's time is over, each place's final rank (Galaxy's, Q-022)
+        WorldData = 17, // the host: a piece of the world of his editor chosen for the match (Galaxy's, Q-022)
+        Rejoin = 18,    // the host: a player who had dropped is back in the match (Galaxy's, Q-022): to
+                        // him the match as it is, to the others that he is back
+        Snapshot = 19,  // the host, to the one back: the world's changes since the start (as Events)
     };
 
     struct LobbySlot
@@ -60,6 +72,14 @@ namespace GalaxyEggbert::Net
     struct LobbyState
     {
         std::uint16_t world = 201; // the multiplayer world (worlds3d/world201.vwr ..., SB2's numbers)
+        // The match's settings, the host's (Galaxy's, Q-022): each player's reserve lives (the
+        // original's ten) and a time limit in minutes (0: none, the original's last survivor only).
+        std::uint8_t lives = kMultiplayerLives;
+        std::uint8_t minutes = 0;
+        // A world of the host's editor in place of `world` (0: none): its bytes' hash and its name;
+        // WorldData brings it.
+        std::uint64_t customHash = 0;
+        std::string customName;
         std::array<LobbySlot, kMaxPlayers> slots{};
     };
 
@@ -117,6 +137,15 @@ namespace GalaxyEggbert::Net
         std::uint8_t step = 1;
     };
 
+    // A lobby place's statistics as the host has them (Rejoin).
+    struct ScoreWire
+    {
+        bool played = false;
+        bool left = false;  // out by leaving (or silence), not knocked out
+        std::uint8_t deaths = 0, kills = 0, out = 0, team = 0;
+        std::string name;
+    };
+
     struct Message
     {
         MessageKind kind = MessageKind::Hello;
@@ -134,6 +163,20 @@ namespace GalaxyEggbert::Net
         std::uint8_t lives = 0;
         std::uint8_t killer = kNoKiller; // Die, Lost: the place (0-3) of the player who killed him
         std::uint8_t target = 0;         // StopCloud: the gamer whose cloud is gone
+        std::uint8_t minutes = 0;        // Start: the time limit (lives: the reserve lives)
+        std::array<std::uint8_t, kMaxPlayers> places{}; // TimeUp: each lobby place's rank (1-4; 0 not in it)
+        // Start: the editor's world played (0 none); WorldData: that world's hash, its size, where
+        // this piece goes and the piece.
+        std::uint64_t customHash = 0;
+        // Rejoin: the place he plays at (target: his gamer), the match's time played, every place's
+        // statistics, where his spawned objects' numbers begin (not those he made before).
+        std::uint8_t rejoinSlot = 0;
+        float seconds = 0.0f;
+        std::array<ScoreWire, kMaxPlayers> scores{};
+        std::uint32_t firstSpawn = 1;
+        std::uint32_t worldSize = 0;
+        std::uint32_t worldOffset = 0;
+        std::vector<std::uint8_t> chunk;
         // Pose
         Pose pose;
         // Events

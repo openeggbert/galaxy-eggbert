@@ -15,11 +15,15 @@
 # NET_WORLD=<201-212> is the host's mission (GALAXY_NET_WORLD; the first installed by default).
 # NET_LOSS=<0-1> and NET_LATENCY=<ms> make the network a bad one (GALAXY_NET_LOSS, GALAXY_NET_LATENCY:
 # CNA's simulated loss of the unreliable packets and latency of all, on what each machine sends).
+# NET_SECONDS=<s> the match's time limit in seconds (GALAXY_NET_SECONDS; the lobby's minutes else).
+# NET_CUSTOM=<file.vwr> the host plays that world as one of his editor's (GALAXY_NET_CUSTOM: sent to the others).
 # NET_TIMEOUT=<s> each instance's limit (240 by default).
+# NET_REJOIN="<seconds> <script>": that long after the last player started, he starts again (the same
+# name and folder, his log <name>2.log) with that script: one whose game dropped coming back.
 # When the scripts write world hashes (autoplay's `hash`), every player's last one must be the same.
 set -u
 if [[ $# -lt 3 || $# -gt 5 ]]; then
-    sed -n '2,21p' "$0" >&2
+    sed -n '2,25p' "$0" >&2
     exit 2
 fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,8 +38,8 @@ mkdir -p "$out"
 out="$(cd "$out" && pwd)" # the instances run in their own directories
 rm -f "$out"/*.rc "$out"/*.log "$out"/*.trace
 
-run() { # <name> <mode> <script>
-    local dir="$repo/build-probe/net-run-$1"
+run() { # <name> <mode> <script> [log name]
+    local dir="$repo/build-probe/net-run-$1" log="${4:-$1}"
     mkdir -p "$dir"
     for d in Content avatars3d textures3d worlds3d; do ln -sfn "$repo/$d" "$dir/$d"; done
     rm -f "$dir/GalaxyEggbert"
@@ -45,11 +49,12 @@ run() { # <name> <mode> <script>
         env GALAXY_USER_DIR="$dir" GALAXY_NET_TEST="$2" GALAXY_NET_NAME="$1" GALAXY_NET_PLAYERS="$count" \
             ${NET_LIVES:+GALAXY_NET_LIVES=$NET_LIVES} ${NET_WORLD:+GALAXY_NET_WORLD=$NET_WORLD} \
             ${NET_LOSS:+GALAXY_NET_LOSS=$NET_LOSS} ${NET_LATENCY:+GALAXY_NET_LATENCY=$NET_LATENCY} \
+            ${NET_SECONDS:+GALAXY_NET_SECONDS=$NET_SECONDS} ${NET_CUSTOM:+GALAXY_NET_CUSTOM=$NET_CUSTOM} \
             AUTOPLAY_REALTIME=1 SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11 \
             timeout "${NET_TIMEOUT:-240}" xvfb-run -a -s "-screen 0 800x600x24" ./GalaxyEggbert --autoplay "$3" \
-            > "$out/$1.log" 2>&1
-        echo $? > "$out/$1.rc"
-        cp -f autoplay_trace.txt "$out/$1.trace" 2>/dev/null
+            > "$out/$log.log" 2>&1
+        echo $? > "$out/$log.rc"
+        cp -f autoplay_trace.txt "$out/$log.trace" 2>/dev/null
     )
 }
 
@@ -57,25 +62,32 @@ for ((i = 0; i < count; ++i)); do
     run "${names[$i]}" "$([[ $i == 0 ]] && echo host || echo join)" "${scripts[$i]}" &
     sleep 2 # the lobby's places in this order
 done
+logs=("${names[@]:0:$count}")
+if [[ -n "${NET_REJOIN:-}" ]]; then
+    read -r delay again <<< "$NET_REJOIN"
+    again="$(cd "$(dirname "$again")" && pwd)/$(basename "$again")"
+    last=${names[$((count - 1))]}
+    ( sleep "$delay"; run "$last" join "$again" "${last}2" ) &
+    logs+=("${last}2")
+fi
 wait
 
 status=0
-for ((i = 0; i < count; ++i)); do
-    who=${names[$i]}
+for who in "${logs[@]}"; do
     rc=$(cat "$out/$who.rc" 2>/dev/null || echo 1)
     if [[ "$rc" != 0 ]]; then echo "FAIL: $who's script (exit $rc), $out/$who.log"; status=1; fi
     for ((j = 0; j < count; ++j)); do
         other=${names[$j]}
-        [[ $j == "$i" ]] && continue
+        [[ $other == "${who%2}" ]] && continue
         if ! grep -aq "multiplayer: $other seen at" "$out/$who.log"; then echo "FAIL: $who never saw $other"; status=1; fi
     done
     grep -a "multiplayer: " "$out/$who.log" | sed "s/^GalaxyEggbertCNA: multiplayer: /$who: /"
 done
 # The world hashes (autoplay's `hash`): every player who wrote one wrote the same last one.
 hashes=()
-for ((i = 0; i < count; ++i)); do
-    h=$(grep -a "multiplayer: world hash" "$out/${names[$i]}.log" | tail -1 | sed 's/.*world hash \([0-9a-f]*\).*/\1/')
-    [[ -n "$h" ]] && hashes+=("${names[$i]}=$h")
+for who in "${logs[@]}"; do
+    h=$(grep -a "multiplayer: world hash" "$out/$who.log" | tail -1 | sed 's/.*world hash \([0-9a-f]*\).*/\1/')
+    [[ -n "$h" ]] && hashes+=("$who=$h")
 done
 if [[ ${#hashes[@]} -gt 0 ]]; then
     if [[ $(printf '%s\n' "${hashes[@]}" | sed 's/.*=//' | sort -u | wc -l) != 1 ]]; then

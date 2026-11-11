@@ -26,7 +26,9 @@ namespace GalaxyEggbert::Net
         // The most objects others' events add to a world (beyond its own); more are refused.
         static constexpr std::size_t kMaxSpawned = 1024;
         // A match begins on the world as loaded; @p slot the local player's place (0-3).
-        void Begin(const std::vector<Game::MobileObjSpec>& objects, int slot);
+        // @p firstSpawn: the first number of his spawned objects (one back in a match after a drop
+        // starts past those he made before, NextSpawnFor()).
+        void Begin(const std::vector<Game::MobileObjSpec>& objects, int slot, std::uint32_t firstSpawn = 1);
 
         void Apply(const WorldEvent& event, Worlds::World& world, std::vector<Game::MobileObjSpec>& objects);
         void Snapshot(const Worlds::World& world, const std::vector<Game::MobileObjSpec>& objects);
@@ -41,6 +43,13 @@ namespace GalaxyEggbert::Net
             const auto it = owners_.find(index);
             return it != owners_.end() ? it->second : -1;
         }
+        // One back in the match (Galaxy's, Q-022): what changed since the start, as events he applies
+        // to the world loaded fresh (@p start, the world as the match began): the blocks changed, the
+        // world's objects gone, the spawned ones still there (with their makers' numbers).
+        [[nodiscard]] std::vector<WorldEvent> Rejoining(const Worlds::World& start, const Worlds::World& world,
+                                                        const std::vector<Game::MobileObjSpec>& objects) const;
+        // Past every number of @p slot's spawned objects known here.
+        [[nodiscard]] std::uint32_t NextSpawnFor(int slot) const;
         [[nodiscard]] int Applied() const noexcept { return applied_; }
         [[nodiscard]] int Refused() const noexcept { return refused_; }
         // The block changes lost to an overflow of the world's journal (none expected: 256 a step).
@@ -48,6 +57,7 @@ namespace GalaxyEggbert::Net
 
     private:
         std::vector<Def::ObjectType> baseTypes_;
+        std::vector<bool> baseActive_;
         std::uint32_t slot_ = 0;
         std::int32_t nextSpawn_ = 1;
         std::uint32_t revision_ = 0;

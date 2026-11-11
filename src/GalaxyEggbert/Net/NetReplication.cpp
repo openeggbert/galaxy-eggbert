@@ -11,12 +11,17 @@
 
 namespace GalaxyEggbert::Net
 {
-    void Replicator::Begin(const std::vector<Game::MobileObjSpec>& objects, int slot)
+    void Replicator::Begin(const std::vector<Game::MobileObjSpec>& objects, int slot, std::uint32_t firstSpawn)
     {
         baseTypes_.clear();
-        for (const auto& object : objects) baseTypes_.push_back(object.type);
+        baseActive_.clear();
+        for (const auto& object : objects)
+        {
+            baseTypes_.push_back(object.type);
+            baseActive_.push_back(object.active);
+        }
         slot_ = static_cast<std::uint32_t>(slot & 0x7f);
-        nextSpawn_ = 1;
+        nextSpawn_ = static_cast<std::int32_t>(std::clamp<std::uint32_t>(firstSpawn, 1, 0xffffff));
         revision_ = 0;
         activeBefore_.clear();
         typeBefore_.clear();
@@ -212,5 +217,64 @@ namespace GalaxyEggbert::Net
         }
         Snapshot(world, objects);
         return events;
+    }
+
+    std::vector<WorldEvent> Replicator::Rejoining(const Worlds::World& start, const Worlds::World& world,
+                                                  const std::vector<Game::MobileObjSpec>& objects) const
+    {
+        std::vector<WorldEvent> events;
+        const int n = static_cast<int>(world.blocksPerAxis());
+        if (start.blocksPerAxis() == world.blocksPerAxis())
+            for (int z = 0; z < n; ++z)
+                for (int y = 0; y < n; ++y)
+                    for (int x = 0; x < n; ++x)
+                    {
+                        const auto ux = static_cast<std::uint16_t>(x), uy = static_cast<std::uint16_t>(y), uz = static_cast<std::uint16_t>(z);
+                        const auto raw = world.getBlock(ux, uy, uz).rawValue();
+                        if (raw == start.getBlock(ux, uy, uz).rawValue()) continue;
+                        WorldEvent e;
+                        e.kind = EventKind::BlockChanged;
+                        e.a = x;
+                        e.b = y;
+                        e.c = z;
+                        e.d = raw;
+                        events.push_back(e);
+                    }
+        // The world's own objects gone (taken, blown, their place now another's), before the spawned
+        // ones take free places.
+        for (std::size_t i = 0; i < baseTypes_.size() && i < objects.size(); ++i)
+        {
+            if (!baseActive_[i]) continue;
+            if (objects[i].active && objects[i].type == baseTypes_[i] && spawnIds_.count(i) == 0) continue;
+            WorldEvent e;
+            e.kind = EventKind::ObjectRetired;
+            e.id = static_cast<std::int32_t>(i);
+            events.push_back(e);
+        }
+        std::vector<std::pair<std::size_t, std::int32_t>> spawned(spawnIds_.begin(), spawnIds_.end());
+        std::sort(spawned.begin(), spawned.end());
+        for (const auto& [index, id] : spawned)
+        {
+            if (index >= objects.size() || !objects[index].active) continue;
+            WorldEvent e;
+            e.kind = EventKind::ObjectSpawned;
+            e.id = id;
+            e.a = static_cast<std::int32_t>(objects[index].type);
+            e.x = objects[index].currentX;
+            e.y = objects[index].currentY;
+            e.z = objects[index].currentZ;
+            events.push_back(e);
+        }
+        return events;
+    }
+
+    std::uint32_t Replicator::NextSpawnFor(int slot) const
+    {
+        // Numbers this machine knows of the slot's objects; a margin for its shots (never kept here).
+        std::uint32_t highest = slot_ == static_cast<std::uint32_t>(slot & 0x7f) ? static_cast<std::uint32_t>(nextSpawn_) : 0;
+        for (const auto& [index, id] : spawnIds_)
+            if (((static_cast<std::uint32_t>(id) >> 24) & 0x7f) == static_cast<std::uint32_t>(slot & 0x7f))
+                highest = std::max(highest, static_cast<std::uint32_t>(id) & 0xffffff);
+        return std::min<std::uint32_t>(0xffffff, highest + 0x10000);
     }
 }

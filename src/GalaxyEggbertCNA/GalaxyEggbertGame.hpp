@@ -1004,6 +1004,28 @@ namespace GalaxyEggbert::CNA
         // The host's address searched beyond the local network, kept in the user folder.
         void NetSetAddress(const std::string& address, bool save);
         void NetFinishTyping(bool send);
+        void NetStartMatchTyping();     // Enter in a match: a chat line typed over the play (Q-022)
+        void NetSay(const std::string& text); // that line typed and sent (autoplay's `say`)
+        // The spectator (Q-022): on the Lost screen, watching another player still in the match.
+        [[nodiscard]] bool NetSpectating() const noexcept;
+        void NetWatch(int step);        // start watching, or the next (+1) / previous (-1) player
+        void NetStopWatching();
+        void NetSpectatorStep(float dt); // the world goes on under the watched one; the camera follows
+        void NetSendLiftSyncs();        // the host's lifts that began a stop this step (NetAfterStep)
+        // A world of the host's editor for the match (Q-022): chosen (index past the multiplayer
+        // worlds), sent in pieces, received.
+        void NetChooseWorld(int index);
+        // A dropped player back in the match (Q-022): the host takes him at his place, sends him the
+        // match and the world's changes; everyone has him back.
+        void NetTryRejoin(std::uint8_t gamerId, const GalaxyEggbert::Net::Message& hello);
+        void NetPeerBack(int slot, std::uint8_t gamerId);
+        void NetMarkLeft(int slot);
+        void NetSendCustomWorld();
+        void NetReceiveWorldData(const GalaxyEggbert::Net::Message& m);
+        [[nodiscard]] bool NetHasLobbyWorld() const noexcept; // the lobby's world here (an editor's: arrived whole)
+        bool netWatchLeftWas_ = false, netWatchRightWas_ = false, netWatchTouchWas_ = false;
+        [[nodiscard]] bool NetTypingInMatch() const noexcept;
+        void NetNoticeKill(std::uint8_t killer, int victimSlot);
         void NetTypedKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
         void NetLeaveLobby();
         bool NetHostGame();
@@ -1018,6 +1040,10 @@ namespace GalaxyEggbert::CNA
         void NetAgePeers(float dt);
         void NetSendPose();
         void NetCheckWin();
+        void NetDeclareWin();          // this player wins (the last survivor, or first when time is up)
+        [[nodiscard]] bool NetHostHoldsClock() const noexcept; // the host out, the others' time still running
+        void NetTimeUp();              // the host: the time limit reached, the ranks sent
+        void NetApplyTimeUp(const std::array<std::uint8_t, GalaxyEggbert::Net::kMaxPlayers>& places);
         void NetSendDie(int livesLeft);
         void NetSendLost();
         void LeaveNetMatch();

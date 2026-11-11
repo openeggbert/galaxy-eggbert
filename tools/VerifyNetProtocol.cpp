@@ -42,14 +42,103 @@ int main()
               lobbyBack->lobby.slots[2].name == "Ben Two" && lobbyBack->lobby.slots[2].playing &&
               !lobbyBack->lobby.slots[0].playing && !lobbyBack->lobby.slots[1].present,
           "Lobby: the world (SB2's 201-212) and the four places (who still plays) come back");
+    check(lobbyBack && lobbyBack->lobby.lives == kMultiplayerLives && lobbyBack->lobby.minutes == 0,
+          "Lobby: the match's settings default to the original's (ten lives, no time limit)");
+    lobby.lobby.lives = 3;
+    lobby.lobby.minutes = 15;
+    const auto settingsBack = Decode(Encode(lobby));
+    check(settingsBack && settingsBack->lobby.lives == 3 && settingsBack->lobby.minutes == 15,
+          "Lobby: the host's lives and time limit come back (Q-022)");
+    lobby.lobby.lives = kMultiplayerLives + 1;
+    check(!Decode(Encode(lobby)), "Lobby: more than ten lives are refused");
+    lobby.lobby.lives = 3;
+    lobby.lobby.minutes = kMaxMinutes + 1;
+    check(!Decode(Encode(lobby)), "Lobby: a time limit past an hour is refused");
     Message start;
     start.kind = MessageKind::Start;
     start.world = 212;
     start.worldHash = 99;
+    start.lives = 5;
+    start.minutes = 10;
     const auto startBack = Decode(Encode(start));
-    check(startBack && startBack->world == 212 && startBack->worldHash == 99, "Start: the multiplayer world comes back");
+    check(startBack && startBack->world == 212 && startBack->worldHash == 99 && startBack->lives == 5 &&
+              startBack->minutes == 10,
+          "Start: the multiplayer world and the match's settings come back");
     start.world = 1000;
     check(!Decode(Encode(start)), "a world number past 999 is refused");
+
+    Message timeUp;
+    timeUp.kind = MessageKind::TimeUp;
+    timeUp.places = {2, 1, 0, 1};
+    const auto timeUpBack = Decode(Encode(timeUp));
+    check(timeUpBack && timeUpBack->places == timeUp.places && IsReliable(MessageKind::TimeUp),
+          "TimeUp: each place's rank comes back (shared firsts too); it must arrive");
+    timeUp.places[2] = kMaxPlayers + 1;
+    check(!Decode(Encode(timeUp)), "TimeUp: a rank past 4 is refused");
+
+    // A world of the host's editor (Q-022): named in the lobby, sent in pieces.
+    lobby.lobby.minutes = 15;
+    lobby.lobby.customHash = 0x1234;
+    lobby.lobby.customName = "My world 3";
+    const auto customLobbyBack = Decode(Encode(lobby));
+    check(customLobbyBack && customLobbyBack->lobby.customHash == 0x1234 && customLobbyBack->lobby.customName == "My world 3",
+          "Lobby: the host's editor world (hash, name) comes back");
+    lobby.lobby.customHash = 0;
+    check(!Decode(Encode(lobby)), "Lobby: a name without a world is refused");
+    lobby.lobby.customName.clear();
+    Message piece;
+    piece.kind = MessageKind::WorldData;
+    piece.customHash = 0x1234;
+    piece.worldSize = 2500;
+    piece.worldOffset = 2048;
+    piece.chunk.assign(452, 7);
+    const auto pieceBack = Decode(Encode(piece));
+    check(pieceBack && pieceBack->customHash == 0x1234 && pieceBack->worldSize == 2500 && pieceBack->worldOffset == 2048 &&
+              pieceBack->chunk == piece.chunk && IsReliable(MessageKind::WorldData),
+          "WorldData: a piece of the world (where it goes) comes back; it must arrive");
+    piece.chunk.assign(453, 7);
+    check(!Decode(Encode(piece)), "WorldData: a piece past the world's end is refused");
+    piece.worldOffset = 0;
+    piece.worldSize = kMaxWorldBytes + 1;
+    piece.chunk.assign(10, 7);
+    check(!Decode(Encode(piece)), "WorldData: a world past 8 MB is refused");
+    piece.worldSize = 2500;
+    piece.customHash = 0;
+    check(!Decode(Encode(piece)), "WorldData: a piece of no world is refused");
+    Message startCustom;
+    startCustom.kind = MessageKind::Start;
+    startCustom.world = 201;
+    startCustom.customHash = 0x99;
+    const auto startCustomBack = Decode(Encode(startCustom));
+    check(startCustomBack && startCustomBack->customHash == 0x99, "Start: the editor's world played comes back");
+
+    // One back in the match after a drop (Q-022).
+    Message rejoin;
+    rejoin.kind = MessageKind::Rejoin;
+    rejoin.target = 21;
+    rejoin.rejoinSlot = 2;
+    rejoin.world = 203;
+    rejoin.lives = 6;
+    rejoin.minutes = 10;
+    rejoin.seconds = 123.5f;
+    rejoin.firstSpawn = 0x10005;
+    rejoin.scores[0] = {true, false, 1, 3, 0, 0, "Ann"};
+    rejoin.scores[2] = {true, true, 4, 0, 1, 2, "Cid"};
+    const auto rejoinBack = Decode(Encode(rejoin));
+    check(rejoinBack && rejoinBack->target == 21 && rejoinBack->rejoinSlot == 2 && rejoinBack->lives == 6 &&
+              rejoinBack->seconds == 123.5f && rejoinBack->firstSpawn == 0x10005 && rejoinBack->scores[2].left &&
+              rejoinBack->scores[2].out == 1 && rejoinBack->scores[0].kills == 3 && rejoinBack->scores[2].name == "Cid" &&
+              !rejoinBack->scores[1].played && IsReliable(MessageKind::Rejoin),
+          "Rejoin: his place, lives, the clock, where his numbers begin and every place's statistics come back");
+    rejoin.rejoinSlot = kMaxPlayers;
+    check(!Decode(Encode(rejoin)), "Rejoin: a place past 3 is refused");
+    Message snapshot;
+    snapshot.kind = MessageKind::Snapshot;
+    snapshot.target = 21;
+    snapshot.events.push_back({EventKind::ObjectRetired, 7});
+    const auto snapshotBack = Decode(Encode(snapshot));
+    check(snapshotBack && snapshotBack->target == 21 && snapshotBack->events.size() == 1 && IsReliable(MessageKind::Snapshot),
+          "Snapshot: the world's changes for the one back (his gamer) come back");
 
     Message pose;
     pose.kind = MessageKind::Pose;
@@ -300,6 +389,34 @@ int main()
         outside.a = 500;
         a.Apply(outside, worldA, objectsA);
         check(a.Refused() == refusedBefore + 2, "a block outside the world is refused");
+
+        // One back after a drop (Q-022): A's world as it is now, against the world as loaded, makes
+        // a fresh world the same (the block, the pickup gone, A's bomb with its number).
+        {
+            GalaxyEggbert::Worlds::World start, now, fresh;
+            auto objectsNow = loaded;
+            auto objectsFresh = loaded;
+            Replicator host, back;
+            host.Begin(objectsNow, 0);
+            host.Snapshot(now, objectsNow);
+            now.setBlock(3, 4, 5, GalaxyEggbert::Worlds::Block::make(12));
+            objectsNow[1].active = false;                               // the world's pickup taken
+            objectsNow[1] = object(ObjectType::ObjectType200, 8.0f);   // and his bomb laid in its place
+            (void)host.Diff(now, objectsNow);
+            const auto events = host.Rejoining(start, now, objectsNow);
+            back.Begin(objectsFresh, 2, host.NextSpawnFor(2));
+            for (const auto& e : events) back.Apply(e, fresh, objectsFresh);
+            bool bombThere = false, pickupThere = false;
+            for (const auto& o : objectsFresh)
+            {
+                bombThere = bombThere || (o.active && o.type == ObjectType::ObjectType200 && o.currentX == 8.0f);
+                pickupThere = pickupThere || (o.active && o.type == ObjectType::ObjectType29);
+            }
+            check(fresh.getBlock(3, 4, 5).type() == 12 && bombThere && !pickupThere && back.Refused() == 0,
+                  "Rejoining: the changes since the start bring a fresh world to the host's");
+            check(host.NextSpawnFor(0) > 1 && host.NextSpawnFor(2) >= 0x10000,
+                  "NextSpawnFor: one back numbers his objects past those made before");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

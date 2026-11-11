@@ -1708,9 +1708,45 @@ Galaxy's additions (the owner, Q-021):
 - A host's address (name or IPv4, ":port") searched besides the broadcast, kept in the user folder's
   multiplayer.txt (CNA's SystemLinkDiscovery); the host's game on UDP 61191 (another when busy), so
   a router can forward it with 61190. The original's DirectPlay TCP/IP asked for an address too.
+Galaxy's additions (the owner, Q-022; none in SB2):
+- The match's settings in the lobby: the host's lives (the original's ten, or 1-9) and a time limit
+  (none, the original's; 3, 5, 10, 15, 20 or 30 minutes). The clock stops while anyone pauses; the
+  host's decides: when it runs out, those still in rank by the lives they have left, then their
+  kills, then the fewer deaths (the same rank shared: "You share the first place"), those out after
+  them, the last out first (TimeUp). A host already out stays on his results screen until the time
+  is up (the ranks are his to send).
+- Messages during the match: who got whom ("Ann got Ben !", "Ann got you !", "You got Ben !") beside
+  the original's notices, and a chat line typed over the play (Enter, Enter sends, Escape gives it
+  up; the game goes on and Blupi stands meanwhile; the others see it as a notice). Not on a touch
+  screen without a keyboard (the lobby's chat is).
+- A spectator: knocked out, left / right (the d-pad, a touch at the screen's left or right edge) on
+  the Lost screen watch the others still playing from behind them (their name and lives at the
+  top); Space goes back to the results, and so does the match being decided. His world goes on
+  (the others' changes, the lifts, the shots), his own Blupi not drawn, nothing of his sent.
+- A world of the host's editor: after the multiplayer worlds his `<` `>` go through his editor's
+  slots ("My world n"); its bytes go to the others in pieces (WorldData, 1 KB each, its hash
+  checked), who are ready once they have it whole. A team without its start in it starts at the
+  yellow one (they stand together then). SB2 had no map transfer (both had to have the map).
+- A player whose game dropped (silence, a crash, the game closed) comes back: his game, started
+  again, finds the game in progress (the session allows joining in progress) and the host takes him
+  at his place by his name, with his colour, the lives he had left, the match's statistics and
+  clock, and the world's changes since the start (Snapshot: the blocks changed, the world's objects
+  gone, the spawned ones with their makers' numbers; his new objects numbered past his old ones);
+  the others see him back ("Cid is back !"). Anyone else asking during a match is not taken; one
+  knocked out cannot come back. The original never let anyone join a game in progress.
+- Speedy Blupi 1's network worlds 101-110 are not added: they are SB2's 201-210 (the decor and the
+  objects the same in eight, a few cells or objects in 103, 108 and 210), already here.
+Fixed on the way: a death on a world's bomb of another team counted no kill (the bomb's slot was
+taken by its pop at once); the killing object's type is kept now.
 
 Validation: VerifyNetProtocol (messages and their refusal of damaged packets, the lobby, the
-rules, a two-machine replication round); tools/net_two_players.sh, two instances on one machine
+rules, a two-machine replication round); FuzzNetProtocol and tools/fuzz_net_sanitized.sh (Q-022:
+random and damaged packets, ASan/UBSan clean; the decoder takes only exact messages, the
+replication keeps the world in bounds); tools/net_players.sh (Q-022: two to four instances) with
+three players (a pause holds everyone, one leaves, the others play on), four players (kills and
+the notices, a chat line), the time limit (ranks by lives then kills), the spectator, an editor's
+world sent, a player dropping and coming back (the three worlds hash the same at the end), and a
+ten-minute match of four at random whose four worlds hash the same at its end; tools/net_two_players.sh, two instances on one machine
 through the screens and their autoplay scripts in real time: bomb (another team's bombs kill, the
 knocked-out one sends LOST, the other wins), laid (a bomb taken back and laid elsewhere kills the
 other there), shot (a tank's shot kills the other there), vehicle (a tank taken and left

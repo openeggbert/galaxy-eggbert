@@ -1,0 +1,8 @@
+# tools/net_players.sh, the spectator (Galaxy's, Q-022; NET_LIVES=0, world 201; watch.expect), the
+# host Ann (yellow): waits at her start; wins once Ben and Cid are out.
+until phase = Play max 7200
+log the match began
+until phase = Win max 5400
+expect phase = Win
+wait 60
+end

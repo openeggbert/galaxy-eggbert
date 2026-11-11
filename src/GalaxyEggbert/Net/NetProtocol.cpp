@@ -118,6 +118,10 @@ namespace GalaxyEggbert::Net
             break;
         case MessageKind::Lobby:
             w.U16(m.lobby.world);
+            w.U8(m.lobby.lives);
+            w.U8(m.lobby.minutes);
+            w.U64(m.lobby.customHash);
+            w.Text(m.lobby.customName, kMaxWorldName);
             for (const auto& slot : m.lobby.slots)
             {
                 w.U8(static_cast<std::uint8_t>((slot.present ? 1 : 0) | (slot.ready ? 2 : 0) | (slot.playing ? 4 : 0)));
@@ -132,6 +136,9 @@ namespace GalaxyEggbert::Net
         case MessageKind::Start:
             w.U16(m.world);
             w.U64(m.worldHash);
+            w.U8(m.lives);
+            w.U8(m.minutes);
+            w.U64(m.customHash);
             break;
         case MessageKind::Pose:
             w.U32(m.pose.tick);
@@ -146,7 +153,9 @@ namespace GalaxyEggbert::Net
             w.U8(m.pose.lives);
             w.U8(m.pose.aura);
             break;
+        case MessageKind::Snapshot:
         case MessageKind::Events:
+            if (m.kind == MessageKind::Snapshot) w.U8(m.target);
             w.U8(static_cast<std::uint8_t>(m.events.size() < kMaxEvents ? m.events.size() : kMaxEvents));
             for (std::size_t i = 0; i < m.events.size() && i < kMaxEvents; ++i)
             {
@@ -190,6 +199,38 @@ namespace GalaxyEggbert::Net
             }
             break;
         case MessageKind::StopCloud: w.U8(m.target); break;
+        case MessageKind::TimeUp:
+            for (const auto place : m.places) w.U8(place);
+            break;
+        case MessageKind::Rejoin:
+            w.U8(m.target);
+            w.U8(m.rejoinSlot);
+            w.U16(m.world);
+            w.U64(m.customHash);
+            w.U8(m.lives);
+            w.U8(m.minutes);
+            w.F32(m.seconds);
+            w.U32(m.firstSpawn);
+            for (const auto& s : m.scores)
+            {
+                w.U8(static_cast<std::uint8_t>((s.played ? 1 : 0) | (s.left ? 2 : 0)));
+                w.U8(s.deaths);
+                w.U8(s.kills);
+                w.U8(s.out);
+                w.U8(s.team);
+                w.Text(s.name, kMaxName);
+            }
+            break;
+        case MessageKind::WorldData:
+        {
+            const std::size_t n = m.chunk.size() < kWorldChunk ? m.chunk.size() : kWorldChunk;
+            w.U64(m.customHash);
+            w.U32(m.worldSize);
+            w.U32(m.worldOffset);
+            w.U16(static_cast<std::uint16_t>(n));
+            w.bytes.insert(w.bytes.end(), m.chunk.begin(), m.chunk.begin() + static_cast<long>(n));
+            break;
+        }
         }
         return w.bytes;
     }
@@ -201,7 +242,7 @@ namespace GalaxyEggbert::Net
         std::uint16_t id = 0;
         std::uint8_t version = 0, kind = 0;
         if (!r.U16(id) || id != kProtocolId || !r.U8(version) || version != kProtocolVersion || !r.U8(kind) ||
-            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::StopCloud))
+            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::Snapshot))
             return std::nullopt;
         Message m;
         m.kind = static_cast<MessageKind>(kind);
@@ -212,7 +253,10 @@ namespace GalaxyEggbert::Net
             ok = r.U32(m.simulationRevision) && r.U64(m.contentHash) && r.Text(m.name, kMaxName) && !m.name.empty();
             break;
         case MessageKind::Lobby:
-            ok = r.U16(m.lobby.world) && m.lobby.world >= 1 && m.lobby.world <= 999;
+            ok = r.U16(m.lobby.world) && m.lobby.world >= 1 && m.lobby.world <= 999 && r.U8(m.lobby.lives) &&
+                 m.lobby.lives <= kMultiplayerLives && r.U8(m.lobby.minutes) && m.lobby.minutes <= kMaxMinutes &&
+                 r.U64(m.lobby.customHash) && r.Text(m.lobby.customName, kMaxWorldName) &&
+                 (m.lobby.customHash != 0 || m.lobby.customName.empty());
             for (auto& slot : m.lobby.slots)
             {
                 std::uint8_t flags = 0;
@@ -234,7 +278,10 @@ namespace GalaxyEggbert::Net
             break;
         }
         case MessageKind::Chat: ok = r.Text(m.text, kMaxChat) && !m.text.empty(); break;
-        case MessageKind::Start: ok = r.U16(m.world) && m.world >= 1 && m.world <= 999 && r.U64(m.worldHash); break;
+        case MessageKind::Start:
+            ok = r.U16(m.world) && m.world >= 1 && m.world <= 999 && r.U64(m.worldHash) && r.U8(m.lives) &&
+                 m.lives <= kMultiplayerLives && r.U8(m.minutes) && m.minutes <= kMaxMinutes && r.U64(m.customHash);
+            break;
         case MessageKind::Pose:
             ok = r.U32(m.pose.tick) && r.F32(m.pose.x) && r.F32(m.pose.y) && r.F32(m.pose.z);
             for (auto& v : m.pose.world) ok = ok && r.F32(v);
@@ -242,10 +289,12 @@ namespace GalaxyEggbert::Net
                  r.U8(m.pose.lives) && r.U8(m.pose.aura) && m.pose.flags <= kPoseFlags &&
                  m.pose.lives <= kMultiplayerLives && m.pose.aura <= kAuraLimit;
             break;
+        case MessageKind::Snapshot:
         case MessageKind::Events:
         {
             std::uint8_t count = 0;
-            ok = r.U8(count) && count >= 1 && count <= kMaxEvents;
+            if (m.kind == MessageKind::Snapshot) ok = r.U8(m.target);
+            ok = ok && r.U8(count) && count >= 1 && count <= kMaxEvents;
             for (int i = 0; ok && i < count; ++i)
             {
                 WorldEvent e;
@@ -296,6 +345,37 @@ namespace GalaxyEggbert::Net
             break;
         }
         case MessageKind::StopCloud: ok = r.U8(m.target); break;
+        case MessageKind::TimeUp:
+            for (auto& place : m.places) ok = ok && r.U8(place) && place <= kMaxPlayers;
+            break;
+        case MessageKind::Rejoin:
+            ok = r.U8(m.target) && r.U8(m.rejoinSlot) && m.rejoinSlot < kMaxPlayers && r.U16(m.world) && m.world >= 1 &&
+                 m.world <= 999 && r.U64(m.customHash) && r.U8(m.lives) && m.lives <= kMultiplayerLives && r.U8(m.minutes) &&
+                 m.minutes <= kMaxMinutes && r.F32(m.seconds) && m.seconds >= 0.0f && r.U32(m.firstSpawn) &&
+                 m.firstSpawn >= 1 && m.firstSpawn <= 0xffffff;
+            for (auto& s : m.scores)
+            {
+                std::uint8_t flags = 0;
+                ok = ok && r.U8(flags) && flags <= 3 && r.U8(s.deaths) && r.U8(s.kills) && r.U8(s.out) && s.out <= kMaxPlayers &&
+                     r.U8(s.team) && s.team < kTeams && r.Text(s.name, kMaxName);
+                s.played = (flags & 1) != 0;
+                s.left = (flags & 2) != 0;
+            }
+            break;
+        case MessageKind::WorldData:
+        {
+            std::uint16_t n = 0;
+            ok = r.U64(m.customHash) && m.customHash != 0 && r.U32(m.worldSize) && m.worldSize >= 1 &&
+                 m.worldSize <= kMaxWorldBytes && r.U32(m.worldOffset) && r.U16(n) && n >= 1 && n <= kWorldChunk &&
+                 m.worldOffset < m.worldSize && n <= m.worldSize - m.worldOffset;
+            for (int i = 0; ok && i < n; ++i)
+            {
+                std::uint8_t b = 0;
+                ok = r.U8(b);
+                m.chunk.push_back(b);
+            }
+            break;
+        }
         }
         if (!ok || !r.Done()) return std::nullopt;
         return m;

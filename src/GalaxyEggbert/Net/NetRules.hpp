@@ -65,6 +65,21 @@ namespace GalaxyEggbert::Net
     inline constexpr std::string_view kTextReady = "Ready ?";                        // 286
     inline constexpr std::string_view kTextWon = "Congratulations, you won, you're the only survivor!"; // 287
     inline constexpr std::string_view kTextPause = "<<<<    P A U S E    >>>>";      // 125
+    // Galaxy's (Q-022, not the original's): the match's time limit.
+    inline constexpr std::string_view kTextTimeUp = "Time is up !";
+    inline constexpr std::string_view kTextTimeUpWon = "Time is up ! You won: the most lives left.";
+    inline constexpr std::string_view kTextTimeUpShared = "Time is up ! You share the first place.";
+    // The time limits the host offers (minutes; 0 none) and its lives (the original's ten, fewer).
+    inline constexpr int kTimeLimits[] = {0, 3, 5, 10, 15, 20, 30};
+    [[nodiscard]] inline std::string TimeLimitText(int minutes)
+    {
+        return minutes <= 0 ? std::string("none") : std::to_string(minutes) + " min";
+    }
+    [[nodiscard]] inline std::string ClockText(float seconds)
+    {
+        const int s = seconds <= 0.0f ? 0 : static_cast<int>(seconds + 0.999f);
+        return std::to_string(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + std::to_string(s % 60);
+    }
 
     [[nodiscard]] inline std::string MissionTitle(int world)                         // 255
     {
@@ -84,6 +99,12 @@ namespace GalaxyEggbert::Net
         if (lives == 0) return name + " has no life left !";
         if (lives == 1) return name + " has only one more life left !";
         return name + " has " + std::to_string(lives) + " lives left !";
+    }
+
+    // Galaxy's (Q-022, not the original's): who got whom, beside PK_DIE's notice.
+    [[nodiscard]] inline std::string KillNotice(const std::string& killer, const std::string& victim)
+    {
+        return killer + " got " + victim + " !";
     }
 
     // FNV-1a over bytes: the content both machines must share (the multiplayer worlds, the Blupi

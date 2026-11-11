@@ -297,7 +297,13 @@ namespace GalaxyEggbert::CNA
         if (session_ == nullptr || !session_->getIsHostProperty()) return;
         try
         {
-            if (session_->getSessionStateProperty() == NetworkSessionState::Lobby) session_->StartGame();
+            // A player whose network dropped may come back to the match (Galaxy's, Q-022): the host
+            // takes him at his place, any other is not taken.
+            if (session_->getSessionStateProperty() == NetworkSessionState::Lobby)
+            {
+                session_->setAllowJoinInProgressProperty(true);
+                session_->StartGame();
+            }
         }
         catch (const std::exception& failure)
         {

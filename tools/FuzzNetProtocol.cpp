@@ -34,6 +34,10 @@ namespace
         m = {};
         m.kind = MessageKind::Lobby;
         m.lobby.world = 205;
+        m.lobby.lives = 4;
+        m.lobby.minutes = 20;
+        m.lobby.customHash = 77;
+        m.lobby.customName = "My world 2";
         for (int i = 0; i < kMaxPlayers; ++i)
         {
             auto& s = m.lobby.slots[static_cast<std::size_t>(i)];
@@ -61,6 +65,8 @@ namespace
         m.kind = MessageKind::Start;
         m.world = 212;
         m.worldHash = 0xfeedfacecafebeefULL;
+        m.lives = 7;
+        m.minutes = 5;
         corpus.push_back(m);
         m = {};
         m.kind = MessageKind::Pose;
@@ -114,6 +120,34 @@ namespace
         m.kind = MessageKind::StopCloud;
         m.target = 12;
         corpus.push_back(m);
+        m = {};
+        m.kind = MessageKind::TimeUp;
+        m.places = {1, 3, 2, 0};
+        corpus.push_back(m);
+        m = {};
+        m.kind = MessageKind::Rejoin;
+        m.target = 9;
+        m.rejoinSlot = 1;
+        m.world = 204;
+        m.lives = 3;
+        m.seconds = 42.0f;
+        m.firstSpawn = 70000;
+        m.scores[0] = {true, false, 2, 1, 0, 0, "Ann"};
+        m.scores[1] = {true, true, 0, 0, 1, 1, "Ben"};
+        corpus.push_back(m);
+        m = {};
+        m.kind = MessageKind::Snapshot;
+        m.target = 9;
+        m.events.push_back({EventKind::BlockChanged, 0, 1, 2, 3, 0x20});
+        m.events.push_back({EventKind::ObjectSpawned, (1 << 24) | 9, 201, 0, 0, 0, 1.0f, 2.0f, 3.0f});
+        corpus.push_back(m);
+        m = {};
+        m.kind = MessageKind::WorldData;
+        m.customHash = 0xabcdef;
+        m.worldSize = 3000;
+        m.worldOffset = 2048;
+        m.chunk.assign(100, 42);
+        corpus.push_back(m);
         return corpus;
     }
 
@@ -136,6 +170,9 @@ namespace
         {
         case MessageKind::Lobby:
             if (m.lobby.world > 999) return "a lobby world past 999";
+            if (m.lobby.lives > kMultiplayerLives || m.lobby.minutes > kMaxMinutes) return "lobby settings out of range";
+            if (!Printable(m.lobby.customName, kMaxWorldName) || (m.lobby.customHash == 0 && !m.lobby.customName.empty()))
+                return "a lobby world name out of range";
             for (const auto& s : m.lobby.slots)
                 if (s.team >= kTeams || !Printable(s.name, kMaxName)) return "a lobby place out of range";
             break;
@@ -144,6 +181,7 @@ namespace
             break;
         case MessageKind::Start:
             if (m.world > 999) return "a world past 999";
+            if (m.lives > kMultiplayerLives || m.minutes > kMaxMinutes) return "start settings out of range";
             break;
         case MessageKind::Pose:
             if (!Finite(m.pose.x) || !Finite(m.pose.y) || !Finite(m.pose.z) || !Finite(m.pose.clipSeconds))
@@ -152,6 +190,14 @@ namespace
                 if (!Finite(v)) return "a pose matrix not finite";
             if (m.pose.flags > kPoseFlags || m.pose.aura > kAuraLimit) return "pose flags out of range";
             break;
+        case MessageKind::Rejoin:
+            if (m.rejoinSlot >= kMaxPlayers || m.lives > kMultiplayerLives || m.minutes > kMaxMinutes || !Finite(m.seconds) ||
+                m.seconds < 0.0f || m.firstSpawn == 0 || m.firstSpawn > 0xffffff)
+                return "a rejoin out of range";
+            for (const auto& score : m.scores)
+                if (score.out > kMaxPlayers || score.team >= kTeams || !Printable(score.name, kMaxName)) return "a rejoin's score out of range";
+            break;
+        case MessageKind::Snapshot:
         case MessageKind::Events:
             if (m.events.empty() || m.events.size() > kMaxEvents) return "an events count out of range";
             for (const auto& e : m.events)
@@ -170,6 +216,15 @@ namespace
             if (m.lifts.empty() || m.lifts.size() > kMaxLifts) return "a lifts count out of range";
             for (const auto& l : m.lifts)
                 if (l.index < 0 || (l.step != 1 && l.step != 3)) return "a lift out of range";
+            break;
+        case MessageKind::TimeUp:
+            for (const auto place : m.places)
+                if (place > kMaxPlayers) return "a rank past 4";
+            break;
+        case MessageKind::WorldData:
+            if (m.customHash == 0 || m.worldSize == 0 || m.worldSize > kMaxWorldBytes || m.chunk.empty() ||
+                m.chunk.size() > kWorldChunk || m.worldOffset >= m.worldSize || m.chunk.size() > m.worldSize - m.worldOffset)
+                return "a world's piece out of range";
             break;
         default:
             break;
@@ -243,7 +298,7 @@ int main(int argc, char** argv)
                 bytes[0] = static_cast<std::uint8_t>(kProtocolId & 0xff);
                 bytes[1] = static_cast<std::uint8_t>(kProtocolId >> 8);
                 bytes[2] = kProtocolVersion;
-                bytes[3] = static_cast<std::uint8_t>(below(18));
+                bytes[3] = static_cast<std::uint8_t>(below(22));
             }
         }
         else
@@ -283,7 +338,7 @@ int main(int argc, char** argv)
         ++taken;
         if (const char* why = Invalid(*message)) fail(std::string("taken with ") + why, bytes);
         if (Encode(*message) != bytes) fail("taken, but it does not encode back to the same bytes", bytes);
-        if (message->kind == MessageKind::Events)
+        if (message->kind == MessageKind::Events || message->kind == MessageKind::Snapshot)
         {
             replicator.Snapshot(world, objects);
             for (const auto& e : message->events)

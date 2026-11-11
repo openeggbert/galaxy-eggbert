@@ -1145,7 +1145,40 @@ namespace GalaxyEggbert::CNA
             const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                 mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
             const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || confirmDown || mouseReturnPressed;
-            if (returnPressed && !phaseReturnKeyWasDown_ && NetMatchActive())
+            // The spectator (Galaxy's, Q-022): knocked out, left / right (the d-pad, a touch at the
+            // screen's left or right edge) watch the others still playing; Space back to the results.
+            bool watchedThisFrame = false;
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Lost && NetMatchActive())
+            {
+                const bool left = phaseKeys.IsKeyDown(Keys::Left) || pad.dpadLeft;
+                const bool right = phaseKeys.IsKeyDown(Keys::Right) || pad.dpadRight;
+                int touchSide = 0;
+                const float w = static_cast<float>(viewport.getWidthProperty());
+                const float h = static_cast<float>(viewport.getHeightProperty());
+                for (const auto& touch : tickInput_.touches)
+                    if (touch.y > 0.3f * h) touchSide = touch.x < 0.2f * w ? -1 : touch.x > 0.8f * w ? 1 : touchSide;
+                const bool touchDown = touchSide != 0;
+                if ((left && !netWatchLeftWas_) || (touchDown && !netWatchTouchWas_ && touchSide < 0)) NetWatch(-1);
+                if ((right && !netWatchRightWas_) || (touchDown && !netWatchTouchWas_ && touchSide > 0)) NetWatch(+1);
+                netWatchLeftWas_ = left;
+                netWatchRightWas_ = right;
+                netWatchTouchWas_ = touchDown;
+                if (NetSpectating())
+                {
+                    NetSpectatorStep(dt);
+                    if (returnPressed && !phaseReturnKeyWasDown_) NetStopWatching();
+                    watchedThisFrame = true;
+                }
+            }
+            if (watchedThisFrame)
+            {
+                // Watching: the return goes back to the results, not to the lobby.
+            }
+            else if (returnPressed && !phaseReturnKeyWasDown_ && NetMatchActive() && NetHostHoldsClock())
+            {
+                // The host decides the time limit's end (Q-022): he stays until it, the others still playing.
+            }
+            else if (returnPressed && !phaseReturnKeyWasDown_ && NetMatchActive())
             {
                 // The match is over for him: back to the game's lobby for another (a rematch, Q-021;
                 // the original closed the network game here, event.cpp:2688-2700).

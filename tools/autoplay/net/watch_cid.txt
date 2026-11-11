@@ -1,0 +1,12 @@
+# tools/net_players.sh, the spectator, Cid (blue): waits a while (Ben watching), walks up the hall
+# (x 41) and into the yellow bomb (41, 38); knocked out.
+until phase = Play max 7200
+log the match began
+wait 900
+mortal
+go 41 60 max 600
+go 41 38 max 3000 until phase = Lost
+until phase = Lost max 600
+expect phase = Lost
+wait 120
+end

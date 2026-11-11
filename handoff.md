@@ -37,9 +37,21 @@ CNA changes go to the `cna` Claude session (SendMessage), not into ../cna.
   - The four-player test found UB-011: CNA's joined clients answered discovery. Fixed in CNA
     c1b520dc9; the build compiles against that working tree.
 - **Not built:** SB1's worlds 101-110 are SB2's 201-210 (owner_questions Q-022).
-- **Next:** the long match (`soak_*.txt`, NET_TIMEOUT=780); the lobby's lives and time limit
-  (protocol 3, `TimeUp`); messages in the match; the spectator; the editor's worlds; rejoining;
-  Windows; PlayerMatch.
+- **Also done, all PASS:**
+  - The long match: four players for ten minutes, the worlds hash the same.
+  - The lobby's lives and time limit.
+  - Who got whom, and a chat line in the match (Enter; autoplay's `say`).
+  - The spectator (left/right on the Lost screen).
+  - The host's editor worlds sent (WorldData).
+  - A dropped player back in the match (Rejoin/Snapshot; NET_REJOIN).
+  - Protocol 3.
+  - All the scenarios: `build-probe/net_all.sh` is a local probe; each scenario's environment is in
+    its script's head.
+- **Next:**
+  - Windows with multiplayer: a MinGW tree in `build-probe/` (CNA's toolchain
+    `cmake/toolchains/mingw-w64.cmake`; SDL3 prebuilt in CNA's `.sdl-prebuilt-Windows-x86_64`),
+    tried under wine against a Linux instance.
+  - PlayerMatch over the internet (cna-gamer-services-server).
 
 How to check it:
 ```bash

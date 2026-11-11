@@ -16,13 +16,17 @@ original: `plans/audit/behavior_differences.md` BD-0120.
 2. In the menu choose the player (A, B or C: on the network you are "Player A" and so on), then
    **Multiplayer** (in the left panel, right of Setup).
 3. One player makes a **New game**: the lobby opens with the mission (#201-#212, the host changes
-   it with `<` and `>`). The others see it under *Available games on the network* (the list is
+   it with `<` and `>`; past #212 come his own worlds of the editor, "My world 1" ..., which the
+   game sends to the others: they can say Ready once they have it whole). The others see it under *Available games on the network* (the list is
    searched again every few seconds, or at **Update list**), choose it and **Join selected game**.
 4. In the lobby each player may change **Colour** (yellow, orange, blue, green: the start and the
    bombs of that colour; colours need not differ) while not ready, and says **Ready ?**. **Send
    message** types a line for the chat zone (the keyboard on the screen, or the real one; Enter
-   sends). The host's **Start** is open once every player present is ready, two at least.
-5. The match: ten lives each, everyone at the start of his colour. Crates, goals and enemy Blupis
+   sends). The host sets **Lives** (10 as the original, or fewer) and a **Time limit** (none as the
+   original, or 3 to 30 minutes) while he is not ready. The host's **Start** is open once every
+   player present is ready, two at least.
+5. The match: ten lives each (or the host's number), everyone at the start of his colour (a world
+   without that colour's start: the yellow one). Crates, goals and enemy Blupis
    are taken out of the world. Each team has its personal bombs: beside one of your colour the action
    key takes it back (five at most), and lays it again elsewhere; another colour's bomb kills at a
    touch (unless shielded). Tank and helicopter shots kill the other players. A player in a cloud
@@ -30,13 +34,21 @@ original: `plans/audit/behavior_differences.md` BD-0120.
    near you and see their shields, powers and clouds; one hidden by the drink is not seen at all.
    Each other player's name is over his head, in his colour. A death starts again where you last
    stood safely. Dying with no life in reserve you are knocked out; the last player still present
-   wins ("Congratulations, you won, you're the only survivor!").
+   wins ("Congratulations, you won, you're the only survivor!"). With a time limit its clock is top
+   left (it stops while anyone pauses); when it runs out, the one with the most lives left wins,
+   then the most kills, then the fewest deaths (a tie shares the first place). Who got whom shows
+   among the notices ("Ann got Ben !"). **Enter** types a chat line over the play (Enter sends,
+   Escape gives it up; your Blupi stands meanwhile, the game goes on).
+   Knocked out, **left / right** (or a touch at the screen's left or right edge) on the lost screen
+   watch the others still playing; **Space** goes back to the results.
 6. Pause (Escape) stops everyone's game until it goes on. Pause's **Menu** leaves the game (the
    others are told). The win and lost screens show the match's results (place, kills, deaths);
    leaving them takes you back to the game's lobby for another match (the others still playing are
    marked "playing"; the host starts again when all are back and ready). When the host leaves, or
    nothing comes from him for 6 seconds, the game ends for everyone; another player silent that long
-   is taken as having left.
+   is taken as having left. One whose game dropped (the network, a crash) starts it again, chooses
+   the same player and joins the game, still listed: the host takes him back at his place with the
+   lives he had left and the world as it is now.
 
 ## Playing over the internet: the host's address
 
@@ -90,5 +102,19 @@ is taken).
   `NET_WORLD=205`), `rematch` (with `NET_WORLD=205 NET_LIVES=0`). `NET_LOSS=0.2 NET_LATENCY=150`
   makes the network a bad one (CNA's simulated loss and latency); `GALAXY_NET_ADDRESS` sets the
   host's address.
+- `tools/net_players.sh <build> <host script> <join script>...` (Q-022) runs two to four (Ann the
+  host, Ben, Cid, Dan): `NET_EXPECT=<file>` lines `Name: regex` each to be found in that player's
+  log, and when the scripts write world hashes (autoplay's `hash`) every player's must be the same.
+  `NET_SECONDS` sets a time limit in seconds, `NET_CUSTOM=<file.vwr>` makes the host play it as a
+  world of his editor (sent to the others), `NET_REJOIN="<seconds> <script>"` starts the last
+  player again that long after (his log `<name>2.log`). Scenarios: `three_*` (`NET_LIVES=0`: a pause holds
+  everyone, one leaves), `four_*` (`NET_LIVES=0`: kills, notices, a chat line by `say`), `time_*`
+  (`NET_SECONDS=40`), `watch_*` (`NET_LIVES=0`: the spectator), `custom_*`
+  (`NET_CUSTOM=$PWD/worlds3d/world011.vwr`), `rejoin_*` (`NET_TIMEOUT=300 NET_REJOIN="70
+  tools/autoplay/net/rejoin_cid2.txt"`: Cid's game ends, he starts again and is taken back), `soak_*` (`NET_TIMEOUT=780`: ten minutes at random,
+  the four worlds hashed at the end), each with its `.expect`. Autoplay's network commands and
+  conditions: `pause`, `wander`, `hash`, `say`, `netpause`, `netplayers`.
+- Robustness: `FuzzNetProtocol` (CTest) sends random and damaged packets through the decoder and
+  the replication; `tools/fuzz_net_sanitized.sh [packets] [seed]` runs it under ASan and UBSan.
 - Logs: the game prints `multiplayer:` lines (who joined, the match, the others seen, every world
   change sent or received, the first sounds and lifts of a match, the results).

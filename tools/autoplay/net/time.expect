@@ -1,0 +1,9 @@
+# NET_EXPECT for time_*.txt: the host's ranks when the time is up (lives, then kills, then deaths).
+Ann: the time is up
+Ben: the time is up
+Cid: the time is up
+Ann: result: 1st  Ann \(Yellow\)  1 kill, 0 deaths
+Ann: result: 2nd  Cid \(Blue\)  0 kills, 0 deaths
+Ann: result: 3rd  Ben \(Orange\)  0 kills, 1 death
+Ben: result: 1st  Ann \(Yellow\)  1 kill, 0 deaths
+Cid: result: 3rd  Ben \(Orange\)  0 kills, 1 death

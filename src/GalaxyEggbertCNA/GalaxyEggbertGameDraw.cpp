@@ -749,6 +749,18 @@ namespace GalaxyEggbert::CNA
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});
             }
+            else if (NetSpectating())
+            {
+                // The spectator (Q-022): the world under the one watched, his name, the notices.
+                const auto& watched = net_->peers[static_cast<std::size_t>(net_->watched)];
+                std::vector<std::string> lines{"Watching " + watched.name + "  (" + std::to_string(watched.lives) +
+                                                   (watched.lives == 1 ? " life)" : " lives)"),
+                                               "Left / right: another player.  Space: the results."};
+                const auto notices = NetNotices();
+                lines.insert(lines.end(), notices.begin(), notices.end());
+                inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
+                DrawNetNames(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Win || phase_ == GalaxyEggbert::Def::GamePhase::Lost)
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
@@ -757,7 +769,21 @@ namespace GalaxyEggbert::CNA
                 {
                     // The match's results under the original's text (Q-021).
                     std::vector<std::string> lines;
-                    if (phase_ == GalaxyEggbert::Def::GamePhase::Win) lines.emplace_back(GalaxyEggbert::Net::kTextWon);
+                    const bool won = phase_ == GalaxyEggbert::Def::GamePhase::Win;
+                    if (net_->timeUp)
+                    {
+                        // The time limit's end (Q-022): a first place alone or shared.
+                        int firsts = 0;
+                        for (const auto place : net_->finalPlaces) firsts += place == 1;
+                        lines.emplace_back(!won ? GalaxyEggbert::Net::kTextTimeUp
+                                                : firsts > 1 ? GalaxyEggbert::Net::kTextTimeUpShared
+                                                             : GalaxyEggbert::Net::kTextTimeUpWon);
+                    }
+                    else if (won) lines.emplace_back(GalaxyEggbert::Net::kTextWon);
+                    if (NetHostHoldsClock())
+                        lines.push_back("The others play on: time left " +
+                                        GalaxyEggbert::Net::ClockText(net_->limitSeconds - net_->matchSeconds) +
+                                        " (the host waits for the end).");
                     const auto results = NetResultLines();
                     lines.insert(lines.end(), results.begin(), results.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);

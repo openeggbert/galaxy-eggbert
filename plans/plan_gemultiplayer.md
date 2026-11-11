@@ -24,9 +24,13 @@ first version. What is done, as recommended in §7 (option A over CNA SystemLink
 2026-11-11 (Q-021): SB2's sounds, lift synchronisation, auras and the cloud's touch; Galaxy's
 names over the players, rematch, results, silence timeout, the host's address with a fixed port
 (BD-0120); protocol 2.
-Open: the Android build and a game between a phone and a PC (not run yet); worlds 205-212 (the
-owner asked for 3-5); host migration (not wanted: the host leaving ends the game); a pause test
-in the scenarios (autoplay has no Escape).
+2026-11-11 (Q-022): tests for three and four players, the pause, broken packets (FuzzNetProtocol,
+ASan/UBSan) and a ten-minute match of four (`tools/net_players.sh`); the lobby's lives and time
+limit, who got whom and a chat line in the match, the spectator, the host's editor worlds sent, a
+dropped player back in the match (protocol 3); UB-011 found and fixed in CNA; SB1's 101-110 are
+SB2's 201-210 (not built).
+Open: a game between a phone and a PC (not run yet); host migration (not wanted: the host leaving
+ends the game); Q-022's Windows and PlayerMatch (in progress).
 
 **Updated 2026-11-09** against `develop` at `c2a243b6`:
 
