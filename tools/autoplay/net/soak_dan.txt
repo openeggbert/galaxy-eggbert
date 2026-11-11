@@ -1,0 +1,13 @@
+# tools/net_players.sh, the long match (Q-022; NET_TIMEOUT=780, any world, two to four players: soak_ann.txt
+# the host's, then soak_ben, soak_cid, soak_dan): ten minutes of random play (wander, seed 4: walking,
+# turning, jumps, the action key, shots), then still for fifteen seconds while the others stop too and
+# the last changes arrive, then the world's hash. Every player still in the match must have the same
+# world (tools/net_players.sh compares the hashes); one knocked out writes none.
+until phase = Play max 7200
+log the match began
+mortal
+wander 36000 seed 4 until phase != Play
+wait 900
+hash
+wait 60
+end
