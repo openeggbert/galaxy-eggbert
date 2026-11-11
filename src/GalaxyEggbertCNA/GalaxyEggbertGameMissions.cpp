@@ -494,8 +494,9 @@ namespace GalaxyEggbert::CNA
         LoadMission(mission); // from its start, as shipped
         interaction_.SetLives(lives);
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
-        ShowDemoNotice(restored ? "Mission " + std::to_string(mission) + ": the world as shipped again."
-                                : "Mission " + std::to_string(mission) + ": the world as shipped from the next start.");
+        ShowDemoNotice(TrFormat(restored ? "Mission {0}: the world as shipped again."
+                                         : "Mission {0}: the world as shipped from the next start.",
+                                {std::to_string(mission)}));
     }
 
     void GalaxyEggbertGame::LeaveMissionEditor()

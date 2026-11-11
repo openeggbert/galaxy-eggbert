@@ -4,6 +4,7 @@
 #include "NetGame.hpp"
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
+#include <System/Globalization/CultureInfo.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
 
@@ -186,6 +187,7 @@ namespace GalaxyEggbert::CNA
         graphics_->setGraphicsProfileProperty(
             Microsoft::Xna::Framework::Graphics::GraphicsProfile::HiDef);
         saveData_.Load();
+        ApplyLanguage(); // CNA's Game has taken the system's languages by now
         graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
         // The network game where CNA has networking (not the web): the menu's Multiplayer.
@@ -452,6 +454,26 @@ namespace GalaxyEggbert::CNA
         // The captures, the demos and the replays step once a loop pass, at its own pace.
         return saveData_.GetFrameRate() > 60 && !autoplay_ && !goldenCaptureMode_ && !goldenTraceMode_ &&
                !demoVerifying_ && !replayingResume_;
+    }
+
+    void GalaxyEggbertGame::ApplyLanguage()
+    {
+        const std::string system = System::Globalization::CultureInfo::getCurrentUICultureProperty().getNameProperty();
+        auto language = ParseLanguage(saveData_.GetLanguage());
+        if (!language) language = ParseLanguage(system);
+        SetLanguage(language.value_or(Language::English));
+        std::cout << "GalaxyEggbertCNA: language " << LanguageCode(CurrentLanguage()) << " (chosen \""
+                  << saveData_.GetLanguage() << "\", system \"" << system << "\")." << std::endl;
+    }
+
+    void GalaxyEggbertGame::NextLanguage()
+    {
+        std::size_t index = 0;
+        while (index < std::size(kLanguages) && kLanguages[index] != CurrentLanguage()) ++index;
+        const Language next = kLanguages[(index + 1) % std::size(kLanguages)];
+        saveData_.SetLanguage(std::string(LanguageCode(next)));
+        SavePlayerData();
+        ApplyLanguage();
     }
 
     void GalaxyEggbertGame::ApplyFrameRate()

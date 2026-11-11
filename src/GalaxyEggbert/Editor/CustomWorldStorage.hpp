@@ -167,6 +167,9 @@ namespace GalaxyEggbert::Editor
     [[nodiscard]] std::optional<std::pair<int, int>> ParseGalaxyWorldPath(const std::string& path);
     // "Main hub", "World 3", "World 3, mission 2", "Bonus world".
     [[nodiscard]] std::string GalaxyMissionName(int mission);
+    // The same name in the current language, for the screens (GalaxyMissionName stays English: a demo's
+    // title in its file, the log).
+    [[nodiscard]] std::string GalaxyMissionLabel(int mission);
     // A new galaxy world to start from: the starter board, with world sign 1 for the main hub,
     // mission sign 1 and the return sign for a world hub, the chest and exit for a mission; Blupi's
     // start set in the file.

@@ -1,5 +1,7 @@
 #include "NetSession.hpp"
 
+#include <GalaxyEggbert/Game/Localization.hpp>
+
 #if defined(GALAXY_EGGBERT_NET)
 #include <Microsoft/Xna/Framework/GamerServices/Gamer.hpp>
 #include <Microsoft/Xna/Framework/GamerServices/GamerServicesDispatcher.hpp>
@@ -60,10 +62,10 @@ namespace GalaxyEggbert::CNA
         {
             switch (reason)
             {
-            case NetworkSessionEndReason::HostEndedSession: return "the host left";
-            case NetworkSessionEndReason::RemovedByHost: return "removed by the host";
-            case NetworkSessionEndReason::ClientSignedOut: return "signed out";
-            default: return "the connection was lost";
+            case NetworkSessionEndReason::HostEndedSession: return GalaxyEggbert::Game::TrMark("the host left");
+            case NetworkSessionEndReason::RemovedByHost: return GalaxyEggbert::Game::TrMark("removed by the host");
+            case NetworkSessionEndReason::ClientSignedOut: return GalaxyEggbert::Game::TrMark("signed out");
+            default: return GalaxyEggbert::Game::TrMark("the connection was lost");
             }
         }
     }
@@ -158,7 +160,7 @@ namespace GalaxyEggbert::CNA
             }
             catch (const std::exception& failure)
             {
-                error_ = std::string("the network could not start: ") + failure.what();
+                error_ = GalaxyEggbert::Game::TrFormat("the network could not start: {0}", {failure.what()});
                 return false;
             }
             servicesStarted_ = true;
@@ -176,7 +178,7 @@ namespace GalaxyEggbert::CNA
             }
             catch (const std::exception& failure)
             {
-                error_ = std::string("no sign-in: ") + failure.what();
+                error_ = GalaxyEggbert::Game::TrFormat("no sign-in: {0}", {failure.what()});
             }
             // GALAXY_NET_ACCOUNT=name:password: a test's account typed into the Guide (a test server's
             // disposable accounts only).
@@ -212,7 +214,7 @@ namespace GalaxyEggbert::CNA
         }
         catch (const std::exception& failure)
         {
-            error_ = std::string("no search: ") + failure.what();
+            error_ = GalaxyEggbert::Game::TrFormat("no search: {0}", {failure.what()});
             std::cout << "GalaxyEggbertCNA: multiplayer: " << error_ << std::endl;
             findResult_ = nullptr;
         }
@@ -240,7 +242,7 @@ namespace GalaxyEggbert::CNA
         }
         catch (const std::exception& failure)
         {
-            error_ = std::string("search failed: ") + failure.what();
+            error_ = GalaxyEggbert::Game::TrFormat("search failed: {0}", {failure.what()});
             std::cout << "GalaxyEggbertCNA: multiplayer: " << error_ << std::endl;
         }
         if (found_.size() != lastFoundCount_)
@@ -301,7 +303,7 @@ namespace GalaxyEggbert::CNA
         }
         catch (const std::exception& failure)
         {
-            error_ = std::string("the game could not be created: ") + failure.what();
+            error_ = GalaxyEggbert::Game::TrFormat("the game could not be created: {0}", {failure.what()});
             std::cout << "GalaxyEggbertCNA: multiplayer: " << error_ << std::endl;
             session_ = nullptr;
             return false;
@@ -323,7 +325,7 @@ namespace GalaxyEggbert::CNA
         }
         catch (const std::exception& failure)
         {
-            error_ = std::string("could not join: ") + failure.what();
+            error_ = GalaxyEggbert::Game::TrFormat("could not join: {0}", {failure.what()});
             std::cout << "GalaxyEggbertCNA: multiplayer: " << error_ << std::endl;
             session_ = nullptr;
             return false;
@@ -497,7 +499,7 @@ namespace GalaxyEggbert::CNA
         {
             error_ = failure.what();
             ended_ = true;
-            endReason_ = "the connection was lost";
+            endReason_ = GalaxyEggbert::Game::TrMark("the connection was lost");
             return;
         }
         if (session_ == nullptr) return;
@@ -572,7 +574,7 @@ namespace GalaxyEggbert::CNA
     bool NetSession::Available() noexcept { return false; }
     bool NetSession::SignIn(const std::string&)
     {
-        error_ = "this build has no network game";
+        error_ = GalaxyEggbert::Game::Tr("this build has no network game");
         return false;
     }
     std::string NetSession::LocalName() const { return {}; }

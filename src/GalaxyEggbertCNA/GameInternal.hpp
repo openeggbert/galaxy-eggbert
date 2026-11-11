@@ -6,6 +6,7 @@
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 #include <GalaxyEggbert/Def/ObjectType.hpp>
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
+#include <GalaxyEggbert/Game/Localization.hpp>
 
 #include <filesystem>
 

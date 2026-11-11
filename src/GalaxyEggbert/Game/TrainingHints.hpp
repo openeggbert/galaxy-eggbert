@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/HintZoneRecord.hpp>
+#include <GalaxyEggbert/Game/Localization.hpp>
 
 #include <string_view>
 #include <vector>
@@ -50,6 +51,10 @@ namespace GalaxyEggbert::Game
     // whatever order @p zones has; the first whose
     // record's gate is open wins (and, as above, an empty text still stops the
     // scan). A record index the mission's table does not have is skipped.
+    // Every hint text of the four tables in @p language (both variants; the empty ones too), for
+    // VerifyLocalization's check that each character has a glyph.
+    [[nodiscard]] std::vector<std::string_view> AllTrainingHintTexts(Language language);
+
     [[nodiscard]] std::string_view FindTrainingHintInZones(int mission, const std::vector<HintZoneRecord>& zones,
                                                            int gridX, int gridY, int gridZ, int treasuresCollected,
                                                            bool inAnyVehicle, bool hasDynamite,

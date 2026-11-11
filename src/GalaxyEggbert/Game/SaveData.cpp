@@ -68,6 +68,11 @@ namespace GalaxyEggbert::Game
             {
                 SetEffectsLevel(std::atoi(value.c_str()));
             }
+            else if (key == "language")
+            {
+                // A code the game knows, else none (the system's language).
+                language_ = ParseLanguage(value) ? std::string(LanguageCode(*ParseLanguage(value))) : std::string();
+            }
             else if (key == "frameRate")
             {
                 SetFrameRate(std::atoi(value.c_str()));
@@ -168,6 +173,7 @@ namespace GalaxyEggbert::Game
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
         out << "effectsLevel=" << effectsLevel_ << "\n";
         out << "frameRate=" << frameRate_ << "\n";
+        if (!language_.empty()) out << "language=" << language_ << "\n";
         out << "textureScale=" << textureScale_ << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         const auto writeSlot = [&out](const char* prefix, int gamer, const GamerSlot& slot)
