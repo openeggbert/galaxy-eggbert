@@ -524,12 +524,15 @@ namespace GalaxyEggbert::CNA
         const bool pickerUp = languagePicking_ && (phase_ == GalaxyEggbert::Def::GamePhase::Init ||
                                                    phase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
                                                    phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup);
-        if ((editorBrowsing || demoSlotsUp || netScreenUp || nicknameUp || pickerUp) && !SuppressLiveInput())
+        const bool setupUp = !nicknameUp && !pickerUp &&
+                             (phase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
+                              phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup);
+        if ((editorBrowsing || demoSlotsUp || netScreenUp || nicknameUp || pickerUp || setupUp) && !SuppressLiveInput())
         {
             const bool naming = demoNaming_ || worldEditor_.WantsText() || NetWantsText() || nicknameUp;
             unsigned now = 0;
             const auto bit = [&now](bool on, unsigned b) { if (on) now |= b; };
-            const bool dpad = padCursor || nicknameUp || pickerUp;
+            const bool dpad = padCursor || nicknameUp || pickerUp || setupUp;
             bit(phaseKeys.IsKeyDown(Keys::Up) || (dpad && pad.dpadUp), 1u);
             bit(phaseKeys.IsKeyDown(Keys::Down) || (dpad && pad.dpadDown), 2u);
             bit(phaseKeys.IsKeyDown(Keys::Left) || (dpad && pad.dpadLeft), 4u);
@@ -556,6 +559,9 @@ namespace GalaxyEggbert::CNA
                                  : nicknameUp   ? nicknameKeyboard_.Rects()
                                  : pickerUp     ? InputPad::LanguagePickerTargets(tickInput_.viewportWidth,
                                                                                   tickInput_.viewportHeight)
+                                 : setupUp      ? inputPad_.SetupTargets(tickInput_.viewportWidth, tickInput_.viewportHeight,
+                                                                         phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
+                                                                         saveData_.GetAccelActive())
                                                 : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
             focus = focusNavigator_.Update(targets, in);
             focusHighlight_.reset();
@@ -696,7 +702,7 @@ namespace GalaxyEggbert::CNA
             if (nicknameEditing_) UpdateNicknameEditing(focusMouse(mouse), escapePressed);
             else if (languagePicking_) UpdateLanguagePicker(focusMouse(mouse), escapePressed);
             const auto setupInput = nicknameWasEditing ? InputPad::SetupInput{}
-                                                       : inputPad_.UpdateSetup(mouse, viewport.getWidthProperty(),
+                                                       : inputPad_.UpdateSetup(focusMouse(mouse), viewport.getWidthProperty(),
                                                                                viewport.getHeightProperty(), isMainSetup,
                                                                                saveData_.GetAccelActive());
             if (setupInput.nicknamePressed && isMainSetup)

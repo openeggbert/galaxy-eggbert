@@ -479,6 +479,11 @@ namespace GalaxyEggbert::Game
         // The Setup's "Jump button on the right" (on by default): off, the stick and the Jump and
         // Action buttons trade sides (the original's getJumpRightProperty()).
         void SetJumpRight(bool jumpRight) noexcept { jumpRight_ = jumpRight; }
+        // The host's cached device capability, independent of the saved accelerometer option.
+        // Both Setup screens hide its controls and exclude them from input/focus when absent.
+        void SetAccelerometerSupported(bool supported) noexcept { accelSupported_ = supported; }
+        [[nodiscard]] std::vector<QuadBatch::Rect> SetupTargets(int viewportW, int viewportH,
+                                                              bool showReset, bool accelOn) const;
         [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH, bool showReset,
                                              bool accelOn = false) noexcept;
@@ -490,7 +495,7 @@ namespace GalaxyEggbert::Game
                        bool terrainRelief = true, int effectsLevel = 0, int frameRate = 60, int textureScale = 0,
                        // The selected player's name for Erase progress (SaveData::GetPlayerName: the
                        // nickname, or "Player A"); empty: "Player A".
-                       const std::string& playerName = {});
+                       const std::string& playerName = {}, std::optional<QuadBatch::Rect> focus = std::nullopt);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
@@ -984,6 +989,7 @@ namespace GalaxyEggbert::Game
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;
         int forwardTouchId_ = -1; // SetAccelerometerMode(): the Forward button's finger
         bool accelMode_ = false;
+        bool accelSupported_ = false;
 
         // Live D-pad drag offset (reference-space pixels from the pad's
         // center), used only to position the thumb icon in DrawPlay --

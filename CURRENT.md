@@ -61,6 +61,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Setup's Accelerometer and Sensitivity controls are hidden and ignore input on devices without
+  a sensor (2026-11-12, owner's request); support is probed once at startup, independently of the
+  saved option, which is preserved. Both Setup screens support arrow/gamepad focus over their
+  visible controls, with no layout reflow and no accelerometer emulation.
 - Twenty languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
   Portuguese, then Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (in 0.3.0), then Finnish,
   Danish, Norwegian, Turkish, Greek 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`

@@ -2403,6 +2403,28 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    std::vector<QuadBatch::Rect> InputPad::SetupTargets(int viewportW, int viewportH,
+                                                      bool showReset, bool accelOn) const
+    {
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        std::vector<Rect> targets{SetupFrameRateRect(m), SetupSoundsRect(m), SetupJumpRect(m), SetupZoomRect(m)};
+        if (accelSupported_) targets.push_back(SetupAccelRect(m));
+        targets.push_back(SetupSliderRect(0, m));
+        targets.push_back(SetupSliderRect(1, m));
+        if (accelSupported_ && accelOn) targets.push_back(SetupSliderRect(2, m));
+        targets.push_back(SetupTexturesRect(m));
+        targets.push_back(SetupTerrainRect(m));
+        targets.push_back(SetupEffectsRect(m));
+        if (showReset)
+        {
+            targets.push_back(SetupResetRect(m));
+            targets.push_back(SetupNicknameRect(m));
+        }
+        targets.push_back(SetupLanguageRect(m));
+        targets.push_back(SetupReturnRect(m));
+        return targets;
+    }
+
     InputPad::SetupInput InputPad::UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                     int viewportW, int viewportH, bool showReset,
                                                     bool accelOn) noexcept
@@ -2419,7 +2441,7 @@ namespace GalaxyEggbert::Game
         const bool overSounds = InRect(mouseX, mouseY, SetupSoundsRect(m));
         const bool overJump = InRect(mouseX, mouseY, SetupJumpRect(m));
         const bool overZoom = InRect(mouseX, mouseY, SetupZoomRect(m));
-        const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
+        const bool overAccel = accelSupported_ && InRect(mouseX, mouseY, SetupAccelRect(m));
         const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
         const bool overEffectsToggle = InRect(mouseX, mouseY, SetupEffectsRect(m));
         const bool overFrameRate = InRect(mouseX, mouseY, SetupFrameRateRect(m));
@@ -2430,7 +2452,7 @@ namespace GalaxyEggbert::Game
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
         const bool overMusic = InRect(mouseX, mouseY, SetupSliderRect(1, m));
-        const bool overSensitivity = accelOn && InRect(mouseX, mouseY, SetupSliderRect(2, m));
+        const bool overSensitivity = accelSupported_ && accelOn && InRect(mouseX, mouseY, SetupSliderRect(2, m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -2460,13 +2482,13 @@ namespace GalaxyEggbert::Game
             const int volume = static_cast<int>(std::lround(SetupSliderValueAt(which, mouseX, m) * 100.0f));
             (which == 0 ? result.effectsVolume : result.musicVolume) = volume;
         }
-        if (mouseDown && activeControl_ == kSetupControlAccelSensitivity)
+        if (mouseDown && accelSupported_ && accelOn && activeControl_ == kSetupControlAccelSensitivity)
         {
             result.accelSensitivity = static_cast<int>(std::lround(SetupSliderValueAt(2, mouseX, m) * 100.0f));
         }
         if (!mouseDown && mouseWasDown_ &&
             (activeControl_ == kSetupControlEffectsVolume || activeControl_ == kSetupControlMusicVolume ||
-             activeControl_ == kSetupControlAccelSensitivity))
+             (accelSupported_ && accelOn && activeControl_ == kSetupControlAccelSensitivity)))
         {
             result.volumeReleased = true;
         }
@@ -2498,7 +2520,8 @@ namespace GalaxyEggbert::Game
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
                               GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, int effectsLevel,
-                              int frameRate, int textureScale, const std::string& playerName)
+                              int frameRate, int textureScale, const std::string& playerName,
+                              std::optional<QuadBatch::Rect> focus)
     {
         if (!loaded_)
         {
@@ -2591,14 +2614,12 @@ namespace GalaxyEggbert::Game
                 AppendLeftAlignedLabel(labelQuads, text.substr(newline + 1), leftX, centerY + 12.0f * scale, scale);
             };
 
-            // Real icon SWAP (not just opacity) for the 3 toggle-style
-            // buttons -- Jump/Zoom/Accel have no real state tracked in
-            // this engine (no meaningful desktop equivalent, see class
-            // comment), so they always render the "off" icon.
+            // Real icon swap for each toggle's saved state.
             appendButton(SetupSoundsRect(m), soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
             appendButton(SetupJumpRect(m), jumpRight ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlJump);
             appendButton(SetupZoomRect(m), autoZoom ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlZoom);
-            appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
+            if (accelSupported_)
+                appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
             appendButton(SetupTerrainRect(m), terrainRelief ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlTerrain);
             appendButton(SetupEffectsRect(m), effectsLevel > 0 ? kIconSetupToggleOn : kIconSetupToggleOff,
@@ -2631,7 +2652,7 @@ namespace GalaxyEggbert::Game
                 const float jaugeSheetH = LogicalHeight(jaugeTexture_);
                 const int volumes[3] = {effectsVolume, musicVolume, accelSensitivity};
                 const char* const names[3] = {TrMark("Sound effects"), TrMark("Music"), TrMark("Sensitivity")};
-                for (int which = 0; which < (accel ? 3 : 2); ++which)
+                for (int which = 0; which < (accelSupported_ && accel ? 3 : 2); ++which)
                 {
                     const Rect block = SetupSliderRect(which, m);
                     const Rect track = SetupSliderTrackRect(which, m);
@@ -2659,7 +2680,7 @@ namespace GalaxyEggbert::Game
             }
             appendLabel(SetupJumpRect(m), Tr("Jump button on the right"));
             appendLabel(SetupZoomRect(m), Tr("Automatic zoom on action"));
-            appendLabel(SetupAccelRect(m), Tr("Accelerometer"));
+            if (accelSupported_) appendLabel(SetupAccelRect(m), Tr("Accelerometer"));
             appendLabel(SetupTerrainRect(m), Tr("3D terrain"));
             {
                 // Its level under it: a press steps to the next (off, low, medium, high, ultra).
@@ -2686,6 +2707,14 @@ namespace GalaxyEggbert::Game
                 appendLabel(SetupResetRect(m), resetLabel);
             }
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
+            if (focus)
+            {
+                const Rect f = *focus;
+                Quad q{f.x0 - 4.0f * scale, f.y0 - 4.0f * scale,
+                       f.x1 + 4.0f * scale, f.y1 + 4.0f * scale};
+                PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1, TextureScaleOf(&padTexture_));
+                pressedQuads.push_back(q);
+            }
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
