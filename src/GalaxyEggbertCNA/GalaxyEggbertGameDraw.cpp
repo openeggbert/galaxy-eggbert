@@ -822,6 +822,9 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetTextureScale(), saveData_.GetPlayerName(saveData_.GetSelectedGamer()));
                 if (nicknameEditing_ && phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
                     DrawNicknameEditing(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (languagePicking_)
+                    inputPad_.DrawLanguagePicker(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                                 focusHighlight_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {
@@ -868,7 +871,12 @@ namespace GalaxyEggbert::CNA
                                        TrFormat("Version {0}", {GalaxyEggbert::VersionString()}),
                                        BuildStampText());
                 }
-                if (demoSlotsShown_)
+                if (languagePicking_ && !goodbyeShown_)
+                {
+                    inputPad_.DrawLanguagePicker(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                                 focusHighlight_);
+                }
+                else if (demoSlotsShown_)
                 {
                     // Over the pause screen's own picture, as from Pause (the menu's buttons hidden).
                     inputPad_.DrawPause(device, viewport.getWidthProperty(), viewport.getHeightProperty(), false, false,

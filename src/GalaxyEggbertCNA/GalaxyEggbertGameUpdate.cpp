@@ -502,12 +502,16 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::FocusNavigator::Output focus;
         // The Setup's nickname panel: its keyboard on the screen, by the arrows and a gamepad's d-pad and A.
         const bool nicknameUp = nicknameEditing_ && phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
-        if ((editorBrowsing || demoSlotsUp || netScreenUp || nicknameUp) && !SuppressLiveInput())
+        // The language picker: its flags and Back, by the arrows, a gamepad's d-pad and A.
+        const bool pickerUp = languagePicking_ && (phase_ == GalaxyEggbert::Def::GamePhase::Init ||
+                                                   phase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
+                                                   phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup);
+        if ((editorBrowsing || demoSlotsUp || netScreenUp || nicknameUp || pickerUp) && !SuppressLiveInput())
         {
             const bool naming = demoNaming_ || worldEditor_.WantsText() || NetWantsText() || nicknameUp;
             unsigned now = 0;
             const auto bit = [&now](bool on, unsigned b) { if (on) now |= b; };
-            const bool dpad = padCursor || nicknameUp;
+            const bool dpad = padCursor || nicknameUp || pickerUp;
             bit(phaseKeys.IsKeyDown(Keys::Up) || (dpad && pad.dpadUp), 1u);
             bit(phaseKeys.IsKeyDown(Keys::Down) || (dpad && pad.dpadDown), 2u);
             bit(phaseKeys.IsKeyDown(Keys::Left) || (dpad && pad.dpadLeft), 4u);
@@ -532,6 +536,8 @@ namespace GalaxyEggbert::CNA
             const auto targets = editorBrowsing ? worldEditor_.BrowserFocusTargets()
                                  : netScreenUp  ? NetFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight)
                                  : nicknameUp   ? nicknameKeyboard_.Rects()
+                                 : pickerUp     ? InputPad::LanguagePickerTargets(tickInput_.viewportWidth,
+                                                                                  tickInput_.viewportHeight)
                                                 : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
             focus = focusNavigator_.Update(targets, in);
             focusHighlight_.reset();
@@ -668,8 +674,9 @@ namespace GalaxyEggbert::CNA
             const auto mouse = CurrentMouseState();
             const bool escapePressed = phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_;
             // While the nickname is typed only its panel answers; the Escape that closes it stays in Setup.
-            const bool nicknameWasEditing = nicknameEditing_;
+            const bool nicknameWasEditing = nicknameEditing_ || languagePicking_;
             if (nicknameEditing_) UpdateNicknameEditing(focusMouse(mouse), escapePressed);
+            else if (languagePicking_) UpdateLanguagePicker(focusMouse(mouse), escapePressed);
             const auto setupInput = nicknameWasEditing ? InputPad::SetupInput{}
                                                        : inputPad_.UpdateSetup(mouse, viewport.getWidthProperty(),
                                                                                viewport.getHeightProperty(), isMainSetup,
@@ -680,8 +687,8 @@ namespace GalaxyEggbert::CNA
             }
             if (setupInput.languagePressed)
             {
-                // The Setup's Language (BD-0126): the next language, saved at once as the toggles.
-                NextLanguage();
+                // The Setup's Language (BD-0126): the language picker over the Setup.
+                OpenLanguagePicker();
             }
             if (setupInput.soundsToggled)
             {
@@ -850,6 +857,14 @@ namespace GalaxyEggbert::CNA
                 pauseKeyWasDown_ = escape;
                 return true;
             }
+            if (languagePicking_)
+            {
+                // The language picker over the menu: only it answers; Escape closes it, not the game.
+                const bool escape = phaseKeys.IsKeyDown(Keys::Escape);
+                UpdateLanguagePicker(mouse, escape && !pauseKeyWasDown_);
+                pauseKeyWasDown_ = escape;
+                return true;
+            }
             auto initInput = inputPad_.UpdateInit(
                 mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
             if (initInput.multiplayerPressed)
@@ -926,10 +941,13 @@ namespace GalaxyEggbert::CNA
                 interaction_.SetLives(saveData_.GetHasProgress() ? saveData_.GetLives() : 3);
                 SetPhase(GalaxyEggbert::Def::GamePhase::Play);
             }
-            else if (initInput.setupPressed || initInput.languagePressed)
+            else if (initInput.languagePressed)
             {
-                // The flag (the owner, 2026-11-12) opens the same Setup, its Language button pointed out.
-                inputPad_.SpotlightSetupLanguage(initInput.languagePressed);
+                // The flag (the owner, 2026-11-12): the language picker, over the menu.
+                OpenLanguagePicker();
+            }
+            else if (initInput.setupPressed)
+            {
                 SetPhase(GalaxyEggbert::Def::GamePhase::MainSetup);
             }
             else if (initInput.editorPressed)
@@ -1133,7 +1151,6 @@ namespace GalaxyEggbert::CNA
         else if (mouseSetupPressed)
         {
             // Real PauseSetup: SetPhase(PlaySetup).
-            inputPad_.SpotlightSetupLanguage(false);
             SetPhase(GalaxyEggbert::Def::GamePhase::PlaySetup);
         }
         else if (mouseMenuPressed)

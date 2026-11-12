@@ -59,7 +59,8 @@ when called without arguments, paths from `BASH_SOURCE`, scratch output under `b
 
 ## Texts and languages
 
-Every text the player sees is in English, French, German and Czech (owner Q-023, BD-0126;
+Every text the player sees is in English, French, German, Czech, Slovak, Spanish, Italian, Polish and
+Brazilian Portuguese (owner Q-023, BD-0126;
 `src/GalaxyEggbert/Game/Localization.hpp`). The English is the key:
 
 - `Tr("Continue")` shows a text where it is written;
@@ -69,16 +70,19 @@ Every text the player sees is in English, French, German and Czech (owner Q-023,
   whole so a language can put the values where its word order wants them. Never build a shown
   sentence with `+`;
 - `TrCount("{0} place", "{0} places", n, {count})` is a number with its noun: the first when `n` is 1,
-  else the second, whose Czech holds two forms joined by `|` (2-4, then 0 and 5 and more).
+  else the second, whose Czech, Slovak and Polish hold two forms joined by `|` (the "few" form, then the
+  "many": Czech and Slovak 2-4; Polish 2-4, 22-24, ... but not 12-14).
 
-A new text needs its translation in `src/GalaxyEggbert/Game/TranslationsFr.cpp`, `TranslationsDe.cpp`
-and `TranslationsCs.cpp` (in its source's group). `VerifyLocalization` (CTest) reads the sources'
+A new text needs its translation in every `src/GalaxyEggbert/Game/Translations<Code>.cpp` (in its
+source's group). `VerifyLocalization` (CTest) reads the sources'
 `Tr`/`TrMark`/`TrFormat`/`TrCount` literals and fails on one without a translation, on a translation no
-code asks for, on placeholders that differ, and on a character text.png cannot draw (the original's
-lower-case à â é è ë ê ï î ô ù û ä ö ü ç, and Galaxy's glyphs 128-170 from `tools/make_text_glyphs.py`:
-á č ď ě í ň ó ř š ť ú ů ý ž, their capitals, Ä Ö Ü, À Â Ç È Ê Ë Î Ï Ô Ù Û; no ß, write "ss"; write
-"oe" for the ligature). A letter more is a line in that script's table, run again, and its width in
-`TextMetrics::kWidth`. The training hints keep their texts beside the English in `TrainingHints.cpp`'s
+code asks for, on placeholders or end spaces that differ, and on a character text.png cannot draw (the
+original's lower-case à â é è ë ê ï î ô ù û ä ö ü ç, and Galaxy's glyphs 128-205 from
+`tools/make_text_glyphs.py`: the Czech, Slovak, Polish, Spanish, Italian and Portuguese letters, the
+capitals with marks, ¿ ¡ °; no ß, write "ss"; write "oe" for the ligature). A letter more is a line in that script's table, run again, and its width in
+`TextMetrics::kWidth`. A language more: its enum value at the end of `Language` and `kLanguages`, its
+code and name in `Localization.cpp`, a table, a column in the training hints, a flag in
+`tools/make_flags.py`. The training hints keep their texts beside the English in `TrainingHints.cpp`'s
 table.
 
 Text is UTF-8: a layout walks it with `TextMetrics::NextGlyph` and shortens it with

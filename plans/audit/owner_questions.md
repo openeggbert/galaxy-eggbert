@@ -538,3 +538,12 @@ recommended options):
   0.1.x was (tag, GitHub release, the site), and the site's pages brought up to date (they still name
   1.0.0-rc1 in places).
 
+**More languages and a picker of flags (2026-11-12, the owner).** Slovak, Spanish, Italian, Polish and
+Portuguese; the menu's flag opens a menu of flags. Decided meanwhile, open to change:
+- **Portuguese is Brazil's** (pt-BR, "você", Brazil's flag), as proposed: more players than Portugal's.
+  A Portugal variant would be a second table of the same keys with its own flag.
+- **Spain's flag without its arms** (the civil flag); Slovakia's arms simplified; Brazil's without its
+  stars and motto (at 48 x 32 they are not legible).
+- The French, German, Slovak, Spanish, Italian, Polish and Portuguese of Galaxy's own texts wait for a
+  native speaker's reading; the owner reads the Czech (and can judge the Slovak).
+

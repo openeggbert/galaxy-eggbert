@@ -1640,7 +1640,7 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
-## BD-0126 — the game in French, German and Czech, and a Language button in the Setup (owner, Q-023) — FIXED_AND_VERIFIED
+## BD-0126 — the game in nine languages, and a language picker of flags (owner, Q-023) — FIXED_AND_VERIFIED
 
 - Original: Mobile Eggbert shows its texts in French or English, from the system's language
   (MyResource::Init: "fr" French, anything else English); there is no choice in the game. Its
@@ -1678,6 +1678,17 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   drawn by `tools/make_flags.py` from the flags' geometry). A press opens the Setup, whose Language
   button pulses for its first 3 s (`InputPad::SpotlightSetupLanguage`); the gear opens it without.
   Checked live: the flag, the pulse, the flag changing with the language.
+- **2026-11-12, five more languages and a picker of flags (the owner):** Slovak, Spanish, Italian, Polish
+  and Brazilian Portuguese (TranslationsSk/Es/It/Pl/Pt.cpp; the training hints now a column a language,
+  `std::array` by `LanguageIndex`). text.png's glyphs 171-205 (ĺ ľ ŕ, ñ ¿ ¡, ì ò, ą ć ę ł ń ś ź ż, ã õ,
+  their capitals, °; º drawn as °); Slovak and Polish plurals in `TrCount`. The menu's flag and the
+  Setup's Language button open a picker (`InputPad::DrawLanguagePicker`): the nine flags with their
+  languages' own names, the current one lit, Back; mouse, touch, the arrows and a gamepad (FocusNavigator);
+  a flag chooses its language and closes it (the flag's pulsing Setup of the morning gone). Flags drawn
+  by `tools/make_flags.py` (Slovakia's arms simplified, Spain's civil flag, Brazil without its stars).
+  Validation: VerifyLocalization (392 texts in each of eight languages, every character drawable, the
+  plurals, the spaces at the ends), CTest; live: the picker over the menu and the Setup, its focus, a
+  choice, Escape; every checked screen in the five new languages.
 
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 

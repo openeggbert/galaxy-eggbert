@@ -267,8 +267,8 @@ namespace GalaxyEggbert::Game
         {"The world {0} could not be started.", "Svět {0} se nepodařilo spustit."},
         {"Mission #{0} could not be started.", "Misi č. {0} se nepodařilo spustit."},
         {"Back in the match !", "Zpátky ve hře!"},
-        {"{0} kill, ", "{0} zásah,"},
-        {"{0} kills, ", "{0} zásahy, |{0} zásahů,"},
+        {"{0} kill, ", "{0} zásah, "},
+        {"{0} kills, ", "{0} zásahy, |{0} zásahů, "},
         {"{0} death", "{0} smrt"},
         {"{0} deaths", "{0} smrti|{0} smrtí"},
         {"{0} could not be read.", "{0} se nepodařilo přečíst."},
@@ -434,6 +434,8 @@ namespace GalaxyEggbert::Game
         {"SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection", "MEZERNÍK/POLOŽ: položit   SHIFT + NUMPAD: rozšířit 3D výběr"},
         {"NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys", "NUMPAD: pevná souřadnice  NUMPAD5: znovu zamířit  H: skrýt klávesy"},
         {"H: keys", "H: klávesy"},
+        // The language picker (InputPad::DrawLanguagePicker)
+        {"Language", "Jazyk"},
     };
     extern const std::size_t kCzechTranslationCount = std::size(kCzechTranslations);
 }

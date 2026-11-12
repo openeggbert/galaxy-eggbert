@@ -18,7 +18,7 @@ Run from the repository: python3 tools/make_text_glyphs.py (it reads the eight o
 can run again). Prints each new glyph's width for TextMetrics::kWidth.
 """
 import sys
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageDraw
 
 # (character, base character, mark). Marks: acute, grave, circumflex, caron, diaeresis, ring, cedilla,
 # apostrophe (the caron of ď and ť).
@@ -35,7 +35,20 @@ GLYPHS = [
     ('À', 'A', 'grave'), ('Â', 'A', 'circumflex'), ('Ç', 'C', 'cedilla'), ('È', 'E', 'grave'),
     ('Ê', 'E', 'circumflex'), ('Ë', 'E', 'diaeresis'), ('Î', 'I', 'circumflex'),
     ('Ï', 'I', 'diaeresis'), ('Ô', 'O', 'circumflex'), ('Ù', 'U', 'grave'), ('Û', 'U', 'circumflex'),
+    # 171 on (2026-11-12): Slovak, Spanish, Italian, Polish, Portuguese and the degree sign.
+    ('ĺ', 'l', 'acute'), ('ľ', 'l', 'apostrophe'), ('ŕ', 'r', 'acute'), ('Ĺ', 'L', 'acute'),
+    ('Ľ', 'L', 'apostrophe'), ('Ŕ', 'R', 'acute'),
+    ('ñ', 'n', 'tilde'), ('Ñ', 'N', 'tilde'), ('¿', '?', 'rotate'), ('¡', '!', 'rotate'),
+    ('ì', 'ı', 'grave'), ('ò', 'o', 'grave'), ('Ì', 'I', 'grave'), ('Ò', 'O', 'grave'),
+    ('ą', 'a', 'ogonek'), ('ć', 'c', 'acute'), ('ę', 'e', 'ogonek'), ('ł', 'l', 'stroke'),
+    ('ń', 'n', 'acute'), ('ś', 's', 'acute'), ('ź', 'z', 'acute'), ('ż', 'z', 'dot'),
+    ('Ą', 'A', 'ogonek'), ('Ć', 'C', 'acute'), ('Ę', 'E', 'ogonek'), ('Ł', 'L', 'stroke'),
+    ('Ń', 'N', 'acute'), ('Ś', 'S', 'acute'), ('Ź', 'Z', 'acute'), ('Ż', 'Z', 'dot'),
+    ('ã', 'a', 'tilde'), ('õ', 'o', 'tilde'), ('Ã', 'A', 'tilde'), ('Õ', 'O', 'tilde'),
+    ('°', ' ', 'degree'),
 ]
+# The marks drawn above the letter (a capital, or an l, made shorter for them).
+ABOVE = {'acute', 'grave', 'circumflex', 'caron', 'diaeresis', 'ring', 'tilde', 'dot'}
 FIRST = 128
 # The original's accented letters (TextMetrics::kAccented, glyphs 15-29).
 ACCENTED = 'üàâéèëêïîôùûäöç'
@@ -97,10 +110,22 @@ def make(sheet, s):
             box = ink(q)
             m = q.crop(box)
             return m.resize((max(2, round(m.width * 0.8)), max(2, round(m.height * 0.8))), Image.LANCZOS), 0
-        if name == 'cedilla':
+        if name in ('cedilla', 'ogonek'):
             c = glyph('ç')
             box = ink(c, BASELINE * s)
-            return c.crop((box[0], BASELINE * s, box[2], box[3])), None
+            m = c.crop((box[0], BASELINE * s, box[2], box[3]))
+            # The ogonek is the cedilla's hook turned the other way, at the letter's right.
+            return (m.transpose(Image.FLIP_LEFT_RIGHT) if name == 'ogonek' else m), None
+        if name == 'tilde':
+            t = glyph('~')
+            m = t.crop(ink(t))
+            h = min(m.height, 5 * s)
+            return m.resize((m.width, h), Image.LANCZOS) if h != m.height else m, (X_HEIGHT - 2) * s
+        if name == 'dot':
+            i = glyph('i')
+            box = ink(i, 0, (X_HEIGHT - 2) * s)
+            box = (box[0], box[1], min(box[2], box[0] + 6 * s), box[3])  # the dot, not the sheet's stray right edge
+            return i.crop(box), box[3]
         source = {'acute': 'é', 'grave': 'è', 'circumflex': 'ê', 'caron': 'ê', 'diaeresis': 'ë'}[name]
         g = glyph(source)
         box = ink(g, 0, (X_HEIGHT - 1) * s)
@@ -118,20 +143,56 @@ def make(sheet, s):
     out = Image.new('L', (16 * cell, 8 * cell), 0)
     widths = []
     for k, (ch, base, name) in enumerate(GLYPHS):
+        at = ((k % 16) * cell, (k // 16) * cell)
         g = glyph(base)
         width = WIDTH[index_of(base)] * s
         capital = base.isupper()
+        if name == 'rotate':
+            # ¿ and ¡: ? and ! turned over, hanging from the x-height down below the baseline.
+            box = ink(g)
+            piece = g.crop(box).rotate(180)
+            turned = Image.new('L', (cell, cell), 0)
+            turned.paste(piece, (box[0], min((X_HEIGHT - 1) * s, cell - piece.height)))
+            widths.append(width)
+            out.paste(turned, at)
+            continue
+        if name == 'degree':
+            m, _ = mark('ring')
+            g = union(Image.new('L', (cell, cell), 0), m, (2 * s, 1 * s))
+            widths.append(m.width + 2 * s)
+            out.paste(g, at)
+            continue
+        if name == 'stroke':
+            # ł and Ł: a bar across the stem, as thick as the stem, rising to the right.
+            top = (CAP_TOP if capital else 0) * s
+            stem = ink(g, top, (X_HEIGHT + 4) * s)
+            thick = max(2 * s, stem[2] - stem[0])
+            cx = (stem[0] + stem[2]) / 2.0
+            cy = (12 if capital else 13) * s
+            k4 = 4
+            big = Image.new('L', (cell * k4, cell * k4), 0)
+            ImageDraw.Draw(big).line([((cx - 4.5 * s) * k4, (cy + 2.5 * s) * k4), ((cx + 4.5 * s) * k4, (cy - 2.5 * s) * k4)],
+                                     fill=255, width=int(thick * 0.8 * k4))
+            bar = big.resize((cell, cell), Image.LANCZOS)
+            g = ImageChops.lighter(g, bar)
+            widths.append(max(width, int(cx + 4.5 * s + 1) - 2 * s))
+            out.paste(g, at)
+            continue
+        tall = name in ABOVE and (capital or base == 'l')
         body = ink(g, (CAP_TOP if capital else X_HEIGHT) * s, BASELINE * s)
         m, bottom = mark(name)
-        if capital and name != 'cedilla':
-            # Shorter, so that the mark fits above it: the rows from CAP_TOP to the baseline squeezed
-            # into CAP_SHORT_TOP..BASELINE (the width kept), the mark made as small as the room left.
-            top, base_row = CAP_TOP * s, BASELINE * s
+        if tall:
+            # Shorter, so that the mark fits above it: the rows from the letter's top to the baseline
+            # squeezed into CAP_SHORT_TOP..BASELINE (the width kept), the mark made as small as the
+            # room left.
+            top, base_row = (CAP_TOP * s if capital else ink(g)[1]), BASELINE * s
             letter = g.crop((0, top, cell, base_row)).resize((cell, base_row - CAP_SHORT_TOP * s), Image.LANCZOS)
             squeezed = Image.new('L', (cell, cell), 0)
             squeezed.paste(g.crop((0, base_row, cell, cell)), (0, base_row))  # anything below the baseline
             squeezed.paste(letter, (0, CAP_SHORT_TOP * s))
             g = squeezed
+            if base == 'l':
+                body = ink(g, CAP_SHORT_TOP * s, BASELINE * s)
             room = CAP_SHORT_TOP * s - s  # rows 0..CAP_SHORT_TOP-2, one row clear above the letter
             if m.height > room:
                 f = room / m.height
@@ -139,6 +200,12 @@ def make(sheet, s):
             y = CAP_SHORT_TOP * s - s - m.height
         elif name == 'cedilla':
             y = BASELINE * s
+        elif name == 'ogonek':
+            letter = ink(g)
+            g = union(g, m, (letter[2] - m.width - s, BASELINE * s - 2 * s))
+            widths.append(width)
+            out.paste(g, at)
+            continue
         elif name == 'apostrophe':
             stem = ink(g, 0, (X_HEIGHT - 2) * s)  # the ascender above the body
             x = stem[2] + s
@@ -146,14 +213,14 @@ def make(sheet, s):
             y = max(0, min(stem[1], (X_HEIGHT - 2) * s - m.height - s))
             g = union(g, m, (x, y))
             widths.append(max(width, (x + m.width) - 2 * s))
-            out.paste(g, ((k % 16) * cell, (k // 16) * cell))
+            out.paste(g, at)
             continue
         else:
             y = bottom - m.height if bottom is not None else 0
-        x = (body[0] + body[2]) // 2 - m.width // 2
+        x = max(0, (body[0] + body[2]) // 2 - m.width // 2)
         g = union(g, m, (x, y))
         widths.append(width)
-        out.paste(g, ((k % 16) * cell, (k // 16) * cell))
+        out.paste(g, at)
     rgba = Image.new('RGBA', out.size, (0, 0, 0, 0))
     rgba.putalpha(out)
     return rgba, widths

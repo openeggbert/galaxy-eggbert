@@ -97,7 +97,14 @@ namespace
         Check(ParseLanguage("de") == Language::German && ParseLanguage("de_AT.UTF-8") == Language::German &&
                   ParseLanguage("cs-CZ") == Language::Czech && ParseLanguage("cs") == Language::Czech,
               "German and Czech codes and locale names");
-        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("sk-SK") && !ParseLanguage("fra") &&
+        Check(ParseLanguage("sk-SK") == Language::Slovak && ParseLanguage("es_MX") == Language::Spanish &&
+                  ParseLanguage("it") == Language::Italian && ParseLanguage("pl-PL") == Language::Polish &&
+                  ParseLanguage("pt-BR") == Language::Portuguese && ParseLanguage("pt_PT.UTF-8") == Language::Portuguese,
+              "the other languages' codes and locale names");
+        for (const Language language : kLanguages)
+            Check(ParseLanguage(LanguageCode(language)) == language && kLanguages[LanguageIndex(language)] == language,
+                  "a language's code reads back as it, its index is its place");
+        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("hu-HU") && !ParseLanguage("fra") &&
                   !ParseLanguage("") && !ParseLanguage("C"),
               "English, and no language for the others");
         SetLanguage(Language::English);
@@ -119,6 +126,18 @@ namespace
               "TrCount: Czech 1, 2-4, 0 and 5+");
         SetLanguage(Language::German);
         Check(TrCount("{0} place", "{0} places", 4, {"4"}) == "4 Orte" && Tr("Continue") == "Weiter", "German");
+        SetLanguage(Language::Slovak);
+        Check(TrCount("{0} place", "{0} places", 3, {"3"}) == "3 miesta" &&
+                  TrCount("{0} place", "{0} places", 7, {"7"}) == "7 miest",
+              "TrCount: Slovak 2-4 and 5+");
+        SetLanguage(Language::Polish);
+        Check(TrCount("{0} place", "{0} places", 2, {"2"}) == "2 miejsca" &&
+                  TrCount("{0} place", "{0} places", 5, {"5"}) == "5 miejsc" &&
+                  TrCount("{0} place", "{0} places", 12, {"12"}) == "12 miejsc" &&
+                  TrCount("{0} place", "{0} places", 22, {"22"}) == "22 miejsca",
+              "TrCount: Polish 2-4 and 22-24 but not 12-14");
+        SetLanguage(Language::Spanish);
+        Check(TrCount("{0} place", "{0} places", 2, {"2"}) == "2 lugares" && Tr("Language") == "Idioma", "Spanish");
         SetLanguage(Language::English);
     }
 
@@ -376,6 +395,17 @@ namespace
                     from = bar + 1;
                 }
                 Check(!text.empty(), name + ": an empty translation of \"" + Shown(key) + "\"");
+                // A space the key starts or ends with (a piece joined to others: "{0} kill, ") every form
+                // keeps too.
+                for (std::size_t from = 0;;)
+                {
+                    const std::size_t bar = text.find('|', from);
+                    const std::string_view form = text.substr(from, bar == std::string_view::npos ? text.npos : bar - from);
+                    Check(form.empty() || key.empty() || (key.back() == ' ') == (form.back() == ' '),
+                          name + ": the space at the end differs: \"" + Shown(key) + "\" / \"" + Shown(form) + "\"");
+                    if (bar == std::string_view::npos) break;
+                    from = bar + 1;
+                }
                 CheckDrawable(text, name);
             }
             for (const std::string_view hint : AllTrainingHintTexts(language)) CheckDrawable(hint, name + " training hint");

@@ -630,6 +630,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
+        languagePicking_ = false; // the language picker belongs to the screen it was opened over
         using GalaxyEggbert::Def::GamePhase;
         if (next != GamePhase::Pause) demoSlotsShown_ = false;
         if (next != GamePhase::Pause) revertArmed_ = false;

@@ -486,6 +486,8 @@ namespace GalaxyEggbert::Game
         {"NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys",
          "PAVÉ NUM : coordonnée fixe  PAVÉ NUM 5 : viser à nouveau  H : cacher les touches"},
         {"H: keys", "H : touches"},
+        // The language picker (InputPad::DrawLanguagePicker)
+        {"Language", "Langue"},
     };
     extern const std::size_t kFrenchTranslationCount = std::size(kFrenchTranslations);
 }

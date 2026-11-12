@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <initializer_list>
+#include <iterator>
 #include <optional>
 #include <span>
 #include <string>
@@ -25,21 +26,35 @@ namespace GalaxyEggbert::Game
         French,
         German,
         Czech,
+        Slovak,
+        Spanish,
+        Italian,
+        Polish,
+        Portuguese, // Brazil's (pt-BR)
     };
 
-    // In the order the Setup's Language button goes through them.
-    inline constexpr Language kLanguages[] = {Language::English, Language::French, Language::German, Language::Czech};
+    // Every language, in the enum's order (an index into kLanguages is the enum's value): the order of
+    // the language picker's flags and of a table by language (TrainingHints.cpp).
+    inline constexpr Language kLanguages[] = {Language::English, Language::French,  Language::German,
+                                              Language::Czech,   Language::Slovak,  Language::Spanish,
+                                              Language::Italian, Language::Polish,  Language::Portuguese};
+    inline constexpr std::size_t kLanguageCount = std::size(kLanguages);
+    [[nodiscard]] constexpr std::size_t LanguageIndex(Language language) noexcept
+    {
+        return static_cast<std::size_t>(language);
+    }
 
     // The language texts are shown in; English until the host chooses (GalaxyEggbertGame's constructor).
     [[nodiscard]] Language CurrentLanguage() noexcept;
     void SetLanguage(Language language) noexcept;
 
-    // "en", "fr", "de", "cs": the save file's `language=` and what ParseLanguage reads back.
+    // "en", "fr", "de", "cs", "sk", "es", "it", "pl", "pt": the save file's `language=` and what
+    // ParseLanguage reads back.
     [[nodiscard]] std::string_view LanguageCode(Language language) noexcept;
-    // The language's own name, as the Setup shows it ("English", "Français", "Deutsch", "Čeština").
+    // The language's own name, as the Setup and the picker show it ("English", "Français", ...).
     [[nodiscard]] std::string_view LanguageName(Language language) noexcept;
     // The language of a code or locale name: "fr", "fr-CA", "fr_FR.UTF-8", "FR" give French, "en..."
-    // English, "de..." German, "cs..." Czech; anything else (a language the game has no texts in)
+    // English, and so on for the others' codes; anything else (a language the game has no texts in)
     // nothing.
     [[nodiscard]] std::optional<Language> ParseLanguage(std::string_view codeOrLocale) noexcept;
 
@@ -59,8 +74,9 @@ namespace GalaxyEggbert::Game
     // put them where its word order wants them.
     [[nodiscard]] std::string TrFormat(std::string_view english, std::initializer_list<std::string_view> args);
     // TrFormat of @p one when @p count is 1, else of @p other: a number's noun in its form. A language
-    // with more than one plural writes them in @p other's translation joined by '|': Czech the form
-    // for 2-4, then the one for 0 and 5 and more ("{0} brány|{0} bran").
+    // with more than one plural writes them in @p other's translation joined by '|', the "few" form
+    // first, then the "many": Czech and Slovak few for 2-4 ("{0} brány|{0} bran"), Polish few for
+    // 2-4, 22-24, 32-34, ... but not 12-14.
     [[nodiscard]] std::string TrCount(std::string_view one, std::string_view other, long long count,
                                       std::initializer_list<std::string_view> args);
 

@@ -19,9 +19,9 @@ namespace GalaxyEggbert::Game::TextMetrics
     // Robert Vokac): pixels at scale 1 per glyph index. For printable ASCII
     // the glyph index is the character code (its table_char is the identity
     // there).
-    // Glyphs 128-170 are Galaxy's (tools/make_text_glyphs.py, owner Q-023 2026-11-12): the letters
-    // Czech, German and French need that the sheet had not, kExtraGlyphs below; their widths are
-    // their base letters' (ď's a little more: its caron beside the stem).
+    // Glyphs 128-205 are Galaxy's (tools/make_text_glyphs.py, owner Q-023 2026-11-12): the letters
+    // the game's languages need that the sheet had not, kExtraGlyphs below; their widths are their
+    // base letters' (ď, ľ, ł a little more: the caron beside the stem, the bar across it).
     inline constexpr std::uint8_t kWidth[256] = {
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 32, 14, 13, 15, 15, 15, 15,
@@ -42,6 +42,10 @@ namespace GalaxyEggbert::Game::TextMetrics
         18, 17, 18, 16, 16, 15, 22, 22, 16, 18, 15, 19, 19, 18, 19,
         18, 22, 19,
         18, 18, 17, 16, 16, 16, 15, 15, 22, 19, 19,
+        // 171-205 (ĺ ľ ŕ Ĺ Ľ Ŕ, ñ Ñ ¿ ¡, ì ò Ì Ò, ą ć ę ł ń ś ź ż, Ą Ć Ę Ł Ń Ś Ź Ż, ã õ Ã Õ, °)
+        6, 9, 12, 14, 14, 16, 16, 22, 14, 5, 6, 14, 15, 22,
+        15, 13, 15, 9, 16, 14, 14, 14, 18, 17, 16, 14, 22, 18, 19, 19,
+        15, 14, 18, 22, 8,
     };
 
     // The glyph the original draws for a character it has no picture of (Text::GetOffset's
@@ -68,6 +72,9 @@ namespace GalaxyEggbert::Game::TextMetrics
         U'Á', U'Č', U'Ď', U'É', U'Ě', U'Í', U'Ň', U'Ó', U'Ř', U'Š', U'Ť', U'Ú', U'Ů', U'Ý', U'Ž',
         U'Ä', U'Ö', U'Ü',
         U'À', U'Â', U'Ç', U'È', U'Ê', U'Ë', U'Î', U'Ï', U'Ô', U'Ù', U'Û',
+        U'ĺ', U'ľ', U'ŕ', U'Ĺ', U'Ľ', U'Ŕ', U'ñ', U'Ñ', U'¿', U'¡', U'ì', U'ò', U'Ì', U'Ò',
+        U'ą', U'ć', U'ę', U'ł', U'ń', U'ś', U'ź', U'ż', U'Ą', U'Ć', U'Ę', U'Ł', U'Ń', U'Ś', U'Ź', U'Ż',
+        U'ã', U'õ', U'Ã', U'Õ', U'°',
     };
     inline constexpr int kFirstExtraGlyph = 128;
 
@@ -115,6 +122,7 @@ namespace GalaxyEggbert::Game::TextMetrics
             case U'‘': case U'’': return '\'';
             case U'“': case U'”': case U'«': case U'»': return '"';
             case U'–': case U'—': return '-';
+            case U'º': return GlyphOf(U'°'); // Portuguese's "1º", "nº": the degree's ring
             default: return kUnknownGlyph;
         }
     }
