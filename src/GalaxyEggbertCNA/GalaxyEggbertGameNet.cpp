@@ -568,7 +568,7 @@ namespace GalaxyEggbert::CNA
                 // internet's games or the local network's.
                 PanelButton server;
                 server.rect = rect(20.0f, 80.0f, 320.0f, 108.0f);
-                server.label = !n.session.Online() ? TrFormat("Server: {0}", {n.server.empty() ? std::string(Tr("none")) : n.server})
+                server.label = !n.session.Online() ? (n.server.empty() ? std::string(Tr("Server: none")) : TrFormat("Server: {0}", {n.server}))
                                : std::string(!n.signedIn ? Tr("Sign in at the server")
                                              : n.session.Internet() ? Tr("Internet games (local: here)")
                                                                     : Tr("Local games (internet: here)"));
@@ -581,7 +581,7 @@ namespace GalaxyEggbert::CNA
             {
                 PanelButton address;
                 address.rect = rect(330.0f, 80.0f, 620.0f, 108.0f);
-                address.label = TrFormat("Host address: {0}", {n.address.empty() ? std::string(Tr("none")) : n.address});
+                address.label = n.address.empty() ? std::string(Tr("Host address: none")) : TrFormat("Host address: {0}", {n.address});
                 address.size = 0.42f;
                 address.enabled = !n.session.Active();
                 l.buttons.push_back(address);
@@ -681,7 +681,7 @@ namespace GalaxyEggbert::CNA
         }
         // The match's settings (Galaxy's, Q-022): the host's to change, everyone's to see.
         const std::string livesText = TrFormat("Lives: {0}", {std::to_string(n.lobby.state.lives)});
-        const std::string timeText = TrFormat("Time limit: {0}", {Net::TimeLimitText(n.lobby.state.minutes)});
+        const std::string timeText = Net::TimeLimitText(n.lobby.state.minutes);
         if (host)
         {
             for (const auto& [action, x0, x1, label] :

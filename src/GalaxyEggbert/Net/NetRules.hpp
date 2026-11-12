@@ -76,9 +76,12 @@ namespace GalaxyEggbert::Net
     inline constexpr std::string_view kTextTimeUpShared = Game::TrMark("Time is up ! You share the first place.");
     // The time limits the host offers (minutes; 0 none) and its lives (the original's ten, fewer).
     inline constexpr int kTimeLimits[] = {0, 3, 5, 10, 15, 20, 30};
+    // The lobby's time-limit button. "none" is a sentence of its own in each case, not a shared
+    // word: French's "aucun" agrees with its noun (une durée, une adresse: "aucune").
     [[nodiscard]] inline std::string TimeLimitText(int minutes)
     {
-        return minutes <= 0 ? std::string(Game::Tr("none")) : Game::TrFormat("{0} min", {std::to_string(minutes)});
+        return minutes <= 0 ? std::string(Game::Tr("Time limit: none"))
+                            : Game::TrFormat("Time limit: {0} min", {std::to_string(minutes)});
     }
     [[nodiscard]] inline std::string ClockText(float seconds)
     {
