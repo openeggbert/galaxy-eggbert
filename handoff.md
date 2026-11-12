@@ -81,6 +81,15 @@ permission check refused that build ("code from external") and a download of Kit
 it: it needs the owner's permission. Without a newer libcurl the only other way is a build without gamer
 services, i.e. without the network game.
 
+## Release 0.4.1 (2026-11-12, the owner) — tagged and published
+
+`v0.4.1` (b59e0a00): the goodbye screen names galaxyeggbert.com; the Setup's Accelerometer option only
+where there is an accelerometer. Android versionCode 8 (the next published APK needs 9). Built against CNA
+`011460b7f` (clean); packages in `build-probe/release/0.4.1/`, checked as 0.4.0's (Linux Greek, Windows
+Turkish, web Finnish with the flags' panel, APK 8 / 0.4.1). Network protocol 5 (plays with 0.4.0, 0.3.0).
+The project site (`web/`) and galaxyeggbert.com name 0.4.1. The owner then introduces an AI policy (as
+FNA's) for Galaxy Eggbert.
+
 ## Release 0.4.0 (2026-11-12, the owner's choice) — tagged and published
 
 `v0.4.0` on the release commit (f482335c); GitHub release "Galaxy Eggbert 0.4.0" with the four packages,
