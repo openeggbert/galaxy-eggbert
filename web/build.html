@@ -83,7 +83,7 @@
     <tr><td>Web (Emscripten)</td><td><code>WEBGL2</code></td><td><code>build-cna-webgl2/</code></td><td><span class="badge badge-wip">Manual</span> verified in headless Chrome, not in CI</td></tr>
     <tr><td>Android (Gradle)</td><td><code>OPENGLES3</code></td><td><code>android/app/build/</code></td><td><span class="badge badge-wip">Emulator</span> builds and runs, not played on a device</td></tr>
     <tr><td>Windows (MinGW)</td><td><code>SDLGPU</code> planned</td><td><code>build-windows/</code></td><td><span class="badge badge-planned">Not verified</span></td></tr>
-    <tr><td><a href="#release">Release packages</a></td><td>Linux archive + Android APK</td><td>a Release desktop tree</td><td><span class="badge badge-done">Published</span> 0.3.0 on 2026-11-12 (a GitHub release)</td></tr>
+    <tr><td><a href="#release">Release packages</a></td><td>Linux archive + Android APK</td><td>a Release desktop tree</td><td><span class="badge badge-done">Published</span> 0.4.0 on 2026-11-12 (a GitHub release)</td></tr>
   </table>
 
   <h2>Before you configure</h2>
@@ -139,14 +139,14 @@ cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4</code></p
   <p>
     The <code>package</code> target (CPack, <code>TGZ</code>) makes a relocatable x86-64 archive,
     <code>GalaxyEggbert-&lt;version&gt;-linux-x86_64.tar.gz</code> (the version from <code>VERSION.txt</code>,
-    e.g. <code>GalaxyEggbert-0.3.0-linux-x86_64.tar.gz</code>), in the build directory. Configure the tree as
+    e.g. <code>GalaxyEggbert-0.4.0-linux-x86_64.tar.gz</code>), in the build directory. Configure the tree as
     Release. <code>README.md</code> does this in a separate <code>build-package</code> directory; the
     same target in the desktop tree, as below, should work equally but has not been run separately:
   </p>
 <pre><code>cmake -S . -B build-cna-opengl3 -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-cna-opengl3 --target package --parallel 4
-tar -xzf build-cna-opengl3/GalaxyEggbert-0.3.0-linux-x86_64.tar.gz
-./GalaxyEggbert-0.3.0-linux-x86_64/run-galaxy-eggbert</code></pre>
+tar -xzf build-cna-opengl3/GalaxyEggbert-0.4.0-linux-x86_64.tar.gz
+./GalaxyEggbert-0.4.0-linux-x86_64/run-galaxy-eggbert</code></pre>
   <p>
     The archive holds the executable, the launcher <code>run-galaxy-eggbert</code> (it enters its own
     directory and starts the game with your arguments), <code>Content/</code>, <code>worlds/</code>,
@@ -173,7 +173,7 @@ tar -xzf build-cna-opengl3/GalaxyEggbert-0.3.0-linux-x86_64.tar.gz
 <pre><code>tools/release/make_release.sh build-cna-opengl3 &lt;out-dir&gt;              # Linux archive + Android APK
 tools/release/make_release.sh build-cna-opengl3 &lt;out-dir&gt; --no-android # Linux archive only</code></pre>
   <ul>
-    <li><strong>Version</strong>: the first line of <code>VERSION.txt</code> (<code>0.3.0</code> as of
+    <li><strong>Version</strong>: the first line of <code>VERSION.txt</code> (<code>0.4.0</code> as of
       2026-11-12). CMake puts it in the archive's name, and Gradle uses it as the APK's
       <code>versionName</code>.</li>
     <li><strong>Linux</strong>: builds <code>GalaxyEggbertCNA</code> and the <code>package</code> target, moves
