@@ -466,14 +466,33 @@ namespace GalaxyEggbert::CNA
                   << saveData_.GetLanguage() << "\", system \"" << system << "\")." << std::endl;
     }
 
-    void GalaxyEggbertGame::NextLanguage()
+    void GalaxyEggbertGame::ChooseLanguage(Language language)
     {
-        std::size_t index = 0;
-        while (index < std::size(kLanguages) && kLanguages[index] != CurrentLanguage()) ++index;
-        const Language next = kLanguages[(index + 1) % std::size(kLanguages)];
-        saveData_.SetLanguage(std::string(LanguageCode(next)));
+        saveData_.SetLanguage(std::string(LanguageCode(language)));
         SavePlayerData();
         ApplyLanguage();
+    }
+
+    void GalaxyEggbertGame::OpenLanguagePicker()
+    {
+        languagePicking_ = true;
+        inputPad_.ResetLanguagePicker(); // the press that opened it does not choose
+    }
+
+    void GalaxyEggbertGame::UpdateLanguagePicker(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                 bool escapePressed)
+    {
+        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        const auto input = inputPad_.UpdateLanguagePicker(mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+        if (input.chosen >= 0 && static_cast<std::size_t>(input.chosen) < kLanguageCount)
+        {
+            ChooseLanguage(kLanguages[static_cast<std::size_t>(input.chosen)]);
+            languagePicking_ = false;
+        }
+        else if (input.backPressed || escapePressed)
+        {
+            languagePicking_ = false;
+        }
     }
 
     void GalaxyEggbertGame::ApplyFrameRate()

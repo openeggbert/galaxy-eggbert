@@ -434,6 +434,8 @@ namespace GalaxyEggbert::Game
         {"SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection", "LEERTASTE/SETZEN: setzen   SHIFT + ZEHNERBLOCK: 3D-Auswahl erweitern"},
         {"NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys", "ZEHNERBLOCK: feste Koordinate  ZEHNERBLOCK 5: neu zielen  H: Tasten verbergen"},
         {"H: keys", "H: Tasten"},
+        // The language picker (InputPad::DrawLanguagePicker)
+        {"Language", "Sprache"},
     };
     extern const std::size_t kGermanTranslationCount = std::size(kGermanTranslations);
 }

@@ -1,18 +1,29 @@
 #include "Localization.hpp"
 
+#include <array>
 #include <atomic>
 #include <cctype>
 #include <unordered_map>
 
 namespace GalaxyEggbert::Game
 {
-    // TranslationsFr.cpp, TranslationsDe.cpp, TranslationsCs.cpp.
+    // Translations<Code>.cpp, one a language but English.
     extern const Translation kFrenchTranslations[];
     extern const std::size_t kFrenchTranslationCount;
     extern const Translation kGermanTranslations[];
     extern const std::size_t kGermanTranslationCount;
     extern const Translation kCzechTranslations[];
     extern const std::size_t kCzechTranslationCount;
+    extern const Translation kSlovakTranslations[];
+    extern const std::size_t kSlovakTranslationCount;
+    extern const Translation kSpanishTranslations[];
+    extern const std::size_t kSpanishTranslationCount;
+    extern const Translation kItalianTranslations[];
+    extern const std::size_t kItalianTranslationCount;
+    extern const Translation kPolishTranslations[];
+    extern const std::size_t kPolishTranslationCount;
+    extern const Translation kPortugueseTranslations[];
+    extern const std::size_t kPortugueseTranslationCount;
 
     namespace
     {
@@ -31,21 +42,27 @@ namespace GalaxyEggbert::Game
             return built;
         }
 
-        // The language's table, built on its first use.
+        // The language's table (English none), all built on the first use of one.
         const Table* TableOf(Language language)
         {
-            static const Table french = Build(Translations(Language::French));
-            static const Table german = Build(Translations(Language::German));
-            static const Table czech = Build(Translations(Language::Czech));
-            switch (language)
+            static const std::array<Table, kLanguageCount> tables = []
             {
-                case Language::French: return &french;
-                case Language::German: return &german;
-                case Language::Czech: return &czech;
-                case Language::English: break;
-            }
-            return nullptr;
+                std::array<Table, kLanguageCount> built;
+                for (const Language each : kLanguages) built[LanguageIndex(each)] = Build(Translations(each));
+                return built;
+            }();
+            return language == Language::English ? nullptr : &tables[LanguageIndex(language)];
         }
+
+        struct LanguageInfo
+        {
+            std::string_view code;
+            std::string_view name;
+        };
+        constexpr std::array<LanguageInfo, kLanguageCount> kInfo{{
+            {"en", "English"},  {"fr", "Français"}, {"de", "Deutsch"},  {"cs", "Čeština"},   {"sk", "Slovenčina"},
+            {"es", "Español"},  {"it", "Italiano"}, {"pl", "Polski"},   {"pt", "Português"},
+        }};
     }
 
     Language CurrentLanguage() noexcept
@@ -60,26 +77,12 @@ namespace GalaxyEggbert::Game
 
     std::string_view LanguageCode(Language language) noexcept
     {
-        switch (language)
-        {
-            case Language::French: return "fr";
-            case Language::German: return "de";
-            case Language::Czech: return "cs";
-            case Language::English: break;
-        }
-        return "en";
+        return kInfo[LanguageIndex(language)].code;
     }
 
     std::string_view LanguageName(Language language) noexcept
     {
-        switch (language)
-        {
-            case Language::French: return "Français";
-            case Language::German: return "Deutsch";
-            case Language::Czech: return "Čeština";
-            case Language::English: break;
-        }
-        return "English";
+        return kInfo[LanguageIndex(language)].name;
     }
 
     std::optional<Language> ParseLanguage(std::string_view codeOrLocale) noexcept
@@ -88,23 +91,14 @@ namespace GalaxyEggbert::Game
         {
             return std::nullopt;
         }
-        const char first = static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[0])));
-        const char second = static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[1])));
-        if (first == 'f' && second == 'r')
+        const char code[2] = {static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[0]))),
+                              static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[1])))};
+        for (const Language language : kLanguages)
         {
-            return Language::French;
-        }
-        if (first == 'e' && second == 'n')
-        {
-            return Language::English;
-        }
-        if (first == 'd' && second == 'e')
-        {
-            return Language::German;
-        }
-        if (first == 'c' && second == 's')
-        {
-            return Language::Czech;
+            if (kInfo[LanguageIndex(language)].code == std::string_view(code, 2))
+            {
+                return language;
+            }
         }
         return std::nullopt;
     }
@@ -158,8 +152,11 @@ namespace GalaxyEggbert::Game
         const auto bar = forms.find('|');
         if (bar != std::string_view::npos)
         {
-            // Czech: 2-4 the first form, 0 and 5 and more the second.
-            const bool few = CurrentLanguage() == Language::Czech && count >= 2 && count <= 4;
+            // The "few" form, then the "many" (the language's own rule; 0 is "many").
+            const Language language = CurrentLanguage();
+            const long long tens = count % 100, units = count % 10;
+            const bool few = ((language == Language::Czech || language == Language::Slovak) && count >= 2 && count <= 4) ||
+                             (language == Language::Polish && units >= 2 && units <= 4 && !(tens >= 12 && tens <= 14));
             forms = few ? forms.substr(0, bar) : forms.substr(bar + 1);
         }
         return Format(forms, args);
@@ -172,6 +169,11 @@ namespace GalaxyEggbert::Game
             case Language::French: return {kFrenchTranslations, kFrenchTranslationCount};
             case Language::German: return {kGermanTranslations, kGermanTranslationCount};
             case Language::Czech: return {kCzechTranslations, kCzechTranslationCount};
+            case Language::Slovak: return {kSlovakTranslations, kSlovakTranslationCount};
+            case Language::Spanish: return {kSpanishTranslations, kSpanishTranslationCount};
+            case Language::Italian: return {kItalianTranslations, kItalianTranslationCount};
+            case Language::Polish: return {kPolishTranslations, kPolishTranslationCount};
+            case Language::Portuguese: return {kPortugueseTranslations, kPortugueseTranslationCount};
             case Language::English: break;
         }
         return {};

@@ -798,14 +798,26 @@ namespace GalaxyEggbert::Game
             // Galaxy's own (2026-11-10, the owner's network game): the games on the network.
             bool multiplayerPressed = false;
             // Galaxy's own (the owner, 2026-11-12): the flag of the language the game speaks, right of
-            // Help; it opens the Setup, its Language button pointed out (SpotlightSetupLanguage).
+            // Help; it opens the language picker (DrawLanguagePicker).
             bool languagePressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
-        // The next Setup points out its Language button (it pulses for a few seconds): the menu's flag
-        // was pressed; off for a Setup opened otherwise.
-        void SpotlightSetupLanguage(bool on) noexcept { spotlightSetupLanguage_ = on; }
+        // The language picker (the owner, 2026-11-12): the flags of the game's languages in a grid over
+        // the menu or the Setup, each with the language's own name; a press chooses it. Opened by the
+        // menu's flag and the Setup's Language button.
+        struct LanguagePickerInput
+        {
+            int chosen = -1;          // the index (kLanguages) of a flag released over
+            bool backPressed = false; // Back, or a click off the panel
+        };
+        [[nodiscard]] LanguagePickerInput UpdateLanguagePicker(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                               int viewportW, int viewportH) noexcept;
+        void DrawLanguagePicker(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                                std::optional<QuadBatch::Rect> focus = std::nullopt);
+        // What the arrows and a gamepad choose among (FocusNavigator): the flags, then Back.
+        [[nodiscard]] static std::vector<QuadBatch::Rect> LanguagePickerTargets(int viewportW, int viewportH);
+        void ResetLanguagePicker() noexcept { pickerActive_ = -1; pickerMouseWasDown_ = true; }
         // What a gamer slot's button shows (Game1::DrawButtonGamerText()).
         struct InitGamerInfo
         {
@@ -964,8 +976,9 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flagsEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> flagsRenderer_;
         bool flagsLoaded_ = false;
-        // The Setup's Language button pulses for its first seconds (reached by the menu's flag).
-        bool spotlightSetupLanguage_ = false;
+        // The language picker's press in progress (a flag's index, kPickerBack, kPickerOutside; -1 none).
+        int pickerActive_ = -1;
+        bool pickerMouseWasDown_ = true;
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;

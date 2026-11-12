@@ -354,7 +354,6 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlTextures = 12;
         constexpr int kSetupControlNickname = 13;
         constexpr int kSetupControlLanguage = 14;
-        constexpr float kSetupLanguageSpotlightSeconds = 3.2f; // the Language button's pulse (menu's flag)
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -1938,6 +1937,138 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    namespace
+    {
+        constexpr int kPickerBack = 100;
+        constexpr int kPickerOutside = 101;
+        constexpr int kPickerColumns = 3;
+
+        struct PickerLayout
+        {
+            QuadBatch::Rect panel;
+            std::array<QuadBatch::Rect, kLanguageCount> cells;
+            QuadBatch::Rect back;
+            float s;
+        };
+
+        // The panel in the 640x480 reference height, centred: the title, three rows of three flags, Back.
+        PickerLayout ComputePickerLayout(int viewportW, int viewportH) noexcept
+        {
+            PickerLayout l{};
+            const float s = static_cast<float>(viewportH) / 480.0f;
+            const float cx = static_cast<float>(viewportW) * 0.5f;
+            l.s = s;
+            l.panel = {cx - 245.0f * s, 22.0f * s, cx + 245.0f * s, 468.0f * s};
+            for (std::size_t i = 0; i < kLanguageCount; ++i)
+            {
+                const float col = static_cast<float>(i % kPickerColumns), row = static_cast<float>(i / kPickerColumns);
+                const float x0 = cx - 225.0f * s + col * 155.0f * s, y0 = 78.0f * s + row * 113.0f * s;
+                l.cells[i] = {x0, y0, x0 + 140.0f * s, y0 + 103.0f * s};
+            }
+            l.back = {cx - 80.0f * s, 418.0f * s, cx + 80.0f * s, 460.0f * s};
+            return l;
+        }
+    }
+
+    std::vector<QuadBatch::Rect> InputPad::LanguagePickerTargets(int viewportW, int viewportH)
+    {
+        const auto l = ComputePickerLayout(viewportW, viewportH);
+        std::vector<QuadBatch::Rect> targets(l.cells.begin(), l.cells.end());
+        targets.push_back(l.back);
+        return targets;
+    }
+
+    InputPad::LanguagePickerInput InputPad::UpdateLanguagePicker(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                                 int viewportW, int viewportH) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+        LanguagePickerInput result;
+        const auto l = ComputePickerLayout(viewportW, viewportH);
+        const float x = static_cast<float>(mouse.getXProperty()), y = static_cast<float>(mouse.getYProperty());
+        const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+        const auto over = [&]() {
+            for (std::size_t i = 0; i < kLanguageCount; ++i)
+                if (InRect(x, y, l.cells[i])) return static_cast<int>(i);
+            if (InRect(x, y, l.back)) return kPickerBack;
+            return InRect(x, y, l.panel) ? -1 : kPickerOutside;
+        };
+        if (down && !pickerMouseWasDown_) pickerActive_ = over();
+        if (!down && pickerMouseWasDown_ && pickerActive_ != -1)
+        {
+            // Released over what it was pressed on: a flag chooses its language; Back or off the panel closes.
+            if (over() == pickerActive_)
+            {
+                if (pickerActive_ == kPickerBack || pickerActive_ == kPickerOutside) result.backPressed = true;
+                else result.chosen = pickerActive_;
+            }
+            pickerActive_ = -1;
+        }
+        pickerMouseWasDown_ = down;
+        return result;
+    }
+
+    void InputPad::DrawLanguagePicker(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                      int viewportH, std::optional<QuadBatch::Rect> focus)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+        const auto l = ComputePickerLayout(viewportW, viewportH);
+        const float s = l.s;
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
+        std::vector<Quad> panels, normal, pressed, flags, labels;
+        const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
+            Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(index, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            bucket.push_back(q);
+        };
+        const auto centred = [&](std::string_view text, float cx, float top, float size, float room) {
+            const float width = TextMetrics::Width(text) * size * s;
+            const float fitted = width > room ? size * room / width : size;
+            AppendGamerLabel(labels, text, cx - TextMetrics::Width(text) * fitted * s * 0.5f,
+                             top + (size - fitted) * 16.0f * s, fitted, s);
+        };
+        // Twice: a panel the screen under it shows through only faintly (the Setup's own labels).
+        icon(panels, l.panel, kInitPanelIcon);
+        icon(panels, l.panel, kInitPanelIcon);
+        const float cx = (l.panel.x0 + l.panel.x1) * 0.5f;
+        centred(Tr("Language"), cx, 32.0f * s, 0.75f, 440.0f * s);
+        const float cells = static_cast<float>(kLanguageCount);
+        for (std::size_t i = 0; i < kLanguageCount; ++i)
+        {
+            const Rect& r = l.cells[i];
+            // The language the game speaks shows lit; so does the one being pressed.
+            const bool lit = kLanguages[i] == CurrentLanguage() || pickerActive_ == static_cast<int>(i);
+            icon(lit ? pressed : normal, r, 21);
+            const float mid = (r.x0 + r.x1) * 0.5f;
+            if (flagsLoaded_)
+            {
+                const float fw = 72.0f * s, fh = 48.0f * s;
+                Quad flag{mid - fw * 0.5f, r.y0 + 12.0f * s, mid + fw * 0.5f, r.y0 + 12.0f * s + fh,
+                          static_cast<float>(i) / cells, 0.0f, static_cast<float>(i + 1) / cells, 1.0f};
+                flags.push_back(flag);
+            }
+            centred(LanguageName(kLanguages[i]), mid, r.y0 + 64.0f * s, 0.62f, 124.0f * s);
+        }
+        icon(pickerActive_ == kPickerBack ? pressed : normal, l.back, 21);
+        centred(Tr("Back"), cx, l.back.y0 + 6.0f * s, 0.62f, 150.0f * s);
+        if (focus)
+        {
+            const Rect f = *focus;
+            icon(pressed, Rect{f.x0 - 4.0f * s, f.y0 - 4.0f * s, f.x1 + 4.0f * s, f.y1 + 4.0f * s}, 21);
+        }
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.95f);
+        FlushQuads(device, *padEffect_, padRenderer_, normal, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressed, viewportW, viewportH, kPausePressedAlpha);
+        if (flagsLoaded_ && !flags.empty())
+            FlushQuads(device, *flagsEffect_, flagsRenderer_, flags, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     InputPad::PauseInput InputPad::UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                     int viewportW, int viewportH,
                                                     bool showBack, bool showRestart, bool showRecord,
@@ -2478,19 +2609,6 @@ namespace GalaxyEggbert::Game
             {
                 const Rect language = SetupLanguageRect(m);
                 appendButton(language, 21, kSetupControlLanguage);
-                // Reached by the menu's flag: it pulses for its first seconds (the lit face, as the
-                // keyboard's choice is shown, breathing out and in).
-                if (spotlightSetupLanguage_ && phaseTimeSeconds < kSetupLanguageSpotlightSeconds)
-                {
-                    const float grow = (3.0f + 5.0f * 0.5f * (1.0f - std::cos(phaseTimeSeconds * 2.0f * 3.14159265f * 1.25f))) * scale;
-                    Quad glow;
-                    glow.x0 = language.x0 - grow;
-                    glow.y0 = language.y0 - grow;
-                    glow.x1 = language.x1 + grow;
-                    glow.y1 = language.y1 + grow;
-                    PadIconUv(21, padSheetW, padSheetH, glow.u0, glow.v0, glow.u1, glow.v1);
-                    pressedQuads.push_back(glow);
-                }
                 AppendCenteredLabel(labelQuads, LanguageName(CurrentLanguage()), (language.x0 + language.x1) * 0.5f,
                                     (language.y0 + language.y1) * 0.5f - 12.0f * scale, scale);
             }

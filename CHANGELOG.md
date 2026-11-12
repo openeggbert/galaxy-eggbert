@@ -9,6 +9,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- The game in Slovak, Spanish, Italian, Polish and Brazilian Portuguese: nine languages in all. The
+  font has the letters they need.
+- A language picker: the main menu's flag and the Setup's Language button open the nine flags with
+  their languages' names; a press chooses one.
+
+### Fixed
+
+- Czech: the network game's results put a space after the kill count again ("3 zásahů, 1 smrt").
+
 ## [0.2.0] — 2026-11-12
 
 The game in French, German and Czech, and the terrain's hitch on a change gone. Packages for

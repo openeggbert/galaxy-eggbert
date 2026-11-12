@@ -747,9 +747,14 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool FrameRateInterpolates() const noexcept;
         // The texts' language (Localization.hpp, the owner's Q-023): the Setup's choice, else the
         // system's (CNA's UI culture, from the platform's preferred languages, as Mobile Eggbert's
-        // MyResource reads the system's), else English. NextLanguage: the Setup's Language button.
+        // MyResource reads the system's), else English. The language picker (InputPad::DrawLanguagePicker,
+        // the owner, 2026-11-12), over the main menu or the Setup: opened by the menu's flag and the Setup's
+        // Language button; a flag chooses its language (saved at once), Back, Escape or a click off it closes.
         void ApplyLanguage();
-        void NextLanguage();
+        void ChooseLanguage(GalaxyEggbert::Game::Language language);
+        void OpenLanguagePicker();
+        void UpdateLanguagePicker(const Microsoft::Xna::Framework::Input::MouseState& mouse, bool escapePressed);
+        bool languagePicking_ = false;
         bool frameRateInterpolating_ = false;
         bool frameRateApplied_ = false;
         double tickClock_ = 0.0;      // seconds since the last step
