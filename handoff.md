@@ -6,7 +6,37 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-12 (release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Five more languages (2026-11-12 evening, the owner after 0.3.0) — done on branch `localization`
+
+Finnish, Danish, Norwegian (Bokmål; the system's "no" and "nn" too), Turkish, Greek (BD-0126): their tables
+(`Translations{Fi,Da,Nb,Tr,El}.cpp`), the hints' columns, five flags, the picker 5 x 4. text.png's glyphs
+268-324 (æ ø and Greek rendered from Comic Relief, Turkish's composed; 0-267 byte-equal). The owner's order
+after this: the glibc 2.35 Linux archive, then the campaign; **no release until all of it is done** (the
+owner: "wait for everything"). Screenshots `build-probe/l10n/{fi,da,nb,tr,el}-*`, `picker20/`, `fix-*`.
+
+## The Linux archive for glibc 2.35 (2026-11-12, the owner after 0.3.0) — in progress on branch `localization`
+
+`tools/release/make_linux_glibc235.sh <out>` builds the Linux archive in a rootless Ubuntu 22.04 root:
+`~/deps/ubuntu-22.04-root` (ubuntu-base 22.04.5, sha256 checked) entered by `~/deps/ubuntu-22.04-enter.sh`
+(unshare: root mapped to the user, 1-65535 to /etc/subuid's range; /rv, the ccache directory, ~/deps and the
+Android SDK's cmake bound at their paths). In the root: GCC 13 (ppa:ubuntu-toolchain-r/test) and the CI's
+-dev packages without FFmpeg. CMake is the Android SDK's 4.1.2 (glibc 2.28; Ubuntu's 3.22 is older than
+easy-gl's 3.23; a download of Kitware's binary was refused by the permission check). The tree is
+`build-probe/glibc235/tree`, SDL its own `build-probe/glibc235/sdl-prebuilt` (never CNA's shared one, built
+for the host's glibc). libstdc++/libgcc static, CNA_ENABLE_VIDEO/WAVEBANK_CODECS OFF (music is stb_vorbis).
+No ccache inside: its 4.5 must not write into the host's 4.11 cache.
+
+**Where it stopped (blocked, Q-018 point 5):** SDL3 and SDL3_mixer are built in the root
+(`build-probe/glibc235/sdl-prebuilt`); CNA's configure then stops: `modules/gamer-services` requires
+libcurl 7.85 (it uses CURLOPT_PROTOCOLS_STR), Ubuntu 22.04 has 7.81. The way on is a static libcurl built in
+the root: Ubuntu 24.04's signed source package curl 8.5.0-2ubuntu10 is already fetched (`/root/src` in the
+root, `apt-get source` against Ubuntu's signed index); building it into `~/deps/curl-8.5.0-jammy` (static,
+OpenSSL + zlib, no tools) and passing `-DCURL_ROOT=` or `CMAKE_PREFIX_PATH` is the next step. The
+permission check refused that build ("code from external") and a download of Kitware's CMake binary before
+it: it needs the owner's permission. Without a newer libcurl the only other way is a build without gamer
+services, i.e. without the network game.
 
 ## Release 0.3.0 (2026-11-12, the owner: "after the further languages") — tagged and published
 
