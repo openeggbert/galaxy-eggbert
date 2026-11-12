@@ -30,34 +30,29 @@ namespace GalaxyEggbert::Editor
         constexpr int kIconTrash = 20;
         constexpr int kIconBlank = 21;
         constexpr float kGlyphCellPx = 32.0f;
-        constexpr int kGlyphCols = 16;
         constexpr float kPanelOpacity = 0.3f;
         constexpr float kPressedOpacity = 0.6f;
         constexpr float kFaintOpacity = 0.5f;
 
-        void PadIconUv(Quad& q, int icon, float sheetW, float sheetH)
+        void PadIconUv(Quad& q, int icon, float sheetW, float sheetH, int textureScale)
         {
-            const int col = icon % kPadCols;
-            const int row = icon / kPadCols;
-            q.u0 = static_cast<float>(col) * kPadCellPx / sheetW;
-            q.v0 = static_cast<float>(row) * kPadCellPx / sheetH;
-            q.u1 = static_cast<float>(col + 1) * kPadCellPx / sheetW;
-            q.v1 = static_cast<float>(row + 1) * kPadCellPx / sheetH;
+            const auto uv = Game::AtlasCellUv(icon, kPadCols, kPadCellPx, kPadCellPx, sheetW, sheetH, textureScale);
+            q.u0 = uv.u0;
+            q.v0 = uv.v0;
+            q.u1 = uv.u1;
+            q.v1 = uv.v1;
         }
 
         void AppendLabel(std::vector<Quad>& quads, std::string_view text, float leftX, float topY, float scale,
-                         float sheetW, float sheetH)
+                         float sheetW, float sheetH, int textureScale)
         {
             float penX = leftX;
             for (std::size_t at = 0; at < text.size();)
             {
                 const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at);
-                const int col = rank % kGlyphCols;
-                const int row = rank / kGlyphCols;
+                const auto uv = GalaxyEggbert::Game::TextMetrics::GlyphUv(rank, sheetW, sheetH, textureScale);
                 Quad q{penX, topY, penX + kGlyphCellPx * scale, topY + kGlyphCellPx * scale,
-                       static_cast<float>(col) * kGlyphCellPx / sheetW, static_cast<float>(row) * kGlyphCellPx / sheetH,
-                       static_cast<float>(col + 1) * kGlyphCellPx / sheetW,
-                       static_cast<float>(row + 1) * kGlyphCellPx / sheetH};
+                       uv.u0, uv.v0, uv.u1, uv.v1};
                 quads.push_back(q);
                 penX += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * scale;
             }
@@ -560,7 +555,7 @@ namespace GalaxyEggbert::Editor
         std::vector<Quad> panels, buttons, pressed, labels, faint;
         const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
-            PadIconUv(q, index, padW, padH);
+            PadIconUv(q, index, padW, padH, Game::TextureScaleOf(&padTexture_));
             bucket.push_back(q);
         };
         const bool held = mouseWasDown_;
@@ -568,7 +563,7 @@ namespace GalaxyEggbert::Editor
             icon(held && InRect(mouseX_, mouseY_, r) ? pressed : buttons, r, index);
         };
         const auto text = [&](std::vector<Quad>& bucket, std::string_view line, float x, float y, float scale) {
-            AppendLabel(bucket, line, x, y, scale, textW, textH);
+            AppendLabel(bucket, line, x, y, scale, textW, textH, Game::TextureScaleOf(&textTexture_));
         };
         // Centred on @p r, smaller when a translation is wider than the button and a little more.
         const auto centred = [&](std::vector<Quad>& bucket, std::string_view line, const Rect& r, float y, float scale) {

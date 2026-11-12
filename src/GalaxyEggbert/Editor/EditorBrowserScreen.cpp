@@ -59,7 +59,6 @@ namespace GalaxyEggbert::Editor
         // use of the same well-known asset convention, not an attempt to
         // build a shared text system.
         constexpr float kGlyphCellPx = 32.0f;
-        constexpr int kGlyphCols = 16;
         constexpr float kTitleScale = 0.6f;
         constexpr float kCaptionScale = 0.5f;
         constexpr float kNumberScale = 0.9f;
@@ -67,37 +66,35 @@ namespace GalaxyEggbert::Editor
         constexpr float kOlderScale = 0.45f;
 
         void AppendLabel(std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, std::string_view text,
-                         float leftX, float topY, float scale, float textSheetW, float textSheetH)
+                         float leftX, float topY, float scale, float textSheetW, float textSheetH, int textureScale)
         {
             const float cellPx = kGlyphCellPx * scale;
             float penX = leftX;
             for (std::size_t at = 0; at < text.size();)
             {
                 const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at);
-                const int col = rank % kGlyphCols;
-                const int row = rank / kGlyphCols;
                 GalaxyEggbert::Game::QuadBatch::Quad q;
                 q.x0 = penX;
                 q.y0 = topY;
                 q.x1 = penX + cellPx;
                 q.y1 = topY + cellPx;
-                q.u0 = (static_cast<float>(col) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(row) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(col + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(row + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = GalaxyEggbert::Game::TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 quads.push_back(q);
                 penX += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * scale;
             }
         }
 
-        void PadIconUv(GalaxyEggbert::Game::QuadBatch::Quad& q, int icon, float sheetW, float sheetH)
+        void PadIconUv(GalaxyEggbert::Game::QuadBatch::Quad& q, int icon, float sheetW, float sheetH, int textureScale)
         {
-            const int col = icon % kPadCols;
-            const int row = icon / kPadCols;
-            q.u0 = (static_cast<float>(col) * kPadCellPx) / sheetW;
-            q.v0 = (static_cast<float>(row) * kPadCellPx) / sheetH;
-            q.u1 = (static_cast<float>(col + 1) * kPadCellPx) / sheetW;
-            q.v1 = (static_cast<float>(row + 1) * kPadCellPx) / sheetH;
+            const auto uv = Game::AtlasCellUv(icon, kPadCols, kPadCellPx, kPadCellPx, sheetW, sheetH, textureScale);
+            q.u0 = uv.u0;
+            q.v0 = uv.v0;
+            q.u1 = uv.u1;
+            q.v1 = uv.v1;
         }
     }
 
@@ -443,7 +440,7 @@ namespace GalaxyEggbert::Editor
         const auto addIcon = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
         {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
-            PadIconUv(q, icon, padSheetW, padSheetH);
+            PadIconUv(q, icon, padSheetW, padSheetH, Game::TextureScaleOf(&padTexture_));
             bucket.push_back(q);
         };
         // A button held down is drawn faded, as the menu's are.
@@ -526,7 +523,7 @@ namespace GalaxyEggbert::Editor
         std::vector<Quad> faintLabels;
         const auto label = [&](std::vector<Quad>& bucket, std::string_view text, float x, float y, float scale)
         {
-            AppendLabel(bucket, text, x, y, scale, textSheetW, textSheetH);
+            AppendLabel(bucket, text, x, y, scale, textSheetW, textSheetH, Game::TextureScaleOf(&textTexture_));
         };
         // A scale no larger than @p scale at which @p text fits @p room (a translation can be wider).
         const auto fitted = [](std::string_view text, float scale, float room)

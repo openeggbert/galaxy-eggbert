@@ -468,6 +468,7 @@ void EditorDeviceControls::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
     std::vector<Quad> panels, active, labels, cursor;
     const float s = Scale(h), tw = Game::LogicalWidth(*rendering_->font),
                 th = Game::LogicalHeight(*rendering_->font);
+    const int textTextureScale = Game::TextureScaleOf(rendering_->font.get());
     const auto label = [&](std::string_view text, Rect r, float font = .43f) {
         // Smaller when a translation is wider than its button.
         const float width = GalaxyEggbert::Game::TextMetrics::Width(text) * s;
@@ -476,9 +477,9 @@ void EditorDeviceControls::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
         const float y = (r.y0 + r.y1) * .5f - 12 * font * s;
         for (std::size_t at = 0; at < text.size();)
         {
-            int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at), col = rank % 16, row = rank / 16;
-            labels.push_back({x, y, x + 32 * font * s, y + 32 * font * s, col * 32 / tw, row * 32 / th,
-                              (col + 1) * 32 / tw, (row + 1) * 32 / th});
+            const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at);
+            const auto uv = Game::TextMetrics::GlyphUv(rank, tw, th, textTextureScale);
+            labels.push_back({x, y, x + 32 * font * s, y + 32 * font * s, uv.u0, uv.v0, uv.u1, uv.v1});
             x += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * font * s;
         }
     };
