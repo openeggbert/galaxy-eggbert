@@ -9,11 +9,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-11-12
+
+Twenty languages, and clean text in full screen. Packages for Windows, Linux, Android and the web on
+GitHub (tag `v0.4.0`); Android's versionCode is 7. Network protocol 5, as 0.3.0: they play together.
+
 ### Added
 
 - The game in Finnish, Danish, Norwegian, Turkish and Greek: twenty languages in all. The font has
   the letters they need (æ ø, Turkish's ğ ı İ ş, the Greek alphabet); the language picker shows twenty
   flags in four rows.
+
+### Fixed
+
+- No more dots under the letters when the game is shown magnified (full screen, a large window): text,
+  button icons and flags are sampled inside their cells, and the 2x font's faint halo is gone.
 
 ## [0.3.0] — 2026-11-12
 
@@ -140,7 +150,8 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.3.0...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.0...develop
+[0.4.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.2...v0.1.3

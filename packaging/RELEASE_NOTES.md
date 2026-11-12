@@ -1,6 +1,14 @@
-# Galaxy Eggbert 0.3.0
+# Galaxy Eggbert 0.4.0
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.4.0
+
+- **Twenty languages:** Finnish, Danish, Norwegian, Turkish and Greek join the fifteen of 0.3.0. The
+  font has their letters (æ ø, ğ ı İ ş, the Greek alphabet); the flags' panel shows twenty flags.
+- **Clean text in full screen:** the dots that showed under letters, icons and flags when the game was
+  magnified are gone.
+- 0.4.0 plays the network game with 0.3.0 (the same network protocol).
 
 ## New in 0.3.0
 
@@ -77,10 +85,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.3.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.3.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.3.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.3.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.4.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.4.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.4.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.4.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations
