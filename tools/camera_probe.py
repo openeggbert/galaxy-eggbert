@@ -4,7 +4,7 @@
 Uses the existing game binary without rebuilding or changing game code. Capture
 uses AUTOPLAY_SHOTS=1 to defeat autoplay draw suppression; the companion GDB
 observer omits expensive diagnostic PNG exports, retaining selected screenshots.
-Outputs default to build-probe/camera; --output-dir keeps comparison runs separate. One game instance at a time.
+All outputs stay below build-probe/camera. One game instance at a time.
 
     python3 tools/camera_probe.py run 011 025 045 065 082 094 105 113 001
     python3 tools/camera_probe.py analyze
@@ -49,7 +49,7 @@ def run(missions, label="", keep="", every=600, realtime=False, tick_observer=Fa
         source_script = Path(override_script).resolve() if override_script else ROOT / f"tools/autoplay/world{mission:03d}.txt"
         script.write_text(f"trace 1000000\ninclude {source_script}\n")
         env = dict(os.environ, GALAXY_USER_DIR=str(folder), SDL_AUDIODRIVER="dummy",
-                   SDL_VIDEODRIVER="x11", AUTOPLAY_SHOTS=str((30 if keep else every) if tick_observer else 1), AUTOPLAY_REALTIME=str(int(realtime)),
+                   SDL_VIDEODRIVER="x11", AUTOPLAY_SHOTS=str(every if tick_observer else 1), AUTOPLAY_REALTIME=str(int(realtime)),
                    GALAXY_INTERP_TRACE=str(folder / "interp.txt"),
                    CAMERA_KEEP_EVERY=str(every), CAMERA_KEEP_TICKS=keep, LP_NUM_THREADS="2",
                    CAMERA_TICK_OBSERVER=str(int(tick_observer)))
@@ -62,8 +62,7 @@ def run(missions, label="", keep="", every=600, realtime=False, tick_observer=Fa
                     "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                     "binary_sha256": digest(binary), "world_sha256": digest(ROOT / f"worlds3d/world{mission:03d}.vwr"),
                     "script_sha256": digest(source_script), "source_script": str(source_script),
-                    "command": command, "realtime": realtime, "tick_observer": tick_observer,
-                    "index_every_draw": bool(tick_observer and keep)}
+                    "command": command, "realtime": realtime, "tick_observer": tick_observer}
         (folder / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         print(f"Start {mission:03d}: {folder}", flush=True)
         start = time.monotonic()
@@ -283,38 +282,15 @@ def analyze(folders=None, partial=False):
         validation = {}
         if (folder / "camera_ticks.csv").exists():
             expected = [f for f in frames if f["tick"] % 30 == 0]
-            compared_draws = drawn
-            unindexed_startup_draws = 0
-            if metadata.get("index_every_draw"):
-                # Selected failure windows add draws between the usual 30-tick samples.
-                # Index every draw via its flushed trace offset, rather than assuming spacing.
-                by_tick = {f["tick"]: f for f in frames}
-                by_offset = {}
-                for row in csv.DictReader((folder / "draw_ticks.csv").open()):
-                    by_offset.setdefault(int(row["trace_bytes"]), int(row["tick"]))
-                offset, expected, compared_draws = 0, [], []
-                for index, line in enumerate((folder / "interp.txt").read_bytes().splitlines(keepends=True)):
-                    offset += len(line)
-                    tick = by_offset.get(offset)
-                    if index == 0 and tick is None:
-                        # The startup draw precedes the first screenshot index, as in the
-                        # original every-frame capture. Do not invent a tick for it.
-                        unindexed_startup_draws += 1
-                        continue
-                    if tick not in by_tick:
-                        raise RuntimeError(f"Unindexed drawn camera frame: {folder}, offset {offset}")
-                    expected.append(by_tick[tick])
-                    compared_draws.append(line.decode())
             # Exit may perform an unmeasured final update, but it is not usually
             # drawn. Reject any discrepancy rather than silently shifting ticks.
             errors = []
-            for frame, line in zip(expected, compared_draws):
+            for frame, line in zip(expected, drawn):
                 eye = tuple(map(float, line.split()[7:10]))
                 errors.append(math.dist(frame["eye"], (eye[0] + 50, eye[1], eye[2] + 50)))
             validation = dict(expected_draws=len(expected), actual_draws=len(drawn),
-                              unindexed_startup_draws=unindexed_startup_draws,
                               max_draw_error=max(errors, default=0),
-                              all_draws_match=len(expected) == len(compared_draws) and max(errors, default=0) < 0.0001)
+                              all_draws_match=len(expected) == len(drawn) and max(errors, default=0) < 0.0001)
         alignment.append(dict(run=folder.name, matched=len(frames), drawn=len(drawn),
                               unmatched=unmatched, events=events, **validation))
         previous = None
@@ -642,9 +618,7 @@ def validate_evidence():
 
 
 def main():
-    global OUT
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-dir", type=Path, default=OUT)
     sub = parser.add_subparsers(dest="command", required=True)
     capture = sub.add_parser("run")
     capture.add_argument("missions", nargs="+")
@@ -660,7 +634,6 @@ def main():
     sub.add_parser("report-tables")
     sub.add_parser("validate-evidence")
     args = parser.parse_args()
-    OUT = args.output_dir.resolve()
     if args.command == "run":
         run(args.missions, args.label, args.keep, args.every, args.realtime, args.tick_observer, args.script)
     elif args.command == "analyze":

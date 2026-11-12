@@ -54,13 +54,6 @@ check_level() {
         fresh="${build_dir}/${f}"
         reference="${reference_dir}/${f}"
         label="${f} (effects ${level})"
-        # Optional review copies; the approved references are never changed by this option.
-        if [[ -n "${GOLDEN_OUTPUT_DIR:-}" ]]; then
-            output="${GOLDEN_OUTPUT_DIR}/effects-${level}"
-            mkdir -p "${output}/before" "${output}/after"
-            [[ ! -f "${fresh}" ]] || cp "${fresh}" "${output}/after/${f}"
-            [[ ! -f "${reference}" ]] || cp "${reference}" "${output}/before/${f}"
-        fi
         if [[ ! -f "${fresh}" ]]; then
             echo "FAIL: ${label} was not captured"
             all_ok=0

@@ -184,12 +184,6 @@ namespace GalaxyEggbert::CNA
         // together through Camera::SetLookAt); it starts at (0, 2, 5) looking
         // at the origin (see the constructor).
         CnaEngine::Graphics::Camera camera_;
-        // The pre-fix view determines pickup-flight timing, independently of presentation.
-        CnaEngine::Graphics::Camera simulationCamera_;
-        bool simulationCameraInitialized_ = false;
-        Microsoft::Xna::Framework::Vector3 simulationEyeSmoothed_{0.0f, 0.0f, 0.0f};
-        Microsoft::Xna::Framework::Vector3 simulationTargetSmoothed_{0.0f, 0.0f, 0.0f};
-        GalaxyEggbert::Game::ChaseCameraYaw simulationChaseCamera_;
         Microsoft::Xna::Framework::Vector3 cameraTarget_{0.0f, 0.0f, 0.0f};
 
         // Smoothed camera eye/target (2026-07-09) -- both camera modes below
@@ -201,7 +195,6 @@ namespace GalaxyEggbert::CNA
         // .cpp). Initialized lazily on the first Update() so load-time
         // doesn't spend a visible lerp-in from the origin.
         bool cameraSmoothedInitialized_ = false;
-        Microsoft::Xna::Framework::Vector3 cameraPreviousBody_{0.0f, 0.0f, 0.0f};
         Microsoft::Xna::Framework::Vector3 cameraEyeSmoothed_{0.0f, 0.0f, 0.0f};
         Microsoft::Xna::Framework::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
         // Third-person orbit around Blupi (behind, lagging, side views; see
@@ -822,7 +815,6 @@ namespace GalaxyEggbert::CNA
         // play. Each true when the tick ends there.
         bool UpdateTickScreens(float dt, GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse);
         bool UpdateTickWorld(float dt, float simDt, const GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool inputPadClaimedMouse);
-        void UpdateSimulationCamera(float dt, bool crouchHeld, bool lookUpHeld, float moveInput, float turnInput);
         bool UpdateTickCamera(float dt, float simDt, const Microsoft::Xna::Framework::Input::KeyboardState& keys,
                               bool inputPadClaimedMouse, bool crouchHeld, bool lookUpHeld, float moveInput, float turnInput);
         bool UpdateTickEvents(int gameOverCountBeforeUpdate, bool wasBallooned);

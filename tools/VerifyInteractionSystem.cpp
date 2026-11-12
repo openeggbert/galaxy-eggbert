@@ -4144,11 +4144,6 @@ int main(int argc, char** argv)
         check(voyageInteraction.VoyageActive(), "the voyage is still active partway through (5 of 10 real ticks)");
         check(std::fabs(voyageInteraction.VoyageDrawX() - 50.0f) < 1.0f,
               "VoyageDrawX() linearly interpolates to the midpoint at phase=5/total=10");
-        // A camera correction changes the drawn flight, never the reward clock.
-        voyageInteraction.SetVoyageDrawEndpoints(1000.0f, 200.0f, 2000.0f, 400.0f);
-        check(std::fabs(voyageInteraction.VoyageDrawX() - 1500.0f) < 1.0f &&
-                  std::fabs(voyageInteraction.VoyageDrawY() - 300.0f) < 1.0f,
-              "reprojecting the flight preserves its halfway phase");
 
         const int treasuresBefore = voyageInteraction.TreasuresCollected();
         for (int i = 0; i < 5; ++i) // the remaining 5 ticks to reach the real total=10

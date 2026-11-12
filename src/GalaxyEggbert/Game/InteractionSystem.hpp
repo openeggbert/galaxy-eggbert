@@ -913,15 +913,6 @@ namespace GalaxyEggbert::Game
         // independently by the caller.
         enum class PendingDeathKind : std::uint8_t { Clear1, Clear2, Glu };
 
-        // Reposition the flight for presentation without changing its reward clock.
-        void SetVoyageDrawEndpoints(float startX, float startY, float endX, float endY)
-        {
-            voyageStartX_ = startX;
-            voyageStartY_ = startY;
-            voyageEndX_ = endX;
-            voyageEndY_ = endY;
-        }
-
         // Called by the game class once it has resolved both endpoints
         // (projecting whichever one was still a world position). Force-
         // completes any voyage already in flight first (see class comment).
