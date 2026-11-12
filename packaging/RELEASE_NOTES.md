@@ -1,6 +1,22 @@
-# Galaxy Eggbert 0.2.0
+# Galaxy Eggbert 0.3.0
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.3.0
+
+- **Fifteen languages:** besides English, French, German and Czech, the game now speaks Slovak,
+  Spanish, Italian, Polish, Brazilian Portuguese, Dutch, Hungarian, Romanian, Swedish, Russian and
+  Ukrainian: the menus, the Setup, the help, the training hints, the 3D editor and the network game.
+  The game starts in your system's language. The flag in the main menu and the Setup's Language
+  button open a panel of the fifteen flags; a tap or a click chooses one, and it is remembered.
+- **The font** has the letters these languages need, the Cyrillic ones too.
+- **3D editor:** an edit shows at once, also in the large worlds (before, every edit rebuilt the
+  whole world's picture).
+- **Lava, lightning and wind** no longer blink for a frame when dynamite changes the terrain near them.
+- **Multiplayer:** names and chat count their length in letters ("Гравець A" is no longer cut), and
+  long button labels are drawn smaller instead of being cut. A 0.3.0 game cannot play with a 0.2.0
+  one: everybody needs 0.3.0.
+- Czech: the network game's results have their space after the kill count again.
 
 ## New in 0.2.0
 
@@ -61,10 +77,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.2.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.2.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.2.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.2.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.3.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.3.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.3.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.3.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations
