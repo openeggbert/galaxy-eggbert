@@ -343,7 +343,8 @@ namespace GalaxyEggbert::CNA
             blupi_.SetYaw(hubArrival->yaw);
         }
         chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
-        cameraSmoothedInitialized_ = false;  // ... there at once, not easing over from the last world
+        simulationChaseCamera_.Reset(blupi_.GetYaw());
+        cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;  // ... there at once, not easing over from the last world
 
         missionStartPending_ = !replayingResume_ && !demoActive_;
         saveData_.SetMissionNumber(missionNumber);

@@ -61,6 +61,18 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Chase camera (2026-11-12, camera audit fix, uncommitted review): exact voxel traversal, safety
+  from Blupi's current body through the final shake, a predictive pull-in and nearby clear views
+  around corners; the final aim and interpolated eye are checked too. On the original eight
+  missions and terrace/idle hub route (110,843 samples): jumps 131 → 55 (largest 4.004 → 1.789
+  blocks), static-terrain occlusion 480 → 0, fully hidden proxy 283 → 0, eye inside 112 → 0.
+  Foreground models can still obscure tight views. Pickup-flight timing and farewell facing use
+  the pre-fix projection independently of the displayed camera; all eight autoplay traces and
+  every-tick probe states remain identical. Nine golden PNGs and the golden trace remain exact.
+  Native build and all 131 CTests pass, including the unchanged demo recordings.
+  Review: `build-probe/camera-fix/report.md`, exact-frame pairs in `comparison.png`. No goldens
+  re-baselined and no commit made.
+
 - Twenty languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
   Portuguese, then Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (in 0.3.0), then Finnish,
   Danish, Norwegian, Turkish, Greek 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`
