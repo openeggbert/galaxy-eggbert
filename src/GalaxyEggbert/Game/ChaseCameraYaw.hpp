@@ -1,8 +1,6 @@
 #pragma once
 
 #include <initializer_list>
-#include <GalaxyEggbert/Worlds/GridRaycast.hpp>
-#include <algorithm>
 
 namespace GalaxyEggbert::Game
 {
@@ -129,19 +127,5 @@ namespace GalaxyEggbert::Game
                                 : cameraDistance >= kUsualDistance ? 1.0f
                                                                    : cameraDistance / kUsualDistance;
         return kNearLookHeight + (kFarLookHeight - kNearLookHeight) * closeness;
-    }
-}
-
-namespace GalaxyEggbert::Game
-{
-    // Exact cell crossings, including a blocked origin: short grazing intersections must not
-    // fall between samples. Keep the near plane back from the first face (camera audit, 2026-11-12).
-    template<class IsBlocked>
-    float ChaseCameraWallDistance(int size, float x, float y, float z,
-                                  float dx, float dy, float dz, float distance, IsBlocked&& blocked)
-    {
-        const auto hit = Worlds::RaycastGrid(size, x, y, z, dx, dy, dz, distance, blocked);
-        constexpr float kFaceMargin = 0.15f;
-        return hit.hit ? std::max(0.0f, hit.distance - kFaceMargin) : distance;
     }
 }

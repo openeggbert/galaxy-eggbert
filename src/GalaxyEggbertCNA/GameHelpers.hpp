@@ -553,6 +553,24 @@ namespace GalaxyEggbert::CNA::detail
         // original's second.
         inline constexpr float kSetupFadeCommitDurationSeconds = 0.25f;
 
+        // Third-person chase-camera wall collision (plan.md CAM-005, found
+        // 2026-07-17): keeps the camera from clipping through solid
+        // geometry to end up outside a tunnel/room looking back in through
+        // a wall. A simplified fixed-step raymarch from the look-at point
+        // toward the desired eye position, stopping at the first solid
+        // block -- not a literal cell-boundary DDA voxel traversal (the
+        // task's own original wording), since the real max distance
+        // involved is tiny (a few world units, the chase distance) and a
+        // small fixed step is both simpler and plenty precise at that
+        // scale; same "documented simplification, not the textbook
+        // algorithm" category as several other collision adaptations this
+        // session. Solidity uses a plain `!isAir()` check (this is a
+        // visual-occlusion query, not Blupi's own movement-collision rule
+        // set -- e.g. a real non-solid-for-Blupi Teleporter pillar still
+        // visually blocks the camera's view through it, which is the
+        // correct behavior here even though it would be wrong for
+        // BlupiController's own `IsSolidAt`). Returns the safe distance
+        // along `direction` (a unit vector), always `<= maxDistance`.
         // TerrainLighting.hpp's light on an effect that draws the terrain, its grass or the cube
         // objects in it (their meshes carry normals: MakeLitTexturedMeshBuilder()).
         inline void ApplyTerrainLighting(Microsoft::Xna::Framework::Graphics::BasicEffect& effect)
@@ -592,39 +610,24 @@ namespace GalaxyEggbert::CNA::detail
             return type != 0 && !block.water && block.collisionMask != 0;
         }
 
-        // Compatibility projection for reward timing only; never used to place the visible
-        // camera. Preserve the pre-fix arithmetic so existing simulation replays stay exact.
-        inline float SimulationCameraWallDistance(const GalaxyEggbert::Worlds::World& world,
-                                                  const Microsoft::Xna::Framework::Vector3& origin,
-                                                  const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
+        inline float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
+                                   const Microsoft::Xna::Framework::Vector3& origin,
+                                   const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
         {
             constexpr float kStep = 0.1f;
+            // Kept this far before a hit: the near plane (0.1, its corners about 0.12 away) must
+            // not reach through the face, or the camera shows what lies behind it.
             constexpr float kFaceMargin = 0.15f;
             float traveled = 0.0f;
             while (traveled < maxDistance)
             {
                 traveled = std::min(traveled + kStep, maxDistance);
                 if (BlocksCamera(world, origin + direction * traveled))
+                {
                     return std::max(0.0f, traveled - kStep - kFaceMargin);
+                }
             }
             return maxDistance;
-        }
-
-        inline float CameraWallDistance(const GalaxyEggbert::Worlds::World& world,
-                                   const Microsoft::Xna::Framework::Vector3& origin,
-                                   const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
-        {
-            return GalaxyEggbert::Game::ChaseCameraWallDistance(
-                static_cast<int>(world.blocksPerAxis()),
-                origin.X + WorldRuntime::kWorldCenterX, origin.Y, origin.Z + WorldRuntime::kWorldCenterZ,
-                direction.X, direction.Y, direction.Z, maxDistance,
-                [&](int x, int y, int z)
-                {
-                    const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                                     static_cast<std::uint16_t>(z)).type();
-                    const auto& block = GalaxyEggbert::GetBlockDefinition(type);
-                    return type != 0 && !block.water && block.collisionMask != 0;
-                });
         }
 
         // Real GalaxyEggbert::Def::GameSpeed (SCORE-009/010/011) as a continuous dt-scale

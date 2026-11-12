@@ -232,8 +232,7 @@ namespace GalaxyEggbert::CNA
                            startSpawnZ_ - WorldRuntime::kWorldCenterZ);
                 blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
                 chaseCamera_.Reset(blupi_.GetYaw());
-                simulationChaseCamera_.Reset(blupi_.GetYaw());
-                cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
+                cameraSmoothedInitialized_ = false;
             }
         }
 
@@ -1321,7 +1320,7 @@ namespace GalaxyEggbert::CNA
                         {
                             PlaceBlupi(0.0f, 1.0f, 0.0f);
                         }
-                        cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
+                        cameraSmoothedInitialized_ = false;
                     }
                     SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
@@ -1768,8 +1767,7 @@ namespace GalaxyEggbert::CNA
                 teleportArrivalCellZ_ = static_cast<int>(std::lround(destZ));
                 interaction_.SpawnTeleportArrival(worldRuntime_, destX, destY, destZ);
                 chaseCamera_.Reset(blupi_.GetYaw());
-                simulationChaseCamera_.Reset(blupi_.GetYaw());
-                cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
+                cameraSmoothedInitialized_ = false;
             }
         }
 
@@ -2391,8 +2389,8 @@ namespace GalaxyEggbert::CNA
                 if (blupi_.TriggerBye())
                 {
                     byePendingTarget_ = target;
-                    const float dx = simulationCamera_.Position().X - blupi_.GetX();
-                    const float dz = simulationCamera_.Position().Z - blupi_.GetZ();
+                    const float dx = camera_.Position().X - blupi_.GetX();
+                    const float dz = camera_.Position().Z - blupi_.GetZ();
                     blupi_.SetYaw(std::atan2(dx, -dz));
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel32);
                 }
@@ -2825,184 +2823,6 @@ namespace GalaxyEggbert::CNA
     }
 
 
-    // Pickup rewards are deferred by their flight's projected screen distance. Keep the
-    // pre-fix projection for that timing and for the recorded farewell facing (2026-11-12),
-    // so a presentation-only camera repair cannot change a replay. This view is never drawn.
-    // The calculation is frozen to the camera before the fix; shake has already advanced once.
-    void GalaxyEggbertGame::UpdateSimulationCamera(float dt, bool crouchHeld, bool lookUpHeld,
-                                                   float moveInput, float turnInput)
-    {
-        const float yaw = blupi_.GetYaw() + lookYawOffset_;
-
-        Microsoft::Xna::Framework::Vector3 rawEye;
-        Microsoft::Xna::Framework::Vector3 rawTarget;
-
-        if (cameraMode_ == CameraMode::FirstPerson)
-        {
-            constexpr float kEyeHeight = 0.75f;
-            constexpr float kCrouchEyeHeight = 0.4f;
-            constexpr float kLookDistance = 5.0f;
-            constexpr float kLookUpTilt = 2.5f;
-            const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
-            const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
-            rawEye = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
-            simulationChaseCamera_.Reset(blupi_.GetYaw()); // third person starts behind him
-            rawTarget = Microsoft::Xna::Framework::Vector3(
-                rawEye.X + std::sin(yaw) * kLookDistance,
-                rawEye.Y + lookYOffset - std::sin(lookPitchOffset_) * kLookDistance,
-                rawEye.Z - std::cos(yaw) * kLookDistance);
-        }
-        else
-        {
-            const float kChaseDistance = 4.0f * static_cast<float>(1 << cheatZoomStep_) / chaseZoom_;
-            constexpr float kChaseLookHeight = 1.0f;
-            constexpr float kBaseElevation = 0.29f;
-            const float elevation = std::clamp(
-                kBaseElevation + lookPitchOffset_ + 0.25f * static_cast<float>(cheatZoomStep_), -1.2f, 1.45f);
-            rawTarget = Microsoft::Xna::Framework::Vector3(
-                blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
-            if (BlocksCamera(worldRuntime_.GetWorld(), rawTarget))
-            {
-                rawTarget.Y = std::max(blupi_.GetY() + 0.2f, std::round(rawTarget.Y) - 0.5f - 0.15f);
-            }
-
-            {
-                constexpr float kHalfPi = 1.57079632679f;
-                constexpr float kOpenFraction = 0.6f;
-                const auto sideOpen = [&](float orbitYaw)
-                {
-                    const Microsoft::Xna::Framework::Vector3 direction(-std::sin(orbitYaw), 0.0f,
-                                                                       std::cos(orbitYaw));
-                    return SimulationCameraWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, kChaseDistance) >=
-                           kChaseDistance * kOpenFraction;
-                };
-                GalaxyEggbert::Game::ChaseCameraInput chaseInput;
-                chaseInput.blupiYaw = blupi_.GetYaw();
-                chaseInput.idle = blupi_.GetAnimState() == BlupiController::AnimState::Stop &&
-                                  moveInput == 0.0f && turnInput == 0.0f;
-                chaseInput.facesViewer = blupiModelIsReal_ && blupiViewerClips_.count(blupiActiveClipName_) != 0;
-                chaseInput.rightOpen = sideOpen(blupi_.GetYaw() - kHalfPi);
-                chaseInput.leftOpen = sideOpen(blupi_.GetYaw() + kHalfPi);
-                simulationChaseCamera_.Update(chaseInput, dt);
-            }
-            const float orbitYaw = simulationChaseCamera_.GetYaw() + lookYawOffset_;
-            const auto chaseOffset = [&](float e)
-            {
-                return Microsoft::Xna::Framework::Vector3(-std::sin(orbitYaw) * kChaseDistance * std::cos(e),
-                                                          kChaseDistance * std::sin(e),
-                                                          std::cos(orbitYaw) * kChaseDistance * std::cos(e));
-            };
-            const Microsoft::Xna::Framework::Vector3 bodyMiddle(blupi_.GetX(), blupi_.GetY() - 0.35f,
-                                                                blupi_.GetZ());
-            const float chaseElevation = GalaxyEggbert::Game::ChaseCameraElevation(
-                elevation, kChaseDistance,
-                [&](float e)
-                {
-                    const auto offset = chaseOffset(e);
-                    const float room = SimulationCameraWallDistance(worldRuntime_.GetWorld(), rawTarget,
-                                                            offset * (1.0f / kChaseDistance), kChaseDistance);
-                    const Microsoft::Xna::Framework::Vector3 toEye = rawTarget + offset - bodyMiddle;
-                    const float length = toEye.Length();
-                    if (length < 0.001f || BlocksCamera(worldRuntime_.GetWorld(), bodyMiddle))
-                    {
-                        return room;
-                    }
-                    const float seen = SimulationCameraWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
-                                                            toEye * (1.0f / length), length);
-                    return std::min(room, kChaseDistance * seen / length);
-                });
-            Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
-
-            const float desiredDistance = desiredOffset.Length();
-            float safeDistance = desiredDistance;
-            if (desiredDistance > 0.001f)
-            {
-                const auto direction = desiredOffset * (1.0f / desiredDistance);
-                safeDistance = SimulationCameraWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
-            }
-            constexpr float kTooClose = 1.0f;
-            if (desiredDistance > 0.001f && safeDistance < kTooClose)
-            {
-                float bestRoom = safeDistance;
-                Microsoft::Xna::Framework::Vector3 bestOffset = desiredOffset;
-                for (const float yawOffset : {0.0f, 0.7f, -0.7f, 1.4f, -1.4f, 2.2f, -2.2f, 3.14159265f})
-                {
-                    for (const float e : {chaseElevation, 0.7f, 1.1f})
-                    {
-                        const float y = orbitYaw + yawOffset;
-                        const Microsoft::Xna::Framework::Vector3 offset(
-                            -std::sin(y) * kChaseDistance * std::cos(e), kChaseDistance * std::sin(e),
-                            std::cos(y) * kChaseDistance * std::cos(e));
-                        const float room = SimulationCameraWallDistance(worldRuntime_.GetWorld(), rawTarget,
-                                                                offset * (1.0f / kChaseDistance), kChaseDistance);
-                        if (room > bestRoom + 1e-3f)
-                        {
-                            bestRoom = room;
-                            bestOffset = offset;
-                        }
-                    }
-                }
-                constexpr float kClearlyMore = 0.5f;
-                if (bestRoom > safeDistance + kClearlyMore)
-                {
-                    desiredOffset = bestOffset * (desiredDistance / bestOffset.Length());
-                    safeDistance = std::min(bestRoom, desiredDistance);
-                }
-            }
-            constexpr float kMinChaseDistance = 0.05f;
-            safeDistance = std::max(safeDistance, std::min(kMinChaseDistance, desiredDistance));
-            rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
-            rawTarget.Y = std::min(rawTarget.Y,
-                                   blupi_.GetY() + GalaxyEggbert::Game::ChaseLookHeight(safeDistance));
-        }
-
-        constexpr float kCameraDampingPerSecond = 8.0f;
-        if (!simulationCameraInitialized_)
-        {
-            simulationEyeSmoothed_ = rawEye;
-            simulationTargetSmoothed_ = rawTarget;
-            simulationCameraInitialized_ = true;
-        }
-        else
-        {
-            const float alpha = 1.0f - std::exp(-kCameraDampingPerSecond * dt);
-            simulationEyeSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(simulationEyeSmoothed_, rawEye, alpha);
-            simulationTargetSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(simulationTargetSmoothed_, rawTarget, alpha);
-            constexpr float kMaxLookLag = 0.35f;
-            const float lag = simulationTargetSmoothed_.Y - rawTarget.Y;
-            const float excess = lag > kMaxLookLag ? lag - kMaxLookLag : lag < -kMaxLookLag ? lag + kMaxLookLag : 0.0f;
-            simulationTargetSmoothed_.Y -= excess;
-            simulationEyeSmoothed_.Y -= excess;
-        }
-        if (cameraMode_ == CameraMode::ThirdPersonModel)
-        {
-            const Microsoft::Xna::Framework::Vector3 toEye = simulationEyeSmoothed_ - simulationTargetSmoothed_;
-            const float eyeDistance = toEye.Length();
-            if (eyeDistance > 0.06f)
-            {
-                const float safe = SimulationCameraWallDistance(worldRuntime_.GetWorld(), simulationTargetSmoothed_,
-                                                        toEye * (1.0f / eyeDistance), eyeDistance);
-                if (safe < eyeDistance)
-                {
-                    simulationEyeSmoothed_ = simulationTargetSmoothed_ + toEye * (std::max(safe, 0.05f) / eyeDistance);
-                }
-            }
-        }
-
-        constexpr float kShakePixelsToWorldUnits = 1.0f / 64.0f;
-        const Microsoft::Xna::Framework::Vector3 shakeOffset(
-            cameraShake_.GetOffsetX() * kShakePixelsToWorldUnits,
-            -cameraShake_.GetOffsetY() * kShakePixelsToWorldUnits, // real +Y is screen-down; this engine's +Y is up
-            0.0f);
-        const Microsoft::Xna::Framework::Vector3 eye = simulationEyeSmoothed_ + shakeOffset;
-        const Microsoft::Xna::Framework::Vector3 target = simulationTargetSmoothed_ + shakeOffset;
-        if (eye != target)
-        {
-            simulationCamera_.SetLookAt(eye, target);
-        }
-
-    }
-
     // UpdateTickWorld's end: the camera (its mode, the chase, the look round) and his animation's clip and time.
     // True when the tick ends here.
     bool GalaxyEggbertGame::UpdateTickCamera(float dt, float simDt, const Microsoft::Xna::Framework::Input::KeyboardState& keys,
@@ -3075,26 +2895,6 @@ namespace GalaxyEggbert::CNA
 
         const float yaw = blupi_.GetYaw() + lookYawOffset_;
 
-        using Microsoft::Xna::Framework::Vector3;
-        const Vector3 body(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-        const auto& cameraWorld = worldRuntime_.GetWorld();
-        // The body is the visibility anchor. A lagging look point can be on the other side of
-        // a corner, or inside its wall; it must never be the origin of the safety check.
-        const auto clearEye = [&](const Vector3& origin, const Vector3& eye)
-        {
-            const Vector3 arm = eye - origin;
-            const float length = arm.Length();
-            if (length < 0.0001f) return origin;
-            const float safe = CameraWallDistance(cameraWorld, origin, arm * (1.0f / length), length);
-            return origin + arm * (safe / length);
-        };
-        Vector3 cameraMotion = cameraSmoothedInitialized_ ? body - cameraPreviousBody_ : Vector3::Zero;
-        // A teleport is not a velocity prediction. Ordinary walking/falling is projected a
-        // 0.3 seconds ahead, stopping the prediction at terrain.
-        if (cameraMotion.Length() > 1.0f) cameraMotion = Vector3::Zero;
-        const Vector3 forecast = clearEye(body, body + cameraMotion * (0.3f / std::max(dt, 0.001f))) - body;
-        cameraPreviousBody_ = body;
-
         Microsoft::Xna::Framework::Vector3 rawEye;
         Microsoft::Xna::Framework::Vector3 rawTarget;
 
@@ -3115,7 +2915,6 @@ namespace GalaxyEggbert::CNA
             const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
             rawEye = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
             chaseCamera_.Reset(blupi_.GetYaw()); // third person starts behind him
-            simulationChaseCamera_.Reset(blupi_.GetYaw());
             // Mouse-look pitch: positive offset (drag down) tilts the
             // view down, standard non-inverted feel. Yaw offset is
             // already folded into `yaw` above.
@@ -3147,8 +2946,14 @@ namespace GalaxyEggbert::CNA
                 kBaseElevation + lookPitchOffset_ + 0.25f * static_cast<float>(cheatZoomStep_), -1.2f, 1.45f);
             rawTarget = Microsoft::Xna::Framework::Vector3(
                 blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
-            // Keep the high look point below low ceilings, even during a jump.
-            rawTarget = clearEye(body, rawTarget);
+            // Jumping under a low ceiling (a three-high tunnel) lifts the look point into the
+            // block above him, and a camera marched out from inside a block stays in it,
+            // showing only the sky behind (reported by the world authoring, 2026-10-26):
+            // look from just under that block instead.
+            if (BlocksCamera(worldRuntime_.GetWorld(), rawTarget))
+            {
+                rawTarget.Y = std::max(blupi_.GetY() + 0.2f, std::round(rawTarget.Y) - 0.5f - 0.15f);
+            }
 
             // Orbit (ChaseCameraYaw, the real-Blupi plan's phase E, user
             // decisions 2026-10-24): behind him while he moves, lagging on
@@ -3163,7 +2968,7 @@ namespace GalaxyEggbert::CNA
                 {
                     const Microsoft::Xna::Framework::Vector3 direction(-std::sin(orbitYaw), 0.0f,
                                                                        std::cos(orbitYaw));
-                    return CameraWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, kChaseDistance) >=
+                    return RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, kChaseDistance) >=
                            kChaseDistance * kOpenFraction;
                 };
                 GalaxyEggbert::Game::ChaseCameraInput chaseInput;
@@ -3197,7 +3002,7 @@ namespace GalaxyEggbert::CNA
                 [&](float e)
                 {
                     const auto offset = chaseOffset(e);
-                    const float room = CameraWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                    const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
                                                             offset * (1.0f / kChaseDistance), kChaseDistance);
                     const Microsoft::Xna::Framework::Vector3 toEye = rawTarget + offset - bodyMiddle;
                     const float length = toEye.Length();
@@ -3205,7 +3010,7 @@ namespace GalaxyEggbert::CNA
                     {
                         return room;
                     }
-                    const float seen = CameraWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
+                    const float seen = RaymarchWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
                                                             toEye * (1.0f / length), length);
                     return std::min(room, kChaseDistance * seen / length);
                 });
@@ -3221,7 +3026,7 @@ namespace GalaxyEggbert::CNA
             if (desiredDistance > 0.001f)
             {
                 const auto direction = desiredOffset * (1.0f / desiredDistance);
-                safeDistance = CameraWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
+                safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
             }
             // A wall right behind him (a dead end, a narrow turn, a lift in a shaft) pulled the eye
             // into his own body, which is not drawn from inside: he vanished from the picture (the
@@ -3241,7 +3046,7 @@ namespace GalaxyEggbert::CNA
                         const Microsoft::Xna::Framework::Vector3 offset(
                             -std::sin(y) * kChaseDistance * std::cos(e), kChaseDistance * std::sin(e),
                             std::cos(y) * kChaseDistance * std::cos(e));
-                        const float room = CameraWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                        const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
                                                                 offset * (1.0f / kChaseDistance), kChaseDistance);
                         if (room > bestRoom + 1e-3f)
                         {
@@ -3257,50 +3062,16 @@ namespace GalaxyEggbert::CNA
                     safeDistance = std::min(bestRoom, desiredDistance);
                 }
             }
-
+            // Never onto the target itself (Camera::LookAt rejects that): at least a short
+            // way back even when a wall stands right behind him (no further, or the eye
+            // would be in that wall).
+            constexpr float kMinChaseDistance = 0.05f;
+            safeDistance = std::max(safeDistance, std::min(kMinChaseDistance, desiredDistance));
             rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
             // Pulled in close (a wall behind him, a low passage), the look point drops toward his
             // middle, so he stays in the picture (ChaseCameraYaw.hpp ChaseLookHeight).
             rawTarget.Y = std::min(rawTarget.Y,
                                    blupi_.GetY() + GalaxyEggbert::Game::ChaseLookHeight(safeDistance));
-        }
-
-        bool anticipatingWall = false;
-        if (cameraMode_ == CameraMode::ThirdPersonModel)
-        {
-            // Shorten the desired arm before damping, so its normal outward motion does not
-            // fight an approaching obstruction. Check the lagging arm as well as the desired
-            // one: on a turn they can be on opposite sides of a corner.
-            const auto anticipatedRoom = [&](const Vector3& eye)
-            {
-                const Vector3 arm = eye - body;
-                const float length = arm.Length();
-                float room = length;
-                if (length > 0.001f)
-                {
-                    for (const float step : {0.0f, 0.25f, 0.5f, 0.75f, 1.0f})
-                    {
-                        const Vector3 origin = body + forecast * step;
-                        room = std::min(room, CameraWallDistance(cameraWorld, origin,
-                                                                arm * (1.0f / length), length));
-                    }
-                }
-                return room;
-            };
-            const Vector3 arm = rawEye - body;
-            const float length = arm.Length();
-            float room = anticipatedRoom(rawEye);
-            if (cameraSmoothedInitialized_)
-            {
-                const float previousRoom = anticipatedRoom(cameraEyeSmoothed_);
-                if (previousRoom + 0.001f < (cameraEyeSmoothed_ - body).Length())
-                {
-                    room = std::min(room, previousRoom);
-                    anticipatingWall = true;
-                }
-            }
-            anticipatingWall |= room + 0.001f < length;
-            if (length > 0.001f) rawEye = body + arm * (room / length);
         }
 
         // Exponential damping toward the raw eye/target computed above
@@ -3322,13 +3093,7 @@ namespace GalaxyEggbert::CNA
         else
         {
             const float alpha = 1.0f - std::exp(-kCameraDampingPerSecond * dt);
-            const float eyeAlpha = anticipatingWall ? 1.0f - std::exp(-20.0f * dt) : alpha;
-            Vector3 move = (rawEye - cameraEyeSmoothed_) * eyeAlpha;
-            // Anticipation gets several ticks to pull in, without itself making a large snap.
-            // Blupi's own translation is allowed in addition to this camera-only motion.
-            const float maxPull = 18.0f * dt + cameraMotion.Length();
-            if (anticipatingWall && move.Length() > maxPull) move *= maxPull / move.Length();
-            cameraEyeSmoothed_ += move;
+            cameraEyeSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
             cameraTargetSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
             // Up and down it follows within a short lag: dropping a few cells (a ledge, a shaft)
             // he fell out of the picture's bottom before the damped camera came down after him
@@ -3340,41 +3105,24 @@ namespace GalaxyEggbert::CNA
             cameraTargetSmoothed_.Y -= excess;
             cameraEyeSmoothed_.Y -= excess;
         }
+        // The smoothed eye trails the raw one, which the wall check placed: swinging round a
+        // corner or a pillar it cut through what the raw eye went round, showing a wall from
+        // inside or putting it between the eye and Blupi (the play pass of 2026-11-03: 092,
+        // 094, 101, 102, 121, 122, ...). It is kept on this side of any wall along its own line
+        // to him, as the raw eye is.
         if (cameraMode_ == CameraMode::ThirdPersonModel)
         {
-            // A newly grazed corner near his body can collapse a four-block arm at once.
-            // First try a small rise or sideways move around that corner; a nearby clear view
-            // is preferable to a long pull-in. If none fits, the present obstruction is a hard
-            // limit: never damp through it.
-            const Vector3 desired = cameraEyeSmoothed_;
-            Vector3 safeEye = clearEye(body, desired);
-            float correction = (safeEye - desired).Length();
-            if (correction > 0.2f)
+            const Microsoft::Xna::Framework::Vector3 toEye = cameraEyeSmoothed_ - cameraTargetSmoothed_;
+            const float eyeDistance = toEye.Length();
+            if (eyeDistance > 0.06f)
             {
-                Vector3 side(desired.Z - body.Z, 0.0f, body.X - desired.X);
-                const float sideLength = side.Length();
-                side = sideLength > 0.001f ? side * (1.0f / sideLength) : Vector3(1.0f, 0.0f, 0.0f);
-                for (const float distance : {0.2f, 0.4f, 0.6f, 0.8f, 1.0f})
+                const float safe = RaymarchWallDistance(worldRuntime_.GetWorld(), cameraTargetSmoothed_,
+                                                        toEye * (1.0f / eyeDistance), eyeDistance);
+                if (safe < eyeDistance)
                 {
-                    if (distance >= correction) break;
-                    for (const Vector3 offset : {Vector3(0.0f, distance, 0.0f), side * distance,
-                                                side * -distance, Vector3(0.0f, -distance, 0.0f)})
-                    {
-                        const Vector3 candidate = desired + offset;
-                        if ((clearEye(body, candidate) - candidate).Length() < 0.0001f)
-                        {
-                            safeEye = candidate;
-                            correction = distance;
-                            break;
-                        }
-                    }
+                    cameraEyeSmoothed_ = cameraTargetSmoothed_ + toEye * (std::max(safe, 0.05f) / eyeDistance);
                 }
             }
-            cameraEyeSmoothed_ = safeEye;
-            cameraTargetSmoothed_ = clearEye(body, cameraTargetSmoothed_);
-            const float room = (cameraEyeSmoothed_ - body).Length();
-            cameraTargetSmoothed_.Y = std::min(cameraTargetSmoothed_.Y,
-                body.Y + GalaxyEggbert::Game::ChaseLookHeight(room));
         }
 
         // Real screen-shake/forced-pan effect (plan.md CAM-008..013,
@@ -3396,55 +3144,16 @@ namespace GalaxyEggbert::CNA
             cameraShake_.GetOffsetX() * kShakePixelsToWorldUnits,
             -cameraShake_.GetOffsetY() * kShakePixelsToWorldUnits, // real +Y is screen-down; this engine's +Y is up
             0.0f);
-        // Apply shake before the last safety check. An arm pulled completely in still needs
-        // a view direction; use his facing in that degenerate case.
-        Vector3 eye = cameraEyeSmoothed_ + shakeOffset;
-        Vector3 target = cameraTargetSmoothed_ + shakeOffset;
-        if (cameraMode_ == CameraMode::ThirdPersonModel)
-        {
-            // Scale only a shake which would obstruct the body ray. Translating both eye
-            // and target by the same fraction keeps its look; the unshaken safe eye is the
-            // fallback, so a tiny shake beside a corner cannot collapse the whole arm.
-            if ((clearEye(body, eye) - eye).Length() > 0.0001f)
-            {
-                float low = 0.0f, high = 1.0f;
-                for (int i = 0; i < 8; ++i)
-                {
-                    const float middle = (low + high) * 0.5f;
-                    const Vector3 candidate = cameraEyeSmoothed_ + shakeOffset * middle;
-                    if ((clearEye(body, candidate) - candidate).Length() < 0.0001f) low = middle;
-                    else high = middle;
-                }
-                eye = cameraEyeSmoothed_ + shakeOffset * low;
-                target = cameraTargetSmoothed_ + shakeOffset * low;
-            }
-            // A safe eye can still aim into a low ceiling while the body is below it.
-            // Keep as much of the damped look point as is visible from the final shaken eye;
-            // the body ray is already clear and provides the fallback.
-            if ((clearEye(eye, target) - target).Length() > 0.0001f)
-            {
-                float low = 0.0f, high = 1.0f;
-                for (int i = 0; i < 8; ++i)
-                {
-                    const float middle = (low + high) * 0.5f;
-                    const Vector3 candidate = Vector3::Lerp(body, target, middle);
-                    if ((clearEye(eye, candidate) - candidate).Length() < 0.0001f) low = middle;
-                    else high = middle;
-                }
-                target = Vector3::Lerp(body, target, low);
-            }
-            if ((eye - target).Length() < 0.001f)
-            {
-                target = eye + Vector3(std::sin(yaw), -0.29f, -std::cos(yaw));
-            }
-        }
+        // An eye on its target (the chase camera pulled all the way in
+        // against a wall) has no view direction; the camera keeps the
+        // last frame's view instead.
+        const Microsoft::Xna::Framework::Vector3 eye = cameraEyeSmoothed_ + shakeOffset;
+        const Microsoft::Xna::Framework::Vector3 target = cameraTargetSmoothed_ + shakeOffset;
         if (eye != target)
         {
             camera_.SetLookAt(eye, target);
             cameraTarget_ = target;
         }
-
-        UpdateSimulationCamera(dt, crouchHeld, lookUpHeld, moveInput, turnInput);
 
         // Third-person placeholder model animation clip (2026-07-09) --
         // advanced regardless of camera mode so switching into
@@ -3607,8 +3316,8 @@ namespace GalaxyEggbert::CNA
             if (blupi_.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration))
             {
                 winCheerActive_ = true;
-                const float dx = simulationCamera_.Position().X - blupi_.GetX();
-                const float dz = simulationCamera_.Position().Z - blupi_.GetZ();
+                const float dx = camera_.Position().X - blupi_.GetX();
+                const float dz = camera_.Position().Z - blupi_.GetZ();
                 blupi_.SetYaw(std::atan2(dx, -dz));
             }
         }

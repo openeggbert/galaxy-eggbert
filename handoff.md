@@ -10,10 +10,13 @@ _Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish
 
 ## The owner's reports of 2026-11-12 evening: camera, dots under letters, music — done, merged into develop
 
-- **Chase camera** (`66031dea`, plans/audit/camera_quality_2026-11-12.md and camera_fix_2026-11-12.md):
-  never inside terrain, Blupi never hidden behind it on the measured routes; a frozen copy of the former
-  camera (`UpdateSimulationCamera`) still times pickup rewards and the farewell so demos replay
-  unchanged. Left: foreground models (mines, fans) can fill a tight view.
+- **Chase camera: REVERTED.** The fix (`66031dea`) measured well in autoplay (60 Hz, no interpolation,
+  no ghost) but the owner found it worse in play: in ghost mode inside walls only Blupi's nose shows (the
+  body ray pulls the eye into him), and with ghost off it sometimes moves jerkily (the owner plays at 144
+  fps: interpolated draws, never measured). Reverted (`git revert`); a rework must be measured at 144 fps
+  with interpolation, in ghost mode and for smoothness (eye acceleration/jerk) against the former
+  camera, and shown to the owner before it lands. The measurement itself
+  (plans/audit/camera_quality_2026-11-12.md, tools/camera_probe.py) stays.
 - **"The camera is farther than before"**: not reproduced. Eye-to-Blupi median 3.74 blocks in 0.2.0 and
   develop, 60/144 fps, window/full screen; FOV 45 degrees, 16:9 fixed (build-probe/music/camera-distance.md
   in the localization worktree). Waiting for the owner's screenshot of where it looks far.

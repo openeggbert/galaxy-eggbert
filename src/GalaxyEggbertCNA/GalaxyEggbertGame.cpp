@@ -190,7 +190,6 @@ namespace GalaxyEggbert::CNA
         ApplyLanguage(); // CNA's Game has taken the system's languages by now
         graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
-        simulationCamera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
         // The network game where CNA has networking (not the web): the menu's Multiplayer.
         inputPad_.SetMultiplayerShown(NetSession::Available());
         keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
@@ -709,7 +708,7 @@ namespace GalaxyEggbert::CNA
         const bool projected = Hud::ProjectWorldToHudSpace(
             Microsoft::Xna::Framework::Vector3(voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
                                                 voyageEvent->voyageWorldZ),
-            simulationCamera_.View(), camera_.Projection(), viewportW, viewportH, projectedX, projectedY);
+            camera_.View(), camera_.Projection(), viewportW, viewportH, projectedX, projectedY);
         // Clear2Ascend (real death-VFX coinflip, plan.md `158` follow-up):
         // BOTH endpoints derive from the SAME projected world point (start
         // = Blupi's projected position, end = straight up from there by a
@@ -746,20 +745,6 @@ namespace GalaxyEggbert::CNA
         const float endY = worldIsStart ? voyageEvent->voyageFixedY : projectedY;
         interaction_.BeginVoyage(worldRuntime_, voyageEvent->voyageKind, voyageEvent->voyageIconId,
                                  voyageEvent->voyageIsButtonChannel, startX, startY, endX, endY, sound_);
-        float drawnX = voyageEvent->voyageFixedX, drawnY = voyageEvent->voyageFixedY;
-        float visibleX = 0.0f, visibleY = 0.0f;
-        if (Hud::ProjectWorldToHudSpace(
-                Microsoft::Xna::Framework::Vector3(voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
-                                                   voyageEvent->voyageWorldZ),
-                camera_.View(), camera_.Projection(), viewportW, viewportH, visibleX, visibleY))
-        {
-            drawnX = visibleX;
-            drawnY = visibleY;
-        }
-        interaction_.SetVoyageDrawEndpoints(worldIsStart ? drawnX : voyageEvent->voyageFixedX,
-                                            worldIsStart ? drawnY : voyageEvent->voyageFixedY,
-                                            worldIsStart ? voyageEvent->voyageFixedX : drawnX,
-                                            worldIsStart ? voyageEvent->voyageFixedY : drawnY);
     }
 
 

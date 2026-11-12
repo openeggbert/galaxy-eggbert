@@ -141,11 +141,9 @@ namespace GalaxyEggbert::CNA
         blupiClipTimeSeconds_ = 0.0;
         phaseTimeSeconds_ = 0.0f;
         chaseCamera_.Reset(blupi_.GetYaw());
-        simulationChaseCamera_.Reset(blupi_.GetYaw());
-        cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
+        cameraSmoothedInitialized_ = false;
         cameraTarget_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + 1.0f, blupi_.GetZ());
         camera_.SetLookAt(cameraTarget_ + Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, -5.0f), cameraTarget_);
-        simulationCamera_.SetLookAt(cameraTarget_ + Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, -5.0f), cameraTarget_);
         sound_.StopAll();
     }
 
@@ -339,15 +337,9 @@ namespace GalaxyEggbert::CNA
         out << static_cast<int>(phase_) << ' ' << static_cast<int>(fadeOutPhase_) << ' ' << phaseTimeSeconds_
             << ' ' << worldRuntime_.GetAnimPhase() << ' ' << static_cast<int>(gameSpeed_);
         result["clocks"] = out.str(); out.str("");
-        // The replay fingerprint follows the projection which determines reward timing.
-        // The displayed camera is free to avoid terrain without invalidating existing demos.
-        const auto eye = simulationCamera_.Position();
-        const auto target = simulationCameraInitialized_
-            ? simulationTargetSmoothed_ + Microsoft::Xna::Framework::Vector3(
-                cameraShake_.GetOffsetX() / 64.0f, -cameraShake_.GetOffsetY() / 64.0f, 0.0f)
-            : cameraTarget_;
-        out << eye.X << ' ' << eye.Y << ' ' << eye.Z << ' ' << target.X << ' ' << target.Y
-            << ' ' << target.Z << ' ' << lookYawOffset_ << ' ' << lookPitchOffset_ << ' ' << chaseZoom_;
+        const auto eye = camera_.Position();
+        out << eye.X << ' ' << eye.Y << ' ' << eye.Z << ' ' << cameraTarget_.X << ' ' << cameraTarget_.Y
+            << ' ' << cameraTarget_.Z << ' ' << lookYawOffset_ << ' ' << lookPitchOffset_ << ' ' << chaseZoom_;
         result["camera"] = out.str(); out.str("");
         for (const auto& ghost : hideGhosts_)
             out << ghost.clip << ' ' << ghost.clipSeconds << ' ' << ghost.ageTicks << '\n';

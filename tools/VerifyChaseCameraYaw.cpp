@@ -1,5 +1,4 @@
 #include <GalaxyEggbert/Game/ChaseCameraYaw.hpp>
-#include <random>
 
 #include <cmath>
 #include <iostream>
@@ -155,53 +154,6 @@ int main()
         const float unlowered = feetAngle - std::atan2(eyeHeight - 1.0f, d * std::cos(e));
         check(lowered < 22.5f * kPi / 180.0f && unlowered > 22.5f * kPi / 180.0f,
               "two blocks off, his feet stay in the picture (looking a block over them, they left it)");
-    }
-
-    // Camera audit regressions: the old 0.1-block march missed a short diagonal corner
-    // crossing and failed to recognise a look point already inside its wall.
-    {
-        const auto block = [](int x, int y, int z) { return x == 5 && y == 5 && z == 5; };
-        const auto room = [&](float x, float y, float z, float dx, float dy, float dz, float distance)
-        { return ChaseCameraWallDistance(10, x, y, z, dx, dy, dz, distance, block); };
-        check(std::fabs(room(2, 5, 5, 1, 0, 0, 6) - 2.35f) < 1e-5f, "camera stops before the exact wall face");
-        check(room(5, 5, 5, 1, 0, 0, 4) == 0, "blocked origin has no safe arm");
-        check(room(2, 3, 5, 1, 0, 0, 6) == 6, "open ray keeps the chase distance");
-        check(room(4.48f, 5.47f, 5, 1, 1, 0, 1) == 0,
-              "short grazing intersection is not skipped");
-        check(std::fabs(room(8, 5, 5, -1, 0, 0, 6) - 2.35f) < 1e-5f, "negative ray uses the same margin");
-        // Compare the traversal against independent analytic slab intersections.
-        std::mt19937 random(1701);
-        std::uniform_real_distribution<float> coordinate(1.0f, 9.0f);
-        bool agrees = true;
-        for (int sample = 0; sample < 2000; ++sample)
-        {
-            float origin[3], direction[3], length2 = 0.0f;
-            for (int axis = 0; axis < 3; ++axis)
-            {
-                origin[axis] = coordinate(random);
-                direction[axis] = coordinate(random) - origin[axis];
-                length2 += direction[axis] * direction[axis];
-            }
-            const float length = std::sqrt(length2);
-            float enter = 0.0f, leave = length;
-            for (int axis = 0; axis < 3; ++axis)
-            {
-                direction[axis] /= length;
-                if (std::fabs(direction[axis]) < 1e-7f)
-                {
-                    if (origin[axis] < 4.5f || origin[axis] > 5.5f) leave = -1.0f;
-                    continue;
-                }
-                const float a = (4.5f - origin[axis]) / direction[axis];
-                const float b = (5.5f - origin[axis]) / direction[axis];
-                enter = std::max(enter, std::min(a, b));
-                leave = std::min(leave, std::max(a, b));
-            }
-            const float expected = enter <= leave ? std::max(0.0f, enter - 0.15f) : length;
-            const float actual = room(origin[0], origin[1], origin[2], direction[0], direction[1], direction[2], length);
-            agrees &= std::fabs(expected - actual) < 2e-5f;
-        }
-        check(agrees, "2000 camera rays agree with independent slab intersections");
     }
 
     std::cout << (allOk ? "ALL PASS" : "SOME CHECKS FAILED") << std::endl;
