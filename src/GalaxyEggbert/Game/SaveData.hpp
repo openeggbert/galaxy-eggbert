@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Localization.hpp"
+
 #include <algorithm>
 #include <array>
 #include <string>
@@ -128,6 +130,11 @@ namespace GalaxyEggbert::Game
         // as flat textured cubes: a Galaxy setting (the owner's request of 2026-11-04: the reliefs cost
         // memory and GPU time a phone may not have). Off by default everywhere (the owner, 2026-11-04);
         // the Setup's "3D terrain" turns it on. Saved as `terrainRelief=`.
+        // The language the player chose in the Setup (a Galaxy addition, the owner's Q-023, 2026-11-11;
+        // BD-0126): its code ("en", "fr"), empty for none chosen, the system's then (the original's
+        // only way). Saved as `language=`, kept by Reset() as the nicknames are.
+        [[nodiscard]] const std::string& GetLanguage() const noexcept { return language_; }
+        void SetLanguage(std::string code) { language_ = std::move(code); }
         [[nodiscard]] bool GetTerrainRelief() const noexcept { return terrainRelief_; }
         void SetTerrainRelief(bool on) noexcept { terrainRelief_ = on; }
         static constexpr bool kTerrainReliefDefault = false;
@@ -247,9 +254,11 @@ namespace GalaxyEggbert::Game
             const bool galaxy = galaxyMode_;
             // The nicknames stay: the reset erases progress and settings, not who the players are.
             auto nicknames = std::move(nicknames_);
+            auto language = std::move(language_);
             *this = SaveData();
             galaxyMode_ = galaxy;
             nicknames_ = std::move(nicknames);
+            language_ = std::move(language);
         }
 
         // Each player's nickname (the owner, 2026-11-11; the Setup's Nickname, a Galaxy addition):
@@ -264,11 +273,11 @@ namespace GalaxyEggbert::Game
         {
             nicknames_[static_cast<std::size_t>(std::clamp(gamer, 0, kGamerCount - 1))] = CleanNickname(nickname);
         }
-        // The nickname, or "Player A" (B, C) without one.
+        // The nickname, or "Player A" (B, C) without one, in the current language.
         [[nodiscard]] std::string GetPlayerName(int gamer) const
         {
             const std::string& nickname = GetNickname(gamer);
-            return nickname.empty() ? std::string("Player ") + static_cast<char>('A' + std::clamp(gamer, 0, kGamerCount - 1))
+            return nickname.empty() ? TrFormat("Player {0}", {std::string(1, static_cast<char>('A' + std::clamp(gamer, 0, kGamerCount - 1)))})
                                     : nickname;
         }
         // What a nickname may hold: printable ASCII (the game's font), no spaces at either end, at
@@ -323,6 +332,7 @@ namespace GalaxyEggbert::Game
         GamerSlot gamers_[kGamerCount];
         GamerSlot galaxies_[kGamerCount];
         std::array<std::string, kGamerCount> nicknames_;
+        std::string language_;
         bool galaxyMode_ = false;
         [[nodiscard]] GamerSlot& Current() noexcept
         {

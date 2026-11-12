@@ -9,6 +9,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- The game in French: the menus, the Setup, the help, the training hints (Mobile Eggbert's own
+  French), the editor and the network game. The language follows the system's; the Setup's new
+  Language button (top right) switches English and French and is saved (BD-0126).
+
 ## [0.1.3] — 2026-11-11
 
 The 1.5x speed moves to F4. Packages for Windows, Linux, Android and the web on GitHub (tag

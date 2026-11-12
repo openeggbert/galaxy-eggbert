@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -465,6 +466,7 @@ namespace GalaxyEggbert::Game
             // Nickname (a Galaxy addition, the owner, 2026-11-11): the selected player's nickname
             // to type; shown with Erase progress, in the main Setup only.
             bool nicknamePressed = false;
+            bool languagePressed = false;  // Language: the next language (BD-0126)
             // The volume sliders (0..100) while one is dragged, -1 otherwise; volumeReleased the
             // frame the slider is let go (save then).
             int effectsVolume = -1;
@@ -840,14 +842,15 @@ namespace GalaxyEggbert::Game
         // top edge at topY, unscaled Y -- see DrawPause()'s real button-
         // label use). A member (not a free function) since text.png's
         // real pixel dimensions are only known once loaded.
-        void AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,
+        [[nodiscard]] static float FaceLabelScale(std::string_view text, const QuadBatch::Rect& face, float scale) noexcept;
+        void AppendCenteredLabel(std::vector<Quad>& quads, std::string_view text,
                                  float centerX, float topY, float scale) const;
 
         // Real `Text::DrawTextRightButton()` semantics: LEFT-aligned
         // starting at leftX, vertically centered around centerY (see
         // DrawSetup()'s real button-label use -- a different alignment
         // from AppendCenteredLabel()'s Pause-row use above).
-        void AppendLeftAlignedLabel(std::vector<Quad>& quads, const std::string& text,
+        void AppendLeftAlignedLabel(std::vector<Quad>& quads, std::string_view text,
                                     float leftX, float centerY, float scale) const;
 
         // Real `Game1::DrawButtonGamerText()` semantics (Init's per-slot
@@ -857,7 +860,7 @@ namespace GalaxyEggbert::Game
         // an explicit label scale (0.7 title / 0.45 body -- this is the
         // first real use of the 0.45x scale in this engine, plan.md
         // MENU-086).
-        void AppendGamerLabel(std::vector<Quad>& quads, const std::string& text,
+        void AppendGamerLabel(std::vector<Quad>& quads, std::string_view text,
                               float leftX, float topY, float labelScale, float viewportScale) const;
 
         // Real Pause/Resume character animation (plan.md MENU-088/089):

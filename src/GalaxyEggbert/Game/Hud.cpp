@@ -327,9 +327,9 @@ namespace GalaxyEggbert::Game
             const float cellPx = kGlyphCellPx * kMessageScale;
             float penX = kRefW * 0.5f - TextMetrics::Width(str) * kMessageScale * 0.5f;
             const float textY = kRefH * 0.5f - cellPx * 0.5f;
-            for (const char c : str)
+            for (std::size_t at = 0; at < str.size();)
             {
-                const int rank = TextMetrics::GlyphIndex(c);
+                const int rank = TextMetrics::NextGlyph(str, at);
                 const int gcol = rank % kGlyphCols;
                 const int grow = rank / kGlyphCols;
                 Quad q;
@@ -342,7 +342,7 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 messageQuads.push_back(q);
-                penX += TextMetrics::Advance(c) * kMessageScale;
+                penX += TextMetrics::GlyphAdvance(rank) * kMessageScale;
             }
             // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
             // straight alpha, while AlphaBlend expects the premultiplied colours
@@ -515,9 +515,9 @@ namespace GalaxyEggbert::Game
             const std::string str(text);
             const float cellPx = kGlyphCellPx * kPersoTextScale;
             float penX = kPersoTextX;
-            for (const char c : str)
+            for (std::size_t at = 0; at < str.size();)
             {
-                const int rank = TextMetrics::GlyphIndex(c);
+                const int rank = TextMetrics::NextGlyph(str, at);
                 const int gcol = rank % kGlyphCols;
                 const int grow = rank / kGlyphCols;
                 Quad q;
@@ -530,7 +530,7 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
-                penX += TextMetrics::Advance(c) * kPersoTextScale;
+                penX += TextMetrics::GlyphAdvance(rank) * kPersoTextScale;
             }
         }
 
@@ -597,9 +597,9 @@ namespace GalaxyEggbert::Game
             std::snprintf(text, sizeof(text), "%d/%d", treasures, totalTreasures);
             const std::string str(text);
             float penX = kTreasureTextCenterX - TextMetrics::Width(str) * 0.5f;
-            for (const char c : str)
+            for (std::size_t at = 0; at < str.size();)
             {
-                const int rank = TextMetrics::GlyphIndex(c);
+                const int rank = TextMetrics::NextGlyph(str, at);
                 const int gcol = rank % kGlyphCols;
                 const int grow = rank / kGlyphCols;
                 Quad q;
@@ -612,7 +612,7 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
-                penX += TextMetrics::Advance(c);
+                penX += TextMetrics::GlyphAdvance(rank);
             }
         }
 
@@ -651,9 +651,9 @@ namespace GalaxyEggbert::Game
 
             const float speedCellPx = kGlyphCellPx * kSpeedTextScale;
             float speedPenX = 5.0f;
-            for (const char c : speedText)
+            for (std::size_t at = 0; at < speedText.size();)
             {
-                const int rank = TextMetrics::GlyphIndex(c);
+                const int rank = TextMetrics::NextGlyph(speedText, at);
                 const int gcol = rank % kGlyphCols;
                 const int grow = rank / kGlyphCols;
                 Quad q;
@@ -666,7 +666,7 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
-                speedPenX += TextMetrics::Advance(c) * kSpeedTextScale;
+                speedPenX += TextMetrics::GlyphAdvance(rank) * kSpeedTextScale;
             }
         }
 
@@ -713,9 +713,9 @@ namespace GalaxyEggbert::Game
             const float totalAdvance = rawWidth * textScale;
             const float textY = kHintTextBaseY + (1.0f - textScale) * kHintTextYNudge;
             float penX = kHintTextCenterX - totalAdvance * 0.5f;
-            for (const char c : str)
+            for (std::size_t at = 0; at < str.size();)
             {
-                const int rank = TextMetrics::GlyphIndex(c);
+                const int rank = TextMetrics::NextGlyph(str, at);
                 const int gcol = rank % kGlyphCols;
                 const int grow = rank / kGlyphCols;
                 Quad q;
@@ -728,7 +728,7 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
-                penX += TextMetrics::Advance(c) * textScale;
+                penX += TextMetrics::GlyphAdvance(rank) * textScale;
             }
         }
 
@@ -757,14 +757,14 @@ namespace GalaxyEggbert::Game
             {
                 float penX=left+(width-TextMetrics::Width(lines[i])*textScale)*.5f;
                 const float y=top+rowHeight*float(i);
-                for (const char c : lines[i])
+                for (std::size_t at=0;at<lines[i].size();)
                 {
-                    const int rank=TextMetrics::GlyphIndex(c),gcol=rank%kGlyphCols,grow=rank/kGlyphCols;
+                    const int rank=TextMetrics::NextGlyph(lines[i], at),gcol=rank%kGlyphCols,grow=rank/kGlyphCols;
                     const float cellPx=kGlyphCellPx*textScale*scale;
                     textQuads.push_back({refToScreenX(penX),refToScreenY(y),refToScreenX(penX)+cellPx,
                         refToScreenY(y)+cellPx,gcol*kGlyphCellPx/textSheetW,grow*kGlyphCellPx/textSheetH,
                         (gcol+1)*kGlyphCellPx/textSheetW,(grow+1)*kGlyphCellPx/textSheetH});
-                    penX+=TextMetrics::Advance(c)*textScale;
+                    penX+=TextMetrics::GlyphAdvance(rank)*textScale;
                 }
             }
         }

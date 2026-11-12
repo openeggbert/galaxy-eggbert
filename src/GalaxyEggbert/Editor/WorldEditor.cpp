@@ -4,6 +4,7 @@
 
 #include "CustomWorldStorage.hpp"
 #include "VoxelRaycast.hpp"
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <algorithm>
@@ -444,14 +445,16 @@ namespace GalaxyEggbert::Editor
         const auto target = CurrentEditTarget(world);
         auto status = StatusLines();
         for (const auto& start : CollectPlayerStarts(world))
-            status.push_back(std::string(PlayerStartNames[static_cast<int>(start.color)])+" start X:"+
-                std::to_string(start.x)+" Y:"+std::to_string(start.y)+" Z:"+std::to_string(start.z));
+            status.push_back(Game::TrFormat("{0} start X:{1} Y:{2} Z:{3}",
+                {Game::Tr(PlayerStartNames[static_cast<int>(start.color)]), std::to_string(start.x), std::to_string(start.y),
+                 std::to_string(start.z)}));
         if (target)
         {
-            status.insert(status.begin(), "Red selection X:"+std::to_string(target->x)+" Y:"+
-                std::to_string(target->y)+" Z:"+std::to_string(target->z));
+            status.insert(status.begin(), Game::TrFormat("Red selection X:{0} Y:{1} Z:{2}",
+                {std::to_string(target->x), std::to_string(target->y), std::to_string(target->z)}));
             if (target->kind==EditTarget::Kind::PlayerStart)
-                status.insert(status.begin(),std::string(PlayerStartNames[static_cast<int>(target->color)])+" Blupi: O turns, DEL removes");
+                status.insert(status.begin(), Game::TrFormat("{0} Blupi: O turns, DEL removes",
+                    {Game::Tr(PlayerStartNames[static_cast<int>(target->color)])}));
         }
 
         palette_.Draw(

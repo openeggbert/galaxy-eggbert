@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include "WorldEditor.hpp"
 #include "AutoTile.hpp"
@@ -1059,24 +1060,24 @@ namespace GalaxyEggbert::Editor
         std::vector<std::string> lines;
         if (!saveError_.empty())
         {
-            lines.emplace_back("NOT SAVED: the file on disk is unchanged");
+            lines.emplace_back(Game::Tr("NOT SAVED: the file on disk is unchanged"));
             lines.emplace_back(saveError_);
         }
         if (extendedSelection_)
         {
-            lines.emplace_back("Selection " + std::to_string(std::abs(int(placementCellX_) - selectionAnchorX_) + 1) +
-                " x " + std::to_string(std::abs(int(placementCellY_) - selectionAnchorY_) + 1) +
-                " x " + std::to_string(std::abs(int(placementCellZ_) - selectionAnchorZ_) + 1) +
-                ": PLACE fills, remove clears, Cancel clears selection");
+            lines.emplace_back(Game::TrFormat("Selection {0} x {1} x {2}: PLACE fills, remove clears, Cancel clears selection",
+                                              {std::to_string(std::abs(int(placementCellX_) - selectionAnchorX_) + 1),
+                                               std::to_string(std::abs(int(placementCellY_) - selectionAnchorY_) + 1),
+                                               std::to_string(std::abs(int(placementCellZ_) - selectionAnchorZ_) + 1)}));
         }
         if (pendingEnd_)
         {
-            lines.emplace_back("Click where it goes (its end). ESC or a click on it: it stays.");
+            lines.emplace_back(Game::Tr("Click where it goes (its end). ESC or a click on it: it stays."));
         }
         if (boxFirstCornerPlaced_)
         {
-            lines.emplace_back(boxForCopy_ ? "C again on the other corner: copied. ESC: cancel"
-                                           : "F again on the other corner: filled. ESC: cancel");
+            lines.emplace_back(boxForCopy_ ? Game::Tr("C again on the other corner: copied. ESC: cancel")
+                                           : Game::Tr("F again on the other corner: filled. ESC: cancel"));
         }
         if (clipboard_)
         {
@@ -1084,39 +1085,41 @@ namespace GalaxyEggbert::Editor
                                std::to_string(clipboard_->sizeZ);
             if (clipboard_->quarterTurns != 0)
             {
-                size += ", turned " + std::to_string(90 * clipboard_->quarterTurns);
+                size += Game::TrFormat(", turned {0}", {std::to_string(90 * clipboard_->quarterTurns)});
             }
             if (clipboard_->mirrored)
             {
-                size += ", mirrored";
+                size += Game::Tr(", mirrored");
             }
             if (pasting_)
             {
-                lines.emplace_back("PASTING " + size + ": a click stamps it at the red preview");
-                lines.emplace_back("CTRL+click: keeps what is under its air  Q: turn  X: mirror  P/ESC: stop");
+                lines.emplace_back(Game::TrFormat("PASTING {0}: a click stamps it at the red preview", {size}));
+                lines.emplace_back(Game::Tr("CTRL+click: keeps what is under its air  Q: turn  X: mirror  P/ESC: stop"));
             }
             else
             {
-                lines.emplace_back("Copied " + size + ". P: paste it");
+                lines.emplace_back(Game::TrFormat("Copied {0}. P: paste it", {size}));
             }
         }
         if (helpVisible_)
         {
-            lines.emplace_back("LEFT CLICK/PLACE: cyan preview   DEL/MIDDLE: remove red selection");
-            lines.emplace_back("Click the block just placed again: its next variant");
-            lines.emplace_back("V: next variant of the aimed block   CTRL+click: no cycling");
-            lines.emplace_back("O: turn the aimed tile, model, object or decor");
-            lines.emplace_back("Lift or creature: place it, then click where it goes");
-            lines.emplace_back("G: pick object/Blupi start  T: object end  TAB +/-: values  DEL: remove");
-            lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
-            lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
-            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down");
-            lines.emplace_back("SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection");
-            lines.emplace_back("NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys");
+            for (const char* line :
+                 {Game::TrMark("LEFT CLICK/PLACE: cyan preview   DEL/MIDDLE: remove red selection"),
+                  Game::TrMark("Click the block just placed again: its next variant"),
+                  Game::TrMark("V: next variant of the aimed block   CTRL+click: no cycling"),
+                  Game::TrMark("O: turn the aimed tile, model, object or decor"),
+                  Game::TrMark("Lift or creature: place it, then click where it goes"),
+                  Game::TrMark("G: pick object/Blupi start  T: object end  TAB +/-: values  DEL: remove"),
+                  Game::TrMark("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save"),
+                  Game::TrMark("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror"),
+                  Game::TrMark("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down"),
+                  Game::TrMark("SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection"),
+                  Game::TrMark("NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys")})
+                lines.emplace_back(Game::Tr(line));
         }
         else if (!pendingEnd_)
         {
-            lines.emplace_back("H: keys");
+            lines.emplace_back(Game::Tr("H: keys"));
         }
         return lines;
     }

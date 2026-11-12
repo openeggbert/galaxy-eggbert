@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/FreeFileName.hpp>
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/UserFolder.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -517,6 +518,15 @@ namespace GalaxyEggbert::Editor
         if (mission == kGalaxyBonusMission) return "Bonus world";
         const std::string world = "World " + std::to_string(mission / 10);
         return mission % 10 == 0 ? world : world + ", mission " + std::to_string(mission % 10);
+    }
+
+    std::string GalaxyMissionLabel(int mission)
+    {
+        if (mission == 1) return std::string(Game::Tr("Main hub"));
+        if (mission == kGalaxyBonusMission) return std::string(Game::Tr("Bonus world"));
+        const std::string world = std::to_string(mission / 10);
+        return mission % 10 == 0 ? Game::TrFormat("World {0}", {world})
+                                 : Game::TrFormat("World {0}, mission {1}", {world, std::to_string(mission % 10)});
     }
 
     GalaxyEggbert::Worlds::World CreateGalaxyStarterWorld(int mission)

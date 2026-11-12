@@ -61,6 +61,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- English and French (2026-11-11, owner Q-023; branch `localization`, not merged yet): every text
+  the player sees through `Localization.hpp` (Tr/TrMark/TrFormat, the English as the key), the French
+  in `TranslationsFr.cpp` and the training hints' table; the system's language or the Setup's
+  Language button (`language=` in savedata.txt); UTF-8 drawn by text.png's accented glyphs
+  (`TextMetrics`). Checked by `VerifyLocalization`; BD-0126.
 - The network game (2026-11-10, owner Q-019; developed on branch `multiplayer`, **merged into
   `develop` 2026-11-11** by the owner, Q-020): Speedy Blupi 2's multiplayer over CNA SystemLink on a LAN, 2-4
   players, Linux and Android (not the web): the menu's Multiplayer, the games on the network, the

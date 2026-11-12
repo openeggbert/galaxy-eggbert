@@ -838,17 +838,17 @@ namespace GalaxyEggbert::CNA
             const auto text = ReadWorldBytes(info.recorded ? own : DemoPath(slot));
             const bool ok = text && ParseDemo(*text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok;
             // A recording named by the player shows its name (2026-11-10).
-            info.line1 = info.recorded ? (ok && !IsAutomaticDemoTitle(demo.title) ? demo.title : "Recorded")
-                                       : ok ? "Shipped" : "Empty";
+            info.line1 = info.recorded ? (ok && !IsAutomaticDemoTitle(demo.title) ? demo.title : std::string(Tr("Recorded")))
+                                       : std::string(ok ? Tr("Shipped") : Tr("Empty"));
             if (ok)
             {
                 const int mission = demo.log.start.mission;
                 const bool galaxy = demo.log.start.worldPath.find("/galaxy/world") != std::string::npos;
-                info.line2 = (galaxy ? "Galaxy " : "Mission ") + std::to_string(mission);
+                info.line2 = TrFormat(galaxy ? "Galaxy {0}" : "Mission {0}", {std::to_string(mission)});
             }
             else if (info.recorded)
             {
-                info.line2 = "(unplayable)";
+                info.line2 = Tr("(unplayable)");
             }
         }
         return slots;
@@ -900,7 +900,7 @@ namespace GalaxyEggbert::CNA
         {
             demoImportPage_ = 0;
             ListDemoImports(); // the file just chosen is the newest, the first row
-            demoSlotsMessage_ = "The file is listed: click it to import it.";
+            demoSlotsMessage_ = Tr("The file is listed: click it to import it.");
         }
         const int armedBefore = demoDeleteArmed_;
         if (slots.importRow > 0 || slots.prevPage || slots.nextPage || slots.recordSlot > 0 ||
@@ -916,14 +916,14 @@ namespace GalaxyEggbert::CNA
             if (armedBefore != index)
             {
                 demoDeleteArmed_ = index;
-                demoSlotsMessage_ = "Delete " + name + "? Click its bin again.";
+                demoSlotsMessage_ = TrFormat("Delete {0}? Click its bin again.", {name});
             }
             else
             {
                 std::error_code error;
                 std::filesystem::remove(file, error);
                 ListDemoImports();
-                demoSlotsMessage_ = error ? name + " could not be deleted." : name + " deleted.";
+                demoSlotsMessage_ = TrFormat(error ? "{0} could not be deleted." : "{0} deleted.", {name});
             }
         }
         else if (slots.prevPage || slots.nextPage)
@@ -944,7 +944,7 @@ namespace GalaxyEggbert::CNA
         else if (slots.exportPressed)
         {
             demoSlotsMode_ = demoSlotsMode_ == 1 ? 0 : 1;
-            demoSlotsMessage_ = demoSlotsMode_ == 1 ? "Click a position to export its demo." : "";
+            demoSlotsMessage_ = demoSlotsMode_ == 1 ? Tr("Click a position to export its demo.") : "";
         }
         else if (slots.importPressed)
         {
@@ -953,14 +953,14 @@ namespace GalaxyEggbert::CNA
         else if (slots.namePressed)
         {
             demoSlotsMode_ = demoSlotsMode_ == 4 ? 0 : 4;
-            demoSlotsMessage_ = demoSlotsMode_ == 4 ? "Click a recorded position to name its demo." : "";
+            demoSlotsMessage_ = demoSlotsMode_ == 4 ? Tr("Click a recorded position to name its demo.") : "";
         }
         else if (slots.restoreSlot > 0)
         {
             std::error_code error;
             std::filesystem::remove(GalaxyEggbert::Game::UserDemoPath(slots.restoreSlot), error);
             demoSlotInfos_ = DemoSlotInfos();
-            demoSlotsMessage_ = "Position " + std::to_string(slots.restoreSlot) + " plays its shipped demo again.";
+            demoSlotsMessage_ = TrFormat("Position {0} plays its shipped demo again.", {std::to_string(slots.restoreSlot)});
             std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
         }
         else if (slots.cancelPressed)
@@ -1007,7 +1007,7 @@ namespace GalaxyEggbert::CNA
         typedShiftPending_ = false;
         demoKeyboard_.Layout(InputPad::DemoKeyboardRect(tickInput_.viewportWidth, tickInput_.viewportHeight));
         demoKeyboard_.Begin(demoNameDraft_);
-        demoSlotsMessage_ = "Type its name or use the keys: OK keeps it, Cancel leaves it.";
+        demoSlotsMessage_ = Tr("Type its name or use the keys: OK keeps it, Cancel leaves it.");
     }
 
     void GalaxyEggbertGame::FinishDemoNaming(bool keep)
@@ -1015,7 +1015,7 @@ namespace GalaxyEggbert::CNA
         using namespace GalaxyEggbert::Game;
         demoNaming_ = false;
         demoSlotsMode_ = 0;
-        const std::string position = "Position " + std::to_string(demoNameSlot_);
+        const std::string position = std::to_string(demoNameSlot_);
         const std::string name = SanitizeDemoName(demoNameDraft_);
         if (!keep)
         {
@@ -1024,11 +1024,12 @@ namespace GalaxyEggbert::CNA
         }
         if (name.empty())
         {
-            demoSlotsMessage_ = position + ": a name needs a letter or a digit; it was left as it was.";
+            demoSlotsMessage_ = TrFormat("Position {0}: a name needs a letter or a digit; it was left as it was.", {position});
             return;
         }
-        demoSlotsMessage_ = RenameDemo(UserDemoPath(demoNameSlot_), name) ? position + " is named " + name + "."
-                                                                           : position + " could not be named.";
+        demoSlotsMessage_ = RenameDemo(UserDemoPath(demoNameSlot_), name)
+                                ? TrFormat("Position {0} is named {1}.", {position, name})
+                                : TrFormat("Position {0} could not be named.", {position});
         demoSlotInfos_ = DemoSlotInfos();
         std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
     }
@@ -1085,14 +1086,14 @@ namespace GalaxyEggbert::CNA
         }
         inputPad_.DrawDemoSlots(device, viewportW, viewportH,
                                     demoSlotInfos_, demoSlotsMessage_,
-                                    demoNaming_           ? "Name the demo in position " + std::to_string(demoNameSlot_)
-                                    : demoSlotsMode_ == 4 ? "Name a demo: choose its position"
-                                    : demoSlotsMode_ == 1   ? "Export a demo: choose its position"
-                                    : demoSlotsMode_ == 2 ? "Import a demo: choose its position"
-                                    : demoSlotsMode_ == 3 ? "Import a demo: choose the file"
+                                    demoNaming_           ? TrFormat("Name the demo in position {0}", {std::to_string(demoNameSlot_)})
+                                    : std::string(demoSlotsMode_ == 4 ? Tr("Name a demo: choose its position")
+                                    : demoSlotsMode_ == 1   ? Tr("Export a demo: choose its position")
+                                    : demoSlotsMode_ == 2 ? Tr("Import a demo: choose its position")
+                                    : demoSlotsMode_ == 3 ? Tr("Import a demo: choose the file")
                                     : phase_ == GalaxyEggbert::Def::GamePhase::Init
-                                        ? "The demo positions"
-                                        : "Record a demo: choose its position",
+                                        ? Tr("The demo positions")
+                                        : Tr("Record a demo: choose its position")),
                                     demoSlotsMode_ == 3 ? 2 : demoSlotsMode_ == 4 ? 3 : demoSlotsMode_,
                                     demoSlotsMode_ == 3 ? &demoPageRows : nullptr,
                                     demoDeleteArmed_ >= demoPageFirst &&
@@ -1108,10 +1109,10 @@ namespace GalaxyEggbert::CNA
     std::string GalaxyEggbertGame::DemoImportPrompt() const
     {
         if (demoImports_.empty())
-            return "Put .gdemo files in " + GalaxyEggbert::Game::SharedDemoDir() + "/ to import them.";
-        if (demoSlotsMode_ == 3) return "Click the file to import.";
+            return TrFormat("Put .gdemo files in {0}/ to import them.", {GalaxyEggbert::Game::SharedDemoDir()});
+        if (demoSlotsMode_ == 3) return std::string(Tr("Click the file to import."));
         const std::string name = std::filesystem::path(demoImports_[demoImportIndex_]).filename().string();
-        return "Import " + name + ": click a position (Import: the list again).";
+        return TrFormat("Import {0}: click a position (Import: the list again).", {name});
     }
 
     int GalaxyEggbertGame::DemoImportPages() const noexcept
@@ -1140,14 +1141,15 @@ namespace GalaxyEggbert::CNA
                                    : std::filesystem::path(path).filename().string()) +
                               "  -  ";
             if (status == DemoLoadStatus::Ok)
-                row += (demo.log.start.worldPath.find("/galaxy/world") != std::string::npos ? "galaxy " : "mission ") +
-                       std::to_string(demo.log.start.mission) + ", " + std::to_string([&demo] {
-                           std::uint64_t ticks = 0;
-                           for (const auto& run : demo.log.runs) ticks += run.count;
-                           return ticks / 60;
-                       }()) + " s";
+                row += TrFormat(demo.log.start.worldPath.find("/galaxy/world") != std::string::npos ? "galaxy {0}, {1} s"
+                                                                                                    : "mission {0}, {1} s",
+                                {std::to_string(demo.log.start.mission), std::to_string([&demo] {
+                                     std::uint64_t ticks = 0;
+                                     for (const auto& run : demo.log.runs) ticks += run.count;
+                                     return ticks / 60;
+                                 }())});
             else
-                row += DemoLoadStatusText(status);
+                row += Tr(DemoLoadStatusText(status));
             demoImportRows_.push_back(std::move(row));
         }
     }
@@ -1167,21 +1169,21 @@ namespace GalaxyEggbert::CNA
         demoImportPage_ = 0;
         ListDemoImports();
         demoSlotsMessage_ = !fromChosen && GalaxyEggbert::Editor::RequestUpload(GalaxyEggbert::Game::SharedDemoDir(), ".gdemo")
-                                ? "Choose a .gdemo file: it is listed here."
+                                ? std::string(Tr("Choose a .gdemo file: it is listed here."))
                                 : DemoImportPrompt();
     }
 
     void GalaxyEggbertGame::HandleDemoSlotClick(int slot)
     {
         using namespace GalaxyEggbert::Game;
-        const std::string position = "Position " + std::to_string(slot);
+        const std::string position = std::to_string(slot);
         if (demoSlotsMode_ == 4)
         {
             std::error_code error;
             if (!std::filesystem::exists(UserDemoPath(slot), error))
-                demoSlotsMessage_ = position + " has no recording of yours to name.";
+                demoSlotsMessage_ = TrFormat("Position {0} has no recording of yours to name.", {position});
             else if (DemoTitle(UserDemoPath(slot)).empty())
-                demoSlotsMessage_ = position + "'s recording cannot be read.";
+                demoSlotsMessage_ = TrFormat("The recording in position {0} cannot be read.", {position});
             else
                 StartDemoNaming(slot);
             return;
@@ -1189,7 +1191,7 @@ namespace GalaxyEggbert::CNA
         if (demoSlotsMode_ == 0)
         {
             if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
-                demoSlotsMessage_ = "A recording is made in a mission: Pause > Record.";
+                demoSlotsMessage_ = Tr("A recording is made in a mission: Pause > Record.");
             else
                 StartPlayerRecording(slot);
             return;
@@ -1200,13 +1202,13 @@ namespace GalaxyEggbert::CNA
             const auto exported = ExportDemo(DemoSlotPath(slot), saveData_.GetSelectedGamer(), slot);
             if (exported.empty())
             {
-                demoSlotsMessage_ = position + " has no demo to export.";
+                demoSlotsMessage_ = TrFormat("Position {0} has no demo to export.", {position});
                 return;
             }
             const std::string name = std::filesystem::path(exported).filename().string();
             demoSlotsMessage_ = GalaxyEggbert::Editor::OfferDownload(exported, name)
-                                    ? "Demo " + std::to_string(slot) + " exported: downloaded as " + name + "."
-                                    : "Demo " + std::to_string(slot) + " exported to " + exported + ".";
+                                    ? TrFormat("Demo {0} exported: downloaded as {1}.", {std::to_string(slot), name})
+                                    : TrFormat("Demo {0} exported to {1}.", {std::to_string(slot), exported});
             std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
             return;
         }
@@ -1221,7 +1223,7 @@ namespace GalaxyEggbert::CNA
         const auto status = ImportDemo(source, slot);
         if (status != DemoLoadStatus::Ok)
         {
-            demoSlotsMessage_ = name + " cannot be imported: " + DemoLoadStatusText(status) + ".";
+            demoSlotsMessage_ = TrFormat("{0} cannot be imported: {1}.", {name, Tr(DemoLoadStatusText(status))});
             std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
             return;
         }
@@ -1236,8 +1238,9 @@ namespace GalaxyEggbert::CNA
             const auto world = ResolveDemoWorld(demo, galaxy);
             playable = DemoWorldStatus(demo, world, ReadWorldBytes(world)) == DemoLoadStatus::Ok;
         }
-        demoSlotsMessage_ = position + " plays " + name + " now." +
-                            (playable ? "" : " Its world is not here: it is skipped until it is.");
+        demoSlotsMessage_ = TrFormat(playable ? "Position {0} plays {1} now."
+                                              : "Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
+                                     {position, name});
         std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
     }
 
@@ -1264,7 +1267,7 @@ namespace GalaxyEggbert::CNA
             demoRecordPath_.clear();
             demoRecordTitle_.clear();
             demoRecordArmed_ = false;
-            ShowDemoNotice("The demo could not be recorded.");
+            ShowDemoNotice(std::string(Tr("The demo could not be recorded.")));
             return;
         }
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
@@ -1280,8 +1283,8 @@ namespace GalaxyEggbert::CNA
         demoRecordTitle_.clear();
         demoRecordArmed_ = false;
         demoEndRequested_ = false;
-        ShowDemoNotice(written ? "Demo recorded in position " + std::to_string(slot) + "."
-                               : "The demo could not be recorded.");
+        ShowDemoNotice(written ? TrFormat("Demo recorded in position {0}.", {std::to_string(slot)})
+                               : std::string(Tr("The demo could not be recorded.")));
         if (const int mission = std::exchange(deferredMission_, 0); mission != 0)
         {
             LoadMission(mission); // where the recorded mission was going

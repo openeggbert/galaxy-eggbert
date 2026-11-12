@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/QuadBatch.hpp>
 #include <Microsoft/Xna/Framework/Input/Keys.hpp>
 
@@ -102,10 +103,10 @@ namespace GalaxyEggbert::Game
             {
             case Kind::Char:
                 return std::string(1, shift_ && key.c >= 'a' && key.c <= 'z' ? static_cast<char>(key.c - 'a' + 'A') : key.c);
-            case Kind::Shift: return "Shift";
-            case Kind::Backspace: return "Del";
-            case Kind::Space: return "Space";
-            case Kind::Cancel: return "Cancel";
+            case Kind::Shift: return std::string(Tr("Shift"));
+            case Kind::Backspace: return std::string(Tr("Del"));
+            case Kind::Space: return std::string(Tr("Space"));
+            case Kind::Cancel: return std::string(Tr("Cancel"));
             case Kind::Done: return "OK";
             }
             return {};

@@ -125,12 +125,12 @@ namespace GalaxyEggbert::CNA
             const auto path = GalaxyEggbert::Editor::SlotWorldPath(saveData_.GetSelectedGamer(), slot);
             std::error_code error;
             if (std::filesystem::is_regular_file(path, error))
-                n.customWorlds.push_back({"My world " + std::to_string(slot), path});
+                n.customWorlds.push_back({TrFormat("My world {0}", {std::to_string(slot)}), path});
         }
         if (const char* forced = std::getenv("GALAXY_NET_CUSTOM"); forced != nullptr && *forced != 0)
             n.customWorlds.push_back({std::filesystem::path(forced).stem().string(), forced}); // a test's
-        if (!NetSession::Available()) n.message = "This version has no network game.";
-        else if (n.worlds.empty()) n.message = "No multiplayer world is installed.";
+        if (!NetSession::Available()) n.message = Tr("This version has no network game.");
+        else if (n.worlds.empty()) n.message = Tr("No multiplayer world is installed.");
         // multiplayer.txt: the host's address searched too, then the gamer services server (Q-022);
         // GALAXY_NET_ADDRESS and GALAXY_NET_SERVER for the tests.
         std::string keptAddress, keptServer;
@@ -142,7 +142,7 @@ namespace GalaxyEggbert::CNA
         if (const char* forced = std::getenv("GALAXY_NET_SERVER"); forced != nullptr) keptServer = forced;
         n.server = keptServer;
         if (!n.server.empty() && !n.session.SetServer(ServerEndpoint(n.server)))
-            n.message = "Not a server: " + n.server + " (" + n.session.LastError() + ").";
+            n.message = TrFormat("Not a server: {0} ({1}).", {n.server, n.session.LastError()});
         n.signedIn = n.session.SignIn(n.name);
         n.findSeconds = kFindEverySeconds; // the first search at once
         if (const char* forced = std::getenv("GALAXY_NET_ADDRESS"); forced != nullptr)
@@ -174,11 +174,11 @@ namespace GalaxyEggbert::CNA
     {
         std::vector<std::string> lines;
         if (!NetMatchActive()) return lines;
-        if (NetRemotePaused()) lines.emplace_back(Net::kTextPause);
-        if (net_->typing) lines.insert(lines.begin(), "Say:  " + net_->draft + "_"); // the chat line typed (Enter)
+        if (NetRemotePaused()) lines.emplace_back(Tr(Net::kTextPause));
+        if (net_->typing) lines.insert(lines.begin(), TrFormat("Say:  {0}", {net_->draft + "_"})); // the chat line typed (Enter)
         // The time limit's clock (Q-022), first.
         if (net_->limitSeconds > 0.0f && !net_->timeUp)
-            lines.insert(lines.begin(), "Time left " + Net::ClockText(net_->limitSeconds - net_->matchSeconds));
+            lines.insert(lines.begin(), TrFormat("Time left {0}", {Net::ClockText(net_->limitSeconds - net_->matchSeconds)}));
         for (const auto& [text, seconds] : net_->notices) lines.push_back(text);
         return lines;
     }
@@ -279,7 +279,7 @@ namespace GalaxyEggbert::CNA
                           << static_cast<int>(peer.silence) << " s." << std::endl;
                 if (peer.id == n.hostId)
                 {
-                    NetSessionEnded("the host does not answer");
+                    NetSessionEnded(TrMark("the host does not answer"));
                     return;
                 }
                 peer.present = false;
@@ -298,7 +298,7 @@ namespace GalaxyEggbert::CNA
             {
                 n.session.Leave();
                 n.screen = NetGame::Screen::Browser;
-                n.message = "The game did not take us (full, or another version).";
+                n.message = Tr("The game did not take us (full, or another version).");
             }
         }
         if (n.match && n.typing)
@@ -506,7 +506,7 @@ namespace GalaxyEggbert::CNA
         sound_.SetOutbox(nullptr);
         n.typing = false;
         n.screen = NetGame::Screen::Browser;
-        n.message = "The network game ended: " + reason + ".";
+        n.message = TrFormat("The network game ended: {0}.", {Tr(reason)});
         std::cout << "GalaxyEggbertCNA: multiplayer: " << n.message << std::endl;
         if (wasMatch)
         {
@@ -544,32 +544,34 @@ namespace GalaxyEggbert::CNA
         };
         if (n.screen == NetGame::Screen::Browser)
         {
-            l.title = std::string(Net::kTextMultiplayer);
+            l.title = std::string(Tr(Net::kTextMultiplayer));
             if (n.typing && n.typingServer)
             {
-                line("Server:  " + n.draft + "_", left, 268.0f, 0.5f);
-                line("The gamer services server for internet games: its name or address, :port if not 47831.", left, 300.0f, 0.42f, true);
-                line("Empty: none. OK keeps it; the game uses it from its next start.", left, 322.0f, 0.42f, true);
+                line(TrFormat("Server:  {0}", {n.draft + "_"}), left, 268.0f, 0.5f);
+                line(std::string(Tr("The gamer services server for internet games: its name or address, :port if not 47831.")), left,
+                     300.0f, 0.42f, true);
+                line(std::string(Tr("Empty: none. OK keeps it; the game uses it from its next start.")), left, 322.0f, 0.42f, true);
                 return l;
             }
             if (n.typing)
             {
-                line("Host address:  " + n.draft + "_", left, 268.0f, 0.5f);
-                line("Its IP address or name (192.168.1.20, a ZeroTier address, a router's address).", left, 300.0f, 0.42f, true);
-                line("Empty: the local network only. OK keeps it.", left, 322.0f, 0.42f, true);
+                line(TrFormat("Host address:  {0}", {n.draft + "_"}), left, 268.0f, 0.5f);
+                line(std::string(Tr("Its IP address or name (192.168.1.20, a ZeroTier address, a router's address).")), left, 300.0f,
+                     0.42f, true);
+                line(std::string(Tr("Empty: the local network only. OK keeps it.")), left, 322.0f, 0.42f, true);
                 return l;
             }
-            line(n.signedIn ? "You play as " + n.name + "." : "Signing in as " + n.name + " ...", left, 62.0f);
+            line(TrFormat(n.signedIn ? "You play as {0}." : "Signing in as {0} ...", {n.name}), left, 62.0f);
             if (NetSession::ServerSupport())
             {
                 // Internet play (Q-022): the server to set (it starts with the game), or with one the
                 // internet's games or the local network's.
                 PanelButton server;
                 server.rect = rect(20.0f, 80.0f, 320.0f, 108.0f);
-                server.label = !n.session.Online() ? "Server: " + (n.server.empty() ? std::string("none") : n.server)
-                               : !n.signedIn            ? std::string("Sign in at the server")
-                               : n.session.Internet()   ? "Internet games (local: here)"
-                                                        : "Local games (internet: here)";
+                server.label = !n.session.Online() ? (n.server.empty() ? std::string(Tr("Server: none")) : TrFormat("Server: {0}", {n.server}))
+                               : std::string(!n.signedIn ? Tr("Sign in at the server")
+                                             : n.session.Internet() ? Tr("Internet games (local: here)")
+                                                                    : Tr("Local games (internet: here)"));
                 server.size = 0.42f;
                 server.enabled = !n.session.Active();
                 l.buttons.push_back(server);
@@ -579,13 +581,13 @@ namespace GalaxyEggbert::CNA
             {
                 PanelButton address;
                 address.rect = rect(330.0f, 80.0f, 620.0f, 108.0f);
-                address.label = "Host address: " + (n.address.empty() ? std::string("none") : n.address);
+                address.label = n.address.empty() ? std::string(Tr("Host address: none")) : TrFormat("Host address: {0}", {n.address});
                 address.size = 0.42f;
                 address.enabled = !n.session.Active();
                 l.buttons.push_back(address);
                 l.actions.push_back(kAddress);
             }
-            line(n.session.Internet() ? std::string("Available games on the internet :") : std::string(Net::kTextAvailableGames),
+            line(std::string(n.session.Internet() ? Tr("Available games on the internet :") : Tr(Net::kTextAvailableGames)),
                  left, 120.0f);
             const auto& found = n.session.Found();
             for (int i = 0; i < kListRows && i < static_cast<int>(found.size()); ++i)
@@ -602,13 +604,13 @@ namespace GalaxyEggbert::CNA
                 l.actions.push_back(kRow0 + i);
             }
             if (found.empty())
-                line(n.signedIn ? "No game found yet. Make a new one, or wait for one." : "", centre, 200.0f, 0.45f,
-                     true, true);
+                line(n.signedIn ? std::string(Tr("No game found yet. Make a new one, or wait for one.")) : std::string(), centre,
+                     200.0f, 0.45f, true, true);
             if (!n.message.empty()) line(n.message, centre, 384.0f, 0.45f, false, true);
-            button(kJoin, 20.0f, 215.0f, std::string(Net::kTextJoin), n.selected >= 0 && n.signedIn);
-            button(kNewGame, 225.0f, 375.0f, std::string(Net::kTextNewGame), n.signedIn && !n.worlds.empty());
-            button(kUpdate, 385.0f, 530.0f, std::string(Net::kTextUpdateList), n.signedIn);
-            button(kBack, 540.0f, 620.0f, "Back");
+            button(kJoin, 20.0f, 215.0f, std::string(Tr(Net::kTextJoin)), n.selected >= 0 && n.signedIn);
+            button(kNewGame, 225.0f, 375.0f, std::string(Tr(Net::kTextNewGame)), n.signedIn && !n.worlds.empty());
+            button(kUpdate, 385.0f, 530.0f, std::string(Tr(Net::kTextUpdateList)), n.signedIn);
+            button(kBack, 540.0f, 620.0f, std::string(Tr("Back")));
             return l;
         }
 
@@ -617,17 +619,19 @@ namespace GalaxyEggbert::CNA
         const std::uint8_t me = n.session.LocalId();
         const int mySlot = n.session.HasLocalGamer() ? n.lobby.SlotOf(me) : -1;
         const bool ready = mySlot >= 0 && n.lobby.state.slots[static_cast<std::size_t>(mySlot)].ready;
-        l.title = n.lobby.state.customHash != 0 ? "World: " + n.lobby.state.customName : Net::MissionTitle(n.lobby.state.world);
+        l.title = n.lobby.state.customHash != 0 ? TrFormat("World: {0}", {n.lobby.state.customName})
+                                                : Net::MissionTitle(n.lobby.state.world);
         if (n.lobby.state.customHash != 0 && !host && !NetHasLobbyWorld())
         {
             std::size_t got = 0;
             for (const bool piece : n.customGot) got += piece ? 1 : 0;
             const std::size_t pieces = std::max<std::size_t>(n.customGot.size(), 1);
-            line("Receiving the host's world ... " + std::to_string(100 * got / pieces) + " %", centre, 172.0f, 0.42f, true, true);
+            line(TrFormat("Receiving the host's world ... {0} %", {std::to_string(100 * got / pieces)}), centre, 172.0f, 0.42f, true,
+                 true);
         }
         if (n.typing)
         {
-            line(std::string(Net::kTextSendMessage) + ":  " + n.draft + "_", left, 268.0f, 0.5f);
+            line(std::string(Tr(Net::kTextSendMessage)) + ":  " + n.draft + "_", left, 268.0f, 0.5f);
             const int shown = static_cast<int>(std::min<std::size_t>(n.chat.size(), 5));
             for (int j = 0; j < shown; ++j)
                 line(n.chat[n.chat.size() - static_cast<std::size_t>(shown - j)], left, 296.0f + 20.0f * static_cast<float>(j),
@@ -648,7 +652,7 @@ namespace GalaxyEggbert::CNA
                 l.actions.push_back(action);
             }
         }
-        line(std::string(Net::kTextPlayerList), left, 66.0f);
+        line(std::string(Tr(Net::kTextPlayerList)), left, 66.0f);
         for (int i = 0; i < Net::kMaxPlayers; ++i)
         {
             const auto& slot = n.lobby.state.slots[static_cast<std::size_t>(i)];
@@ -659,25 +663,25 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
             std::string who = std::to_string(i + 1) + ".   " + slot.name;
-            if (i == 0) who += "  (host)";
-            if (i == mySlot) who += "  (you)";
+            if (i == 0) who += Tr("  (host)");
+            if (i == mySlot) who += Tr("  (you)");
             line(who, left + 10.0f * s, y);
-            line(Net::kTeamNames[slot.team % Net::kTeams], centre + 40.0f * s, y);
-            if (slot.playing) line("playing", centre + 170.0f * s, y, 0.45f, true);
-            else line(slot.ready ? "Ready" : "...", centre + 170.0f * s, y, 0.45f, !slot.ready);
+            line(std::string(Tr(Net::kTeamNames[slot.team % Net::kTeams])), centre + 40.0f * s, y);
+            if (slot.playing) line(std::string(Tr("playing")), centre + 170.0f * s, y, 0.45f, true);
+            else line(slot.ready ? std::string(Tr("Ready")) : std::string("..."), centre + 170.0f * s, y, 0.45f, !slot.ready);
             // The last match (Q-021): his place, kills / deaths.
             if (const auto& score = n.scores[static_cast<std::size_t>(i)]; n.scored && score.played && score.name == slot.name)
             {
-                static const char* const kPlaces[] = {"-", "1st", "2nd", "3rd", "4th"};
+                static const char* const kPlaces[] = {"-", TrMark("1st"), TrMark("2nd"), TrMark("3rd"), TrMark("4th")};
                 const int place = NetPlaceOf(i);
-                line(std::string(kPlaces[place >= 0 && place <= 4 ? place : 0]) + " " + std::to_string(score.kills) + "/" +
+                line(std::string(Tr(kPlaces[place >= 0 && place <= 4 ? place : 0])) + " " + std::to_string(score.kills) + "/" +
                          std::to_string(score.deaths),
                      centre + 235.0f * s, y, 0.42f, true);
             }
         }
         // The match's settings (Galaxy's, Q-022): the host's to change, everyone's to see.
-        const std::string livesText = "Lives: " + std::to_string(n.lobby.state.lives);
-        const std::string timeText = "Time limit: " + Net::TimeLimitText(n.lobby.state.minutes);
+        const std::string livesText = TrFormat("Lives: {0}", {std::to_string(n.lobby.state.lives)});
+        const std::string timeText = Net::TimeLimitText(n.lobby.state.minutes);
         if (host)
         {
             for (const auto& [action, x0, x1, label] :
@@ -694,19 +698,19 @@ namespace GalaxyEggbert::CNA
             }
         }
         else line(livesText + "      " + timeText, left, 204.0f, 0.42f, true);
-        line(std::string(Net::kTextChatZone), left, 236.0f);
+        line(std::string(Tr(Net::kTextChatZone)), left, 236.0f);
         for (std::size_t j = 0; j < n.chat.size(); ++j)
             line(n.chat[j], left + 10.0f * s, 258.0f + 20.0f * static_cast<float>(j), 0.42f);
         if (!n.message.empty()) line(n.message, centre, 384.0f, 0.45f, false, true);
-        else if (mySlot < 0) line("Waiting for the host ...", centre, 384.0f, 0.45f, true, true);
+        else if (mySlot < 0) line(std::string(Tr("Waiting for the host ...")), centre, 384.0f, 0.45f, true, true);
         else if (host && !n.lobby.CanStart())
-            line("Start when every player is ready (two at least).", centre, 384.0f, 0.42f, true, true);
-        button(kColour, 20.0f, 130.0f, "Colour", mySlot >= 0 && !ready);
-        button(kReady, 140.0f, 260.0f, ready ? "Ready" : std::string(Net::kTextReady), mySlot >= 0 && (ready || NetHasLobbyWorld()),
-               ready);
-        button(kChat, 270.0f, 420.0f, std::string(Net::kTextSendMessage), mySlot >= 0);
-        if (host) button(kStart, 430.0f, 520.0f, "Start", n.lobby.CanStart());
-        button(kLeave, 530.0f, 620.0f, "Leave");
+            line(std::string(Tr("Start when every player is ready (two at least).")), centre, 384.0f, 0.42f, true, true);
+        button(kColour, 20.0f, 130.0f, std::string(Tr("Colour")), mySlot >= 0 && !ready);
+        button(kReady, 140.0f, 260.0f, std::string(ready ? Tr("Ready") : Tr(Net::kTextReady)),
+               mySlot >= 0 && (ready || NetHasLobbyWorld()), ready);
+        button(kChat, 270.0f, 420.0f, std::string(Tr(Net::kTextSendMessage)), mySlot >= 0);
+        if (host) button(kStart, 430.0f, 520.0f, std::string(Tr("Start")), n.lobby.CanStart());
+        button(kLeave, 530.0f, 620.0f, std::string(Tr("Leave")));
         return l;
     }
 
@@ -739,14 +743,15 @@ namespace GalaxyEggbert::CNA
             if (c != ' ' && c >= 0x21 && c < 0x7f && address.size() < kAddressInput) address += c;
         if (!n.session.SetSearchAddress(address))
         {
-            n.message = "Not an address: " + address + " (" + n.session.LastError() + ").";
+            n.message = TrFormat("Not an address: {0} ({1}).", {address, n.session.LastError()});
             return;
         }
         n.address = address;
         n.findSeconds = kFindEverySeconds; // searched again at once
         if (save)
         {
-            n.message = address.empty() ? "Games are searched on the local network." : "Games are searched at " + address + " too.";
+            n.message = address.empty() ? std::string(Tr("Games are searched on the local network."))
+                                        : TrFormat("Games are searched at {0} too.", {address});
             NetSaveAddresses();
         }
     }
@@ -815,8 +820,10 @@ namespace GalaxyEggbert::CNA
         const auto& who = n.scores[killer];
         const auto& whom = n.scores[static_cast<std::size_t>(victimSlot)];
         if (!who.played || !whom.played) return;
-        NetNotice(Net::KillNotice(killer == n.slot ? std::string("You") : who.name,
-                                  victimSlot == n.slot ? std::string("you") : whom.name));
+        // "You" and "you" whole sentences of their own: a language puts them where its grammar wants.
+        NetNotice(killer == n.slot       ? TrFormat("You got {0} !", {whom.name})
+                  : victimSlot == n.slot ? TrFormat("{0} got you !", {who.name})
+                                         : Net::KillNotice(who.name, whom.name));
     }
 
     void GalaxyEggbertGame::UpdateNetScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int w, int h,
@@ -898,7 +905,7 @@ namespace GalaxyEggbert::CNA
             n.session.SetInternet(!n.session.Internet());
             n.selected = -1;
             n.findSeconds = kFindEverySeconds;
-            n.message = n.session.Internet() ? "Games on the internet, through the server." : "Games on the local network.";
+            n.message = n.session.Internet() ? Tr("Games on the internet, through the server.") : Tr("Games on the local network.");
             return;
         case kColour:
             if (mySlot >= 0)
@@ -991,7 +998,7 @@ namespace GalaxyEggbert::CNA
         auto& n = *net_;
         if (index < 0 || !n.session.Join(index))
         {
-            n.message = n.session.LastError().empty() ? "Could not join that game." : n.session.LastError();
+            n.message = n.session.LastError().empty() ? std::string(Tr("Could not join that game.")) : n.session.LastError();
             n.findSeconds = kFindEverySeconds;
             return false;
         }
@@ -1128,8 +1135,8 @@ namespace GalaxyEggbert::CNA
         std::istringstream in(bytes ? *bytes : std::string{}, std::ios::in | std::ios::binary);
         if (slot < 0 || !bytes || !worldRuntime_.LoadFromVwrStream(in))
         {
-            n.message = custom ? "The world " + n.lobby.state.customName + " could not be started."
-                               : "Mission #" + std::to_string(worldNumber) + " could not be started.";
+            n.message = custom ? TrFormat("The world {0} could not be started.", {n.lobby.state.customName})
+                               : TrFormat("Mission #{0} could not be started.", {std::to_string(worldNumber)});
             std::cout << "GalaxyEggbertCNA: multiplayer: " << n.message << std::endl;
             return;
         }
@@ -1246,7 +1253,7 @@ namespace GalaxyEggbert::CNA
             }
             std::cout << "GalaxyEggbertCNA: multiplayer: back in the match (" << static_cast<int>(r.lives) << " lives left)."
                       << std::endl;
-            NetNotice("Back in the match !");
+            NetNotice(std::string(Tr("Back in the match !")));
         }
         n.replicator.Begin(objects, slot, firstSpawn);
         n.replicator.Snapshot(worldRuntime_.GetWorld(), objects);
@@ -1458,7 +1465,7 @@ namespace GalaxyEggbert::CNA
         n.won = true;
         n.scores[static_cast<std::size_t>(n.slot)].won = true;
         NetLogResults();
-        if (!n.timeUp) NetNotice(std::string(Net::kTextWon));
+        if (!n.timeUp) NetNotice(std::string(Tr(Net::kTextWon)));
         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel14);
         if (blupi_.IsInVehicle()) blupi_.TriggerDismount();
         if (blupi_.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration))
@@ -1531,7 +1538,7 @@ namespace GalaxyEggbert::CNA
         for (int i = 0; i < Net::kMaxPlayers; ++i)
             if (places[static_cast<std::size_t>(i)] == 1 && n.scores[static_cast<std::size_t>(i)].played)
                 n.scores[static_cast<std::size_t>(i)].won = true;
-        NetNotice(std::string(Net::kTextTimeUp));
+        NetNotice(std::string(Tr(Net::kTextTimeUp)));
         std::cout << "GalaxyEggbertCNA: multiplayer: the time is up." << std::endl;
         if (n.lost || n.won) // already out (his results now final) or won
         {
@@ -1740,14 +1747,14 @@ namespace GalaxyEggbert::CNA
         for (int i = 0; i < Net::kMaxPlayers; ++i)
             if (n.scores[static_cast<std::size_t>(i)].played) order.emplace_back(NetPlaceOf(i), i);
         std::sort(order.begin(), order.end());
-        static const char* const kPlaces[] = {"", "1st", "2nd", "3rd", "4th"};
+        static const char* const kPlaces[] = {"", TrMark("1st"), TrMark("2nd"), TrMark("3rd"), TrMark("4th")};
         for (const auto& [place, i] : order)
         {
             const auto& score = n.scores[static_cast<std::size_t>(i)];
-            std::string line = place > 0 && place <= 4 ? kPlaces[place] : "playing";
-            line += "  " + score.name + " (" + Net::kTeamNames[score.team % Net::kTeams] + ")  " + std::to_string(score.kills) +
-                    (score.kills == 1 ? " kill, " : " kills, ") + std::to_string(score.deaths) +
-                    (score.deaths == 1 ? " death" : " deaths");
+            std::string line(place > 0 && place <= 4 ? Tr(kPlaces[place]) : Tr("playing"));
+            line += "  " + score.name + " (" + std::string(Tr(Net::kTeamNames[score.team % Net::kTeams])) + ")  " +
+                    TrFormat(score.kills == 1 ? "{0} kill, " : "{0} kills, ", {std::to_string(score.kills)}) +
+                    TrFormat(score.deaths == 1 ? "{0} death" : "{0} deaths", {std::to_string(score.deaths)});
             lines.push_back(line);
         }
         return lines;
@@ -2074,7 +2081,7 @@ namespace GalaxyEggbert::CNA
         const auto bytes = ReadWorldBytes(n.customWorlds[k].path.string());
         if (!bytes || bytes->empty() || bytes->size() > Net::kMaxWorldBytes)
         {
-            n.message = n.customWorlds[k].name + " could not be read.";
+            n.message = TrFormat("{0} could not be read.", {n.customWorlds[k].name});
             return;
         }
         n.customBytes.assign(bytes->begin(), bytes->end());
@@ -2162,7 +2169,7 @@ namespace GalaxyEggbert::CNA
             peer.silence = 0.0f;
             peer.paused = false;
             peer.age = 0.0f;
-            NetNotice(peer.name + " is back !");
+            NetNotice(TrFormat("{0} is back !", {peer.name}));
         }
         auto& score = n.scores[static_cast<std::size_t>(slot)];
         if (score.out > 0)
@@ -2276,8 +2283,8 @@ namespace GalaxyEggbert::CNA
             if (c != ' ' && c >= 0x21 && c < 0x7f && server.size() < kAddressInput) server += c;
         n.server = server;
         NetSaveAddresses();
-        n.message = server.empty() ? "No server: the local network only (from the next start)."
-                                   : "The server " + server + " is used from the game's next start.";
+        n.message = server.empty() ? std::string(Tr("No server: the local network only (from the next start)."))
+                                   : TrFormat("The server {0} is used from the game's next start.", {server});
     }
 
     void GalaxyEggbertGame::NetStartPauseTyping(int w, int h)
@@ -2311,11 +2318,11 @@ namespace GalaxyEggbert::CNA
         const float s = static_cast<float>(h) / 480.0f;
         const float left = static_cast<float>(w) * 0.5f - 290.0f * s;
         std::vector<PanelLine> lines;
-        lines.push_back(PanelLine{std::string(Net::kTextSendMessage) + ":  " + n.draft + "_", left, 268.0f * s, 0.5f, false, false});
+        lines.push_back(PanelLine{std::string(Tr(Net::kTextSendMessage)) + ":  " + n.draft + "_", left, 268.0f * s, 0.5f, false, false});
         const int shown = static_cast<int>(std::min<std::size_t>(n.chat.size(), 5));
         for (int j = 0; j < shown; ++j)
             lines.push_back(PanelLine{n.chat[n.chat.size() - static_cast<std::size_t>(shown - j)], left,
                                       (296.0f + 20.0f * static_cast<float>(j)) * s, 0.42f, false, false});
-        inputPad_.DrawPanel(device, w, h, "Message", {}, lines, &net_->keyboard, focusHighlight_);
+        inputPad_.DrawPanel(device, w, h, std::string(Tr("Message")), {}, lines, &net_->keyboard, focusHighlight_);
     }
 }

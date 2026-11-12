@@ -2,6 +2,7 @@
 
 #include <tuple>
 #include <sstream>
+#include "Localization.hpp"
 #include "TextMetrics.hpp"
 #include "TextureScale.hpp"
 #include "CheatConfig.hpp"
@@ -228,6 +229,13 @@ namespace GalaxyEggbert::Game
         {
             return Rect{20.0f * m.s, 15.0f * m.s, 150.0f * m.s, 69.0f * m.s};
         }
+        // "Language" (a Galaxy addition, the owner's Q-023, 2026-11-11; BD-0126): the language's own
+        // name on the blank face, a press the next language; in the top-right corner, Nickname's
+        // mirror, in every Setup (the pause's too).
+        Rect SetupLanguageRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.w - 150.0f * m.s, 15.0f * m.s, m.w - 20.0f * m.s, 69.0f * m.s};
+        }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -345,6 +353,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlFrameRate = 11;
         constexpr int kSetupControlTextures = 12;
         constexpr int kSetupControlNickname = 13;
+        constexpr int kSetupControlLanguage = 14;
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -733,7 +742,16 @@ namespace GalaxyEggbert::Game
         QuadBatch::FlushQuads(device, effect, renderer, quads, viewportW, viewportH, alpha);
     }
 
-    void InputPad::AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,
+    // The scale (at most @p scale) at which @p text, drawn as AppendCenteredLabel draws it, fits the
+    // blank face @p face with a little margin: a translation can be wider than the English.
+    float InputPad::FaceLabelScale(std::string_view text, const Rect& face, float scale) noexcept
+    {
+        const float room = face.x1 - face.x0 - 8.0f * scale;
+        const float width = TextMetrics::Width(text) * kPauseLabelScale * scale;
+        return width > room && width > 0.0f ? scale * room / width : scale;
+    }
+
+    void InputPad::AppendCenteredLabel(std::vector<Quad>& quads, std::string_view text,
                                         float centerX, float topY, float viewportScale) const
     {
         if (text.empty())
@@ -745,9 +763,9 @@ namespace GalaxyEggbert::Game
         const float glyphScale = kPauseLabelScale * viewportScale;
         const float cellPx = kGlyphCellPx * glyphScale;
         float penX = centerX - TextMetrics::Width(text) * glyphScale * 0.5f;
-        for (const char c : text)
+        for (std::size_t at = 0; at < text.size();)
         {
-            const int rank = TextMetrics::GlyphIndex(c);
+            const int rank = TextMetrics::NextGlyph(text, at);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -760,11 +778,11 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += TextMetrics::Advance(c) * glyphScale;
+            penX += TextMetrics::GlyphAdvance(rank) * glyphScale;
         }
     }
 
-    void InputPad::AppendLeftAlignedLabel(std::vector<Quad>& quads, const std::string& text,
+    void InputPad::AppendLeftAlignedLabel(std::vector<Quad>& quads, std::string_view text,
                                             float leftX, float centerY, float viewportScale) const
     {
         if (text.empty())
@@ -777,9 +795,9 @@ namespace GalaxyEggbert::Game
         const float cellPx = kGlyphCellPx * glyphScale;
         const float topY = centerY - kSetupLabelYNudge * viewportScale;
         float penX = leftX;
-        for (const char c : text)
+        for (std::size_t at = 0; at < text.size();)
         {
-            const int rank = TextMetrics::GlyphIndex(c);
+            const int rank = TextMetrics::NextGlyph(text, at);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -792,7 +810,7 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += TextMetrics::Advance(c) * glyphScale;
+            penX += TextMetrics::GlyphAdvance(rank) * glyphScale;
         }
     }
 
@@ -967,11 +985,18 @@ namespace GalaxyEggbert::Game
         const std::vector<Quad> panel{{ox + 10 * s, oy + 10 * s, ox + 630 * s, oy + 470 * s,
                                        0, 0, 1, 1}};
         std::vector<Quad> text;
-        const auto line = [&](const char* label, float x, float y, float size = 0.48f) {
+        // A line narrower than @p room (reference pixels) when one is given: a translation longer
+        // than the English is drawn smaller rather than over the other column.
+        const auto line = [&](std::string_view label, float x, float y, float size = 0.48f, float room = 0.0f) {
+            const float width = TextMetrics::Width(label);
+            if (room > 0.0f && width * size > room) size = room / width;
             AppendGamerLabel(text, label, ox + x * s, oy + y * s, size, s);
         };
+        constexpr float kLeftRoom = 300.0f;  // 28 .. 328, the right column starting at 335
+        constexpr float kRightRoom = 285.0f; // 335 .. 620, the panel's right edge at 630
         if (cheats)
         {
+            // The cheat list stays English (the owner's Q-023: a tester's tool, as the debug panel).
             line("Galaxy Eggbert - Cheats", 28, 22, 0.85f);
             line("Type a word during play (no Enter needed).", 28, 54, 0.45f);
             int count = 0;
@@ -987,59 +1012,59 @@ namespace GalaxyEggbert::Game
         }
         else
         {
-            line("Galaxy Eggbert - Controls", 28, 22, 0.85f);
-            line("KEYBOARD", 28, 62, 0.65f);
+            line(Tr("Galaxy Eggbert - Controls"), 28, 22, 0.85f, 500.0f);
+            line(Tr("KEYBOARD"), 28, 62, 0.65f, kLeftRoom);
             const char* keyboard[] = {
-                "W / Up: walk forward",
-                "A D / Left Right: turn",
-                "S / Down: turn around, then walk",
-                "Left Ctrl: jump / helicopter up",
-                "Space: action / enter / leave",
-                "F: vehicle glue; Ctrl: tank glue",
-                "X / Right Ctrl: back up",
-                "Left Shift: crouch / dive",
-                "Crouch + S / Down: pull crate",
-                "Right Shift: look / helicopter up",
-                "Esc: pause / continue",
-                "Enter: Play / Continue",
-                "F1: show / hide this help",
-                "F3: first / third person",
-                "F11: full screen",
-                "F5 / F4 / F6: speed 1x / 1.5x / 2x",
-                "Tab: slow / normal speed",
-                "F12: cheat menu",
-                "F7 / F8: faster (quick cheat)"};
+                TrMark("W / Up: walk forward"),
+                TrMark("A D / Left Right: turn"),
+                TrMark("S / Down: turn around, then walk"),
+                TrMark("Left Ctrl: jump / helicopter up"),
+                TrMark("Space: action / enter / leave"),
+                TrMark("F: vehicle glue; Ctrl: tank glue"),
+                TrMark("X / Right Ctrl: back up"),
+                TrMark("Left Shift: crouch / dive"),
+                TrMark("Crouch + S / Down: pull crate"),
+                TrMark("Right Shift: look / helicopter up"),
+                TrMark("Esc: pause / continue"),
+                TrMark("Enter: Play / Continue"),
+                TrMark("F1: show / hide this help"),
+                TrMark("F3: first / third person"),
+                TrMark("F11: full screen"),
+                TrMark("F5 / F4 / F6: speed 1x / 1.5x / 2x"),
+                TrMark("Tab: slow / normal speed"),
+                TrMark("F12: cheat menu"),
+                TrMark("F7 / F8: faster (quick cheat)")};
             float y = 90;
             for (const char* label : keyboard)
             {
                 if (!kCheatsEnabled && (std::string_view(label).starts_with("F12") || std::string_view(label).starts_with("F7"))) continue;
-                line(label, 28, y); y += 17;
+                line(Tr(label), 28, y, 0.48f, kLeftRoom); y += 17;
             }
-            line("GAMEPAD", 335, 62, 0.65f);
+            line(Tr("GAMEPAD"), 335, 62, 0.65f, kRightRoom);
             const char* gamepad[] = {
-                "Left stick / D-pad: walk, turn",
-                "Down: turn around, then walk",
-                "A: jump / helicopter up",
-                "A: Play / Continue in menus",
-                "B / X: action / enter / leave",
-                "RT: vehicle glue shot / drop",
-                "RB: back up",
-                "LB: crouch / dive",
-                "LB + Down: pull crate",
-                "Y: look up",
-                "Start / Back: pause / continue"};
+                TrMark("Left stick / D-pad: walk, turn"),
+                TrMark("Down: turn around, then walk"),
+                TrMark("A: jump / helicopter up"),
+                TrMark("A: Play / Continue in menus"),
+                TrMark("B / X: action / enter / leave"),
+                TrMark("RT: vehicle glue shot / drop"),
+                TrMark("RB: back up"),
+                TrMark("LB: crouch / dive"),
+                TrMark("LB + Down: pull crate"),
+                TrMark("Y: look up"),
+                TrMark("Start / Back: pause / continue")};
             y = 90;
-            for (const char* label : gamepad) { line(label, 335, y); y += 17; }
-            line("MOUSE", 335, 285, 0.65f);
-            line("Left click: menu buttons", 335, 313);
-            line("Hold left + drag: look around", 335, 330);
-            line("Walking returns the camera", 335, 347);
-            line("Touch Fire: tank / helicopter glue",335,366);
-            line("Touch controls: touch screens only", 335, 383);
-            line(kCheatsEnabled ? "Type help: cheats explained" : "Cheats disabled", 335, 405);
+            for (const char* label : gamepad) { line(Tr(label), 335, y, 0.48f, kRightRoom); y += 17; }
+            line(Tr("MOUSE"), 335, 285, 0.65f, kRightRoom);
+            line(Tr("Left click: menu buttons"), 335, 313, 0.48f, kRightRoom);
+            line(Tr("Hold left + drag: look around"), 335, 330, 0.48f, kRightRoom);
+            line(Tr("Walking returns the camera"), 335, 347, 0.48f, kRightRoom);
+            line(Tr("Touch Fire: tank / helicopter glue"), 335, 366, 0.48f, kRightRoom);
+            line(Tr("Touch controls: touch screens only"), 335, 383, 0.48f, kRightRoom);
+            line(kCheatsEnabled ? Tr("Type help: cheats explained") : Tr("Cheats disabled"), 335, 405, 0.48f, kRightRoom);
         }
-        line("[Close]",550,25,.55f);
-        line("Game paused - F1 or Esc to close", 28, 439, 0.6f);
+        line(Tr("[Close]"), 550, 25, .55f, 75.0f);
+        line(Tr("Game paused - F1 or Esc to close"), 28, 439, 0.6f, 590.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, panel, viewportW, viewportH, 0.87f);
         const auto diffuse = textEffect_->getDiffuseColorProperty();
@@ -1049,7 +1074,7 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
-    void InputPad::AppendGamerLabel(std::vector<Quad>& quads, const std::string& text, float leftX, float topY,
+    void InputPad::AppendGamerLabel(std::vector<Quad>& quads, std::string_view text, float leftX, float topY,
                                       float labelScale, float viewportScale) const
     {
         if (text.empty())
@@ -1061,9 +1086,9 @@ namespace GalaxyEggbert::Game
         const float glyphScale = labelScale * viewportScale;
         const float cellPx = kGlyphCellPx * glyphScale;
         float penX = leftX;
-        for (const char c : text)
+        for (std::size_t at = 0; at < text.size();)
         {
-            const int rank = TextMetrics::GlyphIndex(c);
+            const int rank = TextMetrics::NextGlyph(text, at);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -1076,7 +1101,7 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += TextMetrics::Advance(c) * glyphScale;
+            penX += TextMetrics::GlyphAdvance(rank) * glyphScale;
         }
     }
 
@@ -1476,7 +1501,8 @@ namespace GalaxyEggbert::Game
             const auto r=PlayFireRect(m,jumpRight_);
             std::vector<Quad> labels;
             const float font=.55f;
-            AppendGamerLabel(labels,"Fire",(r.x0+r.x1)*.5f-TextMetrics::Width("Fire")*font*m.s*.5f,
+            const std::string_view fire=Tr("Fire");
+            AppendGamerLabel(labels,fire,(r.x0+r.x1)*.5f-TextMetrics::Width(fire)*font*m.s*.5f,
                              (r.y0+r.y1)*.5f-12*font*m.s,font,m.s);
             FlushQuads(device,*textEffect_,textRenderer_,labels,viewportW,viewportH,1);
         }
@@ -1666,7 +1692,7 @@ namespace GalaxyEggbert::Game
             PadIconUv(index, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
             bucket.push_back(q);
         };
-        const auto centred = [&](std::vector<Quad>& bucket, const std::string& text, float cx, float top, float size) {
+        const auto centred = [&](std::vector<Quad>& bucket, std::string_view text, float cx, float top, float size) {
             AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
@@ -1674,7 +1700,7 @@ namespace GalaxyEggbert::Game
         // A text the width of @p room at most (cut, "..." at its end).
         const auto fit = [&](std::string text, float size, float room) {
             if (TextMetrics::Width(text) * size * s <= room) return text;
-            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) text.pop_back();
+            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) TextMetrics::PopBack(text);
             return text + "...";
         };
         if (extras.keyboard != nullptr)
@@ -1682,7 +1708,7 @@ namespace GalaxyEggbert::Game
             // Naming a recording: the name over the keyboard, in place of the positions.
             const Rect field{w * 0.5f - 300.0f * s, 74.0f * s, w * 0.5f + 300.0f * s, 110.0f * s};
             icon(normal, field, kInitPanelIcon);
-            AppendGamerLabel(labels, fit("Name: " + extras.draft + "_", 0.55f, field.x1 - field.x0 - 20.0f * s),
+            AppendGamerLabel(labels, fit(TrFormat("Name: {0}", {extras.draft + "_"}), 0.55f, field.x1 - field.x0 - 20.0f * s),
                              field.x0 + 10.0f * s, field.y0 + 7.0f * s, 0.55f, s);
             for (std::size_t i = 0; i < extras.keyboard->Keys().size(); ++i)
             {
@@ -1703,8 +1729,8 @@ namespace GalaxyEggbert::Game
             icon(demoSlotsControl_ == 30 + i ? pressed : rows, r, demoSlotsControl_ == 30 + i ? 21 : kInitPanelIcon);
             icon(demoSlotsControl_ == 40 + i ? pressed : normal, DemoListDeleteRect(i, viewportW, viewportH),
                  armedRow == i ? 13 : 20); // the tick, the bin
-            std::string row = armedRow == i ? "Delete it? Click its bin again." : (*listRows)[static_cast<std::size_t>(i)];
-            while (!row.empty() && TextMetrics::Width(row) * 0.45f * s > r.x1 - r.x0 - 52.0f * s) row.pop_back();
+            std::string row = armedRow == i ? std::string(Tr("Delete it? Click its bin again.")) : (*listRows)[static_cast<std::size_t>(i)];
+            while (!row.empty() && TextMetrics::Width(row) * 0.45f * s > r.x1 - r.x0 - 52.0f * s) TextMetrics::PopBack(row);
             AppendGamerLabel(labels, row, r.x0 + 10.0f * s, r.y0 + 6.0f * s, 0.45f, s);
         }
         if (listRows != nullptr && !pageLabel.empty())
@@ -1730,22 +1756,22 @@ namespace GalaxyEggbert::Game
             {
                 const Rect o = DemoRestoreRect(i, viewportW, viewportH);
                 icon(demoSlotsControl_ == 10 + i ? pressed : normal, o, 21);
-                centred(labels, "Original", cx, o.y0 + 6.0f * s, 0.42f);
+                centred(labels, Tr("Original"), cx, o.y0 + 6.0f * s, 0.42f);
             }
         }
         const Rect cancel = DemoCancelRect(viewportW, viewportH);
         if (extras.keyboard == nullptr)
         {
             icon(demoSlotsControl_ == 20 ? pressed : normal, cancel, 21);
-            centred(labels, "Cancel", (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
+            centred(labels, Tr("Cancel"), (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
             // activeMode: 1 Export, 2 Import, 3 Name drawn held.
             for (const auto& [control, rect, caption] :
-                 {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), "Export"},
-                  std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), "Import"},
-                  std::tuple<int, Rect, const char*>{23, DemoNameRect(viewportW, viewportH), "Name"}})
+                 {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), TrMark("Export")},
+                  std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), TrMark("Import")},
+                  std::tuple<int, Rect, const char*>{23, DemoNameRect(viewportW, viewportH), TrMark("Name")}})
             {
                 icon(demoSlotsControl_ == control || activeMode == control - 20 ? pressed : normal, rect, 21);
-                centred(labels, caption, (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
+                centred(labels, Tr(caption), (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
             }
         }
         if (extras.focus)
@@ -1753,7 +1779,13 @@ namespace GalaxyEggbert::Game
             const Rect f = *extras.focus;
             icon(pressed, Rect{f.x0 - 4.0f * s, f.y0 - 4.0f * s, f.x1 + 4.0f * s, f.y1 + 4.0f * s}, 21);
         }
-        if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
+        if (!message.empty())
+        {
+            // Smaller when it is wider than the panel (a long file name, a longer translation).
+            const float width = TextMetrics::Width(message) * s;
+            const float size = width * 0.45f > 620.0f * s ? 620.0f * s / width : 0.45f;
+            centred(labels, message, w * 0.5f, 384.0f * s, size);
+        }
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);
         FlushQuads(device, *padEffect_, padRenderer_, rows, viewportW, viewportH, 0.6f);
@@ -1835,10 +1867,10 @@ namespace GalaxyEggbert::Game
         // A text the width of @p room at most (cut, "..." at its end).
         const auto fit = [&](std::string text, float size, float room) {
             if (TextMetrics::Width(text) * size * s <= room) return text;
-            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) text.pop_back();
+            while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room) TextMetrics::PopBack(text);
             return text + "...";
         };
-        const auto centred = [&](std::vector<Quad>& bucket, const std::string& text, float cx, float top, float size) {
+        const auto centred = [&](std::vector<Quad>& bucket, std::string_view text, float cx, float top, float size) {
             AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
@@ -2023,7 +2055,7 @@ namespace GalaxyEggbert::Game
                 const Rect r = PauseButtonRect(index, m);
                 const float centerX = (r.x0 + r.x1) * 0.5f;
                 const float topY = r.y1 + kPauseLabelYOffset * scale;
-                AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
+                AppendCenteredLabel(labelQuads, Tr(text), centerX, topY, scale);
             };
 
             const auto appendButton = [&](int index, bool visible, int icon, int controlId)
@@ -2046,11 +2078,11 @@ namespace GalaxyEggbert::Game
             appendButton(2, true, kIconPauseSetup, kPauseControlSetup);
             appendButton(3, showRestart, kIconPauseRestart, kPauseControlRestart);
             appendButton(4, true, kIconPauseContinue, kPauseControlContinue);
-            appendLabel(0, true, "Home");
-            appendLabel(1, showBack, "Back");
-            appendLabel(2, true, "Setup");
-            appendLabel(3, showRestart, "Restart");
-            appendLabel(4, true, "Continue");
+            appendLabel(0, true, TrMark("Home"));
+            appendLabel(1, showBack, TrMark("Back"));
+            appendLabel(2, true, TrMark("Setup"));
+            appendLabel(3, showRestart, TrMark("Restart"));
+            appendLabel(4, true, TrMark("Continue"));
             if (showRecord)
             {
                 // Galaxy's own (BD-0116), as the menu's Exit button.
@@ -2058,8 +2090,10 @@ namespace GalaxyEggbert::Game
                 Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
                 PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == kPauseControlRecord ? pressedQuads : normalQuads).push_back(q);
-                AppendCenteredLabel(labelQuads, "Record", (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * scale,
-                                    scale);
+                const std::string_view record = Tr("Record");
+                const float fitted = FaceLabelScale(record, r, scale);
+                AppendCenteredLabel(labelQuads, record, (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * fitted,
+                                    fitted);
             }
             if (showOriginal)
             {
@@ -2068,8 +2102,10 @@ namespace GalaxyEggbert::Game
                 Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
                 PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == kPauseControlOriginal ? pressedQuads : normalQuads).push_back(q);
-                AppendCenteredLabel(labelQuads, originalLabel, (r.x0 + r.x1) * 0.5f,
-                                    (r.y0 + r.y1) * 0.5f - 12.0f * scale, scale);
+                const std::string_view original = Tr(originalLabel);
+                const float fitted = FaceLabelScale(original, r, scale);
+                AppendCenteredLabel(labelQuads, original, (r.x0 + r.x1) * 0.5f,
+                                    (r.y0 + r.y1) * 0.5f - 12.0f * fitted, fitted);
             }
         }
 
@@ -2239,6 +2275,7 @@ namespace GalaxyEggbert::Game
         const bool overTextures = InRect(mouseX, mouseY, SetupTexturesRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overNickname = showReset && InRect(mouseX, mouseY, SetupNicknameRect(m));
+        const bool overLanguage = InRect(mouseX, mouseY, SetupLanguageRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
         const bool overMusic = InRect(mouseX, mouseY, SetupSliderRect(1, m));
@@ -2259,6 +2296,7 @@ namespace GalaxyEggbert::Game
             else if (overTextures) activeControl_ = kSetupControlTextures;
             else if (overReset) activeControl_ = kSetupControlReset;
             else if (overNickname) activeControl_ = kSetupControlNickname;
+            else if (overLanguage) activeControl_ = kSetupControlLanguage;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
         }
@@ -2295,6 +2333,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kSetupControlTextures && overTextures) result.texturesToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlNickname && overNickname) result.nicknamePressed = true;
+            else if (activeControl_ == kSetupControlLanguage && overLanguage) result.languagePressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
         }
@@ -2384,7 +2423,7 @@ namespace GalaxyEggbert::Game
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
-            const auto appendLabel = [&](const Rect& r, const std::string& text)
+            const auto appendLabel = [&](const Rect& r, std::string_view text)
             {
                 const float leftX = r.x1 + kSetupLabelXOffset * scale;
                 const float centerY = (r.y0 + r.y1) * 0.5f;
@@ -2392,7 +2431,7 @@ namespace GalaxyEggbert::Game
                 // above the button's centre (12 above the one-line
                 // position) and its second line is 24 lower.
                 const auto newline = text.find('\n');
-                if (newline == std::string::npos)
+                if (newline == std::string_view::npos)
                 {
                     AppendLeftAlignedLabel(labelQuads, text, leftX, centerY, scale);
                     return;
@@ -2423,23 +2462,29 @@ namespace GalaxyEggbert::Game
                 // The blank face (the menu's Fullscreen, Help) with its label on it.
                 const Rect nickname = SetupNicknameRect(m);
                 appendButton(nickname, 21, kSetupControlNickname);
-                AppendCenteredLabel(labelQuads, "Nickname", (nickname.x0 + nickname.x1) * 0.5f,
+                AppendCenteredLabel(labelQuads, Tr("Nickname"), (nickname.x0 + nickname.x1) * 0.5f,
                                     (nickname.y0 + nickname.y1) * 0.5f - 12.0f * scale, scale);
+            }
+            {
+                const Rect language = SetupLanguageRect(m);
+                appendButton(language, 21, kSetupControlLanguage);
+                AppendCenteredLabel(labelQuads, LanguageName(CurrentLanguage()), (language.x0 + language.x1) * 0.5f,
+                                    (language.y0 + language.y1) * 0.5f - 12.0f * scale, scale);
             }
             appendButton(SetupReturnRect(m), kIconSetupReturn, kSetupControlReturn);
 
-            appendLabel(SetupSoundsRect(m), "Sound effects");
+            appendLabel(SetupSoundsRect(m), Tr("Sound effects"));
             // The two volume sliders right of it: label over the track, the knob at the value.
             {
                 const float jaugeSheetW = LogicalWidth(jaugeTexture_);
                 const float jaugeSheetH = LogicalHeight(jaugeTexture_);
                 const int volumes[3] = {effectsVolume, musicVolume, accelSensitivity};
-                const char* const names[3] = {"Sound effects", "Music", "Sensitivity"};
+                const char* const names[3] = {TrMark("Sound effects"), TrMark("Music"), TrMark("Sensitivity")};
                 for (int which = 0; which < (accel ? 3 : 2); ++which)
                 {
                     const Rect block = SetupSliderRect(which, m);
                     const Rect track = SetupSliderTrackRect(which, m);
-                    AppendCenteredLabel(labelQuads, names[which], (block.x0 + block.x1) * 0.5f,
+                    AppendCenteredLabel(labelQuads, Tr(names[which]), (block.x0 + block.x1) * 0.5f,
                                         block.y0 + 2.0f * scale, scale);
                     Quad bar;
                     bar.x0 = track.x0;
@@ -2461,20 +2506,21 @@ namespace GalaxyEggbert::Game
                                               : kSetupControlAccelSensitivity);
                 }
             }
-            appendLabel(SetupJumpRect(m), "Jump button on the right");
-            appendLabel(SetupZoomRect(m), "Automatic zoom on action");
-            appendLabel(SetupAccelRect(m), "Accelerometer");
-            appendLabel(SetupTerrainRect(m), "3D terrain");
+            appendLabel(SetupJumpRect(m), Tr("Jump button on the right"));
+            appendLabel(SetupZoomRect(m), Tr("Automatic zoom on action"));
+            appendLabel(SetupAccelRect(m), Tr("Accelerometer"));
+            appendLabel(SetupTerrainRect(m), Tr("3D terrain"));
             {
                 // Its level under it: a press steps to the next (off, low, medium, high, ultra).
-                static const char* const kLevels[5] = {"Off", "Low", "Medium", "High", "Ultra"};
+                static const char* const kLevels[5] = {TrMark("Off"), TrMark("Low"), TrMark("Medium"), TrMark("High"),
+                                                       TrMark("Ultra")};
                 appendLabel(SetupEffectsRect(m),
-                            std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel]);
-                appendLabel(SetupFrameRateRect(m), "Frame rate: " + std::to_string(frameRate) + " fps");
-                static const char* const kTextures[3] = {"Auto", "1x", "2x"};
+                            TrFormat("3D effects\n{0}", {Tr(kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel])}));
+                appendLabel(SetupFrameRateRect(m), TrFormat("Frame rate: {0} fps", {std::to_string(frameRate)}));
+                static const char* const kTextures[3] = {TrMark("Auto"), "1x", "2x"};
                 appendLabel(SetupTexturesRect(m),
-                            std::string("Textures: ") + kTextures[textureScale == 1 || textureScale == 2 ? textureScale : 0] +
-                                "\n(next start)");
+                            TrFormat("Textures: {0}\n(next start)",
+                                     {Tr(kTextures[textureScale == 1 || textureScale == 2 ? textureScale : 0])}));
             }
             if (showReset)
             {
@@ -2483,8 +2529,9 @@ namespace GalaxyEggbert::Game
                 // screen (2026-10-25).
                 // The nickname in place of "Player A" when the player has one (2026-11-11).
                 const std::string resetLabel =
-                    (playerName.empty() ? "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) : playerName) +
-                    " :\nErase progress";
+                    TrFormat("{0} :\nErase progress",
+                             {playerName.empty() ? TrFormat("Player {0}", {std::string(1, static_cast<char>('A' + selectedGamer))})
+                                                 : playerName});
                 appendLabel(SetupResetRect(m), resetLabel);
             }
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
@@ -2606,7 +2653,7 @@ namespace GalaxyEggbert::Game
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
-            const auto appendLabel = [&](const Rect& r, const char* text)
+            const auto appendLabel = [&](const Rect& r, std::string_view text)
             {
                 const float centerX = (r.x0 + r.x1) * 0.5f;
                 const float topY = r.y1 + kPauseLabelYOffset * scale;
@@ -2615,8 +2662,8 @@ namespace GalaxyEggbert::Game
 
             appendButton(ResumeButtonRect(0, m), kIconPauseMenu, kResumeControlMenu);
             appendButton(ResumeButtonRect(1, m), kIconPauseContinue, kResumeControlContinue);
-            appendLabel(ResumeButtonRect(0, m), "Home");
-            appendLabel(ResumeButtonRect(1, m), "Continue");
+            appendLabel(ResumeButtonRect(0, m), Tr("Home"));
+            appendLabel(ResumeButtonRect(1, m), Tr("Continue"));
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
@@ -2930,9 +2977,9 @@ namespace GalaxyEggbert::Game
         const float h = static_cast<float>(viewportH);
         // As Speedy Blupi's goodbye (CEvent::DrawButtons, WM_PHASE_BYE: two lines at its top, two at
         // its bottom), in Galaxy Eggbert's own words.
-        static const char* const kTop[2] = {"Thank you for playing Galaxy Eggbert!",
-                                            "We hope Blupi's galaxy was as much fun to play as to build."};
-        static const char* const kBottom[2] = {"Speedy Blupi and Speedy Eggbert: original games by EPSITEC SA",
+        static const char* const kTop[2] = {TrMark("Thank you for playing Galaxy Eggbert!"),
+                                            TrMark("We hope Blupi's galaxy was as much fun to play as to build.")};
+        static const char* const kBottom[2] = {TrMark("Speedy Blupi and Speedy Eggbert: original games by EPSITEC SA"),
                                                "Galaxy Eggbert: galaxyeggbert.openeggbert.com"};
         std::vector<Quad> panelQuads, labelQuads, faintQuads;
         const auto panel = [&](float y0, float y1) {
@@ -2944,16 +2991,20 @@ namespace GalaxyEggbert::Game
         const float top = h * 0.37f;
         panel(top, top + 96.0f * scale); // the third line: how to leave
         panel(h - 78.0f * scale, h - 10.0f * scale);
+        // A line no wider than the panel (a translation can be longer than the English).
+        const auto centred = [&](std::vector<Quad>& quads, std::string_view text, float lineTop) {
+            const float room = 640.0f * scale;
+            const float width = TextMetrics::Width(text) * kPauseLabelScale * scale;
+            AppendCenteredLabel(quads, text, w * 0.5f, lineTop, width > room ? scale * room / width : scale);
+        };
         for (int i = 0; i < 2; ++i)
         {
-            AppendCenteredLabel(labelQuads, kTop[i], w * 0.5f, top + (8.0f + 28.0f * static_cast<float>(i)) * scale, scale);
-            AppendCenteredLabel(labelQuads, kBottom[i], w * 0.5f, h - (70.0f - 28.0f * static_cast<float>(i)) * scale,
-                                scale);
+            centred(labelQuads, Tr(kTop[i]), top + (8.0f + 28.0f * static_cast<float>(i)) * scale);
+            centred(labelQuads, Tr(kBottom[i]), h - (70.0f - 28.0f * static_cast<float>(i)) * scale);
         }
         // After a moment, how to leave (the original waited for the same), the text being dark on the panel.
         if (seconds > 1.5f)
-            AppendCenteredLabel(faintQuads, "A key, a click or a button closes the game.", w * 0.5f, top + 64.0f * scale,
-                                scale);
+            centred(faintQuads, Tr("A key, a click or a button closes the game."), top + 64.0f * scale);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         if (!overTitleScene)
         {
@@ -2983,7 +3034,7 @@ namespace GalaxyEggbert::Game
         // menu's translucent panels in the band of sky between them and Blupi.
         std::vector<Quad> labelQuads;
         const int dots = static_cast<int>(phaseTimeSeconds * 3.0f) % 4;
-        AppendCenteredLabel(labelQuads, std::string("Loading") + std::string(static_cast<std::size_t>(dots), '.'),
+        AppendCenteredLabel(labelQuads, std::string(Tr("Loading")) + std::string(static_cast<std::size_t>(dots), '.'),
                             w * 0.5f, h * 0.43f, scale);
 
         // The gauge, centred under it, filled as Wait's (the original's waitTable curve).
@@ -3346,27 +3397,27 @@ namespace GalaxyEggbert::Game
                 const float textLeft = r.x1 + kGamerTextXOffset * s;
                 const InitGamerInfo& info = gamers[static_cast<std::size_t>(gamer)];
                 // The player's nickname in place of "Player A" (a Galaxy addition, 2026-11-11).
-                std::string title = info.nickname.empty() ? std::string("Player ") + letter : info.nickname;
+                std::string title = info.nickname.empty() ? TrFormat("Player {0}", {std::string(1, letter)}) : info.nickname;
                 AppendGamerLabel(labelQuads, title, textLeft, r.y0 + kGamerTitleYOffset * s, kGamerTitleScale, s);
-                AppendGamerLabel(labelQuads, "Main gates : " + std::to_string(info.mainGates) + "/12", textLeft,
+                AppendGamerLabel(labelQuads, TrFormat("Main gates : {0}/12", {std::to_string(info.mainGates)}), textLeft,
                                 r.y0 + kGamerMDoorsYOffset * s, kGamerBodyScale, s);
-                AppendGamerLabel(labelQuads, "Secondary gates : " + std::to_string(info.secondaryGates) + "/52",
+                AppendGamerLabel(labelQuads, TrFormat("Secondary gates : {0}/52", {std::to_string(info.secondaryGates)}),
                                 textLeft, r.y0 + kGamerSDoorsYOffset * s, kGamerBodyScale, s);
-                const std::string blupi = "Blupi : " + std::to_string(info.lives);
+                const std::string blupi = TrFormat("Blupi : {0}", {std::to_string(info.lives)});
                 AppendGamerLabel(labelQuads, blupi, textLeft, r.y0 + kGamerLivesYOffset * s, kGamerBodyScale, s);
                 if (info.galaxyGates >= 0)
                 {
                     // Right-aligned in the panel, smaller when it would reach the Blupi count.
-                    const std::string gates = " : " + std::to_string(info.galaxyGates) +
-                                              (info.galaxyGates == 1 ? " gate" : " gates");
-                    std::string named = info.galaxyName.empty() ? std::string("Galaxy") : info.galaxyName;
+                    const std::string gates = TrFormat(info.galaxyGates == 1 ? " : {0} gate" : " : {0} gates",
+                                                       {std::to_string(info.galaxyGates)});
+                    std::string named = info.galaxyName.empty() ? std::string(Tr("Galaxy")) : info.galaxyName;
                     const float right = layout.leftPanel.x1 - 8.0f * s;
                     const float room = right - (textLeft + (TextMetrics::Width(blupi) * kGamerBodyScale + 10.0f) * s);
                     // A long name is cut ("...") where even the smallest letters would reach Blupi's count.
                     bool cut = false;
                     while (named.size() > 1 && TextMetrics::Width(named + (cut ? "..." : "") + gates) * 0.3f * s > room)
                     {
-                        named.pop_back();
+                        TextMetrics::PopBack(named);
                         cut = true;
                     }
                     const std::string galaxy = named + (cut ? "..." : "") + gates;
@@ -3385,37 +3436,37 @@ namespace GalaxyEggbert::Game
                           kIconInitPlay);
             appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, layout.editor,
                           kIconInitEditorFace);
+            // A blank face's label, smaller when a translation is wider than the face.
+            const auto faceLabel = [&](const Rect& r, std::string_view text, float labelScale, float lift) {
+                const float room = r.x1 - r.x0 - 10.0f * s;
+                const float width = TextMetrics::Width(text) * kPauseLabelScale * labelScale;
+                const float fitted = width > room ? labelScale * room / width : labelScale;
+                AppendCenteredLabel(labelQuads, text, (r.x0 + r.x1) * 0.5f,
+                                    (r.y0 + r.y1) * 0.5f - lift * s * fitted / labelScale, fitted);
+            };
             appendIconQuad(activeControl_ == kInitControlHelp ? pressedQuads : normalQuads,layout.help,21);
-            AppendCenteredLabel(labelQuads,"Help",(layout.help.x0+layout.help.x1)*.5f,
-                                (layout.help.y0+layout.help.y1)*.5f-12*s,s);
+            faceLabel(layout.help, Tr("Help"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlFullscreen ? pressedQuads : normalQuads, layout.fullscreen, 21);
-            AppendCenteredLabel(labelQuads, fullscreen ? "Window" : "Fullscreen",
-                                (layout.fullscreen.x0 + layout.fullscreen.x1) * 0.5f,
-                                (layout.fullscreen.y0 + layout.fullscreen.y1) * 0.5f - 12.0f * s, s);
+            faceLabel(layout.fullscreen, fullscreen ? Tr("Window") : Tr("Fullscreen"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlExit ? pressedQuads : normalQuads, layout.exit, 21);
-            AppendCenteredLabel(labelQuads, "Exit", (layout.exit.x0 + layout.exit.x1) * 0.5f,
-                                (layout.exit.y0 + layout.exit.y1) * 0.5f - 12.0f * s, s);
+            faceLabel(layout.exit, Tr("Exit"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlDemo ? pressedQuads : normalQuads, layout.demo, 21);
-            AppendCenteredLabel(labelQuads, "Demo", (layout.demo.x0 + layout.demo.x1) * 0.5f,
-                                (layout.demo.y0 + layout.demo.y1) * 0.5f - 12.0f * s, s);
+            faceLabel(layout.demo, Tr("Demo"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlGalaxy ? pressedQuads : normalQuads, layout.galaxy, 21);
-            AppendCenteredLabel(labelQuads, "Galaxy", (layout.galaxy.x0 + layout.galaxy.x1) * 0.5f,
-                                (layout.galaxy.y0 + layout.galaxy.y1) * 0.5f - 12.0f * s, s);
+            faceLabel(layout.galaxy, Tr("Galaxy"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlDemos ? pressedQuads : normalQuads, layout.demos, 21);
-            AppendCenteredLabel(labelQuads, "Demos", (layout.demos.x0 + layout.demos.x1) * 0.5f,
-                                (layout.demos.y0 + layout.demos.y1) * 0.5f - 12.0f * s, s);
+            faceLabel(layout.demos, Tr("Demos"), s, 12.0f);
             if (multiplayerShown_)
             {
                 appendIconQuad(activeControl_ == kInitControlMultiplayer ? pressedQuads : normalQuads,
                                layout.multiplayer, 21);
-                AppendCenteredLabel(labelQuads, "Multiplayer", (layout.multiplayer.x0 + layout.multiplayer.x1) * 0.5f,
-                                    (layout.multiplayer.y0 + layout.multiplayer.y1) * 0.5f - 8.0f * s, 0.68f * s);
+                faceLabel(layout.multiplayer, Tr("Multiplayer"), 0.68f * s, 8.0f);
             }
 
             // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
             // Setup (Game1::DrawButtonsText()); the editor's label under its
             // button, on two lines like the original's two-line labels.
-            AppendCenteredLabel(labelQuads, "Play", (layout.play.x0 + layout.play.x1) * 0.5f,
+            AppendCenteredLabel(labelQuads, Tr("Play"), (layout.play.x0 + layout.play.x1) * 0.5f,
                                 layout.play.y1 + kPauseLabelYOffset * s, s);
             // Galaxy's own (the owner, 2026-11-11): the version and under it the build's date and
             // time, left of Play, right-aligned a little left of the right panel.
@@ -3438,11 +3489,18 @@ namespace GalaxyEggbert::Game
             AppendGamerLabel(labelQuads, buildText,
                              versionRight - TextMetrics::Width(buildText) * kInitBuildScale * s, playMiddle,
                              kInitBuildScale, s);
-            AppendLeftAlignedLabel(labelQuads, "Setup", layout.setup.x1 + kSetupLabelXOffset * s,
-                                   (layout.setup.y0 + layout.setup.y1) * 0.5f, s);
+            {
+                // Smaller when a translation would reach the Multiplayer button (or the panel's edge).
+                const std::string_view setup = Tr("Setup");
+                const float left = layout.setup.x1 + kSetupLabelXOffset * s;
+                const float room = (multiplayerShown_ ? layout.multiplayer.x0 : layout.leftPanel.x1) - 4.0f * s - left;
+                const float width = TextMetrics::Width(setup) * kSetupLabelScale * s;
+                AppendLeftAlignedLabel(labelQuads, setup, left, (layout.setup.y0 + layout.setup.y1) * 0.5f,
+                                       width > room && room > 0.0f ? s * room / width : s);
+            }
             const float editorCenterX = (layout.editor.x0 + layout.editor.x1) * 0.5f;
-            AppendCenteredLabel(labelQuads, "3D World", editorCenterX, layout.editor.y1 + kPauseLabelYOffset * s, s);
-            AppendCenteredLabel(labelQuads, "Editor", editorCenterX, layout.editor.y1 + (kPauseLabelYOffset + 22.0f) * s,
+            AppendCenteredLabel(labelQuads, Tr("3D World"), editorCenterX, layout.editor.y1 + kPauseLabelYOffset * s, s);
+            AppendCenteredLabel(labelQuads, Tr("Editor"), editorCenterX, layout.editor.y1 + (kPauseLabelYOffset + 22.0f) * s,
                                 s);
 
             const float iconHalf = (layout.editor.x1 - layout.editor.x0) * kInitEditorIconFraction * 0.5f;

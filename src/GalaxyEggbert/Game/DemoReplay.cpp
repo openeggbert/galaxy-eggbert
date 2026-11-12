@@ -1,5 +1,6 @@
 #include "DemoReplay.hpp"
 #include "FreeFileName.hpp"
+#include "Localization.hpp"
 #include "UserFolder.hpp"
 
 #include <algorithm>
@@ -190,14 +191,14 @@ namespace GalaxyEggbert::Game
         switch (status)
         {
             case DemoLoadStatus::Ok: return "ok";
-            case DemoLoadStatus::Missing: return "missing";
-            case DemoLoadStatus::Corrupt: return "damaged or not a demo";
-            case DemoLoadStatus::IncompatibleFormat: return "another demo format";
-            case DemoLoadStatus::IncompatibleRevision: return "recorded with another simulation revision";
-            case DemoLoadStatus::WorldMissing: return "its world is missing";
-            case DemoLoadStatus::WorldChanged: return "its world has changed";
+            case DemoLoadStatus::Missing: return TrMark("missing");
+            case DemoLoadStatus::Corrupt: return TrMark("damaged or not a demo");
+            case DemoLoadStatus::IncompatibleFormat: return TrMark("another demo format");
+            case DemoLoadStatus::IncompatibleRevision: return TrMark("recorded with another simulation revision");
+            case DemoLoadStatus::WorldMissing: return TrMark("its world is missing");
+            case DemoLoadStatus::WorldChanged: return TrMark("its world has changed");
         }
-        return "unknown";
+        return TrMark("unknown");
     }
 
     DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out)

@@ -1,6 +1,7 @@
 #include "EditorDeviceControls.hpp"
 #include <GalaxyEggbert/Game/TextureScale.hpp>
 
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
@@ -25,30 +26,30 @@ struct Entry
     const char *name;
     Keys key;
 };
-constexpr std::array<Entry, int(Tool::Count)> kEntries{{{"Save", Keys::Enter},
-                                                        {"Undo", Keys::U},
-                                                        {"Redo", Keys::R},
-                                                        {"Select 3D", Keys::None},
-                                                        {"Cancel", Keys::Escape},
-                                                        {"Remove", Keys::Back},
-                                                        {"Turn", Keys::O},
-                                                        {"Variant", Keys::V},
-                                                        {"Pick object", Keys::G},
-                                                        {"Set end", Keys::T},
-                                                        {"Next field", Keys::Tab},
-                                                        {"Value +", Keys::OemPlus},
-                                                        {"Value -", Keys::OemMinus},
-                                                        {"Delete obj", Keys::Delete},
-                                                        {"Copy box", Keys::C},
-                                                        {"Paste", Keys::P},
-                                                        {"Turn copy", Keys::Q},
-                                                        {"Mirror", Keys::X},
-                                                        {"Box fill", Keys::F},
-                                                        {"Keep", Keys::None},
-                                                        {"Reset XYZ", Keys::NumPad5},
-                                                        {"Music", Keys::M},
-                                                        {"Help", Keys::H},
-                                                        {"Stop", Keys::F10}}};
+constexpr std::array<Entry, int(Tool::Count)> kEntries{{{Game::TrMark("Save"), Keys::Enter},
+                                                        {Game::TrMark("Undo"), Keys::U},
+                                                        {Game::TrMark("Redo"), Keys::R},
+                                                        {Game::TrMark("Select 3D"), Keys::None},
+                                                        {Game::TrMark("Cancel"), Keys::Escape},
+                                                        {Game::TrMark("Remove"), Keys::Back},
+                                                        {Game::TrMark("Turn"), Keys::O},
+                                                        {Game::TrMark("Variant"), Keys::V},
+                                                        {Game::TrMark("Pick object"), Keys::G},
+                                                        {Game::TrMark("Set end"), Keys::T},
+                                                        {Game::TrMark("Next field"), Keys::Tab},
+                                                        {Game::TrMark("Value +"), Keys::OemPlus},
+                                                        {Game::TrMark("Value -"), Keys::OemMinus},
+                                                        {Game::TrMark("Delete obj"), Keys::Delete},
+                                                        {Game::TrMark("Copy box"), Keys::C},
+                                                        {Game::TrMark("Paste"), Keys::P},
+                                                        {Game::TrMark("Turn copy"), Keys::Q},
+                                                        {Game::TrMark("Mirror"), Keys::X},
+                                                        {Game::TrMark("Box fill"), Keys::F},
+                                                        {Game::TrMark("Keep"), Keys::None},
+                                                        {Game::TrMark("Reset XYZ"), Keys::NumPad5},
+                                                        {Game::TrMark("Music"), Keys::M},
+                                                        {Game::TrMark("Help"), Keys::H},
+                                                        {Game::TrMark("Stop"), Keys::F10}}};
 float Scale(int h)
 {
     return std::clamp(float(h) / 480.0f, 0.65f, 1.75f);
@@ -467,24 +468,27 @@ void EditorDeviceControls::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
     std::vector<Quad> panels, active, labels, cursor;
     const float s = Scale(h), tw = Game::LogicalWidth(*rendering_->font),
                 th = Game::LogicalHeight(*rendering_->font);
-    const auto label = [&](const std::string &text, Rect r, float font = .43f) {
+    const auto label = [&](std::string_view text, Rect r, float font = .43f) {
+        // Smaller when a translation is wider than its button.
+        const float width = GalaxyEggbert::Game::TextMetrics::Width(text) * s;
+        if (width * font > r.x1 - r.x0 - 4 * s && width > 0) font = (r.x1 - r.x0 - 4 * s) / width;
         float x = (r.x0 + r.x1) * .5f - GalaxyEggbert::Game::TextMetrics::Width(text) * font * s * .5f;
         const float y = (r.y0 + r.y1) * .5f - 12 * font * s;
-        for (char c : text)
+        for (std::size_t at = 0; at < text.size();)
         {
-            int rank = GalaxyEggbert::Game::TextMetrics::GlyphIndex(c), col = rank % 16, row = rank / 16;
+            int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at), col = rank % 16, row = rank / 16;
             labels.push_back({x, y, x + 32 * font * s, y + 32 * font * s, col * 32 / tw, row * 32 / th,
                               (col + 1) * 32 / tw, (row + 1) * 32 / th});
-            x += GalaxyEggbert::Game::TextMetrics::Advance(c) * font * s;
+            x += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * font * s;
         }
     };
     const auto button = [&](Rect r, const char *name, bool on = false) {
         (on ? active : panels).push_back({r.x0, r.y0, r.x1, r.y1, 0, 0, 1, 1});
-        label(name, r);
+        label(Game::Tr(name), r);
     };
     if (editing_)
     {
-        button(ToolsRect(w, h), toolsOpen_ ? "Close tools" : "Tools", toolsOpen_);
+        button(ToolsRect(w, h), toolsOpen_ ? Game::TrMark("Close tools") : Game::TrMark("Tools"), toolsOpen_);
         if (toolsOpen_ && !paletteOpen_)
             for (int i = 0; i < int(Tool::Count); ++i)
                 button(ToolRect(Tool(i), w, h), kEntries[i].name,
@@ -492,19 +496,19 @@ void EditorDeviceControls::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
         if (touchCapable_ && !paletteOpen_ && !toolsOpen_)
         {
             const auto r = MoveRect(w, h);
-            button(r, "Move");
+            button(r, Game::TrMark("Move"));
             label("^", {r.x0, r.y0, r.x1, r.y0 + 30 * s});
             label("v", {r.x0, r.y1 - 30 * s, r.x1, r.y1});
             label("<", {r.x0, r.y0, r.x0 + 28 * s, r.y1});
             label(">", {r.x1 - 28 * s, r.y0, r.x1, r.y1});
-            button(UpRect(w, h), "Up");
-            button(DownRect(w, h), "Down");
+            button(UpRect(w, h), Game::TrMark("Up"));
+            button(DownRect(w, h), Game::TrMark("Down"));
         }
         if (padConnected_ && !paletteOpen_ && !toolsOpen_)
         {
             const Rect hint{float(w) - 370 * s, 46 * s, float(w) - 8 * s, 67 * s};
             panels.push_back({hint.x0, hint.y0, hint.x1, hint.y1, 0, 0, 1, 1});
-            label(pointerMode_ ? "Y: fly  A: click" : "Y: pointer  A: place  X: remove", hint, .38f);
+            label(pointerMode_ ? Game::Tr("Y: fly  A: click") : Game::Tr("Y: pointer  A: place  X: remove"), hint, .38f);
         }
     }
     if (padConnected_ && pointerMode_)

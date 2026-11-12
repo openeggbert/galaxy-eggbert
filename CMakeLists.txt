@@ -52,6 +52,8 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/HubDoors.cpp
     src/GalaxyEggbert/BlockDefinitionRegistry.cpp
     src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
+    src/GalaxyEggbert/Game/Localization.cpp
+    src/GalaxyEggbert/Game/TranslationsFr.cpp
 )
 
 # =============================================================================
@@ -520,6 +522,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/InputPad.cpp
         src/GalaxyEggbert/Game/TextureScale.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
+        src/GalaxyEggbert/Game/Localization.cpp
+        src/GalaxyEggbert/Game/TranslationsFr.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -750,6 +754,8 @@ add_executable(VerifyGESaveData
         tools/VerifyGESaveData.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Game/UserFolder.cpp
+        src/GalaxyEggbert/Game/Localization.cpp
+        src/GalaxyEggbert/Game/TranslationsFr.cpp
 )
 
 target_include_directories(VerifyGESaveData PRIVATE
@@ -814,6 +820,19 @@ target_include_directories(VerifyNetProtocol PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 add_test(NAME VerifyNetProtocol COMMAND VerifyNetProtocol)
+
+# The texts in every language (Localization.hpp, the owner's Q-023): the UTF-8 glyphs, and a
+# translation for every Tr/TrMark/TrFormat literal of the sources (read from the source tree).
+add_executable(VerifyLocalization
+    tools/VerifyLocalization.cpp
+    src/GalaxyEggbert/Game/TrainingHints.cpp
+    ${GE_SHARED_SOURCES}
+)
+target_include_directories(VerifyLocalization PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+add_test(NAME VerifyLocalization COMMAND VerifyLocalization ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The network game against broken and hostile packets (Q-022): random and damaged packets through the
 # decoder and the world changes it lets through into a world; tools/fuzz_net_sanitized.sh runs it

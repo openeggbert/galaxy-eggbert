@@ -4,6 +4,7 @@
 #include "CustomWorldStorage.hpp"
 #include "PlatformFiles.hpp"
 
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #include <algorithm>
@@ -44,13 +45,13 @@ namespace GalaxyEggbert::Editor
             q.v1 = static_cast<float>(row + 1) * kPadCellPx / sheetH;
         }
 
-        void AppendLabel(std::vector<Quad>& quads, const std::string& text, float leftX, float topY, float scale,
+        void AppendLabel(std::vector<Quad>& quads, std::string_view text, float leftX, float topY, float scale,
                          float sheetW, float sheetH)
         {
             float penX = leftX;
-            for (const char c : text)
+            for (std::size_t at = 0; at < text.size();)
             {
-                const int rank = GalaxyEggbert::Game::TextMetrics::GlyphIndex(c);
+                const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(text, at);
                 const int col = rank % kGlyphCols;
                 const int row = rank / kGlyphCols;
                 Quad q{penX, topY, penX + kGlyphCellPx * scale, topY + kGlyphCellPx * scale,
@@ -58,7 +59,7 @@ namespace GalaxyEggbert::Editor
                        static_cast<float>(col + 1) * kGlyphCellPx / sheetW,
                        static_cast<float>(row + 1) * kGlyphCellPx / sheetH};
                 quads.push_back(q);
-                penX += GalaxyEggbert::Game::TextMetrics::Advance(c) * scale;
+                penX += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * scale;
             }
         }
     }
@@ -123,7 +124,7 @@ namespace GalaxyEggbert::Editor
         keyboard_.Begin(nameDraft_);
         keyboardKey_ = -1;
         armedGalaxyDelete_ = false;
-        message_ = "Type its name or use the keys: OK keeps it, Cancel leaves it as it was.";
+        message_ = Game::Tr("Type its name or use the keys: OK keeps it, Cancel leaves it as it was.");
     }
 
     std::vector<Rect> GalaxyBrowserScreen::FocusTargets() const
@@ -170,8 +171,9 @@ namespace GalaxyEggbert::Editor
         naming_ = false;
         const std::string kept = SanitizeGalaxyName(nameDraft_);
         if (kept == name_) return;
-        message_ = SetGalaxyName(gamerSlot_, kept) ? (kept.empty() ? "The galaxy has no name now." : "Named " + kept + ".")
-                                                   : "The name could not be kept.";
+        message_ = SetGalaxyName(gamerSlot_, kept)
+                       ? (kept.empty() ? std::string(Game::Tr("The galaxy has no name now.")) : Game::TrFormat("Named {0}.", {kept}))
+                       : std::string(Game::Tr("The name could not be kept."));
         name_ = GalaxyName(gamerSlot_);
     }
 
@@ -191,15 +193,16 @@ namespace GalaxyEggbert::Editor
         const auto exported = ExportGalaxy(gamerSlot_);
         if (exported.empty())
         {
-            message_ = "Nothing to export: the galaxy has no place yet.";
+            message_ = Game::Tr("Nothing to export: the galaxy has no place yet.");
             return;
         }
         const std::string name = exported.filename().string();
         const auto recordings = GalaxyRecordings(gamerSlot_).size();
-        const std::string with = recordings == 0 ? "" : " (" + std::to_string(recordings) +
-                                                            (recordings == 1 ? " demo" : " demos") + " with it)";
-        message_ = OfferDownload(exported, name) ? "Galaxy exported: downloaded as " + name + with + "."
-                                                 : "Galaxy exported to " + exported.generic_string() + with + ".";
+        const std::string with = recordings == 0 ? ""
+                                 : Game::TrFormat(recordings == 1 ? " ({0} demo with it)" : " ({0} demos with it)",
+                                                  {std::to_string(recordings)});
+        message_ = OfferDownload(exported, name) ? Game::TrFormat("Galaxy exported: downloaded as {0}{1}.", {name, with})
+                                                 : Game::TrFormat("Galaxy exported to {0}{1}.", {exported.generic_string(), with});
     }
 
     void GalaxyBrowserScreen::ToggleImport()
@@ -216,8 +219,9 @@ namespace GalaxyEggbert::Editor
         restoreMode_ = false;
         ListImports();
         message_ = RequestUpload(SharedWorldsDir(), kGalaxyPackExtension)
-                       ? "Choose a .galaxy file: it is listed on the right."
-                       : "Put .galaxy files in " + SharedWorldsDir().generic_string() + "/: they are listed on the right.";
+                       ? std::string(Game::Tr("Choose a .galaxy file: it is listed on the right."))
+                       : Game::TrFormat("Put .galaxy files in {0}/: they are listed on the right.",
+                                        {SharedWorldsDir().generic_string()});
     }
 
     void GalaxyBrowserScreen::Refresh(int gamerSlot)
@@ -261,7 +265,7 @@ namespace GalaxyEggbert::Editor
     void GalaxyBrowserScreen::Restore(int mission)
     {
         const auto path = GalaxyWorldPath(gamerSlot_, mission);
-        const std::string name = GalaxyMissionName(mission);
+        const std::string name = GalaxyMissionLabel(mission);
         if (restoreMission_ != mission)
         {
             restoreMission_ = mission;
@@ -270,15 +274,16 @@ namespace GalaxyEggbert::Editor
         }
         if (!RestoreBackup(path))
         {
-            message_ = name + " has no backup.";
+            message_ = Game::TrFormat("{0} has no backup.", {name});
             return;
         }
         ++restoreSteps_;
         Refresh(gamerSlot_);
         // A deleted place comes back as its newest backup; one that was there steps through them.
-        message_ = restoreCycle_ == 0                   ? name + " is back."
-                   : restoreSteps_ % restoreCycle_ == 0 ? name + " is back as it was."
-                                                        : name + ": backup restored. Again: an older one.";
+        message_ = Game::TrFormat(restoreCycle_ == 0                   ? "{0} is back."
+                                  : restoreSteps_ % restoreCycle_ == 0 ? "{0} is back as it was."
+                                                                       : "{0}: backup restored. Again: an older one.",
+                                  {name});
     }
 
     bool GalaxyBrowserScreen::WorldHasAny(int world) const noexcept
@@ -303,7 +308,7 @@ namespace GalaxyEggbert::Editor
             ListImports();
             armedImport_ = armedImportDelete_ = -1;
             importPage_ = 0; // the file just chosen is the newest
-            message_ = "The file is listed on the right: two clicks make it this galaxy.";
+            message_ = Game::Tr("The file is listed on the right: two clicks make it this galaxy.");
         }
         const bool backTriggered = backPressed && !backWasDown_;
         backWasDown_ = backPressed;
@@ -366,12 +371,12 @@ namespace GalaxyEggbert::Editor
                 for (int mission = 1; mission < 200 && !any; ++mission) any = Exists(mission);
                 if (!any)
                 {
-                    message_ = "The galaxy has no place to delete.";
+                    message_ = Game::Tr("The galaxy has no place to delete.");
                 }
                 else if (!galaxyDeleteWasArmed)
                 {
                     armedGalaxyDelete_ = true;
-                    message_ = "Delete the whole galaxy? Click again (Import brings it back).";
+                    message_ = Game::Tr("Delete the whole galaxy? Click again (Import brings it back).");
                 }
                 else
                 {
@@ -380,13 +385,13 @@ namespace GalaxyEggbert::Editor
                     restoreMode_ = false;
                     if (kept.empty())
                     {
-                        message_ = "The galaxy could not be kept first: nothing was deleted.";
+                        message_ = Game::Tr("The galaxy could not be kept first: nothing was deleted.");
                     }
                     else
                     {
                         result.deleted = true;
                         if (importMode_) ListImports();
-                        message_ = "Galaxy deleted, kept as " + kept.filename().string() + " (Import brings it back).";
+                        message_ = Game::TrFormat("Galaxy deleted, kept as {0} (Import brings it back).", {kept.filename().string()});
                     }
                 }
             }
@@ -400,7 +405,7 @@ namespace GalaxyEggbert::Editor
                 restoreMode_ = !restoreMode_;
                 restoreMission_ = 0;
                 importMode_ = false;
-                message_ = restoreMode_ ? "Click a place to bring back its backup." : "";
+                message_ = restoreMode_ ? Game::Tr("Click a place to bring back its backup.") : std::string_view();
                 handled = true;
             }
             else if (InRect(x, y, ExportRect()))
@@ -434,7 +439,7 @@ namespace GalaxyEggbert::Editor
                     if (armedImportDelete_ != index)
                     {
                         armedBin = index;
-                        message_ = "Delete " + name + "? Click its bin again.";
+                        message_ = Game::TrFormat("Delete {0}? Click its bin again.", {name});
                         break;
                     }
                     std::error_code removed;
@@ -442,29 +447,32 @@ namespace GalaxyEggbert::Editor
                     ListImports();
                     const int left = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
                     importPage_ = std::min(importPage_, left - 1);
-                    message_ = removed ? name + " could not be deleted." : name + " deleted.";
+                    message_ = Game::TrFormat(removed ? "{0} could not be deleted." : "{0} deleted.", {name});
                     break;
                 }
                 if (armedImport_ != index)
                 {
                     armedRow = index;
-                    message_ = "Replace this galaxy with " + name + "? Click it again.";
+                    message_ = Game::TrFormat("Replace this galaxy with {0}? Click it again.", {name});
                     break;
                 }
                 int demos = 0;
                 const int places = ImportGalaxy(gamerSlot_, pack, &demos);
                 if (places < 0)
                 {
-                    message_ = name + " is not a galaxy this game can read.";
+                    message_ = Game::TrFormat("{0} is not a galaxy this game can read.", {name});
                     break;
                 }
                 Refresh(gamerSlot_);
                 importMode_ = false;
                 result.imported = true;
-                message_ = name + ": " + std::to_string(places) + (places == 1 ? " place" : " places") +
-                           (demos == 0 ? " imported (Backups brings back the old ones)."
-                                       : " and " + std::to_string(demos) + (demos == 1 ? " demo" : " demos") +
-                                             " (Pause > Record > Import) imported.");
+                const std::string placesText =
+                    Game::TrFormat(places == 1 ? "{0} place" : "{0} places", {std::to_string(places)});
+                message_ = demos == 0 ? Game::TrFormat("{0}: {1} imported (Backups brings back the old ones).", {name, placesText})
+                                      : Game::TrFormat("{0}: {1} and {2} (Pause > Record > Import) imported.",
+                                                       {name, placesText,
+                                                        Game::TrFormat(demos == 1 ? "{0} demo" : "{0} demos",
+                                                                       {std::to_string(demos)})});
             }
             armedImport_ = armedRow;
             armedImportDelete_ = armedBin;
@@ -481,7 +489,7 @@ namespace GalaxyEggbert::Editor
                 // Into its backups: Backups brings it back.
                 (void)DeleteSlotWorld(GalaxyWorldPath(gamerSlot_, shown.mission));
                 Refresh(gamerSlot_);
-                message_ = GalaxyMissionName(shown.mission) + " deleted (Backups brings it back).";
+                message_ = Game::TrFormat("{0} deleted (Backups brings it back).", {GalaxyMissionLabel(shown.mission)});
             }
             int mission = 0;
             if (!handled)
@@ -559,11 +567,43 @@ namespace GalaxyEggbert::Editor
         const auto button = [&](const Rect& r, int index) {
             icon(held && InRect(mouseX_, mouseY_, r) ? pressed : buttons, r, index);
         };
-        const auto text = [&](std::vector<Quad>& bucket, const std::string& line, float x, float y, float scale) {
+        const auto text = [&](std::vector<Quad>& bucket, std::string_view line, float x, float y, float scale) {
             AppendLabel(bucket, line, x, y, scale, textW, textH);
         };
-        const auto centred = [&](std::vector<Quad>& bucket, const std::string& line, const Rect& r, float y,
-                                 float scale) { text(bucket, line, (r.x0 + r.x1 - Width(line) * scale) * 0.5f, y, scale); };
+        // Centred on @p r, smaller when a translation is wider than the button and a little more.
+        const auto centred = [&](std::vector<Quad>& bucket, std::string_view line, const Rect& r, float y, float scale) {
+            const float room = r.x1 - r.x0 + 36.0f;
+            const float width = Width(line) * scale;
+            const float fitted = width > room && width > 0.0f ? scale * room / width : scale;
+            text(bucket, line, (r.x0 + r.x1 - Width(line) * fitted) * 0.5f, y + (scale - fitted) * kGlyphCellPx * 0.5f, fitted);
+        };
+        // @p paragraph broken into lines no wider than @p room at @p scale, from @p y down; the next line's y.
+        const auto wrapped = [&](std::vector<Quad>& bucket, std::string_view paragraph, float x, float y, float scale,
+                                 float room, float step) {
+            std::string line;
+            std::size_t at = 0;
+            while (at < paragraph.size())
+            {
+                const std::size_t space = paragraph.find(' ', at);
+                const std::string_view word =
+                    paragraph.substr(at, space == std::string_view::npos ? std::string_view::npos : space - at);
+                at = space == std::string_view::npos ? paragraph.size() : space + 1;
+                const std::string longer = line.empty() ? std::string(word) : line + " " + std::string(word);
+                if (!line.empty() && Width(longer) * scale > room)
+                {
+                    text(bucket, line, x, y, scale);
+                    y += step;
+                    line = std::string(word);
+                }
+                else line = longer;
+            }
+            if (!line.empty())
+            {
+                text(bucket, line, x, y, scale);
+                y += step;
+            }
+            return y;
+        };
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         icon(panels, {10.0f, 10.0f, 590.0f, 470.0f}, kIconPanel);
@@ -640,30 +680,32 @@ namespace GalaxyEggbert::Editor
         FlushQuads(device, *padEffect_, padRenderer_, pressed, viewportWidth, viewportHeight, kPressedOpacity);
         FlushQuads(device, *padEffect_, padRenderer_, focus, viewportWidth, viewportHeight, kPressedOpacity);
 
-        const std::string player = std::string(" - Player ") + static_cast<char>('A' + gamerSlot_);
+        const std::string player = Game::TrFormat(" - Player {0}", {std::string(1, static_cast<char>('A' + gamerSlot_))});
         if (naming_)
-            text(labels, "Name: " + nameDraft_ + "_", 22.0f, 18.0f, 0.6f);
+            text(labels, Game::TrFormat("Name: {0}", {nameDraft_ + "_"}), 22.0f, 18.0f, 0.6f);
         else if (name_.empty())
         {
-            text(labels, "Galaxy" + player, 22.0f, 18.0f, 0.6f);
-            text(faint, "(click: name it)", 22.0f + Width("Galaxy" + player) * 0.6f + 8.0f, 24.0f, 0.36f);
+            const std::string title = std::string(Game::Tr("Galaxy")) + player;
+            text(labels, title, 22.0f, 18.0f, 0.6f);
+            text(faint, Game::Tr("(click: name it)"), 22.0f + Width(title) * 0.6f + 8.0f, 24.0f, 0.36f);
         }
         else
             text(labels, name_ + player, 22.0f, 18.0f, 0.6f);
-        const auto place = [&](const Rect& r, int mission, const std::string& face, const std::string& caption) {
+        const auto place = [&](const Rect& r, int mission, std::string_view face, std::string_view caption) {
             const bool there = Exists(mission);
             auto& bucket = there ? labels : faint;
             centred(bucket, face, r, (r.y0 + r.y1 - kGlyphCellPx * 0.6f) * 0.5f, 0.6f);
             if (restoreMode_)
             {
                 const bool has = Backups(mission) > 0;
-                centred(has ? labels : faint, has ? "Restore" : "No backup", r, r.y1 + 3.0f, 0.4f);
+                centred(has ? labels : faint, has ? Game::Tr("Restore") : Game::Tr("No backup"), r, r.y1 + 3.0f, 0.4f);
                 return;
             }
-            centred(bucket, !there ? "New" : armedDelete_ == mission ? "Delete?" : caption, r, r.y1 + 3.0f, 0.4f);
+            centred(bucket, !there ? Game::Tr("New") : armedDelete_ == mission ? Game::Tr("Delete?") : caption, r, r.y1 + 3.0f,
+                    0.4f);
         };
-        place(MainHubRect(), 1, "Hub", "Main hub");
-        place(BonusRect(), kGalaxyBonusMission, "199", "Bonus");
+        place(MainHubRect(), 1, Game::Tr("Hub"), Game::Tr("Main hub"));
+        place(BonusRect(), kGalaxyBonusMission, "199", Game::Tr("Bonus"));
         if (naming_)
         {
             for (const auto& key : keyboard_.Keys())
@@ -675,61 +717,51 @@ namespace GalaxyEggbert::Editor
         }
         else
         {
-            text(labels, "Worlds (a click selects one)", 22.0f, 146.0f, 0.45f);
+            text(labels, Game::Tr("Worlds (a click selects one)"), 22.0f, 146.0f, 0.45f);
             for (int world = 1; world <= kGalaxyWorldCount; ++world)
             {
                 const Rect r = WorldRect(world);
                 auto& bucket = WorldHasAny(world) ? labels : faint;
                 const std::string number = std::to_string(world);
                 centred(bucket, number, r, (r.y0 + r.y1 - kGlyphCellPx * 0.8f) * 0.5f, 0.8f);
-                centred(bucket, "World " + number, r, r.y1 + 3.0f, 0.38f);
+                centred(bucket, Game::TrFormat("World {0}", {number}), r, r.y1 + 3.0f, 0.38f);
             }
-            text(labels, "World " + std::to_string(selectedWorld_) + ": its hub and missions", 22.0f, 340.0f, 0.45f);
+            text(labels, Game::TrFormat("World {0}: its hub and missions", {std::to_string(selectedWorld_)}), 22.0f, 340.0f,
+                 0.45f);
             for (int p = 0; p <= kGalaxyMissionsPerWorld; ++p)
             {
                 const int mission = selectedWorld_ * 10 + p;
-                place(PlaceRect(p), mission, p == 0 ? "Hub" : std::to_string(p),
-                      p == 0 ? "Hub " + std::to_string(mission) : std::to_string(mission));
+                const std::string number = std::to_string(p);
+                place(PlaceRect(p), mission, p == 0 ? std::string(Game::Tr("Hub")) : number,
+                      p == 0 ? Game::TrFormat("Hub {0}", {std::to_string(mission)}) : std::to_string(mission));
             }
         }
+        // The help beside the worlds, its paragraphs broken into the column's lines (a translation's
+        // words fall where they fall).
         const char* help[] = {
-            "Your own galaxy, played",
-            "from the main menu's",
-            "Galaxy button.",
+            Game::TrMark("Your own galaxy, played from the main menu's Galaxy button."),
             "",
-            "Main hub: world signs",
-            "1-14 lead to the worlds.",
-            "World hub: mission signs",
-            "1-8, a door beside each",
-            "but the first opens when",
-            "the one before is won;",
-            "the golden key ends the",
-            "world. The return sign",
-            "leads back.",
-            "Faint: not made yet; a",
-            "click makes it. The bin",
-            "deletes (two clicks);",
-            "Backups brings it back.",
+            Game::TrMark("Main hub: world signs 1-14 lead to the worlds."),
+            Game::TrMark("World hub: mission signs 1-8, a door beside each but the first opens when the one before is won; "
+                         "the golden key ends the world. The return sign leads back."),
+            Game::TrMark("Faint: not made yet; a click makes it. The bin deletes (two clicks); Backups brings it back."),
         };
         if (importMode_)
         {
-            text(labels, "Import a galaxy", 606.0f, 18.0f, 0.45f);
+            text(labels, Game::Tr("Import a galaxy"), 606.0f, 18.0f, 0.45f);
             if (imports_.empty())
-            {
-                text(faint, "No .galaxy file", 606.0f, 54.0f, 0.36f);
-                text(faint, "to import yet.", 606.0f, 73.0f, 0.36f);
-            }
+                wrapped(faint, Game::Tr("No .galaxy file to import yet."), 606.0f, 54.0f, 0.36f, 180.0f, 19.0f);
             for (int i = 0; i < kImportRowsShown; ++i)
             {
                 const int index = importPage_ * kImportRowsShown + i;
                 if (index >= static_cast<int>(imports_.size())) break;
                 const Rect row = ImportRowRect(i);
                 const std::string& packName = importNames_[static_cast<std::size_t>(index)];
-                std::string name = armedImport_ == index         ? "Replace? Click again"
-                                   : armedImportDelete_ == index ? "Delete? Its bin again"
+                std::string name = armedImport_ == index         ? std::string(Game::Tr("Replace? Click again"))
+                                   : armedImportDelete_ == index ? std::string(Game::Tr("Delete? Its bin again"))
                                    : !packName.empty()           ? packName
                                                                  : imports_[static_cast<std::size_t>(index)].stem().string();
-                while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 40.0f) name.pop_back();
+                while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 40.0f) Game::TextMetrics::PopBack(name);
                 text(labels, name, row.x0 + 6.0f, (row.y0 + row.y1 - kGlyphCellPx * 0.36f) * 0.5f, 0.36f);
             }
             if (importPages > 1)
@@ -745,18 +777,15 @@ namespace GalaxyEggbert::Editor
         else
         {
             float y = 20.0f;
-            for (const char* line : help)
-            {
-                text(labels, line, 606.0f, y, 0.36f);
-                y += 19.0f;
-            }
+            for (const char* paragraph : help)
+                y = *paragraph == '\0' ? y + 19.0f : wrapped(labels, Game::Tr(paragraph), 606.0f, y, 0.36f, 180.0f, 19.0f);
         }
-        for (const auto& [rect, caption] : {std::pair<Rect, const char*>{ExportRect(), "Export"},
-                                            std::pair<Rect, const char*>{ImportRect(), "Import"}})
+        for (const auto& [rect, caption] : {std::pair<Rect, std::string_view>{ExportRect(), Game::Tr("Export")},
+                                            std::pair<Rect, std::string_view>{ImportRect(), Game::Tr("Import")}})
             centred(labels, caption, rect, (rect.y0 + rect.y1 - kGlyphCellPx * 0.45f) * 0.5f, 0.45f);
-        centred(labels, "Backups", BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
+        centred(labels, Game::Tr("Backups"), BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
                 0.4f);
-        centred(labels, armedGalaxyDelete_ ? "Delete all? Again" : "Delete galaxy", DeleteGalaxyRect(),
+        centred(labels, armedGalaxyDelete_ ? Game::Tr("Delete all? Again") : Game::Tr("Delete galaxy"), DeleteGalaxyRect(),
                 (DeleteGalaxyRect().y0 + DeleteGalaxyRect().y1 - kGlyphCellPx * 0.4f) * 0.5f, 0.4f);
         if (!message_.empty()) text(labels, message_, 22.0f, 446.0f, 0.4f);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportWidth, viewportHeight, 1.0f);

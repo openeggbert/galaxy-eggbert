@@ -678,6 +678,11 @@ namespace GalaxyEggbert::CNA
             {
                 StartNicknameEditing(viewport.getWidthProperty(), viewport.getHeightProperty());
             }
+            if (setupInput.languagePressed)
+            {
+                // The Setup's Language (BD-0126): the next language, saved at once as the toggles.
+                NextLanguage();
+            }
             if (setupInput.soundsToggled)
             {
                 // Real SetupSounds toggle -- a genuinely meaningful
@@ -857,7 +862,7 @@ namespace GalaxyEggbert::CNA
                 demoSlotsShown_ = true;
                 demoSlotsMode_ = 0;
                 demoSlotInfos_ = DemoSlotInfos();
-                demoSlotsMessage_ = "Export, Import or Original here; record in a mission: Pause > Record.";
+                demoSlotsMessage_ = Tr("Export, Import or Original here; record in a mission: Pause > Record.");
                 return true;
             }
             if (initInput.fullscreenPressed) ToggleFullscreen();
@@ -1032,7 +1037,7 @@ namespace GalaxyEggbert::CNA
                     {
                         // Nothing was created (the save is atomic): the browser stays, saying why.
                         created = false;
-                        worldEditor_.ShowBrowserMessage(std::string("Not created: ") + failure.what());
+                        worldEditor_.ShowBrowserMessage(TrFormat("Not created: {0}", {failure.what()}));
                     }
                     if (created) LoadCustomWorldForEditing(request.createPath);
                 }

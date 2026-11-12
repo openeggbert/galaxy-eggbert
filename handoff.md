@@ -6,7 +6,32 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-11 (English and French on branch `localization`, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## English and French (2026-11-11, owner Q-023) — done on branch `localization`, waiting for the owner
+
+Where: branch `localization`, worktree `../galaxy-eggbert-localization` (its own `build-cna-opengl3`,
+configured with `-DCNA_HOME=/rv/data/development/github.com/libcna/cna -DCNA_ENGINE_HOME=.../cna-engine
+-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=<main worktree>/build-cna-opengl3/_deps/googletest-src`). Merge
+into `develop` only on the owner's acceptance (Q-023 a); `develop` moved on meanwhile in the shared
+worktree, so merge `develop` into the branch first and run VerifyLocalization (a new text on develop
+needs its French).
+
+Done: `Localization.hpp/.cpp` (Tr, TrMark, TrFormat, the language, ParseLanguage),
+`TranslationsFr.cpp` (390 texts; Mobile Eggbert's MyResource French where it has them), the training
+hints' French in their table, `TextMetrics` on UTF-8 (the 15 accented glyphs, capitals unaccented,
+PopBack), the Setup's Language button (top right; `language=` in savedata.txt; else CNA's UI culture,
+the system's), every screen converted (menu, Setup, pause, help, demos, goodbye, editor, galaxy, network
+game, notices). Labels too wide for their button or column are scaled down. `VerifyLocalization` in
+CTest; CTest 130/130. Live in French (`build-probe/l10n/`): menu, Setup both ways, help, demo positions,
+multiplayer list, editor, galaxy, goodbye, mission 11's hint, pause.
+
+Open (owner_questions Q-023): acceptance and merge (a), the two corrected spellings of the original's
+hints (b), a native speaker's proofreading (c), CNA's English sign-in toast (d), German or Czech next
+(e: Czech needs new glyphs on text.png and its 2x sheet).
+
+To check French live: put `language=fr` in the run folder's `savedata.txt` (tools/qa_live.sh's
+`build-probe/qa-run/`), or press the Setup's Language button.
 
 ## Release 0.1.3 (2026-11-11, the owner) — tagged and published
 

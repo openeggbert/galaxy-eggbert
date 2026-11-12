@@ -761,7 +761,7 @@ namespace GalaxyEggbert::CNA
                         device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
                         phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
                         (CanRevertWorld() || NetMatchActive()) && !demoSlotsShown_,
-                        NetMatchActive() ? "Message" : revertArmed_ ? "Sure?" : "Original");
+                        NetMatchActive() ? TrMark("Message") : revertArmed_ ? TrMark("Sure?") : TrMark("Original"));
                 if (demoSlotsShown_)
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 else if (demoNoticeSeconds_ > 0.0f)
@@ -772,9 +772,9 @@ namespace GalaxyEggbert::CNA
             {
                 // The spectator (Q-022): the world under the one watched, his name, the notices.
                 const auto& watched = net_->peers[static_cast<std::size_t>(net_->watched)];
-                std::vector<std::string> lines{"Watching " + watched.name + "  (" + std::to_string(watched.lives) +
-                                                   (watched.lives == 1 ? " life)" : " lives)"),
-                                               "Left / right: another player.  Space: the results."};
+                std::vector<std::string> lines{TrFormat(watched.lives == 1 ? "Watching {0}  ({1} life)" : "Watching {0}  ({1} lives)",
+                                                        {watched.name, std::to_string(watched.lives)}),
+                                               std::string(Tr("Left / right: another player.  Space: the results."))};
                 const auto notices = NetNotices();
                 lines.insert(lines.end(), notices.begin(), notices.end());
                 inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
@@ -794,15 +794,14 @@ namespace GalaxyEggbert::CNA
                         // The time limit's end (Q-022): a first place alone or shared.
                         int firsts = 0;
                         for (const auto place : net_->finalPlaces) firsts += place == 1;
-                        lines.emplace_back(!won ? GalaxyEggbert::Net::kTextTimeUp
-                                                : firsts > 1 ? GalaxyEggbert::Net::kTextTimeUpShared
-                                                             : GalaxyEggbert::Net::kTextTimeUpWon);
+                        lines.emplace_back(Tr(!won ? GalaxyEggbert::Net::kTextTimeUp
+                                              : firsts > 1 ? GalaxyEggbert::Net::kTextTimeUpShared
+                                                           : GalaxyEggbert::Net::kTextTimeUpWon));
                     }
-                    else if (won) lines.emplace_back(GalaxyEggbert::Net::kTextWon);
+                    else if (won) lines.emplace_back(Tr(GalaxyEggbert::Net::kTextWon));
                     if (NetHostHoldsClock())
-                        lines.push_back("The others play on: time left " +
-                                        GalaxyEggbert::Net::ClockText(net_->limitSeconds - net_->matchSeconds) +
-                                        " (the host waits for the end).");
+                        lines.push_back(TrFormat("The others play on: time left {0} (the host waits for the end).",
+                                                 {GalaxyEggbert::Net::ClockText(net_->limitSeconds - net_->matchSeconds)}));
                     const auto results = NetResultLines();
                     lines.insert(lines.end(), results.begin(), results.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), lines);
@@ -866,7 +865,7 @@ namespace GalaxyEggbert::CNA
                                        phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
                                        /*overTitleScene=*/titleSceneActive_,
                                        graphics_ && graphics_->getIsFullScreenProperty(),
-                                       "Version " + std::string(GalaxyEggbert::VersionString()),
+                                       TrFormat("Version {0}", {GalaxyEggbert::VersionString()}),
                                        BuildStampText());
                 }
                 if (demoSlotsShown_)
@@ -891,7 +890,7 @@ namespace GalaxyEggbert::CNA
                 if (demoActive_)
                 {
                     // Speedy Blupi shows TX_DEMOPLAY ("Demo") top left while a demo plays.
-                    std::vector<std::string> names{"Demo"};
+                    std::vector<std::string> names{std::string(Tr("Demo"))};
                     const auto cheats = ActiveCheatNames();
                     names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
@@ -902,7 +901,7 @@ namespace GalaxyEggbert::CNA
                     // what the last recording became.
                     // The network game's notices (the original's NotifPush) and another player's pause.
                     std::vector<std::string> names = NetNotices();
-                    if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
+                    if (demoRecording_ && demoRecordSlot_ > 0) names.push_back(std::string(Tr("REC")));
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
                     const auto cheats = ActiveCheatNames();
@@ -1112,15 +1111,15 @@ namespace GalaxyEggbert::CNA
         const float s = static_cast<float>(viewportH) / 480.0f;
         const float left = static_cast<float>(viewportW) * 0.5f - 290.0f * s;
         const int gamer = saveData_.GetSelectedGamer();
-        const std::string player = std::string("Player ") + static_cast<char>('A' + gamer);
+        const std::string player = TrFormat("Player {0}", {std::string(1, static_cast<char>('A' + gamer))});
         std::vector<GalaxyEggbert::Game::PanelLine> lines;
-        lines.push_back({"Nickname:  " + nicknameDraft_ + "_", left, 268.0f * s, 0.5f, false, false});
-        lines.push_back({"Shown in the menu and in the network game. Empty: " + player + ".", left, 300.0f * s, 0.42f,
-                         false, true});
-        lines.push_back({"OK or Enter keeps it, Cancel or Escape leaves it as it was.", left, 322.0f * s, 0.42f, false,
-                         true});
-        inputPad_.DrawPanel(device, viewportW, viewportH, player + "'s nickname", {}, lines, &nicknameKeyboard_,
-                            focusHighlight_);
+        lines.push_back({TrFormat("Nickname:  {0}", {nicknameDraft_ + "_"}), left, 268.0f * s, 0.5f, false, false});
+        lines.push_back({TrFormat("Shown in the menu and in the network game. Empty: {0}.", {player}), left, 300.0f * s,
+                         0.42f, false, true});
+        lines.push_back({std::string(Tr("OK or Enter keeps it, Cancel or Escape leaves it as it was.")), left, 322.0f * s,
+                         0.42f, false, true});
+        inputPad_.DrawPanel(device, viewportW, viewportH, TrFormat("{0}'s nickname", {player}), {}, lines,
+                            &nicknameKeyboard_, focusHighlight_);
     }
 
 }

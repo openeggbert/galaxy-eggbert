@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Game/TextureScale.hpp>
 
 #include <GalaxyEggbert/Game/QuadBatch.hpp>
+#include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
@@ -45,19 +46,19 @@ namespace GalaxyEggbert::Editor
             return {0.95f, 0.80f, 0.20f};
         }
 
-        float LabelWidth(const char* message)
+        float LabelWidth(std::string_view message)
         {
             return GalaxyEggbert::Game::TextMetrics::Width(message) * kTextScale;
         }
 
         void AppendLabel(
-            std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, const char* message,
+            std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, std::string_view message,
             float left, float top, float sheetWidth, float sheetHeight)
         {
             float penX = left;
-            for (const char* c = message; *c != '\0'; ++c)
+            for (std::size_t at = 0; at < message.size();)
             {
-                const int rank = GalaxyEggbert::Game::TextMetrics::GlyphIndex(*c);
+                const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(message, at);
                 const int column = rank % kGlyphColumns;
                 const int row = rank / kGlyphColumns;
                 const float glyphSize = kGlyphCellPx * kTextScale;
@@ -68,7 +69,7 @@ namespace GalaxyEggbert::Editor
                     static_cast<float>(column + 1) * kGlyphCellPx / sheetWidth,
                     static_cast<float>(row + 1) * kGlyphCellPx / sheetHeight,
                 });
-                penX += GalaxyEggbert::Game::TextMetrics::Advance(*c) * kTextScale;
+                penX += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * kTextScale;
             }
         }
     }
@@ -430,8 +431,8 @@ namespace GalaxyEggbert::Editor
 
         if (overview && impl_->textTexture && impl_->textEffect)
         {
-            constexpr const char* kLabels[EditorPaletteLayout::PlacementButtonCount] = {
-                "X-", "X+", "Y-", "Y+", "Z-", "Z+", "PLACE",
+            const char* const kLabels[EditorPaletteLayout::PlacementButtonCount] = {
+                "X-", "X+", "Y-", "Y+", "Z-", "Z+", Game::TrMark("PLACE"),
             };
             const float sheetWidth = Game::LogicalWidth(*impl_->textTexture);
             const float sheetHeight = Game::LogicalHeight(*impl_->textTexture);
@@ -454,10 +455,10 @@ namespace GalaxyEggbert::Editor
             const GalaxyEggbert::Game::QuadBatch::Rect place = layout.PlacementButtonRect(
                 EditorPaletteLayout::PlacementPlaceIndex, viewportWidth, viewportHeight);
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad> placeLabel;
+            const std::string_view placeText = Game::Tr(kLabels[EditorPaletteLayout::PlacementPlaceIndex]);
             AppendLabel(
-                placeLabel, kLabels[EditorPaletteLayout::PlacementPlaceIndex],
-                place.x0 + ((place.x1 - place.x0) -
-                            LabelWidth(kLabels[EditorPaletteLayout::PlacementPlaceIndex])) * 0.5f,
+                placeLabel, placeText,
+                place.x0 + ((place.x1 - place.x0) - LabelWidth(placeText)) * 0.5f,
                 place.y0 + ((place.y1 - place.y0) - kGlyphCellPx * kTextScale) * 0.5f,
                 sheetWidth, sheetHeight);
             impl_->textEffect->setDiffuseColorProperty({0.12f, 0.08f, 0.02f});
@@ -558,7 +559,7 @@ namespace GalaxyEggbert::Editor
 
         if (state.noticeVisible && impl_->textTexture && impl_->textEffect)
         {
-            constexpr const char* kMessage = "Not yet implemented.";
+            const std::string_view kMessage = Game::Tr("Not yet implemented.");
             const float messageWidth = LabelWidth(kMessage);
             const float left = (static_cast<float>(viewportWidth) - messageWidth) * 0.5f;
             const float top = static_cast<float>(viewportHeight) * 0.5f - 8.0f;

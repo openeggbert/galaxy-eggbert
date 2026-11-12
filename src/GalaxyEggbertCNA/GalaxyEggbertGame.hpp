@@ -745,6 +745,11 @@ namespace GalaxyEggbert::CNA
         // replays, whose ticks must be the loop's.
         void ApplyFrameRate();
         [[nodiscard]] bool FrameRateInterpolates() const noexcept;
+        // The texts' language (Localization.hpp, the owner's Q-023): the Setup's choice, else the
+        // system's (CNA's UI culture, from the platform's preferred languages, as Mobile Eggbert's
+        // MyResource reads the system's), else English. NextLanguage: the Setup's Language button.
+        void ApplyLanguage();
+        void NextLanguage();
         bool frameRateInterpolating_ = false;
         bool frameRateApplied_ = false;
         double tickClock_ = 0.0;      // seconds since the last step
