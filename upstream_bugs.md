@@ -355,3 +355,18 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   DebugSimulateContextLoss/DebugRestoreContext stay for tests. Galaxy 0.1.3 is built against it: all
   four release trees have `CNA_DEBUG_CONTEXT_HOTKEYS=0`, and a Release game pressing F9 and F10 logs
   no context loss (checked). A Debug build of Galaxy keeps them unless configured OFF.
+
+## UB-014 — CNA gamer services: the Guide's own texts are English only
+
+- **Found:** 2026-11-11, while checking Galaxy's French (Q-023). Read-only inspection of CNA
+  `b5b877691`; CNA was not modified.
+- **Where:** `SignedInGamer.cpp:54` builds the sign-in toast as `gamertag + " signed in"`; the
+  Guide's screens (`Internal/Guide/GuideSocial.cpp`, `GuideScreens.cpp`, `GuideSignInFlow.cpp`:
+  "Nobody is signed in", "That profile is already signed in.", ...) are English literals too.
+- **Effect on Galaxy:** in French the multiplayer screen shows "Joueur A signed in": the gamertag is
+  Galaxy's translated name, the rest CNA's English. XNA's Guide followed the console's language.
+- **Galaxy:** nothing to work around; the toast stays mixed until CNA can show it in the game's
+  language.
+- **Suggestion for CNA:** take the Guide's texts from a table chosen by the system's UI culture
+  (`CultureInfo::CurrentUICulture`, which CNA already sets), or let a game give them.
+- **Status:** open.

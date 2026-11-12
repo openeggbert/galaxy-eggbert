@@ -488,7 +488,7 @@ Until then the work goes on with the loopback server.
 - **Windows:** a zip to try on a real Windows machine.
 - **The branch:** it still waits for the owner's own test (Q-020).
 
-## Q-023 — the game in more languages: the minimal variant, English and French (2026-11-11, asked interactively) — ANSWERED, done on branch `localization`
+## Q-023 — the game in more languages: the minimal variant, English and French (2026-11-11, asked interactively) — ANSWERED, done on branch `localization`; open points ANSWERED 2026-11-12
 
 The owner asked how much work more languages are and whether they cost performance (none
 measurable: a text found by its key, a few instructions more per glyph for UTF-8), then had the
@@ -521,4 +521,20 @@ recommended options):
 - **(e) More languages next (German, Czech):** German needs its words only (ä ö ü are on the sheet;
   ß, Ä Ö Ü are not: written "ss" and without dots). Czech needs new glyphs (č ř š ž ě ů ...) drawn on
   text.png and its 2x sheet. Which, and when?
+
+**The open points, ANSWERED (2026-11-12, asked interactively).**
+
+- **(a)** Verify first (the web and Android builds, the lobby, the nickname panel and the Win/Lost
+  screens in French), then merge into `develop`.
+- **(b)** Keep the two corrected spellings.
+- **(c)** No native reading before the release; the owner reads the Czech in the game afterwards.
+- **(d)** Recorded for the `cna` session in `upstream_bugs.md`.
+- **(e)** Czech and German next. text.png and its 2x sheet get the glyphs they lack, composed from
+  the sheet's own strokes (the acute of é, the circumflex of ê turned over as a caron). A capital
+  with a mark is drawn a few pixels shorter so that the mark fits the 32x32 cell, in every
+  language (French's É À Ç included). Merged into `develop` once verified.
+- **Then:** the rest of the reported lag (OR-0074: the terrain rebuilt on the main thread after
+  dynamite), Czech and German, one release 0.2.0 with the four languages, published by the agent as
+  0.1.x was (tag, GitHub release, the site), and the site's pages brought up to date (they still name
+  1.0.0-rc1 in places).
 
