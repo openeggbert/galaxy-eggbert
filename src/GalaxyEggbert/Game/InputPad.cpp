@@ -3131,7 +3131,7 @@ namespace GalaxyEggbert::Game
         static const char* const kTop[2] = {TrMark("Thank you for playing Galaxy Eggbert!"),
                                             TrMark("We hope Blupi's galaxy was as much fun to play as to build.")};
         static const char* const kBottom[2] = {TrMark("Speedy Blupi and Speedy Eggbert: original games by EPSITEC SA"),
-                                               "Galaxy Eggbert: galaxyeggbert.openeggbert.com"};
+                                               "Galaxy Eggbert: galaxyeggbert.com"};
         std::vector<Quad> panelQuads, labelQuads, faintQuads;
         const auto panel = [&](float y0, float y1) {
             Quad q{w * 0.5f - 330.0f * scale, y0, w * 0.5f + 330.0f * scale, y1, 0.0f, 0.0f, 0.0f, 0.0f};
