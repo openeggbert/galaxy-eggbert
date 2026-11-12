@@ -81,6 +81,16 @@ permission check refused that build ("code from external") and a download of Kit
 it: it needs the owner's permission. Without a newer libcurl the only other way is a build without gamer
 services, i.e. without the network game.
 
+## Release 0.4.0 (2026-11-12, the owner's choice) — tagged and published
+
+`v0.4.0` on the release commit (f482335c); GitHub release "Galaxy Eggbert 0.4.0" with the four packages,
+SHA256SUMS.txt and the notes; Android versionCode 7 (the next published APK needs 8). Built against CNA
+`2ee9c0c47` (clean before and after each package). Packages in `build-probe/release/0.4.0/` (scripts
+`build-0.4.0.sh`, `check-0.4.0.sh`; `shotafter.sh` takes the screenshots under xvfb-run); checked
+unpacked: Linux read-only in Greek, Windows under wine in Turkish, web in Chrome in Finnish with the
+twenty flags and a choice of Greek, the APK's versionCode 7 / 0.4.0. Network protocol 5, as 0.3.0. The
+site names 0.4.0 and twenty languages. Next: the owner tries the APK on a phone; the model gallery for D11.
+
 ## Release 0.3.0 (2026-11-12, the owner: "after the further languages") — tagged and published
 
 `v0.3.0` on the release commit (e5e78c71); GitHub release "Galaxy Eggbert 0.3.0" with the four packages,
