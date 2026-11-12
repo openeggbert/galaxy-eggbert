@@ -797,9 +797,15 @@ namespace GalaxyEggbert::Game
             bool demosPressed = false;
             // Galaxy's own (2026-11-10, the owner's network game): the games on the network.
             bool multiplayerPressed = false;
+            // Galaxy's own (the owner, 2026-11-12): the flag of the language the game speaks, right of
+            // Help; it opens the Setup, its Language button pointed out (SpotlightSetupLanguage).
+            bool languagePressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
+        // The next Setup points out its Language button (it pulses for a few seconds): the menu's flag
+        // was pressed; off for a Setup opened otherwise.
+        void SpotlightSetupLanguage(bool on) noexcept { spotlightSetupLanguage_ = on; }
         // What a gamer slot's button shows (Game1::DrawButtonGamerText()).
         struct InitGamerInfo
         {
@@ -952,6 +958,14 @@ namespace GalaxyEggbert::Game
         int demoSlotsControl_ = -1; // the demo positions' control held down (UpdateDemoSlots)
         int panelControl_ = -1;     // the network screens' button (or 100 + key) held down
         bool multiplayerShown_ = false;
+        // The flags of the languages (Content/icons/flags.png, tools/make_flags.py), for the menu's
+        // language button; without the file the button shows the language's code.
+        Microsoft::Xna::Framework::Graphics::Texture2D flagsTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flagsEffect_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> flagsRenderer_;
+        bool flagsLoaded_ = false;
+        // The Setup's Language button pulses for its first seconds (reached by the menu's flag).
+        bool spotlightSetupLanguage_ = false;
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;

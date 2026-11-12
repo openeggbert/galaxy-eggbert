@@ -354,6 +354,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlTextures = 12;
         constexpr int kSetupControlNickname = 13;
         constexpr int kSetupControlLanguage = 14;
+        constexpr float kSetupLanguageSpotlightSeconds = 3.2f; // the Language button's pulse (menu's flag)
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -460,7 +461,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy, demos, multiplayer;
+            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy, demos, multiplayer, language;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -486,6 +487,8 @@ namespace GalaxyEggbert::Game
             l.editor = Rect{w - 20.0f * s - f2 * 0.75f, h - 20.0f * s - f2 * 2.1f,
                             w - 20.0f * s - f2 * 0.25f, h - 20.0f * s - f2 * 1.6f};
             l.help = Rect{20.f*s,82.f*s,130.f*s,136.f*s};
+            // The language's flag (the owner, 2026-11-12): right of Help, under Fullscreen's end.
+            l.language = Rect{140.0f * s, 82.0f * s, 190.0f * s, 136.0f * s};
             l.fullscreen = Rect{20.0f * s, 15.0f * s, 190.0f * s, 69.0f * s};
             l.exit = Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
             // Galaxy's Demo button (Speedy Blupi's demos, DemoReplay.hpp): under Exit, as Help is
@@ -565,6 +568,7 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlGalaxy = 10;
         constexpr int kInitControlDemos = 11;
         constexpr int kInitControlMultiplayer = 12;
+        constexpr int kInitControlLanguage = 13;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -702,6 +706,12 @@ namespace GalaxyEggbert::Game
         speedyblupiEffect_ = makeEffect(speedyblupiTexture_);
         gearEffect_ = makeEffect(gearTexture_);
         buttonEffect_ = makeEffect(buttonTexture_);
+        if (std::filesystem::exists("Content/icons/flags.png"))
+        {
+            LoadScaled(flagsTexture_, "Content/icons/flags.png");
+            flagsEffect_ = makeEffect(flagsTexture_);
+            flagsLoaded_ = true;
+        }
         helpPanelEffect_ = std::make_unique<BasicEffect>(device);
         helpPanelEffect_->VertexColorEnabled = false;
         helpPanelEffect_->setTextureEnabledProperty(false);
@@ -2468,6 +2478,19 @@ namespace GalaxyEggbert::Game
             {
                 const Rect language = SetupLanguageRect(m);
                 appendButton(language, 21, kSetupControlLanguage);
+                // Reached by the menu's flag: it pulses for its first seconds (the lit face, as the
+                // keyboard's choice is shown, breathing out and in).
+                if (spotlightSetupLanguage_ && phaseTimeSeconds < kSetupLanguageSpotlightSeconds)
+                {
+                    const float grow = (3.0f + 5.0f * 0.5f * (1.0f - std::cos(phaseTimeSeconds * 2.0f * 3.14159265f * 1.25f))) * scale;
+                    Quad glow;
+                    glow.x0 = language.x0 - grow;
+                    glow.y0 = language.y0 - grow;
+                    glow.x1 = language.x1 + grow;
+                    glow.y1 = language.y1 + grow;
+                    PadIconUv(21, padSheetW, padSheetH, glow.u0, glow.v0, glow.u1, glow.v1);
+                    pressedQuads.push_back(glow);
+                }
                 AppendCenteredLabel(labelQuads, LanguageName(CurrentLanguage()), (language.x0 + language.x1) * 0.5f,
                                     (language.y0 + language.y1) * 0.5f - 12.0f * scale, scale);
             }
@@ -3206,6 +3229,7 @@ namespace GalaxyEggbert::Game
         const bool overGalaxy = InRect(mouseX, mouseY, layout.galaxy);
         const bool overDemos = InRect(mouseX, mouseY, layout.demos);
         const bool overMultiplayer = multiplayerShown_ && InRect(mouseX, mouseY, layout.multiplayer);
+        const bool overLanguage = InRect(mouseX, mouseY, layout.language);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -3222,6 +3246,7 @@ namespace GalaxyEggbert::Game
             else if (overGalaxy) activeControl_ = kInitControlGalaxy;
             else if (overDemos) activeControl_ = kInitControlDemos;
             else if (overMultiplayer) activeControl_ = kInitControlMultiplayer;
+            else if (overLanguage) activeControl_ = kInitControlLanguage;
             else activeControl_ = -1;
         }
 
@@ -3244,6 +3269,7 @@ namespace GalaxyEggbert::Game
                 case kInitControlGalaxy: result.galaxyPressed = overGalaxy; break;
                 case kInitControlDemos: result.demosPressed = overDemos; break;
                 case kInitControlMultiplayer: result.multiplayerPressed = overMultiplayer; break;
+                case kInitControlLanguage: result.languagePressed = overLanguage; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -3371,6 +3397,7 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> panelQuads;
 
         std::vector<Quad> editorIconQuads;
+        std::vector<Quad> flagQuads;
 
         // Real: buttons are hidden entirely while an exit fade is active.
         if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
@@ -3448,6 +3475,32 @@ namespace GalaxyEggbert::Game
             faceLabel(layout.help, Tr("Help"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlFullscreen ? pressedQuads : normalQuads, layout.fullscreen, 21);
             faceLabel(layout.fullscreen, fullscreen ? Tr("Window") : Tr("Fullscreen"), s, 12.0f);
+            // The language's flag on the blank face (its code when the flags are missing).
+            appendIconQuad(activeControl_ == kInitControlLanguage ? pressedQuads : normalQuads, layout.language, 21);
+            if (flagsLoaded_)
+            {
+                std::size_t index = 0;
+                while (index < std::size(kLanguages) && kLanguages[index] != CurrentLanguage()) ++index;
+                const float cells = static_cast<float>(std::size(kLanguages));
+                const Rect& r = layout.language;
+                const float fw = 34.0f * s, fh = fw * 2.0f / 3.0f;
+                Quad flag;
+                flag.x0 = (r.x0 + r.x1) * 0.5f - fw * 0.5f;
+                flag.y0 = (r.y0 + r.y1) * 0.5f - fh * 0.5f - 2.0f * s;
+                flag.x1 = flag.x0 + fw;
+                flag.y1 = flag.y0 + fh;
+                flag.u0 = static_cast<float>(index) / cells;
+                flag.u1 = static_cast<float>(index + 1) / cells;
+                flag.v0 = 0.0f;
+                flag.v1 = 1.0f;
+                flagQuads.push_back(flag);
+            }
+            else
+            {
+                std::string code(LanguageCode(CurrentLanguage()));
+                for (auto& c : code) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                faceLabel(layout.language, code, s, 12.0f);
+            }
             appendIconQuad(activeControl_ == kInitControlExit ? pressedQuads : normalQuads, layout.exit, 21);
             faceLabel(layout.exit, Tr("Exit"), s, 12.0f);
             appendIconQuad(activeControl_ == kInitControlDemo ? pressedQuads : normalQuads, layout.demo, 21);
@@ -3542,6 +3595,8 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *buttonEffect_, buttonRenderer_, editorIconQuads, viewportW, viewportH, 1.0f);
+        if (flagsLoaded_ && !flagQuads.empty())
+            FlushQuads(device, *flagsEffect_, flagsRenderer_, flagQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }

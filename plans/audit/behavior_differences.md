@@ -1673,6 +1673,11 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   plural forms), VerifyNetProtocol (a UTF-8 name round trip), CTest 131/131; live in German and Czech:
   the menu, the Setup, the help, the demo positions, the network game's list and nickname panel, the
   editor, its tools and keys, the galaxy, the goodbye, mission 11's hint, the pause.
+- **2026-11-12, the language's flag in the main menu (the owner):** right of Help, a blank face with
+  the flag of the language the game speaks (Union Flag, France, Germany, Czechia; Content/icons/flags.png
+  drawn by `tools/make_flags.py` from the flags' geometry). A press opens the Setup, whose Language
+  button pulses for its first 3 s (`InputPad::SpotlightSetupLanguage`); the gear opens it without.
+  Checked live: the flag, the pulse, the flag changing with the language.
 
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 

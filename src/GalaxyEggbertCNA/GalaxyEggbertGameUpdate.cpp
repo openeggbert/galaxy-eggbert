@@ -926,8 +926,10 @@ namespace GalaxyEggbert::CNA
                 interaction_.SetLives(saveData_.GetHasProgress() ? saveData_.GetLives() : 3);
                 SetPhase(GalaxyEggbert::Def::GamePhase::Play);
             }
-            else if (initInput.setupPressed)
+            else if (initInput.setupPressed || initInput.languagePressed)
             {
+                // The flag (the owner, 2026-11-12) opens the same Setup, its Language button pointed out.
+                inputPad_.SpotlightSetupLanguage(initInput.languagePressed);
                 SetPhase(GalaxyEggbert::Def::GamePhase::MainSetup);
             }
             else if (initInput.editorPressed)
@@ -1131,6 +1133,7 @@ namespace GalaxyEggbert::CNA
         else if (mouseSetupPressed)
         {
             // Real PauseSetup: SetPhase(PlaySetup).
+            inputPad_.SpotlightSetupLanguage(false);
             SetPhase(GalaxyEggbert::Def::GamePhase::PlaySetup);
         }
         else if (mouseMenuPressed)
