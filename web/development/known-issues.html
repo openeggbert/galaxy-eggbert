@@ -80,20 +80,17 @@
     <tr><td>Linux desktop (OpenGL)</td><td><span class="badge badge-done">Verified</span> the maintained, playable target: ctest, golden frames and trace, scripted playthroughs, live checks under Xvfb</td></tr>
     <tr><td>Web (WebGL 2)</td><td><span class="badge badge-done">Verified manually</span> builds and plays in headless Chrome (2026-11-09); not part of CI</td></tr>
     <tr><td>Android</td><td><span class="badge badge-wip">Partly verified</span> builds a debug APK that starts and draws the 3D models in an emulator; not played on a device</td></tr>
-    <tr><td>Windows (<code>SDLGPU</code>)</td><td><span class="badge badge-planned">Not verified</span> no fresh cross-build and live 3D run; not called supported until both pass</td></tr>
-    <tr><td>Linux runtime bundle (<code>package</code> target)</td><td>produces the versioned archive; 1.0.0-rc1's was built and run (2026-11-10). It needs glibc 2.38 or newer</td></tr>
+    <tr><td>Windows (<code>SDLGPU</code>)</td><td><span class="badge badge-wip">Packaged</span> a MinGW cross-build zip in every release since 0.1.0, played under wine; not yet tested on Windows itself</td></tr>
+    <tr><td>Linux runtime bundle (<code>package</code> target)</td><td>produces the versioned archive of every release (0.2.0 on 2026-11-12). It needs glibc 2.38 or newer</td></tr>
   </table>
   <p>See <a href="../platform-support.html">Platform Support</a> for details.</p>
 
   <h2>Waiting on the owner</h2>
   <ul>
-    <li><strong>Publishing release candidate 1.0.0-rc1</strong> (<code>Q-018</code> in
-      <code>plans/audit/owner_questions.md</code>). Its Linux archive and Android APK were built on 2026-11-10
-      (<a href="../releases.html">Releases</a>) and nothing is published yet. Open: where to publish (for
-      example a GitHub release; the web build on this site?), whether to keep the version number, a Windows
-      package (needs a MinGW build of CNA and the game, then a live 3D run on Windows), and an archive for
-      glibc 2.35 (needs a build on such a system, for example Ubuntu 22.04 in a container), or accepting
-      glibc 2.38 as the minimum.</li>
+    <li><strong>An archive for older Linux systems</strong> (glibc 2.35, for example Ubuntu 22.04): it needs a
+      build on such a system; until then glibc 2.38 is the minimum.</li>
+    <li><strong>A native speaker's reading</strong> of the French and German (the owner reads the Czech;
+      <code>Q-023</code> in <code>plans/audit/owner_questions.md</code>).</li>
     <li><strong>A human play pass</strong> (optional). <code>MR-0004</code> lists what to try; the owner judged
       the automated playthroughs plus the reachability audit sufficient (<code>MR-0007</code>), so it holds
       nothing up.</li>
@@ -113,8 +110,9 @@
 
   <h2>In progress</h2>
   <ul>
-    <li>Release packages: <code>tools/release/make_release.sh</code> and 1.0.0-rc1 exist since 2026-11-10; the
-      Windows package and a glibc 2.35 archive are still missing (above). The 2x texture sheets and the goodbye
+    <li>Release packages: <code>tools/release/make_release.sh</code>, <code>make_windows_zip.sh</code> and
+      <code>make_web_zip.sh</code> make the four packages of every release (0.2.0 on 2026-11-12); a glibc 2.35
+      archive is still missing (above). The 2x texture sheets and the goodbye
       screen on quitting, listed here earlier, are in too.</li>
   </ul>
 

@@ -177,6 +177,7 @@
   </p>
   <table>
     <tr><th>Left column</th><th>Right column</th></tr>
+    <tr><td>Nickname (top left: the player's name in the menu and the network game)</td><td>Language (top right: English, Français, Deutsch, Čeština; the main menu's flag leads here)</td></tr>
     <tr><td>Frame rate: 60 / 120 / 144 / 240 fps</td><td>Textures: Auto / 1x / 2x (next start)</td></tr>
     <tr><td>Sound effects (on/off), then the <em>Sound effects</em> and <em>Music</em> volume sliders</td><td></td></tr>
     <tr><td>Jump button on the right</td><td>Player A/B/C : Erase progress (main menu only)</td></tr>
@@ -184,7 +185,9 @@
     <tr><td>Accelerometer, with a <em>Sensitivity</em> slider while it is on</td><td>3D effects: Off / Low / Medium / High / Ultra</td></tr>
   </table>
   <p>
-    The volume sliders, 3D terrain, 3D effects, frame rate and textures are Galaxy Eggbert additions;
+    The nickname, the language, the volume sliders, 3D terrain, 3D effects, frame rate and textures are
+    Galaxy Eggbert additions (the original took its language, French or English, from the system's; Galaxy
+    does too until the button is pressed);
     the rest is the original's Setup. <strong>Erase progress</strong> works as the original's: it resets
     the whole file to its defaults, every setting and all three players' progress. What the effect
     levels draw: <a href="graphics.html">3D Effects &amp; Graphics</a>.
@@ -209,6 +212,8 @@
     <tr><td><code>effectsLevel</code></td><td>0-4 (0 = Off)</td><td>3D effects; an old <code>effects3d=1</code> line reads as High</td></tr>
     <tr><td><code>frameRate</code></td><td>60, 120, 144, 240 (60)</td><td>Frame rate; the simulation always steps 60 times a second</td></tr>
     <tr><td><code>textureScale</code></td><td>0 auto, 1, 2 (0)</td><td>Textures</td></tr>
+    <tr><td><code>language</code></td><td>en, fr, de, cs (absent: the system's)</td><td>Language; written only once it is chosen</td></tr>
+    <tr><td><code>gamerN.nickname</code></td><td>text (empty: Player A, B, C in the language)</td><td>Nickname</td></tr>
     <tr><td><code>fullscreen</code></td><td>0/1 (0)</td><td>F11 or the main menu's Fullscreen / Window button, not the Setup</td></tr>
     <tr><td><code>selectedGamer</code></td><td>0-2 (0)</td><td>The player chosen in the main menu (A, B, C)</td></tr>
     <tr><td><code>gamerN.lives</code>, <code>.missionNumber</code>, <code>.lastWorld</code>, <code>.hasProgress</code>, <code>.doorsUnlocked</code></td><td>per player 0-2</td><td>Campaign progress; <code>doorsUnlocked</code> is 200 digits, one per mission door</td></tr>
