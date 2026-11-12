@@ -89,7 +89,13 @@ SHA256SUMS.txt and the notes; Android versionCode 7 (the next published APK need
 `build-0.4.0.sh`, `check-0.4.0.sh`; `shotafter.sh` takes the screenshots under xvfb-run); checked
 unpacked: Linux read-only in Greek, Windows under wine in Turkish, web in Chrome in Finnish with the
 twenty flags and a choice of Greek, the APK's versionCode 7 / 0.4.0. Network protocol 5, as 0.3.0. The
-site names 0.4.0 and twenty languages. Next: the owner tries the APK on a phone; the model gallery for D11.
+site names 0.4.0 and twenty languages. The presentation site galaxyeggbert.com (repository
+openeggbert/galaxyeggbert.com, the owner's go-ahead) brought from 0.1.3 to 0.4.0 the same evening (aac9d19:
+news, downloads, a languages FAQ, the network versions that play together, the online player's web
+build; brief plans/codex/2026-11-12-site-0.4.0.md); the goodbye screen now names galaxyeggbert.com
+(after 0.4.0, in develop). Next: the owner tries the APK on a phone; marks models in the review gallery
+https://claude.ai/artifact/JEyjQhqyHacJv1hFcMkpjZ (db collection `marks`, doc id = model name: state
+ok/wrong, note) - read them with ArtifactData list for D11.
 
 ## Release 0.3.0 (2026-11-12, the owner: "after the further languages") — tagged and published
 
