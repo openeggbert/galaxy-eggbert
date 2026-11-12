@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Changed
+
+- The goodbye screen gives the game's address as galaxyeggbert.com.
+
 ## [0.4.0] — 2026-11-12
 
 Twenty languages, and clean text in full screen. Packages for Windows, Linux, Android and the web on
