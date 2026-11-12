@@ -84,6 +84,24 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
+        // GALAXY_PERF: an update over 20 ms reported with its phase (the stutter that is left).
+        struct PerfUpdateTimer
+        {
+            GalaxyEggbertGame& game;
+            std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+            ~PerfUpdateTimer()
+            {
+                if (!game.perfEnabled_) return;
+                ++game.perfUpdates_;
+                ++game.perfUpdatesSinceDraw_;
+                const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+                if (ms > 20.0)
+                {
+                    std::cout << "GalaxyEggbertCNA perf: long update " << ms << " ms (update " << game.perfUpdates_
+                              << ", phase " << static_cast<int>(game.phase_) << ")" << std::endl;
+                }
+            }
+        } perfUpdateTimer{*this};
         Game::Update(gameTime);
         if (!frameRateApplied_)
         {
@@ -1078,7 +1096,7 @@ namespace GalaxyEggbert::CNA
                 }
                 if (worldEditor_.ConsumeNeedsPresentationRebuild())
                 {
-                    RebuildWorldPresentation();
+                    RebuildWorldPresentation(/*editorEdit=*/true);
                 }
                 InteractionSystem::AdvanceEditorPlatforms(worldRuntime_, dt);
                 if (worldEditor_.ConsumePlayTestRequested())

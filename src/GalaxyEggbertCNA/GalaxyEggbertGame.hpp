@@ -559,7 +559,12 @@ namespace GalaxyEggbert::CNA
         // `worldRuntime_` -- shared by `LoadContent()`'s own initial load
         // (which handles `blupi_`'s spawn/`saveData_`'s load itself, at its
         // own point in the boot sequence) and `LoadMission()` below.
-        void RebuildWorldPresentation();
+        // @p editorEdit: after an edit in the world editor (the same World): the background is loaded
+        // again only for another sky region, and the terrain is patched or rebuilt by chunks as in play
+        // (RefreshTerrainMeshIfChanged) instead of built whole (2026-11-12, the owner: a faster editor).
+        void RebuildWorldPresentation(bool editorEdit = false);
+        int backgroundRegion_ = -1;                                 // the sky region whose picture is loaded
+        const GalaxyEggbert::Worlds::World* terrainWorld_ = nullptr; // the World the terrain was built from
 
         // Builds the terrain mesh again when the world's blocks changed since it was built
         // (`Worlds::World::blockRevision()`): doors opened in play, hub doors at load.
@@ -1534,6 +1539,10 @@ namespace GalaxyEggbert::CNA
         long long perfModelDraws_ = 0;
         long long perfModelTriangles_ = 0;
         long long perfModelCulled_ = 0;
+        // GALAXY_PERF: an update or a draw over 20 ms named (what is left of the stutter, OR-0074),
+        // and the updates CNA runs back to back to catch up before a draw.
+        int perfUpdatesSinceDraw_ = 0;
+        long long perfUpdates_ = 0;
         // A sign's painted face (its digit or world picture) as a decal on its model (MR-0006;
         // avatars3d/objects/<sign>/decals.txt): the texture and its rectangle in model space.
         struct SignDecal

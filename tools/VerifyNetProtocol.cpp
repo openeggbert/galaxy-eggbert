@@ -35,8 +35,25 @@ int main()
     const auto czechBack = Decode(Encode(hello));
     check(czechBack && czechBack->name == "Hráč A", "Hello: a UTF-8 name comes back whole");
     check(CleanText("ab\x01" "c\xff\xc3", 15) == "abc", "CleanText: controls and broken sequences are left out");
-    check(CleanText("ččččččččč", 15) == "ččččččč", "CleanText: a character is never cut at the limit");
+    check(CleanText("ččččččččč", 15) == "ččččččččč", "CleanText: nine two-byte characters within 15 (characters, protocol 5)");
+    // Protocol 5: the limits count characters ("Гравець A", Ukrainian's default name, is 16 bytes).
+    hello.name = "Гравець A";
+    const auto ukrainian = Decode(Encode(hello));
+    check(ukrainian && ukrainian->name == "Гравець A", "Hello: a 16-byte Cyrillic name of 9 characters comes back whole");
+    check(CleanText("ГГГГГГГГГГГГГГГГ", kMaxName) == "ГГГГГГГГГГГГГГГ", "CleanText: 15 characters kept, the 16th cut");
+    {
+        std::string longChat;
+        for (int i = 0; i < 99; ++i) longChat += "Ж"; // 198 bytes
+        check(CleanText(longChat, kMaxChat) == longChat, "CleanText: 99 two-byte characters fit");
+        std::string wide;
+        for (int i = 0; i < 99; ++i) wide += "\xF0\x9F\x98\x80"; // 396 bytes
+        const std::string capped = CleanText(wide, kMaxChat);
+        check(capped.size() == 252 && capped.size() <= kMaxTextBytes, "CleanText: at most 255 bytes, a character never cut");
+    }
     check(AsciiText("Hráč Žluťoučký ß", 30) == "Hrac Zlutoucky ss", "AsciiText: the letters without their marks");
+    check(AsciiText("Игрок A", 15) == "Igrok A" && AsciiText("Gracz Łódź", 15) == "Gracz Lodz" &&
+              AsciiText("Гравець A", 15) == "Gravets A",
+          "AsciiText: Cyrillic transliterated, Polish without its marks");
     hello.name = "Player A";
 
     Message lobby;

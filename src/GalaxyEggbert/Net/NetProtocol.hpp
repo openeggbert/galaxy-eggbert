@@ -16,15 +16,18 @@ namespace GalaxyEggbert::Net
     // (the original applied whatever arrived; blupi_recon's validator is the model). No CNA here.
 
     inline constexpr std::uint16_t kProtocolId = 0x4547; // "GE"
-    inline constexpr std::uint8_t kProtocolVersion = 4; // 2: sounds, lifts, the aura, the cloud's touch, killers;
+    inline constexpr std::uint8_t kProtocolVersion = 5; // 2: sounds, lifts, the aura, the cloud's touch, killers;
                                                         // 3: the match's lives and time limit, TimeUp,
                                                         //    a world of the host's editor sent (WorldData),
                                                         //    a dropped player back in the match (Rejoin, Snapshot);
                                                         // 4: names and chat in UTF-8 ("Hráč A", Czech's default name)
+                                                        // 5: their limits in characters, not bytes (Ukrainian's
+                                                        //    default "Гравець A" is 16 bytes)
     inline constexpr int kMaxPlayers = 4;     // the original's MAXNETPLAYER
     inline constexpr int kTeams = 4;          // yellow, orange, blue, green (the editor's starts)
-    inline constexpr std::size_t kMaxName = 15;     // a CNA local profile's name
+    inline constexpr std::size_t kMaxName = 15;     // a CNA local profile's name (characters, as all the limits)
     inline constexpr std::size_t kMaxChat = 99;     // the original's chat line, its NUL taken off
+    inline constexpr std::size_t kMaxTextBytes = 255; // a text's bytes on the wire (its length a byte)
     inline constexpr std::size_t kMaxEvents = 64;   // per Events packet
     inline constexpr int kMultiplayerLives = 10;    // PlayPrepare: m_nbVies = 10 in a network game
     inline constexpr std::size_t kMaxSounds = 32;   // per Sounds packet
@@ -200,7 +203,8 @@ namespace GalaxyEggbert::Net
     // Whether the message must arrive (lobby, chat, events, deaths) or may be lost (poses).
     [[nodiscard]] bool IsReliable(MessageKind kind) noexcept;
     // What names and chat may hold: printable ASCII and whole UTF-8 characters from U+00A0 on (no
-    // control, no broken sequence), at most @p limit bytes, a character never cut.
+    // control, no broken sequence), at most @p limit characters and kMaxTextBytes bytes, a character
+    // never cut (protocol 5; 4 counted bytes).
     [[nodiscard]] std::string CleanText(const std::string& text, std::size_t limit);
     // @p text in printable ASCII, a Latin letter without its mark ("Hráč" -> "Hrac", "ß" -> "ss"), any
     // other character left out: for CNA's local profile name.

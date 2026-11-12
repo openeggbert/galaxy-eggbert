@@ -547,3 +547,17 @@ Portuguese; the menu's flag opens a menu of flags. Decided meanwhile, open to ch
 - The French, German, Slovak, Spanish, Italian, Polish and Portuguese of Galaxy's own texts wait for a
   native speaker's reading; the owner reads the Czech (and can judge the Slovak).
 
+**Six more and the release after them (2026-11-12, asked interactively).** The owner: release "after
+the further languages"; Dutch, Hungarian, Romanian and Swedish; Russian and Ukrainian; besides the
+languages a faster editor, the rest of the stutter and the languages on Android. Decided meanwhile,
+open to change:
+- **The Cyrillic letters are rendered from a font** (Comic Relief, SIL OFL 1.1, a hand like the sheet's),
+  not composed: Cyrillic has no strokes on the sheet to compose from. The font stays outside the
+  repository (`~/deps/fonts`); its pictures on text.png are not bound by the OFL. The letters that look
+  like Latin ones (а е о р с у х і ї ...) are drawn by the Latin glyphs.
+- **Romanian with the comma below** (ș ț), the correct letters, not the cedilla of old fonts.
+- Their texts too wait for a native speaker's reading.
+- **Release 0.3.0** once the six are verified: the option the owner chose read "first the languages
+  chosen below, then one release 0.3.0; building and publishing it takes about an hour", so published
+  by the agent as 0.2.0 was (tag, GitHub release, the site); Android versionCode 6.
+

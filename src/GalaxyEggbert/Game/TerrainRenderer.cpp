@@ -1474,7 +1474,15 @@ namespace GalaxyEggbert::Game
         {
             UploadChunk(device, world, coverage, ChunkIndex(cx, cy, cz), BuildChunk(inputs, cx, cy, cz), true);
         }
+        // The animated meshes (lava, lightning, wind, animated tiles, water) of the lists FinishChunks
+        // renewed are made again now, at the step they showed: left to the next Update, the frame drawn
+        // after a change in play (Update comes first in the tick) or the editor lost its lava for one frame.
+        const int shownPhase = m_lastAnimPhase;
         FinishChunks(device);
+        if (shownPhase >= 0)
+        {
+            Update(device, shownPhase, m_blupiFocused);
+        }
         return true;
     }
 

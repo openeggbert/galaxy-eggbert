@@ -3,7 +3,8 @@
 
 Content/icons/flags.png (and its 2x sheet in Content/icons2x/): one cell a language, in
 Localization.hpp's kLanguages order: English (the Union Flag), French, German, Czech, Slovak, Spanish,
-Italian, Polish, Portuguese (Brazil's flag: the game's Portuguese is Brazil's). Each cell is
+Italian, Polish, Portuguese (Brazil's flag: the game's Portuguese is Brazil's), Dutch, Hungarian,
+Romanian, Swedish, Russian, Ukrainian. Each cell is
 48x32 (96x64 at 2x), the flag drawn from its geometry (no picture copied), eight times as large and
 scaled down, with a thin dark edge. Run from the repository: python3 tools/make_flags.py
 """
@@ -142,7 +143,33 @@ def brazilian(d, w, h):
     d._image.paste(WHITE, (0, 0), ImageChops.multiply(band, globe))
 
 
-FLAGS = [union_flag, french, german, czech, slovak, spanish, italian, polish, brazilian]
+def stripes(colours, vertical=False):
+    def draw(d, w, h):
+        n = len(colours)
+        for i, colour in enumerate(colours):
+            if vertical:
+                d.rectangle((i * w / n, 0, (i + 1) * w / n, h), fill=colour)
+            else:
+                d.rectangle((0, i * h / n, w, (i + 1) * h / n), fill=colour)
+    return draw
+
+
+def swedish(d, w, h):
+    """Blue, the yellow Nordic cross: 5:2:9 across, 4:2:4 down."""
+    d.rectangle((0, 0, w, h), fill=(0, 106, 167))
+    x0, x1 = w * 5 / 16.0, w * 7 / 16.0
+    y0, y1 = h * 4 / 10.0, h * 6 / 10.0
+    d.rectangle((x0, 0, x1, h), fill=(254, 204, 0))
+    d.rectangle((0, y0, w, y1), fill=(254, 204, 0))
+
+
+FLAGS = [union_flag, french, german, czech, slovak, spanish, italian, polish, brazilian,
+         stripes([(174, 28, 40), WHITE, (33, 70, 139)]),           # Netherlands
+         stripes([(206, 41, 57), WHITE, (71, 112, 80)]),           # Hungary
+         stripes([(0, 43, 127), (252, 209, 22), (206, 17, 38)], vertical=True),  # Romania
+         swedish,
+         stripes([WHITE, (0, 57, 166), (213, 43, 30)]),            # Russia
+         stripes([(0, 87, 183), (255, 215, 0)])]                  # Ukraine
 
 
 def sheet(scale):

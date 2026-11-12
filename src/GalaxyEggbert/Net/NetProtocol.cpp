@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
@@ -74,7 +75,7 @@ namespace GalaxyEggbert::Net
             bool Text(std::string& text, std::size_t limit)
             {
                 std::uint8_t length = 0;
-                if (!U8(length) || length > limit || !Take(length)) return false;
+                if (!U8(length) || length > std::min(kMaxTextBytes, limit * 4) || !Take(length)) return false;
                 text.assign(reinterpret_cast<const char*>(data_ + pos_ - length), length);
                 return CleanText(text, limit) == text;
             }
@@ -96,6 +97,7 @@ namespace GalaxyEggbert::Net
     std::string CleanText(const std::string& text, std::size_t limit)
     {
         std::string out;
+        std::size_t characters = 0;
         for (std::size_t at = 0; at < text.size();)
         {
             const std::size_t start = at;
@@ -104,15 +106,17 @@ namespace GalaxyEggbert::Net
                               (c >= 0xA0 && c != U'\uFFFD' && c <= 0x10FFFF && !(c >= 0xFDD0 && c <= 0xFDEF) &&
                                (c & 0xFFFE) != 0xFFFE);
             if (!keep) continue;
-            if (out.size() + (at - start) > limit) break;
+            if (characters == limit || out.size() + (at - start) > kMaxTextBytes) break;
             out.append(text, start, at - start);
+            ++characters;
         }
         return out;
     }
 
     std::string AsciiText(const std::string& text, std::size_t limit)
     {
-        // The Latin letters of the game's languages (and their neighbours) without their marks.
+        // The Latin letters of the game's languages (and their neighbours) without their marks, the
+        // Cyrillic ones transliterated ("Игрок" -> "Igrok").
         static constexpr struct { char32_t from; const char* to; } kPlain[] = {
             {U'à', "a"}, {U'á', "a"}, {U'â', "a"}, {U'ã', "a"}, {U'ä', "a"}, {U'å', "a"}, {U'ç', "c"}, {U'č', "c"},
             {U'ď', "d"}, {U'è', "e"}, {U'é', "e"}, {U'ê', "e"}, {U'ë', "e"}, {U'ě', "e"}, {U'ì', "i"}, {U'í', "i"},
@@ -124,6 +128,25 @@ namespace GalaxyEggbert::Net
             {U'Î', "I"}, {U'Ï', "I"}, {U'Ľ', "L"}, {U'Ĺ', "L"}, {U'Ñ', "N"}, {U'Ň', "N"}, {U'Ò', "O"}, {U'Ó', "O"},
             {U'Ô', "O"}, {U'Õ', "O"}, {U'Ö', "O"}, {U'Ŕ', "R"}, {U'Ř', "R"}, {U'Š', "S"}, {U'Ť', "T"}, {U'Ù', "U"},
             {U'Ú', "U"}, {U'Û', "U"}, {U'Ü', "U"}, {U'Ů', "U"}, {U'Ý', "Y"}, {U'Ÿ', "Y"}, {U'Ž', "Z"},
+            // Polish, Hungarian, Romanian, Swedish, Slovak; Russian and Ukrainian transliterated.
+            {U'ą', "a"}, {U'Ą', "A"}, {U'ć', "c"}, {U'Ć', "C"}, {U'ę', "e"}, {U'Ę', "E"},
+            {U'ł', "l"}, {U'Ł', "L"}, {U'ń', "n"}, {U'Ń', "N"}, {U'ś', "s"}, {U'Ś', "S"},
+            {U'ź', "z"}, {U'Ź', "Z"}, {U'ż', "z"}, {U'Ż', "Z"}, {U'ő', "o"}, {U'Ő', "O"},
+            {U'ű', "u"}, {U'Ű', "U"}, {U'ă', "a"}, {U'Ă', "A"}, {U'ș', "s"}, {U'Ș', "S"},
+            {U'ț', "t"}, {U'Ț', "T"}, {U'å', "a"}, {U'Å', "A"}, {U'ĺ', "l"}, {U'Ĺ', "L"},
+            {U'ľ', "l"}, {U'Ľ', "L"}, {U'ŕ', "r"}, {U'Ŕ', "R"}, {U'а', "a"}, {U'А', "A"},
+            {U'б', "b"}, {U'Б', "B"}, {U'в', "v"}, {U'В', "V"}, {U'г', "g"}, {U'Г', "G"},
+            {U'ґ', "g"}, {U'Ґ', "G"}, {U'д', "d"}, {U'Д', "D"}, {U'е', "e"}, {U'Е', "E"},
+            {U'ё', "e"}, {U'Ё', "E"}, {U'є', "ye"}, {U'Є', "Ye"}, {U'ж', "zh"}, {U'Ж', "Zh"},
+            {U'з', "z"}, {U'З', "Z"}, {U'и', "i"}, {U'И', "I"}, {U'і', "i"}, {U'І', "I"},
+            {U'ї', "yi"}, {U'Ї', "Yi"}, {U'й', "y"}, {U'Й', "Y"}, {U'к', "k"}, {U'К', "K"},
+            {U'л', "l"}, {U'Л', "L"}, {U'м', "m"}, {U'М', "M"}, {U'н', "n"}, {U'Н', "N"},
+            {U'о', "o"}, {U'О', "O"}, {U'п', "p"}, {U'П', "P"}, {U'р', "r"}, {U'Р', "R"},
+            {U'с', "s"}, {U'С', "S"}, {U'т', "t"}, {U'Т', "T"}, {U'у', "u"}, {U'У', "U"},
+            {U'ф', "f"}, {U'Ф', "F"}, {U'х', "kh"}, {U'Х', "Kh"}, {U'ц', "ts"}, {U'Ц', "Ts"},
+            {U'ч', "ch"}, {U'Ч', "Ch"}, {U'ш', "sh"}, {U'Ш', "Sh"}, {U'щ', "shch"}, {U'Щ', "Shch"},
+            {U'ъ', ""}, {U'Ъ', ""}, {U'ы', "y"}, {U'Ы', "Y"}, {U'ь', ""}, {U'Ь', ""},
+            {U'э', "e"}, {U'Э', "E"}, {U'ю', "yu"}, {U'Ю', "Yu"}, {U'я', "ya"}, {U'Я', "Ya"},
         };
         std::string out;
         for (std::size_t at = 0; at < text.size();)

@@ -31,13 +31,21 @@ namespace GalaxyEggbert::Game
         Italian,
         Polish,
         Portuguese, // Brazil's (pt-BR)
+        Dutch,
+        Hungarian,
+        Romanian,
+        Swedish,
+        Russian,
+        Ukrainian,
     };
 
     // Every language, in the enum's order (an index into kLanguages is the enum's value): the order of
     // the language picker's flags and of a table by language (TrainingHints.cpp).
-    inline constexpr Language kLanguages[] = {Language::English, Language::French,  Language::German,
-                                              Language::Czech,   Language::Slovak,  Language::Spanish,
-                                              Language::Italian, Language::Polish,  Language::Portuguese};
+    inline constexpr Language kLanguages[] = {Language::English,   Language::French,   Language::German,
+                                              Language::Czech,     Language::Slovak,   Language::Spanish,
+                                              Language::Italian,   Language::Polish,   Language::Portuguese,
+                                              Language::Dutch,     Language::Hungarian, Language::Romanian,
+                                              Language::Swedish,   Language::Russian,  Language::Ukrainian};
     inline constexpr std::size_t kLanguageCount = std::size(kLanguages);
     [[nodiscard]] constexpr std::size_t LanguageIndex(Language language) noexcept
     {
@@ -76,7 +84,8 @@ namespace GalaxyEggbert::Game
     // TrFormat of @p one when @p count is 1, else of @p other: a number's noun in its form. A language
     // with more than one plural writes them in @p other's translation joined by '|', the "few" form
     // first, then the "many": Czech and Slovak few for 2-4 ("{0} brány|{0} bran"), Polish few for
-    // 2-4, 22-24, 32-34, ... but not 12-14.
+    // 2-4, 22-24, 32-34, ... but not 12-14, Romanian few for 0 and 2-19 (and 101-119 ...), many with
+    // "de" from 20. Russian and Ukrainian add a third, for 21, 31, ... (not 11): few 2-4 as Polish's.
     [[nodiscard]] std::string TrCount(std::string_view one, std::string_view other, long long count,
                                       std::initializer_list<std::string_view> args);
 

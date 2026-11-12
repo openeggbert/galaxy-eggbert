@@ -1640,7 +1640,7 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
-## BD-0126 — the game in nine languages, and a language picker of flags (owner, Q-023) — FIXED_AND_VERIFIED
+## BD-0126 — the game in fifteen languages, and a language picker of flags (owner, Q-023) — FIXED_AND_VERIFIED
 
 - Original: Mobile Eggbert shows its texts in French or English, from the system's language
   (MyResource::Init: "fr" French, anything else English); there is no choice in the game. Its
@@ -1689,6 +1689,23 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   Validation: VerifyLocalization (392 texts in each of eight languages, every character drawable, the
   plurals, the spaces at the ends), CTest; live: the picker over the menu and the Setup, its focus, a
   choice, Escape; every checked screen in the five new languages.
+- **2026-11-12, six more: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (the owner):**
+  TranslationsNl/Hu/Ro/Sv/Ru/Uk.cpp and their hints' columns; fifteen languages, the picker 5 x 3 with
+  the current language drawn a little larger as well as lit. text.png's glyphs 206-217 composed as
+  before (ő ű ă ș ț å and capitals; Romanian with the comma below, not the cedilla) and 218-267 the
+  Cyrillic letters without a Latin look-alike, rendered from the font Comic Relief (SIL OFL 1.1; the
+  look of the sheet's own hand; the font is not in the repository: provenance/third-party.md); а е о р с
+  у х і ї and their capitals are drawn by the Latin glyphs (`TextMetrics::GlyphOf`). Plurals: Romanian
+  ("de" from 20), Russian and Ukrainian (one for 1, 21, 31 ... but 11; few for 2-4, 22-24 ...; many)
+  in `TrCount`. A network name in Cyrillic is transliterated for CNA's local profile (`AsciiText`); the
+  network game's limits count characters, not bytes (protocol 5: Ukrainian's default "Гравець A" is 16
+  bytes and lost its letter), and its buttons draw a long label smaller before cutting it.
+  Labels too wide shortened as for the others (Hungarian "Opciók"). Validation: VerifyLocalization
+  (392 texts in each of 14 languages, every character drawable, the plurals of cs/sk/pl/ro/ru/uk),
+  VerifyNetProtocol, CTest 131/131; live in each of the six: the menu, the Setup, the help, the pause,
+  mission 11's hint, the editor's keys and tools, the galaxy, the goodbye, the network game's list, its
+  nickname panel and a new game (`build-probe/l10n/<code>-*`); the system's language picked at the
+  start for each of the fifteen locales.
 
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 

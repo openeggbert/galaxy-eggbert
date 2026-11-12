@@ -46,9 +46,25 @@ GLYPHS = [
     ('Ń', 'N', 'acute'), ('Ś', 'S', 'acute'), ('Ź', 'Z', 'acute'), ('Ż', 'Z', 'dot'),
     ('ã', 'a', 'tilde'), ('õ', 'o', 'tilde'), ('Ã', 'A', 'tilde'), ('Õ', 'O', 'tilde'),
     ('°', ' ', 'degree'),
-]
+    # 206 on (2026-11-12): Hungarian, Romanian, Swedish; then Russian's and Ukrainian's letters that
+    # are not Latin ones (а е ё о р с у х і ї and А В Е Ё К М Н О Р С Т Х І Ї are drawn by the Latin
+    # glyphs, TextMetrics::GlyphOf), rendered from Comic Relief ('@': see render()).
+    ('ő', 'o', 'dacute'), ('ű', 'u', 'dacute'), ('Ő', 'O', 'dacute'), ('Ű', 'U', 'dacute'),
+    ('ă', 'a', 'breve'), ('Ă', 'A', 'breve'), ('ș', 's', 'commabelow'), ('ț', 't', 'commabelow'),
+    ('Ș', 'S', 'commabelow'), ('Ț', 'T', 'commabelow'), ('å', 'a', 'ring'), ('Å', 'A', 'ring'),
+] + [(ch, '@' + ch, 'plain') for ch in 'бвгджзийклмнптфцчшщъыьэюяєґ'] + \
+    [(ch, '@' + ch, 'plain') for ch in 'БГДЖЗИЛПУФЦЧШЩЪЫЬЭЮЯЄҐ'] + [('Й', '@И', 'breve')]
 # The marks drawn above the letter (a capital, or an l, made shorter for them).
-ABOVE = {'acute', 'grave', 'circumflex', 'caron', 'diaeresis', 'ring', 'tilde', 'dot'}
+ABOVE = {'acute', 'grave', 'circumflex', 'caron', 'diaeresis', 'ring', 'tilde', 'dot', 'dacute', 'breve'}
+SHEET_ROWS = 24  # the whole sheet: the original's 8 rows and Galaxy's 16
+
+# The Cyrillic letters text.png has no likeness of are drawn from Comic Relief (SIL Open Font
+# License; Comic Sans's metrics, the shapes text.png's glyphs have), Regular: its stroke inks as much
+# as the sheet's (H: 676 against 655 at 2x). Not kept in the repository: fetched once into
+# ~/deps/fonts/ (COMIC_RELIEF overrides) from github.com/google/fonts, ofl/comicrelief/.
+import os
+FONT = os.environ.get('COMIC_RELIEF', os.path.expanduser('~/deps/fonts/ComicRelief-Regular.ttf'))
+CAP_SIZE, LOWER_SIZE = 61, 56  # at 2x: H's height 46 as the sheet's capitals, x 30 as its x-height
 FIRST = 128
 # The original's accented letters (TextMetrics::kAccented, glyphs 15-29).
 ACCENTED = 'üàâéèëêïîôùûäöç'
@@ -80,7 +96,22 @@ def make(sheet, s):
     cell = 32 * s
     alpha = sheet.getchannel('A')
 
+    def render(ch):
+        """@p ch from Comic Relief: drawn at 2x on the sheet's baseline, its ink from the sheet's left
+        bearing, scaled down for the 1x sheet."""
+        from PIL import ImageFont
+        font = ImageFont.truetype(FONT, CAP_SIZE if ch.isupper() else LOWER_SIZE)
+        big = Image.new('L', (64, 64), 0)
+        ImageDraw.Draw(big).text((0, 0), ch, font=font, fill=255)
+        box = big.getbbox()
+        ImageDraw.Draw(big).rectangle((0, 0, 63, 63), fill=0)
+        top_of_h = ImageFont.truetype(FONT, CAP_SIZE if ch.isupper() else LOWER_SIZE).getbbox('H')
+        ImageDraw.Draw(big).text((4 - box[0], BASELINE * 2 - top_of_h[3]), ch, font=font, fill=255)
+        return big if s == 2 else big.resize((32, 32), Image.LANCZOS)
+
     def glyph(ch):
+        if ch.startswith('@'):
+            return render(ch[1:])
         i = index_of(ch)
         g = alpha.crop(((i % 16) * cell, (i // 16) * cell, (i % 16 + 1) * cell, (i // 16 + 1) * cell))
         if ch == 'ı':  # the i without its dot: its stem only
@@ -116,6 +147,30 @@ def make(sheet, s):
             m = c.crop((box[0], BASELINE * s, box[2], box[3]))
             # The ogonek is the cedilla's hook turned the other way, at the letter's right.
             return (m.transpose(Image.FLIP_LEFT_RIGHT) if name == 'ogonek' else m), None
+        if name == 'dacute':
+            # Hungarian's double acute: two acutes, smaller, side by side.
+            g = glyph('é')
+            box = ink(g, 0, (X_HEIGHT - 1) * s)
+            one = g.crop(box)
+            one = one.resize((max(1, round(one.width * 0.75)), max(1, round(one.height * 0.85))), Image.LANCZOS)
+            gap = max(1, round(one.width * 0.55))
+            pair = Image.new('L', (one.width + gap, one.height), 0)
+            pair = ImageChops.lighter(pair, Image.new('L', pair.size, 0))
+            pair.paste(one, (0, 0))
+            pair = ImageChops.lighter(pair, Image.new('L', pair.size, 0))
+            second = Image.new('L', pair.size, 0)
+            second.paste(one, (gap, 0))
+            return ImageChops.lighter(pair, second), box[3]
+        if name == 'breve':
+            # Romanian's and Russian's breve: Comic Relief's, from its ă above the x-height.
+            g = render('ă')
+            box = ink(g, 0, (X_HEIGHT - 1) * s)
+            return g.crop(box), box[3]
+        if name == 'commabelow':
+            c = glyph(',')
+            box = ink(c)
+            m = c.crop(box)
+            return m.resize((max(1, round(m.width * 0.85)), max(1, round(m.height * 0.85))), Image.LANCZOS), None
         if name == 'tilde':
             t = glyph('~')
             m = t.crop(ink(t))
@@ -140,12 +195,16 @@ def make(sheet, s):
         layer.paste(b, at)
         return ImageChops.lighter(a, layer)
 
-    out = Image.new('L', (16 * cell, 8 * cell), 0)
+    out = Image.new('L', (16 * cell, (SHEET_ROWS - 8) * cell), 0)
     widths = []
     for k, (ch, base, name) in enumerate(GLYPHS):
         at = ((k % 16) * cell, (k // 16) * cell)
         g = glyph(base)
-        width = WIDTH[index_of(base)] * s
+        if base.startswith('@'):
+            drawn = ink(g)  # a rendered letter's width from its ink, as the sheet's (right edge - 2)
+            width = max(1, (drawn[2] if drawn else 2 * s) // s - 2) * s
+        else:
+            width = WIDTH[index_of(base)] * s
         capital = base.isupper()
         if name == 'rotate':
             # ¿ and ¡: ? and ! turned over, hanging from the x-height down below the baseline.
@@ -155,6 +214,17 @@ def make(sheet, s):
             turned.paste(piece, (box[0], min((X_HEIGHT - 1) * s, cell - piece.height)))
             widths.append(width)
             out.paste(turned, at)
+            continue
+        if name == 'plain':
+            widths.append(width)
+            out.paste(g, at)
+            continue
+        if name == 'commabelow':
+            body = ink(g, X_HEIGHT * s, BASELINE * s) if not capital else ink(g, CAP_TOP * s, BASELINE * s)
+            m, _ = mark(name)
+            g = union(g, m, (max(0, (body[0] + body[2]) // 2 - m.width // 2), BASELINE * s + s))
+            widths.append(width)
+            out.paste(g, at)
             continue
         if name == 'degree':
             m, _ = mark('ring')
@@ -237,7 +307,7 @@ def main():
         sheet = Image.open(path).convert('RGBA')
         original = sheet.crop((0, 0, 512 * s, 256 * s))
         rows, widths = make(original, s)
-        whole = Image.new('RGBA', (512 * s, 512 * s), (0, 0, 0, 0))
+        whole = Image.new('RGBA', (512 * s, 32 * SHEET_ROWS * s), (0, 0, 0, 0))
         whole.paste(original, (0, 0))
         whole.paste(rows, (0, 256 * s))
         whole.save(path, optimize=True)

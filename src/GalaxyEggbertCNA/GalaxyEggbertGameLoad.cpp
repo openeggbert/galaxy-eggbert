@@ -722,8 +722,9 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
     }
 
-    void GalaxyEggbertGame::RebuildWorldPresentation()
+    void GalaxyEggbertGame::RebuildWorldPresentation(bool editorEdit)
     {
+        const auto editStarted = std::chrono::steady_clock::now();
         // Re-derive skyRegion/missionNumber/mobileObjects_ from the World
         // itself first (plan.md EDITOR-109): the world editor mutates the
         // live World in place, with no disk round-trip, so LoadFromVwrFile()
@@ -754,6 +755,11 @@ namespace GalaxyEggbert::CNA
         // missing ones are confirmed never used by any real level
         // (05-backgrounds.md), but a hand-authored .vwr world could still
         // reference one, so this must degrade gracefully, not throw.
+        // An editor's edit keeps the picture of the same region (decoding it and Ultra's sky light took
+        // most of an edit's time).
+        const bool sameBackground = editorEdit && backgroundRegion_ == static_cast<int>(worldRuntime_.GetSkyRegion());
+        backgroundRegion_ = static_cast<int>(worldRuntime_.GetSkyRegion());
+        if (!sameBackground)
         {
             char backgroundPath[64];
             std::snprintf(backgroundPath, sizeof(backgroundPath),
@@ -823,10 +829,24 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        if (editorEdit && terrainRenderer_ && terrainWorld_ == &worldRuntime_.GetWorld())
+        {
+            // The same World edited: its changes patched or the chunks they reach rebuilt, as in play
+            // (a full build when the history is unknown: a turned plate, more than 256 cells at once).
+            RefreshTerrainMeshIfChanged();
+            if (perfEnabled_)
+            {
+                std::cout << "GalaxyEggbertCNA perf: editor edit presented in "
+                          << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - editStarted).count()
+                          << " ms" << std::endl;
+            }
+            return;
+        }
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
                                                              terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
                                                              TerrainOcclusionWanted(), TerrainGiWanted());
+        terrainWorld_ = &worldRuntime_.GetWorld();
         terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
         terrainReliefWarm_ = false;
         ApplyBlockModels();
@@ -837,6 +857,12 @@ namespace GalaxyEggbert::CNA
             std::cout << ", " << terrainRenderer_->RaggedBrickCount() << " brick end(s) ragged";
         std::cout << ", " << terrainRenderer_->StaticChunkCount() << " chunk(s)";
         std::cout << "." << std::endl;
+        if (perfEnabled_)
+        {
+            std::cout << "GalaxyEggbertCNA perf: presentation built in "
+                      << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - editStarted).count()
+                      << " ms" << (editorEdit ? " (an editor edit)" : "") << std::endl;
+        }
     }
 
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()

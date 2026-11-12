@@ -36,7 +36,7 @@ failure; sources in `tools/`):
 | `VerifyBlupiMovement` | `BlupiController` against `world999`: walking, jumping, gravity, collision, crates as boxes, swimming, vehicles, one-shot sound cues. Runs from the repo root |
 | `VerifyInteractionSystem` | `InteractionSystem` against `world999`: lifts, crate push and pull timing against the original's tables, pickups, enemy and hazard contact, dynamite, doors. Runs from the repo root |
 | `VerifyTerrainChunks` | the static terrain's chunks: through hundreds of cells changed in four shipped worlds and across chunk faces on purpose, every chunk outside a change's reach (`TerrainRenderer::ChunksReachedBy`) keeps its fingerprint (its meshes after the occlusion bake, its lists, its reliefs); prints the chunks rebuilt per change and the CPU time of a whole world against one change |
-| `VerifyLocalization` | the texts in every language: UTF-8 drawn by text.png's glyphs (accented letters, broken sequences), every `Tr`/`TrMark`/`TrFormat` literal of `src/` and `include/` translated, no translation left over, placeholders kept, the training hints' French drawable. Takes the source directory |
+| `VerifyLocalization` | the texts in every language: UTF-8 drawn by text.png's glyphs (accented letters, broken sequences), every `Tr`/`TrMark`/`TrFormat`/`TrCount` literal of `src/` and `include/` translated in each of the fourteen tables, no translation left over, placeholders and end spaces kept, every character of every language drawable (the Cyrillic look-alikes through Latin glyphs), the plural forms of Czech, Slovak, Polish, Romanian, Russian and Ukrainian. Takes the source directory |
 | `VerifyShippedWorlds` | every `worlds3d/*.vwr` loads through the game's reader, carries the mission number of its file name, gives `WorldRuntime` its objects, and survives load, save, load unchanged |
 | `VerifyBlockDefinitionsCsv` | `DumpBlockDefinitions --check tools/data/blocks.csv`: the committed CSV equals the C++ registry |
 | `VerifyDefinitionRegistries` | the block and object registries: render modes, roles, capabilities, texture sheets |
@@ -188,6 +188,12 @@ every shipped world, walks ahead two seconds, takes a screenshot and writes a li
 `result.txt`. `tools/qa_original.sh <port-dir> <out-dir> <steps>` does the same for a *copy* of the
 original game's Linux build, to see what the original does where the source leaves it open (never run
 or change the original in place).
+
+**Timing.** `GALAXY_PERF=1` makes the game print, as `GalaxyEggbertCNA perf:` lines, the draw's
+average every 120 frames, every terrain patch or chunk rebuild and its milliseconds, a world's
+presentation built and an editor edit shown, an update or a draw over 20 ms (with the update's number
+and the phase), and the updates CNA ran back to back to catch up before a draw. Under Xvfb the draws
+are a CPU rasteriser's (relative only); the updates' times are the game's own.
 
 ## Python checking tools
 
