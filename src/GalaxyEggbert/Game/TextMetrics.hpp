@@ -52,6 +52,11 @@ namespace GalaxyEggbert::Game::TextMetrics
         18, 11, 15, 15, 12, 16, 19, 13, 14, 12, 21, 15, 13, 19, 21, 17,
         20, 11, 12, 23, 12, 12, 12, 15, 15, 21, 26, 16, 19, 20, 25, 19,
         18, 21, 16, 25, 27, 21, 29, 15, 17, 30, 16, 16, 15, 19,
+        // 268-324 (æ Æ ø Ø, ğ Ğ ı İ ş Ş, then Greek's letters drawn from Comic Relief; ι given i's width)
+        24, 30, 14, 24, 14, 19, 6, 15, 14, 18, 14, 14, 13, 13, 11, 13,
+        12, 16, 6, 13, 13, 12, 13, 12, 17, 13, 15, 12, 12, 13, 15, 14,
+        15, 20, 14, 11, 12, 13, 20, 13, 15, 23, 22, 21, 20, 25, 19, 18,
+        20, 28, 18, 21, 26, 21, 25, 25, 28,
     };
 
     // The glyph the original draws for a character it has no picture of (Text::GetOffset's
@@ -86,6 +91,11 @@ namespace GalaxyEggbert::Game::TextMetrics
         U'ч', U'ш', U'щ', U'ъ', U'ы', U'ь', U'э', U'ю', U'я', U'є', U'ґ', U'Б', U'Г', U'Д',
         U'Ж', U'З', U'И', U'Л', U'П', U'У', U'Ф', U'Ц', U'Ч', U'Ш', U'Щ', U'Ъ', U'Ы', U'Ь',
         U'Э', U'Ю', U'Я', U'Є', U'Ґ', U'Й',
+        U'æ', U'Æ', U'ø', U'Ø', U'ğ', U'Ğ', U'ı', U'İ', U'ş', U'Ş', U'α', U'β', U'γ', U'δ',
+        U'ε', U'ζ', U'η', U'θ', U'ι', U'κ', U'λ', U'μ', U'ν', U'ξ', U'π', U'ρ', U'σ', U'ς',
+        U'τ', U'υ', U'φ', U'χ', U'ψ', U'ω', U'ά', U'έ', U'ή', U'ύ', U'ώ', U'ϋ', U'Γ', U'Δ',
+        U'Θ', U'Λ', U'Ξ', U'Π', U'Σ', U'Φ', U'Ψ', U'Ω', U'Ά', U'Έ', U'Ή', U'Ί', U'Ό', U'Ύ',
+        U'Ώ',
     };
     inline constexpr int kFirstExtraGlyph = 128;
 
@@ -159,6 +169,26 @@ namespace GalaxyEggbert::Game::TextMetrics
             case U'Х': return 'X';
             case U'І': return 'I';
             case U'Ї': return GlyphOf(U'Ï');
+            // The Greek letters drawn as the Latin ones they look like (2026-11-12); ό ί ϊ as ó í ï.
+            case U'Α': return 'A';
+            case U'Β': return 'B';
+            case U'Ε': return 'E';
+            case U'Ζ': return 'Z';
+            case U'Η': return 'H';
+            case U'Ι': return 'I';
+            case U'Κ': return 'K';
+            case U'Μ': return 'M';
+            case U'Ν': return 'N';
+            case U'Ο': return 'O';
+            case U'Ρ': return 'P';
+            case U'Τ': return 'T';
+            case U'Υ': return 'Y';
+            case U'Χ': return 'X';
+            case U'Ϊ': return GlyphOf(U'Ï');
+            case U'ο': return 'o';
+            case U'ό': return GlyphOf(U'ó');
+            case U'ί': return GlyphOf(U'í');
+            case U'ϊ': return GlyphOf(U'ï');
             default: return kUnknownGlyph;
         }
     }

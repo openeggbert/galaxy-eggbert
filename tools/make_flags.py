@@ -4,7 +4,7 @@
 Content/icons/flags.png (and its 2x sheet in Content/icons2x/): one cell a language, in
 Localization.hpp's kLanguages order: English (the Union Flag), French, German, Czech, Slovak, Spanish,
 Italian, Polish, Portuguese (Brazil's flag: the game's Portuguese is Brazil's), Dutch, Hungarian,
-Romanian, Swedish, Russian, Ukrainian. Each cell is
+Romanian, Swedish, Russian, Ukrainian, Finnish, Danish, Norwegian, Turkish, Greek. Each cell is
 48x32 (96x64 at 2x), the flag drawn from its geometry (no picture copied), eight times as large and
 scaled down, with a thin dark edge. Run from the repository: python3 tools/make_flags.py
 """
@@ -163,13 +163,71 @@ def swedish(d, w, h):
     d.rectangle((0, y0, w, y1), fill=(254, 204, 0))
 
 
+def nordic(field, cross, across, down, inner=None, inner_across=None, inner_down=None):
+    """A Nordic cross: `across` and `down` the field's units (left, cross, right; top, cross, bottom);
+    an `inner` cross (Norway's) drawn inside it on its own units."""
+    def draw(d, w, h):
+        d.rectangle((0, 0, w, h), fill=field)
+
+        def cross_of(colour, a, b):
+            x0 = w * a[0] / float(sum(a))
+            x1 = w * (a[0] + a[1]) / float(sum(a))
+            y0 = h * b[0] / float(sum(b))
+            y1 = h * (b[0] + b[1]) / float(sum(b))
+            d.rectangle((x0, 0, x1, h), fill=colour)
+            d.rectangle((0, y0, w, y1), fill=colour)
+        cross_of(cross, across, down)
+        if inner is not None:
+            cross_of(inner, inner_across, inner_down)
+    return draw
+
+
+def turkish(d, w, h):
+    """Red, the white crescent and star (the flag law's proportions, G the height: the outer circle at
+    G/2 from the hoist, G/2 across; the inner one G/16 farther, 2G/5 across; the star's circle G/4
+    across, G/3 beyond the inner circle's centre), one point of the star towards the crescent."""
+    import math
+    g = float(h)
+    d.rectangle((0, 0, w, h), fill=(227, 10, 23))
+    cx, cy = g / 2, g / 2
+    d.ellipse((cx - g / 4, cy - g / 4, cx + g / 4, cy + g / 4), fill=WHITE)
+    ix = cx + g / 16
+    d.ellipse((ix - g / 5, cy - g / 5, ix + g / 5, cy + g / 5), fill=(227, 10, 23))
+    r = g / 8
+    sx = ix + g / 3 + r
+    pts = []
+    for k in range(10):
+        a = math.pi + k * math.pi / 5  # the first point towards the hoist
+        rad = r if k % 2 == 0 else r * 0.382
+        pts.append((sx + rad * math.cos(a), cy + rad * math.sin(a)))
+    d.polygon(pts, fill=WHITE)
+
+
+def greek(d, w, h):
+    """Nine stripes, blue first; the blue canton five stripes high (as wide) with the white cross one
+    stripe wide."""
+    blue = (13, 94, 175)
+    s = h / 9.0
+    for i in range(9):
+        d.rectangle((0, i * s, w, (i + 1) * s), fill=blue if i % 2 == 0 else WHITE)
+    c = 5 * s
+    d.rectangle((0, 0, c, c), fill=blue)
+    d.rectangle((2 * s, 0, 3 * s, c), fill=WHITE)
+    d.rectangle((0, 2 * s, c, 3 * s), fill=WHITE)
+
+
 FLAGS = [union_flag, french, german, czech, slovak, spanish, italian, polish, brazilian,
          stripes([(174, 28, 40), WHITE, (33, 70, 139)]),           # Netherlands
          stripes([(206, 41, 57), WHITE, (71, 112, 80)]),           # Hungary
          stripes([(0, 43, 127), (252, 209, 22), (206, 17, 38)], vertical=True),  # Romania
          swedish,
          stripes([WHITE, (0, 57, 166), (213, 43, 30)]),            # Russia
-         stripes([(0, 87, 183), (255, 215, 0)])]                  # Ukraine
+         stripes([(0, 87, 183), (255, 215, 0)]),                  # Ukraine
+         nordic(WHITE, (0, 47, 108), (5, 3, 10), (4, 3, 4)),       # Finland
+         nordic((200, 16, 46), WHITE, (12, 4, 21), (12, 4, 12)),   # Denmark
+         nordic((186, 12, 47), WHITE, (6, 4, 12), (6, 4, 6), (0, 32, 91), (7, 2, 13), (7, 2, 7)),  # Norway
+         turkish,
+         greek]
 
 
 def sheet(scale):

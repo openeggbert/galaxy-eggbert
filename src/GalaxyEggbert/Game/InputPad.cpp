@@ -1967,8 +1967,9 @@ namespace GalaxyEggbert::Game
             for (std::size_t i = 0; i < kLanguageCount; ++i)
             {
                 const float col = static_cast<float>(i % kPickerColumns), row = static_cast<float>(i / kPickerColumns);
-                const float x0 = cx - 296.0f * s + col * 120.0f * s, y0 = 78.0f * s + row * 113.0f * s;
-                l.cells[i] = {x0, y0, x0 + 112.0f * s, y0 + 103.0f * s};
+                // Five a row, four rows (twenty languages since 2026-11-12).
+                const float x0 = cx - 296.0f * s + col * 120.0f * s, y0 = 70.0f * s + row * 86.0f * s;
+                l.cells[i] = {x0, y0, x0 + 112.0f * s, y0 + 80.0f * s};
             }
             l.back = {cx - 80.0f * s, 418.0f * s, cx + 80.0f * s, 460.0f * s};
             return l;
@@ -2047,18 +2048,18 @@ namespace GalaxyEggbert::Game
             // The language the game speaks shows lit; so does the one being pressed.
             const bool current = kLanguages[i] == CurrentLanguage();
             const bool lit = current || pickerActive_ == static_cast<int>(i);
-            // The current language a little larger as well as lit, so it stands out among fifteen.
+            // The current language a little larger as well as lit, so it stands out among twenty.
             const float grow = current ? 4.0f * s : 0.0f;
             icon(lit ? pressed : normal, Rect{r.x0 - grow, r.y0 - grow, r.x1 + grow, r.y1 + grow}, 21);
             const float mid = (r.x0 + r.x1) * 0.5f;
             if (flagsLoaded_)
             {
-                const float fw = 69.0f * s, fh = 46.0f * s;
-                Quad flag{mid - fw * 0.5f, r.y0 + 12.0f * s, mid + fw * 0.5f, r.y0 + 12.0f * s + fh,
+                const float fw = 57.0f * s, fh = 38.0f * s;
+                Quad flag{mid - fw * 0.5f, r.y0 + 8.0f * s, mid + fw * 0.5f, r.y0 + 8.0f * s + fh,
                           static_cast<float>(i) / cells, 0.0f, static_cast<float>(i + 1) / cells, 1.0f};
                 flags.push_back(flag);
             }
-            centred(LanguageName(kLanguages[i]), mid, r.y0 + 64.0f * s, 0.6f, 102.0f * s);
+            centred(LanguageName(kLanguages[i]), mid, r.y0 + 50.0f * s, 0.55f, 102.0f * s);
         }
         icon(pickerActive_ == kPickerBack ? pressed : normal, l.back, 21);
         centred(Tr("Back"), cx, l.back.y0 + 6.0f * s, 0.62f, 150.0f * s);
