@@ -1,0 +1,32 @@
+# Main-hub camera route: climb all six two-block tiers, idle/orbit, descend.
+# Existing input commands only; no cheats, world edits or portals.
+wait 30
+expect mission = 1
+go 55 75
+go 50 75
+go 50 72.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+go 50 69.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+go 50 66.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+go 50 63.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+go 50 60.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+go 50 57.8 jump 1.8 tol 0.15
+until ground = 1 max 180
+expect y >= 12.9
+wait 240
+face 90
+wait 240
+face 180
+wait 240
+face 270
+wait 240
+go 50 75
+until ground = 1 max 180
+expect y <= 1.1
+expect mission = 1
+wait 240
+end
