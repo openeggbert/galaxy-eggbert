@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-11-12
+
+The game in French, German and Czech, and the terrain's hitch on a change gone. Packages for
+Windows, Linux, Android and the web on GitHub (tag `v0.2.0`); Android's versionCode is 5.
+
 ### Added
 
 - The game in French: the menus, the Setup, the help, the training hints (Mobile Eggbert's own
@@ -17,6 +22,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 - The game in German and Czech too; the Language button goes through the four. The font has the
   letters they need, and capitals keep their accents (French's too). The network game carries names
   with accents ("Hráč A"): it cannot be played with 0.1.x (network protocol 4).
+- The flag of the game's language in the main menu, right of Help: it opens the Setup, its Language
+  button pulsing.
 
 ### Fixed
 
@@ -99,7 +106,8 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.3...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.2.0...develop
+[0.2.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.0...v0.1.1

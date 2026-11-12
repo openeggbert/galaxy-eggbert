@@ -1,6 +1,19 @@
-# Galaxy Eggbert 0.1.3
+# Galaxy Eggbert 0.2.0
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.2.0
+
+- **The game in French, German and Czech** besides English: the menus, the Setup, the help, the
+  training hints, the 3D editor and the network game. The game starts in your system's language;
+  the Setup's new button at the top right switches between the four (English, Français, Deutsch,
+  Čeština) and is remembered. The French uses Mobile Eggbert's own texts where it has them. The
+  main menu shows the language's flag right of Help; it takes you to that button.
+- **The font** has the letters these languages need, and capitals keep their accents.
+- **No more hitch when the terrain changes** (dynamite cutting a saw, a drip or a fan): only the
+  part of the world around the change is built again.
+- **Multiplayer:** names with accents ("Hráč A") reach the other players. A 0.2.0 game cannot play
+  with a 0.1.x one: everybody needs 0.2.0.
 
 ## New in 0.1.3
 
@@ -48,10 +61,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.1.3-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.1.3-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.1.3-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.1.3-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.2.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.2.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.2.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.2.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations
