@@ -6,9 +6,29 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-12 (fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian on branch `localization`; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-12 (release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## A faster editor and the rest of the stutter (2026-11-12, the owner) — done on branch `localization`
+## Release 0.3.0 (2026-11-12, the owner: "after the further languages") — tagged and published
+
+`v0.3.0` on the release commit (e5e78c71); GitHub release "Galaxy Eggbert 0.3.0" with the four packages,
+SHA256SUMS.txt and packaging/RELEASE_NOTES.md; Android versionCode 6 (the next published APK needs 7).
+Built against CNA `115dae2e4` (clean before and after each package). Packages in `build-probe/release/0.3.0/`
+(scripts `build-probe/release/build-0.3.0.sh`, `check-0.3.0.sh`); checked unpacked: Linux from a read-only
+folder (Ukrainian from the locale, "Версія 0.3.0", the flag), Windows under wine (Russian from the locale),
+web over HTTP in Chrome under Xvfb (Polish from the browser; the flag opens the panel of fifteen flags; a
+click on Ukrainian switches and is saved), the APK's versionCode 6 / 0.3.0. Network protocol 5: 0.3.0 does not
+play with 0.2.0. The site (`web/`) names 0.3.0 and the fifteen languages; deployed by the push.
+
+**Android (the owner's "languages on Android"):** an x86_64 debug APK of develop in an emulator (AVD
+`galaxy-test` in `~/.android/avd`, Android 15; no KVM on this machine, so TCG: very slow, the system's
+watchdog killed system_server once; screencap is black under SwiftShader, the game's own startup
+screenshot is pulled with `adb exec-out run-as org.openeggbert.galaxyeggbert cat files/screenshot_hud.png`).
+With the app's locale set to ru-RU (`cmd locale set-app-locales org.openeggbert.galaxyeggbert --locales
+ru-RU`) the game logs `language ru (chosen "", system "ru-RU")` and draws "Загрузка." in Cyrillic: SDL's
+Android locale reaches CNA's UI culture and the APK's glyph sheet draws. The flag and the picker by touch were
+not tapped through there (too slow); they read the same pointer state as every menu button. On a phone: open.
+
+## A faster editor and the rest of the stutter (2026-11-12, the owner) — merged into develop (d6feec8f), released in 0.3.0
 
 The editor's edit goes through `RebuildWorldPresentation(/*editorEdit=*/true)`: the background kept for
 the same sky region, the terrain patched or rebuilt by chunks (`RefreshTerrainMeshIfChanged`) when the
@@ -17,7 +37,7 @@ renderer was built from the same World (`terrainWorld_`); a world loaded still b
 `GALAXY_PERF=1` reports long updates, long draws and catch-ups (handbook 04-testing). OR-0074 has the
 numbers; open: GPU draws, web audio (CNA).
 
-## Six more languages (2026-11-12, the owner) — done on branch `localization`
+## Six more languages (2026-11-12, the owner) — merged into develop (d6feec8f), released in 0.3.0
 
 Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (BD-0126, Q-023's last note): their tables
 (`Translations{Nl,Hu,Ro,Sv,Ru,Uk}.cpp`), the hints' columns, six flags, the picker 5 x 3. text.png's

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Releases — Galaxy Eggbert Docs</title>
-<meta name="description" content="Galaxy Eggbert 0.2.0: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations.">
+<meta name="description" content="Galaxy Eggbert 0.3.0: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -66,16 +66,29 @@
 
 <main id="content">
   <h1>Releases</h1>
-  <p class="subtitle">Galaxy Eggbert 0.2.0: the packages for Windows, Linux, Android and the web, what they need, and how to install and run them.</p>
+  <p class="subtitle">Galaxy Eggbert 0.3.0: the packages for Windows, Linux, Android and the web, what they need, and how to install and run them.</p>
 
   <div class="note">
     <strong>Download</strong>
-    Release <strong>0.2.0</strong> (2026-11-12) is published as a
-    <a href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.2.0">GitHub release</a> of the
-    repository, with its four packages, their checksums and the release notes. Earlier releases (0.1.0 to
-    0.1.3, 2026-11-11) are on the <a href="https://github.com/openeggbert/galaxy-eggbert/releases">releases
+    Release <strong>0.3.0</strong> (2026-11-12) is published as a
+    <a href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.3.0">GitHub release</a> of the
+    repository, with its four packages, their checksums and the release notes. Earlier releases (0.2.0 the
+    same day, 0.1.0 to 0.1.3 on 2026-11-11) are on the <a href="https://github.com/openeggbert/galaxy-eggbert/releases">releases
     page</a>; <code>CHANGELOG.md</code> lists what changed in each.
   </div>
+
+  <h2>New in 0.3.0</h2>
+  <ul>
+    <li><strong>Fifteen languages</strong>: besides English, French, German and Czech, the game speaks Slovak,
+      Spanish, Italian, Polish, Brazilian Portuguese, Dutch, Hungarian, Romanian, Swedish, Russian and Ukrainian.
+      It starts in the system's language; the main menu's flag and the Setup's Language button open a panel of
+      the fifteen flags, and the choice is remembered.</li>
+    <li>The font has the letters these languages need, the Cyrillic ones too.</li>
+    <li>The 3D editor shows an edit at once, also in the large worlds.</li>
+    <li>Lava, lightning and wind no longer blink for a frame when dynamite changes the terrain near them.</li>
+    <li>The network game counts names and chat in letters, not bytes. A 0.3.0 game cannot play with a 0.2.0
+      one.</li>
+  </ul>
 
   <h2>New in 0.2.0</h2>
   <ul>
@@ -107,10 +120,10 @@
   <h2>Files</h2>
   <table>
     <tr><th>File</th><th>For</th></tr>
-    <tr><td><code>GalaxyEggbert-0.2.0-windows-x86_64.zip</code></td><td>64-bit Windows: extract and run <code>GalaxyEggbert.exe</code></td></tr>
-    <tr><td><code>GalaxyEggbert-0.2.0-linux-x86_64.tar.gz</code></td><td>64-bit Linux (x86-64)</td></tr>
-    <tr><td><code>GalaxyEggbert-0.2.0-android-arm64.apk</code></td><td>Android 7.0 (API 24) or newer, arm64 phones and tablets</td></tr>
-    <tr><td><code>GalaxyEggbert-0.2.0-web.zip</code></td><td>a web server: extract, serve the folder and open <code>GalaxyEggbert.html</code></td></tr>
+    <tr><td><code>GalaxyEggbert-0.3.0-windows-x86_64.zip</code></td><td>64-bit Windows: extract and run <code>GalaxyEggbert.exe</code></td></tr>
+    <tr><td><code>GalaxyEggbert-0.3.0-linux-x86_64.tar.gz</code></td><td>64-bit Linux (x86-64)</td></tr>
+    <tr><td><code>GalaxyEggbert-0.3.0-android-arm64.apk</code></td><td>Android 7.0 (API 24) or newer, arm64 phones and tablets</td></tr>
+    <tr><td><code>GalaxyEggbert-0.3.0-web.zip</code></td><td>a web server: extract, serve the folder and open <code>GalaxyEggbert.html</code></td></tr>
     <tr><td><code>SHA256SUMS.txt</code></td><td>SHA-256 checksums of the packages</td></tr>
     <tr><td><code>RELEASE_NOTES.md</code></td><td>What the release holds and its known limitations</td></tr>
   </table>
@@ -137,8 +150,8 @@
       SDL3_mixer are bundled.</li>
   </ul>
   <h3>Install and run</h3>
-<pre><code>tar -xzf GalaxyEggbert-0.2.0-linux-x86_64.tar.gz
-./GalaxyEggbert-0.2.0-linux-x86_64/run-galaxy-eggbert</code></pre>
+<pre><code>tar -xzf GalaxyEggbert-0.3.0-linux-x86_64.tar.gz
+./GalaxyEggbert-0.3.0-linux-x86_64/run-galaxy-eggbert</code></pre>
   <p>
     The launcher enters its own directory and starts <code>GalaxyEggbert</code> with any arguments you give
     it, so the command-line flags in <a href="running.html">Running the Game</a> work through it. Keep the
@@ -174,7 +187,7 @@
       page.</li>
   </ul>
 
-  <h2>Known limitations of 0.2.0</h2>
+  <h2>Known limitations of 0.3.0</h2>
   <table>
     <tr><th>Area</th><th>Limitation</th></tr>
     <tr><td>Linux, older systems</td><td>No archive for glibc 2.35 (for example Ubuntu 22.04). It has to be built on such a system.</td></tr>
@@ -182,7 +195,7 @@
     <tr><td>Android</td><td>Played on a phone, but gamepads have had little testing on real devices.</td></tr>
     <tr><td>Web</td><td>No multiplayer in the browser.</td></tr>
     <tr><td>Multiplayer</td><td>Played between several instances on one machine and under wine, not yet between two real machines.</td></tr>
-    <tr><td>Languages</td><td>The French, German and Czech of Galaxy's own texts were translated for the game and wait for a native speaker's reading.</td></tr>
+    <tr><td>Languages</td><td>Galaxy's own texts were translated for the game and wait for a native speaker's reading (the owner reads the Czech).</td></tr>
   </table>
   <p>Everything still open is collected in <a href="development/known-issues.html">Known Issues</a>.</p>
 
