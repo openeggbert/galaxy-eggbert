@@ -27,6 +27,8 @@
 #include <chrono>
 #include <cmath>
 #include <functional>
+#include <tuple>
+#include <set>
 
 namespace GalaxyEggbert::Game
 {
@@ -45,6 +47,13 @@ namespace GalaxyEggbert::Game
             return (static_cast<std::uint32_t>(x) << 20) |
                    (static_cast<std::uint32_t>(y) << 10) |
                    static_cast<std::uint32_t>(z);
+        }
+
+        // A relief chunk's key: its cell coordinates over kReliefChunkCells, packed as above.
+        std::uint32_t ReliefChunkKey(int x, int y, int z)
+        {
+            constexpr int k = TerrainRenderer::kReliefChunkCells;
+            return static_cast<std::uint32_t>((x / k) << 20 | (y / k) << 10 | (z / k));
         }
 
         // InnerFlatPlate/TripleCrossBillboard geometry sizing — "spans most
@@ -539,8 +548,11 @@ namespace GalaxyEggbert::Game
         }
         for (const auto& c : changes.cells)
         {
-            if (Worlds::Block(c.oldRaw).isAir()) ++m_blockCount;
-            if (Worlds::Block(c.newRaw).isAir()) --m_blockCount;
+            // Its chunk's count too: FinishChunks sums the chunks after a rebuild.
+            auto& chunk = m_staticChunks[static_cast<std::size_t>(ChunkIndex(c.x / kStaticChunkCells, c.y / kStaticChunkCells,
+                                                                             c.z / kStaticChunkCells))];
+            if (Worlds::Block(c.oldRaw).isAir()) { ++m_blockCount; ++chunk.blocks; }
+            if (Worlds::Block(c.newRaw).isAir()) { --m_blockCount; --chunk.blocks; }
         }
         m_centroidX = m_blockCount ? static_cast<float>(m_nonModelSumX / m_blockCount) : 0.0f;
         m_centroidY = m_blockCount ? static_cast<float>(m_nonModelSumY / m_blockCount) : 0.0f;
@@ -559,68 +571,102 @@ namespace GalaxyEggbert::Game
     {
         m_ambientOcclusion = ambientOcclusion;
         m_globalIllumination = ambientOcclusion && globalIllumination != nullptr;
-        // The occlusion alone, or (Ultra) the light from around with it.
-        const auto bake = [&](CnaEngine::Graphics::MeshData& mesh)
+        if (m_globalIllumination)
         {
-            if (m_globalIllumination)
+            m_giSettings = *globalIllumination;
+        }
+        m_drawSecret = drawSecret;
+        m_stillModelIcons = std::move(modelDrawnIcons);
+        m_rotatedPlatePositions = RotatedPlates(world);
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        m_blocksPerAxis = blocksPerAxis;
+        m_chunksPerAxis = (blocksPerAxis + kStaticChunkCells - 1) / kStaticChunkCells;
+        m_staticChunks.resize(static_cast<std::size_t>(m_chunksPerAxis) * m_chunksPerAxis * m_chunksPerAxis);
+        const ChunkBuildInputs inputs{&world, &tileAtlas, &tileCoverage, drawSecret, &m_stillModelIcons, m_reliefs,
+                                      &m_rotatedPlatePositions};
+        // Chunk by chunk, each in the grid's own order (y, z, x) as the one mesh was before them.
+        for (int cy = 0; cy < m_chunksPerAxis; ++cy)
+        {
+            for (int cz = 0; cz < m_chunksPerAxis; ++cz)
             {
-                BakeGlobalIllumination(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ, *globalIllumination);
+                for (int cx = 0; cx < m_chunksPerAxis; ++cx)
+                {
+                    UploadChunk(device, world, tileCoverage, ChunkIndex(cx, cy, cz), BuildChunk(inputs, cx, cy, cz), false);
+                }
             }
-            else
-            {
-                BakeAmbientOcclusion(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
-            }
-        };
+        }
+        FinishChunks(device);
+        Update(device, 0);
+    }
+
+    std::unordered_set<std::uint32_t> TerrainRenderer::RotatedPlates(const Worlds::World& world)
+    {
+        std::unordered_set<std::uint32_t> plates;
+        for (const auto& pos : CollectRotatedPlatePositions(world))
+        {
+            plates.insert(PackPlatePositionKey(pos[0], pos[1], pos[2]));
+        }
+        return plates;
+    }
+
+    int TerrainRenderer::ChunkIndex(int cx, int cy, int cz) const noexcept
+    {
+        return (cy * m_chunksPerAxis + cz) * m_chunksPerAxis + cx;
+    }
+
+    TerrainRenderer::ChunkBuild TerrainRenderer::BuildChunk(const ChunkBuildInputs& inputs, int chunkX, int chunkY,
+                                                            int chunkZ)
+    {
+        const Worlds::World& world = *inputs.world;
+        const TileAtlas& tileAtlas = *inputs.tileAtlas;
+        const std::vector<TileCoverage>& tileCoverage = *inputs.tileCoverage;
+        const bool drawSecret = inputs.drawSecret;
+        const std::vector<std::uint16_t>& modelDrawnIcons = *inputs.modelDrawnIcons;
+        const TerrainReliefTable* const reliefs = inputs.reliefs;
+        const std::unordered_set<std::uint32_t>& rotatedPlates = *inputs.rotatedPlates;
+        ChunkBuild out;
+        auto& staticMesh = out.opaque;
+        auto& transparentStaticMesh = out.transparent;
+        auto& cutoutMesh = out.cutout;
+        auto& grassMesh = out.grass;
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
         // texture (DirectionalCubeTiles.cpp) -- computed once here since
         // it never changes, threaded through AppendSpecialGeometry.
         const auto icon107Uv = tileAtlas.GetTileUv(107);
-        for (const auto& pos : CollectRotatedPlatePositions(world))
-        {
-            m_rotatedPlatePositions.insert(PackPlatePositionKey(pos[0], pos[1], pos[2]));
-        }
-        auto staticMesh = MakeLitTexturedMeshBuilder();
-        auto transparentStaticMesh = MakeLitTexturedMeshBuilder();
-        auto cutoutMesh = MakeLitTexturedMeshBuilder();
-        auto grassMesh = MakeLitTexturedMeshBuilder();
-        // The relief tiles' cubes, by chunk (UpdateRelief).
+        // The relief tiles' cubes, by relief chunk (UpdateRelief); a static chunk holds whole relief chunks.
         std::unordered_map<std::uint32_t, std::size_t> reliefChunkOf;
-        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCubes;
-        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkGrass;
-        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCutouts;
         const auto reliefChunkFor = [&](int x, int y, int z)
         {
             const int k = TerrainRenderer::kReliefChunkCells;
-            const auto key = static_cast<std::uint32_t>((x / k) << 20 | (y / k) << 10 | (z / k));
+            const auto key = ReliefChunkKey(x, y, z);
             auto found = reliefChunkOf.find(key);
             if (found == reliefChunkOf.end())
             {
-                found = reliefChunkOf.emplace(key, m_reliefChunks.size()).first;
-                ReliefChunk chunk;
+                found = reliefChunkOf.emplace(key, out.reliefs.size()).first;
+                ChunkBuild::Relief chunk;
+                chunk.key = key;
                 const Microsoft::Xna::Framework::Vector3 low(static_cast<float>((x / k) * k - kWorldCenterX) - 0.5f,
                                                              static_cast<float>((y / k) * k) - 0.5f,
                                                              static_cast<float>((z / k) * k - kWorldCenterZ) - 0.5f);
                 chunk.boxMin = low;
                 chunk.boxMax = low + Microsoft::Xna::Framework::Vector3(static_cast<float>(k));
-                m_reliefChunks.push_back(std::move(chunk));
-                reliefChunkCubes.push_back(MakeLitTexturedMeshBuilder());
-                reliefChunkGrass.push_back(MakeLitTexturedMeshBuilder());
-                reliefChunkCutouts.push_back(MakeLitTexturedMeshBuilder());
+                out.reliefs.push_back(std::move(chunk));
             }
             return found->second;
         };
+
         // A relief tile's cell, near the focus, is its relief, which lies inside the cell: it does not
         // hide the faces of a neighbour drawn otherwise (they would leave a gap down to its lumps).
         const auto isReliefCell = [&](int nx, int ny, int nz)
         {
-            if (m_reliefs == nullptr || nx < 0 || ny < 0 || nz < 0 || nx >= static_cast<int>(world.blocksPerAxis()) ||
+            if (reliefs == nullptr || nx < 0 || ny < 0 || nz < 0 || nx >= static_cast<int>(world.blocksPerAxis()) ||
                 ny >= static_cast<int>(world.blocksPerAxis()) || nz >= static_cast<int>(world.blocksPerAxis()))
             {
                 return false;
             }
             const auto other = world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(ny),
                                               static_cast<std::uint16_t>(nz));
-            return !other.isAir() && m_reliefs->Find(other.type()) != nullptr;
+            return !other.isAir() && reliefs->Find(other.type()) != nullptr;
         };
         // The faces (bit per BoxFace) whose neighbour is a relief tile's cell.
         // A relief overhangs only into solid cells: not into a cell drawn as its model (the teleporter's
@@ -665,16 +711,15 @@ namespace GalaxyEggbert::Game
                            : BrickEdges::Neighbour::Solid;
             });
         };
-        m_stillModelIcons = modelDrawnIcons;
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        for (int y = 0; y < blocksPerAxis; ++y)
+        const int x0 = chunkX * kStaticChunkCells, x1 = std::min(blocksPerAxis, x0 + kStaticChunkCells);
+        const int y0 = chunkY * kStaticChunkCells, y1 = std::min(blocksPerAxis, y0 + kStaticChunkCells);
+        const int z0 = chunkZ * kStaticChunkCells, z1 = std::min(blocksPerAxis, z0 + kStaticChunkCells);
+        for (int y = y0; y < y1; ++y)
         {
-            for (int z = 0; z < blocksPerAxis; ++z)
+            for (int z = z0; z < z1; ++z)
             {
-                for (int x = 0; x < blocksPerAxis; ++x)
+                for (int x = x0; x < x1; ++x)
                 {
                     const auto block = world.getBlock(static_cast<std::uint16_t>(x),
                                                        static_cast<std::uint16_t>(y),
@@ -693,15 +738,15 @@ namespace GalaxyEggbert::Game
                     const float worldX = static_cast<float>(x - kWorldCenterX);
                     const float worldY = static_cast<float>(y);
                     const float worldZ = static_cast<float>(z - kWorldCenterZ);
-                    ++m_blockCount;
+                    ++out.blocks;
                     if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), block.type()) != modelDrawnIcons.end())
                     {
-                        m_staticModelCells.push_back(*ComputeTerrainModelCell(world, x, y, z, modelDrawnIcons, drawSecret));
+                        out.modelCells.push_back(*ComputeTerrainModelCell(world, x, y, z, modelDrawnIcons, drawSecret));
                         continue;
                     }
-                    sumX += worldX;
-                    sumY += worldY;
-                    sumZ += worldZ;
+                    out.sumX += worldX;
+                    out.sumY += worldY;
+                    out.sumZ += worldZ;
 
                     const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
                     const std::uint16_t animBase = definition.animation.baseIcon;
@@ -710,15 +755,15 @@ namespace GalaxyEggbert::Game
                         // Its family's first frame (110, 114, 118, 122); BuildWindFrame draws it.
                         AnimBlock wind{worldX, worldY, worldZ,
                                        static_cast<std::uint16_t>(110 + (block.type() - 110) / 4 * 4)};
-                        wind.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
-                        m_windBlocks.push_back(wind);
+                        wind.rotated = rotatedPlates.count(PackPlatePositionKey(x, y, z)) != 0;
+                        out.wind.push_back(wind);
                         continue;
                     }
                     if (IsWater(animBase))
                     {
                         AnimBlock water{worldX, worldY, worldZ, animBase};
                         water.waterFaces = WaterSurfaceFaces(world, x, y, z);
-                        m_waterBlocks.push_back(water);
+                        out.water.push_back(water);
                         continue;
                     }
                     if (IsAnimated(animBase))
@@ -750,18 +795,18 @@ namespace GalaxyEggbert::Game
                                 (sideIs(0, -1, 0, false) ? 16 : 0));
                         }
                         AnimBlock animBlock{worldX,worldY,worldZ,animBase,lavaSides};
-                        animBlock.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
+                        animBlock.rotated = rotatedPlates.count(PackPlatePositionKey(x, y, z)) != 0;
                         if (animBase == GalaxyEggbert::BlockTypes::Lava)
                         {
-                            m_lavaBlocks.push_back(animBlock); // its frames built once each (Update)
+                            out.lava.push_back(animBlock); // its frames built once each (Update)
                         }
                         else if (animBase == GalaxyEggbert::BlockTypes::Blitz)
                         {
-                            m_blitzBlocks.push_back(animBlock); // the same: one frame for all at a time
+                            out.blitz.push_back(animBlock); // the same: one frame for all at a time
                         }
                         else
                         {
-                            m_animBlocks.push_back(animBlock);
+                            out.anim.push_back(animBlock);
                         }
                         continue;
                     }
@@ -769,7 +814,7 @@ namespace GalaxyEggbert::Game
                     const Microsoft::Xna::Framework::Vector3 center(worldX, worldY, worldZ);
                     const int icon = static_cast<int>(block.type());
                     const auto tileUv = tileAtlas.GetTileUv(icon);
-                    const bool plateRotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
+                    const bool plateRotated = rotatedPlates.count(PackPlatePositionKey(x, y, z)) != 0;
 
                     if (definition.alphaBlend)
                     {
@@ -782,15 +827,15 @@ namespace GalaxyEggbert::Game
                         continue;
                     }
 
-                    const bool grassRelief = definition.grassTop && m_reliefs != nullptr &&
-                                             m_reliefs->Find(block.type()) != nullptr &&
+                    const bool grassRelief = definition.grassTop && reliefs != nullptr &&
+                                             reliefs->Find(block.type()) != nullptr &&
                                              CoverageOf(tileCoverage, icon) == TileCoverage::Opaque;
                     if (grassRelief)
                     {
                         // The grass as its scene's strips near the focus (TerrainRelief.hpp
                         // kGrassAirMask); far, its cube and top plate as below, kept in its chunk.
                         const std::size_t chunkIndex = reliefChunkFor(x, y, z);
-                        reliefChunkGrass[chunkIndex].AddPlate(
+                        out.reliefs[chunkIndex].grass.AddPlate(
                             Microsoft::Xna::Framework::Vector3(worldX, worldY + 0.5f, worldZ), kGrassPlateWidth,
                             kGrassPlateDepth, CnaEngine::Graphics::PlateAxis::Y,
                             CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
@@ -798,7 +843,7 @@ namespace GalaxyEggbert::Game
                         // other relief cells: reliefNeighbourFaces is for the cells drawn otherwise).
                         const std::uint8_t hidden = HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage);
                         AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
-                                              reliefChunkCubes[chunkIndex], hidden, -1);
+                                              out.reliefs[chunkIndex].cubes, hidden, -1);
                         ReliefCell cell;
                         cell.center = center;
                         cell.icon = block.type();
@@ -820,7 +865,7 @@ namespace GalaxyEggbert::Game
                         }
                         if (cell.faces != 0)
                         {
-                            m_reliefChunks[chunkIndex].cells.push_back(cell);
+                            out.reliefs[chunkIndex].cells.push_back(cell);
                         }
                         continue;
                     }
@@ -904,9 +949,9 @@ namespace GalaxyEggbert::Game
                             texturedSide = TurnTexturedSide(texturedSide,ObjectQuarterTurns(world,x,y,z));
                         }
                     }
-                    if (m_reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
+                    if (reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
                         definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube &&
-                        !IsTeleporterTipIcon(icon) && m_reliefs->Find(block.type()) != nullptr)
+                        !IsTeleporterTipIcon(icon) && reliefs->Find(block.type()) != nullptr)
                     {
                         // A relief tile that is a DirectionalCube (the machine panel 10 and its kin): its
                         // faces that wear the tile become the relief near the focus, the others stay flat.
@@ -944,22 +989,22 @@ namespace GalaxyEggbert::Game
                             }
                         }
                         cell.cutout = mesh == &cutoutMesh;
-                        AddCenteredBox(mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex],
+                        AddCenteredBox(mesh == &cutoutMesh ? out.reliefs[chunkIndex].cutouts : out.reliefs[chunkIndex].cubes,
                                        center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), cubeFaces);
                         if ((cell.faces | cell.flatFaces) != 0)
                         {
-                            m_reliefChunks[chunkIndex].cells.push_back(cell);
+                            out.reliefs[chunkIndex].cells.push_back(cell);
                         }
                         continue;
                     }
-                    if (m_reliefs != nullptr && definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate &&
-                        mesh != &transparentStaticMesh && m_reliefs->Find(block.type()) != nullptr)
+                    if (reliefs != nullptr && definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate &&
+                        mesh != &transparentStaticMesh && reliefs->Find(block.type()) != nullptr)
                     {
                         // A plate tile with a relief (the cave's edge plates 285/302): near the focus its
                         // scene both ways from the cell's middle, overhanging freely (it is decor in an
                         // empty cell); far off the plate as before, in its chunk.
                         const std::size_t chunkIndex = reliefChunkFor(x, y, z);
-                        auto& far = mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex];
+                        auto& far = mesh == &cutoutMesh ? out.reliefs[chunkIndex].cutouts : out.reliefs[chunkIndex].cubes;
                         AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, far, hiddenFaces,
                                               texturedSide);
                         ReliefCell cell;
@@ -971,7 +1016,7 @@ namespace GalaxyEggbert::Game
                         cell.faces = axis == CnaEngine::Graphics::PlateAxis::X   ? std::uint8_t{4 | 8}
                                      : axis == CnaEngine::Graphics::PlateAxis::Y ? std::uint8_t{16 | 32}
                                                                                  : std::uint8_t{1 | 2};
-                        m_reliefChunks[chunkIndex].cells.push_back(cell);
+                        out.reliefs[chunkIndex].cells.push_back(cell);
                         continue;
                     }
                     if (mesh == &staticMesh && BrickEdges::IsBrickEdgeIcon(icon))
@@ -1006,7 +1051,7 @@ namespace GalaxyEggbert::Game
                                               cubeFaces[static_cast<int>(CnaEngine::Graphics::BoxFace::PositiveY)].uv,
                                               cubeFaces[static_cast<int>(CnaEngine::Graphics::BoxFace::NegativeY)].uv,
                                               across, brickShapeAt(x, y + 1, z), brickShapeAt(x, y - 1, z));
-                            ++m_raggedBrickCount;
+                            ++out.ragged;
                             continue;
                         }
                     }
@@ -1017,8 +1062,8 @@ namespace GalaxyEggbert::Game
                     }
 
                     using CnaEngine::Graphics::BoxFace;
-                    const bool reliefTile = m_reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
-                                            m_reliefs->Find(block.type()) != nullptr;
+                    const bool reliefTile = reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
+                                            reliefs->Find(block.type()) != nullptr;
                     const std::uint8_t besideRelief = reliefTile ? std::uint8_t{0} : reliefNeighbourFaces(x, y, z);
                     CnaEngine::Graphics::BoxFaces faces;
                     faces[static_cast<int>(BoxFace::PositiveZ)] =
@@ -1049,7 +1094,7 @@ namespace GalaxyEggbert::Game
                         // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
                         // focus and as the cells' reliefs near it.
                         const std::size_t chunkIndex = reliefChunkFor(x, y, z);
-                        AddCenteredBox(mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex],
+                        AddCenteredBox(mesh == &cutoutMesh ? out.reliefs[chunkIndex].cutouts : out.reliefs[chunkIndex].cubes,
                                        center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                         ReliefCell cell;
                         cell.center = center;
@@ -1075,7 +1120,7 @@ namespace GalaxyEggbert::Game
                         }
                         if ((cell.faces | cell.flatFaces) != 0)
                         {
-                            m_reliefChunks[chunkIndex].cells.push_back(cell);
+                            out.reliefs[chunkIndex].cells.push_back(cell);
                         }
                         continue;
                     }
@@ -1083,111 +1128,431 @@ namespace GalaxyEggbert::Game
                 }
             }
         }
+        return out;
+    }
 
-        m_nonModelSumX = sumX;
-        m_nonModelSumY = sumY;
-        m_nonModelSumZ = sumZ;
-        if (m_blockCount > 0)
+    void TerrainRenderer::UploadChunk(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                      const Worlds::World& world, const std::vector<TileCoverage>& tileCoverage,
+                                      int chunkIndex, ChunkBuild build, bool rebuilt)
+    {
+        // The occlusion alone, or (Ultra) the light from around with it.
+        const auto bake = [&](CnaEngine::Graphics::MeshData& mesh)
         {
-            m_centroidX = static_cast<float>(sumX / m_blockCount);
-            m_centroidY = static_cast<float>(sumY / m_blockCount);
-            m_centroidZ = static_cast<float>(sumZ / m_blockCount);
-        }
-
-        // Guarded the same way m_transparentStaticRenderer/m_grassRenderer
-        // already are below (found 2026-07-18, plan.md EDITOR-107): a
-        // genuinely empty (all-air) World -- e.g. the editor's brand-new
-        // "New World" -- has zero static blocks; easy-3d's mesh renderer then
-        // drew with primitiveCount 0, which CNA rejects with an
-        // ArgumentOutOfRangeException, and GpuMesh::Upload rejects an empty
-        // mesh outright. Every hand-authored
-        // .vwr world before the editor existed always had at least some
-        // terrain, so this was never reachable until now.
-        if (!staticMesh.Mesh().Empty())
-        {
-            if (m_ambientOcclusion)
+            if (m_globalIllumination)
             {
-                auto occluded = staticMesh.Take();
-                bake(occluded);
-                m_staticRenderer = UploadLitColoredTexturedMeshParts(device, occluded);
+                BakeGlobalIllumination(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ, *m_giSettings);
             }
             else
             {
-                m_staticRenderer = UploadLitTexturedMeshParts(device, staticMesh.Mesh());
+                BakeAmbientOcclusion(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
+            }
+        };
+        StaticChunk& chunk = m_staticChunks[static_cast<std::size_t>(chunkIndex)];
+        chunk = StaticChunk{};
+        chunk.blocks = build.blocks;
+        chunk.ragged = build.ragged;
+        chunk.sumX = build.sumX;
+        chunk.sumY = build.sumY;
+        chunk.sumZ = build.sumZ;
+        // Guarded (found 2026-07-18, plan.md EDITOR-107): an empty mesh is not uploaded (GpuMesh::Upload
+        // rejects it, and CNA a draw of primitiveCount 0): an all-air World (the editor's New World), and
+        // now most chunks of a world too.
+        if (!build.opaque.Mesh().Empty())
+        {
+            if (m_ambientOcclusion)
+            {
+                auto occluded = build.opaque.Take();
+                bake(occluded);
+                chunk.opaque = UploadLitColoredTexturedMeshParts(device, occluded);
+            }
+            else
+            {
+                chunk.opaque = UploadLitTexturedMeshParts(device, build.opaque.Mesh());
             }
         }
-
-        for (std::size_t i = 0; i < m_reliefChunks.size(); ++i)
+        if (!build.cutout.Mesh().Empty())
         {
-            if (!reliefChunkCubes[i].Mesh().Empty())
+            auto cutouts = build.cutout.Take();
+            if (m_ambientOcclusion)
+            {
+                BakeAmbientOcclusion(cutouts, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
+            }
+            chunk.cutout = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
+        }
+        if (!build.transparent.Mesh().Empty())
+        {
+            chunk.transparent = UploadLitTexturedMeshParts(device, build.transparent.Mesh());
+        }
+        if (!build.grass.Mesh().Empty())
+        {
+            chunk.grass = UploadLitTexturedMeshParts(device, build.grass.Mesh());
+        }
+
+        // Its relief chunks. Rebuilt, the ones of this chunk are emptied first (a relief tile blown away
+        // leaves none), and a relief chunk whose cells are the same keeps its built (or building) relief
+        // as AdoptReliefs does across renderers.
+        const int k = kStaticChunkCells;
+        const int cx = chunkIndex % m_chunksPerAxis;
+        const int cz = chunkIndex / m_chunksPerAxis % m_chunksPerAxis;
+        const int cy = chunkIndex / (m_chunksPerAxis * m_chunksPerAxis);
+        std::vector<std::pair<std::size_t, std::uint64_t>> before; // relief chunk, its signature
+        if (rebuilt)
+        {
+            for (const auto& [key, index] : m_reliefChunkIndex)
+            {
+                const int rx = static_cast<int>(key >> 20) * kReliefChunkCells;
+                const int ry = static_cast<int>((key >> 10) & 0x3ff) * kReliefChunkCells;
+                const int rz = static_cast<int>(key & 0x3ff) * kReliefChunkCells;
+                if (rx / k == cx && ry / k == cy && rz / k == cz)
+                {
+                    before.emplace_back(index, m_reliefChunks[index].signature);
+                }
+            }
+        }
+        std::vector<bool> refilled(m_reliefChunks.size(), false);
+        for (auto& relief : build.reliefs)
+        {
+            auto found = m_reliefChunkIndex.find(relief.key);
+            if (found == m_reliefChunkIndex.end())
+            {
+                found = m_reliefChunkIndex.emplace(relief.key, m_reliefChunks.size()).first;
+                m_reliefChunks.emplace_back();
+                refilled.push_back(false);
+            }
+            ReliefChunk& target = m_reliefChunks[found->second];
+            refilled[found->second] = true;
+            const std::uint64_t signature = ReliefSignature(relief.cells);
+            if (target.signature != signature || !rebuilt)
+            {
+                target.relief.reset();
+                target.pending = {};
+            }
+            target.boxMin = relief.boxMin;
+            target.boxMax = relief.boxMax;
+            target.cells = std::move(relief.cells);
+            target.signature = signature;
+            target.cubes.reset();
+            target.grassTops.reset();
+            target.cutouts.reset();
+            target.gi.reset();
+            if (!relief.cubes.Mesh().Empty())
             {
                 if (m_ambientOcclusion)
                 {
-                    auto occluded = reliefChunkCubes[i].Take();
+                    auto occluded = relief.cubes.Take();
                     bake(occluded);
                     if (m_globalIllumination)
                     {
-                        const auto table = ReliefChunkGi(occluded, m_reliefChunks[i].boxMin, kReliefChunkCells);
-                        constexpr int k = kReliefChunkCells;
-                        m_reliefChunks[i].gi = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
-                            device, k * k, k * kReliefGiFaces);
-                        m_reliefChunks[i].gi->SetData(table.data(), static_cast<int>(table.size()));
+                        const auto table = ReliefChunkGi(occluded, target.boxMin, kReliefChunkCells);
+                        constexpr int kr = kReliefChunkCells;
+                        target.gi = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
+                            device, kr * kr, kr * kReliefGiFaces);
+                        target.gi->SetData(table.data(), static_cast<int>(table.size()));
                     }
-                    m_reliefChunks[i].cubes = UploadLitColoredTexturedMeshParts(device, occluded);
+                    target.cubes = UploadLitColoredTexturedMeshParts(device, occluded);
                 }
                 else
                 {
-                    m_reliefChunks[i].cubes = UploadLitTexturedMeshParts(device, reliefChunkCubes[i].Mesh());
+                    target.cubes = UploadLitTexturedMeshParts(device, relief.cubes.Mesh());
                 }
             }
-            if (!reliefChunkGrass[i].Mesh().Empty())
+            if (!relief.grass.Mesh().Empty())
             {
-                m_reliefChunks[i].grassTops = UploadLitTexturedMeshParts(device, reliefChunkGrass[i].Mesh());
+                target.grassTops = UploadLitTexturedMeshParts(device, relief.grass.Mesh());
             }
-            if (!reliefChunkCutouts[i].Mesh().Empty())
+            if (!relief.cutouts.Mesh().Empty())
             {
-                auto cutouts = reliefChunkCutouts[i].Take();
+                auto cutouts = relief.cutouts.Take();
                 if (m_ambientOcclusion)
                 {
                     BakeAmbientOcclusion(cutouts, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
                 }
-                m_reliefChunks[i].cutouts = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
+                target.cutouts = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
             }
-            m_reliefChunks[i].signature = ReliefSignature(m_reliefChunks[i].cells);
+        }
+        for (const auto& [index, signature] : before)
+        {
+            if (!refilled[index])
+            {
+                ReliefChunk& emptied = m_reliefChunks[index];
+                emptied.cells.clear();
+                emptied.cubes.reset();
+                emptied.grassTops.reset();
+                emptied.cutouts.reset();
+                emptied.gi.reset();
+                emptied.relief.reset();
+                emptied.pending = {};
+                emptied.signature = ReliefSignature(emptied.cells);
+            }
         }
 
-        const bool chunkCutouts = std::any_of(m_reliefChunks.begin(), m_reliefChunks.end(),
-                                              [](const ReliefChunk& chunk) { return chunk.cutouts != nullptr; });
-        if (!cutoutMesh.Mesh().Empty() || chunkCutouts)
+        // The cells drawn otherwise: this chunk's in the lists, which stay in the grid's order (y, z, x).
+        const auto inChunk = [&](float wx, float wy, float wz)
         {
-            if (!cutoutMesh.Mesh().Empty())
+            const int x = static_cast<int>(std::lround(wx)) + kWorldCenterX;
+            const int y = static_cast<int>(std::lround(wy));
+            const int z = static_cast<int>(std::lround(wz)) + kWorldCenterZ;
+            return x / k == cx && y / k == cy && z / k == cz;
+        };
+        const auto replace = [&](std::vector<AnimBlock>& list, std::vector<AnimBlock>& added)
+        {
+            const std::size_t size = list.size();
+            if (rebuilt)
             {
-                auto cutouts = cutoutMesh.Take();
-                if (m_ambientOcclusion)
-                {
-                    BakeAmbientOcclusion(cutouts, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
-                }
-                m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
+                list.erase(std::remove_if(list.begin(), list.end(),
+                                          [&](const AnimBlock& b) { return inChunk(b.x, b.y, b.z); }),
+                           list.end());
             }
+            const bool changed = list.size() != size || !added.empty();
+            list.insert(list.end(), added.begin(), added.end());
+            return changed;
+        };
+        m_windChanged = replace(m_windBlocks, build.wind) || m_windChanged;
+        m_waterChanged = replace(m_waterBlocks, build.water) || m_waterChanged;
+        m_lavaChanged = replace(m_lavaBlocks, build.lava) || m_lavaChanged;
+        m_blitzChanged = replace(m_blitzBlocks, build.blitz) || m_blitzChanged;
+        m_animChanged = replace(m_animBlocks, build.anim) || m_animChanged;
+        if (rebuilt)
+        {
+            m_staticModelCells.erase(std::remove_if(m_staticModelCells.begin(), m_staticModelCells.end(),
+                                                    [&](const ModelCell& c) { return inChunk(c.x, c.y, c.z); }),
+                                     m_staticModelCells.end());
+        }
+        m_staticModelCells.insert(m_staticModelCells.end(), build.modelCells.begin(), build.modelCells.end());
+    }
+
+    void TerrainRenderer::FinishChunks(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        // The lists in the grid's order (y, z, x), as one pass over the world made them: the water and
+        // the other alpha-blended tiles are drawn in it, and PatchTerrainModelCells keeps its cells so.
+        const auto gridOrder = [](const auto& a, const auto& b) { return std::tie(a.y, a.z, a.x) < std::tie(b.y, b.z, b.x); };
+        for (auto* list : {&m_windBlocks, &m_waterBlocks, &m_lavaBlocks, &m_blitzBlocks, &m_animBlocks})
+        {
+            std::stable_sort(list->begin(), list->end(), gridOrder);
+        }
+        std::stable_sort(m_staticModelCells.begin(), m_staticModelCells.end(), gridOrder);
+        // A list changed: its meshes are made again at the next Update (an emptied one is dropped here,
+        // Update leaving everything as it is when there is nothing animated).
+        if (m_lavaChanged)
+        {
+            m_lavaFrames.clear();
+            m_lavaIcon = -1;
+        }
+        if (m_blitzChanged)
+        {
+            m_blitzFrames.clear();
+            m_blitzIcon = -1;
+        }
+        if (m_windChanged)
+        {
+            for (auto& frame : m_windFrames) frame.reset();
+            m_windFrame = -1;
+        }
+        if (m_animChanged && m_animBlocks.empty()) m_animRenderer.reset();
+        if (m_waterChanged && m_waterBlocks.empty()) m_waterRenderer.reset();
+        if (m_lavaChanged || m_blitzChanged || m_windChanged || m_animChanged || m_waterChanged)
+        {
+            m_lastAnimPhase = -1;
+        }
+        m_lavaChanged = m_blitzChanged = m_windChanged = m_animChanged = m_waterChanged = false;
+
+        m_blockCount = 0;
+        m_raggedBrickCount = 0;
+        double sumX = 0.0, sumY = 0.0, sumZ = 0.0;
+        bool cutouts = false;
+        for (const auto& chunk : m_staticChunks)
+        {
+            m_blockCount += chunk.blocks;
+            m_raggedBrickCount += chunk.ragged;
+            sumX += chunk.sumX;
+            sumY += chunk.sumY;
+            sumZ += chunk.sumZ;
+            cutouts = cutouts || chunk.cutout != nullptr;
+        }
+        m_nonModelSumX = sumX;
+        m_nonModelSumY = sumY;
+        m_nonModelSumZ = sumZ;
+        m_centroidX = m_blockCount > 0 ? static_cast<float>(sumX / m_blockCount) : 0.0f;
+        m_centroidY = m_blockCount > 0 ? static_cast<float>(sumY / m_blockCount) : 0.0f;
+        m_centroidZ = m_blockCount > 0 ? static_cast<float>(sumZ / m_blockCount) : 0.0f;
+
+        cutouts = cutouts || std::any_of(m_reliefChunks.begin(), m_reliefChunks.end(),
+                                         [](const ReliefChunk& chunk) { return chunk.cutouts != nullptr; });
+        if (cutouts && !m_cutoutEffect)
+        {
             m_cutoutEffect = std::make_unique<Microsoft::Xna::Framework::Graphics::AlphaTestEffect>(device);
             m_cutoutEffect->setVertexColorEnabledProperty(true);
             m_cutoutEffect->setAlphaFunctionProperty(
                 Microsoft::Xna::Framework::Graphics::CompareFunction::GreaterEqual);
             m_cutoutEffect->setReferenceAlphaProperty(kCutoutReferenceAlpha);
         }
+    }
 
-        if (!transparentStaticMesh.Mesh().Empty())
+    std::vector<std::array<int, 3>> TerrainRenderer::ChunksReachedBy(const ChunkBuildInputs& inputs,
+                                                                     const Worlds::World::BlockChanges& changes,
+                                                                     bool globalIllumination)
+    {
+        // The cells whose drawing a changed cell reaches, by chunk:
+        // - within 2 every way: its neighbours' faces (1), the occlusion bake's corners (1), a brick end's
+        //   neighbours' neighbours (2, BrickEdges::ShapeFor), a bar under a tile, the reliefs' sides;
+        // - along the four horizontal lines from it, up to kRoomRun (8): a tile textured on one side in
+        //   its row (the room before each of its sides, SingleTexturedSide), a still model there or up
+        //   to kFrontModelFloorDepth above (TerrainModelDependsOn: its opening, its floor);
+        // - Ultra's light from around: its rays' reach every way.
+        const Worlds::World& world = *inputs.world;
+        const int n = static_cast<int>(world.blocksPerAxis());
+        const int k = kStaticChunkCells;
+        const int chunks = (n + k - 1) / k;
+        std::set<std::array<int, 3>> reached;
+        const auto box = [&](int x, int y, int z, int r)
         {
-            m_transparentStaticRenderer =
-                UploadLitTexturedMeshParts(device, transparentStaticMesh.Mesh());
-        }
-
-        if (!grassMesh.Mesh().Empty())
+            const auto chunkOf = [&](int cell) { return std::clamp(cell, 0, n - 1) / k; };
+            for (int cy = chunkOf(y - r); cy <= chunkOf(y + r); ++cy)
+                for (int cz = chunkOf(z - r); cz <= chunkOf(z + r); ++cz)
+                    for (int cx = chunkOf(x - r); cx <= chunkOf(x + r); ++cx)
+                        if (cx < chunks && cy < chunks && cz < chunks) reached.insert({cx, cy, cz});
+        };
+        const auto isModel = [&](std::uint16_t type) {
+            return std::find(inputs.modelDrawnIcons->begin(), inputs.modelDrawnIcons->end(), type) !=
+                   inputs.modelDrawnIcons->end();
+        };
+        const auto oneSided = [&](std::uint16_t type) {
+            const int room[4] = {0, 0, 0, 0};
+            return GalaxyEggbert::GetBlockDefinition(type).renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube &&
+                   SingleTexturedSide(type, 0, room) >= 0;
+        };
+        constexpr int kRoomRun = 8; // BuildChunk's
+        const int run = std::max(kRoomRun, kFrontModelOpenRun);
+        for (const auto& c : changes.cells)
         {
-            m_grassRenderer = UploadLitTexturedMeshParts(device, grassMesh.Mesh());
+            if (globalIllumination)
+            {
+                box(c.x, c.y, c.z, TerrainGiSettings{}.reach + 1);
+                continue;
+            }
+            box(c.x, c.y, c.z, 2);
+            for (int y = c.y - 1; y <= c.y + kFrontModelFloorDepth; ++y) // the column's models
+            {
+                if (y >= 0 && y < n && isModel(world.getBlock(c.x, static_cast<std::uint16_t>(y), c.z).type()))
+                    box(c.x, y, c.z, 0);
+            }
+            static constexpr int kLines[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            for (const auto& line : kLines)
+            {
+                for (int d = 1; d <= run; ++d)
+                {
+                    const int x = c.x + line[0] * d, z = c.z + line[1] * d;
+                    if (x < 0 || z < 0 || x >= n || z >= n) break;
+                    for (int y = c.y; y <= c.y + kFrontModelFloorDepth && y < n; ++y)
+                    {
+                        const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                         static_cast<std::uint16_t>(z)).type();
+                        if ((y == c.y && d <= kRoomRun && oneSided(type)) || (d <= kFrontModelOpenRun && isModel(type)))
+                            box(x, y, z, 0);
+                    }
+                }
+            }
         }
+        return {reached.begin(), reached.end()};
+    }
 
-        Update(device, 0);
+    bool TerrainRenderer::RebuildChangedChunks(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                               const Worlds::World& world, const Worlds::World::BlockChanges& changes,
+                                               const std::vector<std::uint16_t>& icons, bool drawSecret,
+                                               const std::vector<TileCoverage>& coverage)
+    {
+        // An unknown history (the journal overflowed, metadata edited: a plate turned), another
+        // ShowSecret or other models: the whole terrain is built again by the caller.
+        if (!changes.known || drawSecret != m_drawSecret || icons != m_stillModelIcons ||
+            static_cast<int>(world.blocksPerAxis()) != m_blocksPerAxis)
+        {
+            return false;
+        }
+        const ChunkBuildInputs inputs{&world, m_tileAtlas, &coverage, drawSecret, &m_stillModelIcons, m_reliefs,
+                                      &m_rotatedPlatePositions};
+        for (const auto& [cx, cy, cz] : ChunksReachedBy(inputs, changes, m_globalIllumination))
+        {
+            UploadChunk(device, world, coverage, ChunkIndex(cx, cy, cz), BuildChunk(inputs, cx, cy, cz), true);
+        }
+        FinishChunks(device);
+        return true;
+    }
+
+    int TerrainRenderer::StaticChunkCount() const noexcept
+    {
+        return static_cast<int>(std::count_if(m_staticChunks.begin(), m_staticChunks.end(), [](const StaticChunk& c) {
+            return c.opaque || c.transparent || c.cutout || c.grass;
+        }));
+    }
+
+    std::uint64_t TerrainRenderer::ChunkFingerprint(const ChunkBuildInputs& inputs, int chunkX, int chunkY, int chunkZ,
+                                                    const TerrainGiSettings* globalIllumination)
+    {
+        // FNV-1a over everything the CPU makes of the chunk, the static meshes after the bake the upload
+        // gives them.
+        std::uint64_t hash = 1469598103934665603ull;
+        const auto bytes = [&](const void* data, std::size_t size)
+        {
+            const auto* p = static_cast<const unsigned char*>(data);
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                hash = (hash ^ p[i]) * 1099511628211ull;
+            }
+        };
+        const auto value = [&](const auto& v) { bytes(&v, sizeof(v)); };
+        const auto mesh = [&](CnaEngine::Graphics::MeshData data, bool baked)
+        {
+            if (baked)
+            {
+                if (globalIllumination != nullptr)
+                    BakeGlobalIllumination(data, *inputs.world, *inputs.tileCoverage, kWorldCenterX, kWorldCenterZ,
+                                           *globalIllumination);
+                else
+                    BakeAmbientOcclusion(data, *inputs.world, *inputs.tileCoverage, kWorldCenterX, kWorldCenterZ);
+            }
+            value(data.positions.size());
+            for (const auto& v : data.positions) { value(v.X); value(v.Y); value(v.Z); }
+            for (const auto& v : data.normals) { value(v.X); value(v.Y); value(v.Z); }
+            for (const auto& v : data.texCoords0) { value(v.X); value(v.Y); }
+            for (const auto& c : data.colors)
+            {
+                value(c.getRProperty()); value(c.getGProperty()); value(c.getBProperty()); value(c.getAProperty());
+            }
+            value(data.indices.size());
+            for (const auto i : data.indices) value(i);
+        };
+        auto build = BuildChunk(inputs, chunkX, chunkY, chunkZ);
+        mesh(build.opaque.Take(), true);
+        mesh(build.cutout.Take(), true);
+        mesh(build.transparent.Take(), false);
+        mesh(build.grass.Take(), false);
+        for (auto& relief : build.reliefs)
+        {
+            value(relief.key);
+            value(ReliefSignature(relief.cells));
+            mesh(relief.cubes.Take(), true);
+            mesh(relief.grass.Take(), false);
+            mesh(relief.cutouts.Take(), true);
+        }
+        for (const auto* list : {&build.wind, &build.water, &build.lava, &build.blitz, &build.anim})
+        {
+            value(list->size());
+            for (const auto& b : *list)
+            {
+                value(b.x); value(b.y); value(b.z); value(b.base); value(b.lavaSides); value(b.rotated); value(b.waterFaces);
+            }
+        }
+        value(build.modelCells.size());
+        for (const auto& c : build.modelCells)
+        {
+            value(c.x); value(c.y); value(c.z); value(c.base); value(c.sameSides); value(c.openSide);
+        }
+        value(build.blocks);
+        value(build.ragged);
+        value(build.sumX);
+        value(build.sumY);
+        value(build.sumZ);
+        return hash;
     }
 
     std::unique_ptr<GpuMeshParts> TerrainRenderer::RebuildAnimatedRenderer(
@@ -1663,10 +2028,7 @@ namespace GalaxyEggbert::Game
         {
             lava->second->Draw(device, lavaEffect != nullptr ? *lavaEffect : effect);
         }
-        if (m_staticRenderer)
-        {
-            m_staticRenderer->Draw(device, cubesEffect);
-        }
+        DrawChunks(device, &StaticChunk::opaque, cubesEffect);
         const bool reliefGi = shading != nullptr && shading->reliefGi;
         for (const auto& chunk : m_reliefChunks)
         {
@@ -1688,10 +2050,7 @@ namespace GalaxyEggbert::Game
         if (m_cutoutEffect && shading != nullptr && shading->cutout != nullptr)
         {
             // The effects' cutout shader (it tests the alpha itself).
-            if (m_cutoutRenderer)
-            {
-                m_cutoutRenderer->Draw(device, *shading->cutout);
-            }
+            DrawChunks(device, &StaticChunk::cutout, *shading->cutout);
             for (const auto& chunk : m_reliefChunks)
             {
                 if (chunk.near && chunk.relief)
@@ -1723,10 +2082,7 @@ namespace GalaxyEggbert::Game
                 m_cutoutEffect->setFogStartProperty(effect.getFogStartProperty());
                 m_cutoutEffect->setFogEndProperty(effect.getFogEndProperty());
             }
-            if (m_cutoutRenderer)
-            {
-                m_cutoutRenderer->Draw(device, *m_cutoutEffect);
-            }
+            DrawChunks(device, &StaticChunk::cutout, *m_cutoutEffect);
             for (const auto& chunk : m_reliefChunks)
             {
                 if (chunk.near && chunk.relief)
@@ -1753,7 +2109,7 @@ namespace GalaxyEggbert::Game
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
         const GpuMeshParts* windRenderer =
             m_windFrame >= 0 ? m_windFrames[static_cast<std::size_t>(m_windFrame)].get() : nullptr;
-        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || blitzRenderer ||
+        if (m_animRenderer || m_waterRenderer || AnyChunk(&StaticChunk::transparent) || blitzRenderer ||
             windRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
@@ -1783,10 +2139,7 @@ namespace GalaxyEggbert::Game
             using Microsoft::Xna::Framework::Graphics::DepthStencilState;
             device.setBlendStateProperty(BlendState::NonPremultiplied);
             device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
-            if (m_transparentStaticRenderer)
-            {
-                m_transparentStaticRenderer->Draw(device, effect);
-            }
+            DrawChunks(device, &StaticChunk::transparent, effect);
             if (m_animRenderer)
             {
                 m_animRenderer->Draw(device, effect);
@@ -1821,10 +2174,7 @@ namespace GalaxyEggbert::Game
         {
             lava->second->Draw(device, plain);
         }
-        if (m_staticRenderer)
-        {
-            m_staticRenderer->Draw(device, baked);
-        }
+        DrawChunks(device, &StaticChunk::opaque, baked);
         for (const auto& chunk : m_reliefChunks)
         {
             if (chunk.near && chunk.relief)
@@ -1850,10 +2200,7 @@ namespace GalaxyEggbert::Game
                 }
             }
         }
-        if (m_cutoutRenderer)
-        {
-            m_cutoutRenderer->Draw(device, cutout);
-        }
+        DrawChunks(device, &StaticChunk::cutout, cutout);
     }
 
     void TerrainRenderer::DrawWater(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -1874,10 +2221,7 @@ namespace GalaxyEggbert::Game
         {
             lava->second->Draw(device, solid);
         }
-        if (m_staticRenderer)
-        {
-            m_staticRenderer->Draw(device, solid);
-        }
+        DrawChunks(device, &StaticChunk::opaque, solid);
         for (const auto& chunk : m_reliefChunks)
         {
             if (chunk.near && chunk.relief)
@@ -1903,10 +2247,7 @@ namespace GalaxyEggbert::Game
                 }
             }
         }
-        if (m_cutoutRenderer)
-        {
-            m_cutoutRenderer->Draw(device, cutout);
-        }
+        DrawChunks(device, &StaticChunk::cutout, cutout);
     }
 
     std::vector<Microsoft::Xna::Framework::Vector3> TerrainRenderer::LavaCells() const
@@ -1934,10 +2275,7 @@ namespace GalaxyEggbert::Game
     void TerrainRenderer::DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                       Microsoft::Xna::Framework::Graphics::Effect& grassEffect) const
     {
-        if (m_grassRenderer)
-        {
-            m_grassRenderer->Draw(device, grassEffect);
-        }
+        DrawChunks(device, &StaticChunk::grass, grassEffect);
         for (const auto& chunk : m_reliefChunks)
         {
             if (chunk.grassTops && !(chunk.near && chunk.relief))
@@ -1949,23 +2287,35 @@ namespace GalaxyEggbert::Game
 
     int TerrainRenderer::VertexCount() const noexcept
     {
-        return (m_staticRenderer ? m_staticRenderer->VertexCount() : 0) +
-               (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
-               (m_cutoutRenderer ? m_cutoutRenderer->VertexCount() : 0) +
+        int count = 0;
+        for (const auto& chunk : m_staticChunks)
+        {
+            for (const auto* mesh : {chunk.opaque.get(), chunk.transparent.get(), chunk.cutout.get(), chunk.grass.get()})
+            {
+                count += mesh != nullptr ? mesh->VertexCount() : 0;
+            }
+        }
+        return count +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
                (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
-               (m_grassRenderer ? m_grassRenderer->VertexCount() : 0) + ReliefCubeCount(m_reliefChunks, true);
+               ReliefCubeCount(m_reliefChunks, true);
     }
 
     int TerrainRenderer::PrimitiveCount() const noexcept
     {
-        return (m_staticRenderer ? m_staticRenderer->PrimitiveCount() : 0) +
-               (m_transparentStaticRenderer ? m_transparentStaticRenderer->PrimitiveCount() : 0) +
-               (m_cutoutRenderer ? m_cutoutRenderer->PrimitiveCount() : 0) +
+        int count = 0;
+        for (const auto& chunk : m_staticChunks)
+        {
+            for (const auto* mesh : {chunk.opaque.get(), chunk.transparent.get(), chunk.cutout.get(), chunk.grass.get()})
+            {
+                count += mesh != nullptr ? mesh->PrimitiveCount() : 0;
+            }
+        }
+        return count +
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
                (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->PrimitiveCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0) +
-               (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0) + ReliefCubeCount(m_reliefChunks, false);
+               ReliefCubeCount(m_reliefChunks, false);
     }
 }

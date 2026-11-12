@@ -620,6 +620,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)
     ge_add_editor_verify(VerifyDefinitionRegistries tools/VerifyDefinitionRegistries.cpp)
     ge_add_editor_verify(VerifyTileFaces tools/VerifyTileFaces.cpp)
+    # The static terrain's chunks: a change rebuilds only the chunks within its reach (OR-0074).
+    ge_add_editor_verify(VerifyTerrainChunks tools/VerifyTerrainChunks.cpp)
+    target_sources(VerifyTerrainChunks PRIVATE
+        src/GalaxyEggbert/Game/TerrainRenderer.cpp
+        src/GalaxyEggbert/Game/TerrainAnimDivisor.cpp
+        src/GalaxyEggbert/Game/InnerPillarBoxTiles.cpp
+        src/GalaxyEggbert/Game/ThinBarTiles.cpp
+        src/GalaxyEggbert/Game/InnerFlatPlateTiles.cpp)
+    target_compile_definitions(VerifyTerrainChunks PRIVATE GE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     # The 3D effects' decisions without a GPU (SceneEffectsLogic.hpp): shadows, lights, occlusion.
     ge_add_editor_verify(VerifySceneEffects tools/VerifySceneEffects.cpp)
     ge_add_editor_verify(VerifyUltra tools/VerifyUltra.cpp)

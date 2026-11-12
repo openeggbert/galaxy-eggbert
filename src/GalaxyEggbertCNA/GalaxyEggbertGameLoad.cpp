@@ -835,14 +835,15 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->VertexCount() << " vertices";
         if (terrainRenderer_->RaggedBrickCount() > 0)
             std::cout << ", " << terrainRenderer_->RaggedBrickCount() << " brick end(s) ragged";
+        std::cout << ", " << terrainRenderer_->StaticChunkCount() << " chunk(s)";
         std::cout << "." << std::endl;
     }
 
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
     {
         if (replayingResume_) return;
-        // Patch changes confined to non-occluding models. All other edits, missing journal
-        // history, model availability changes, and ShowSecret still rebuild the terrain.
+        // Patch changes confined to non-occluding models, else rebuild the chunks the changes reach.
+        // Missing journal history, model availability changes and ShowSecret rebuild the terrain.
         if (terrainRenderer_ && (worldRuntime_.GetWorld().blockRevision() != terrainRevision_ ||
                                  TerrainDrawSecret() != terrainDrawSecret_))
         {
@@ -856,6 +857,20 @@ namespace GalaxyEggbert::CNA
                 if (perfEnabled_)
                 {
                     std::cout << "GalaxyEggbertCNA perf: terrain models patched " << changes.cells.size() << " changes in "
+                              << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - rebuildStart).count()
+                              << " ms" << std::endl;
+                }
+                return;
+            }
+            // Else the chunks the changes reach (a wall blown away, a saw cut): a few of the world's.
+            if (terrainRenderer_->RebuildChangedChunks(getGraphicsDeviceProperty(), world, changes, StillModelIcons(),
+                                                       TerrainDrawSecret(), tileCoverage_))
+            {
+                terrainRevision_ = world.blockRevision();
+                if (perfEnabled_)
+                {
+                    std::cout << "GalaxyEggbertCNA perf: terrain chunks rebuilt for " << changes.cells.size()
+                              << " changes in "
                               << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - rebuildStart).count()
                               << " ms" << std::endl;
                 }

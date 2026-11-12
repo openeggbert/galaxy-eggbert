@@ -21,12 +21,15 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 namespace GalaxyEggbert::Game
 {
+    // (Since 2026-11-12 the static meshes below are kept in chunks of kStaticChunkCells^3, and a change
+    // rebuilds only the chunks it reaches: RebuildChangedChunks, OR-0074.)
     // Builds one static GpuMesh covering every non-animated
     // opaque non-air cell of a loaded World, a second static renderer for
     // the small set of non-animated blocks that ALSO need alpha blending
@@ -193,6 +196,40 @@ namespace GalaxyEggbert::Game
             m_lastAnimPhase = -1;
         }
         using ModelCell = TerrainModelCell;
+        // The static terrain is kept in chunks of kStaticChunkCells^3 cells: a change rebuilds the chunks
+        // within its cells' reach (ChunksReachedBy), not the world (OR-0074's rest: dynamite cutting a wall
+        // built the whole world's mesh again on the main thread, 60-90 ms on a desktop). Refused (false,
+        // nothing changed) when the history is unknown (World::BlockChanges::known: the journal overflowed,
+        // metadata edited) or the drawing rules changed (ShowSecret, the models loaded): the caller then
+        // builds a new renderer.
+        static constexpr int kStaticChunkCells = 32;
+        bool RebuildChangedChunks(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                  const Worlds::World& world, const Worlds::World::BlockChanges& changes,
+                                  const std::vector<std::uint16_t>& icons, bool drawSecret,
+                                  const std::vector<TileCoverage>& coverage);
+        // The chunks with something drawn.
+        [[nodiscard]] int StaticChunkCount() const noexcept;
+
+        // For VerifyTerrainChunks: what a chunk is built from; a fingerprint of all the CPU makes of it
+        // (its meshes with the occlusion bake their upload gives them, its lists, its reliefs' cells); the
+        // chunks a change can reach. A chunk outside them keeps its fingerprint through the change.
+        struct ChunkBuildInputs
+        {
+            const Worlds::World* world = nullptr;
+            const TileAtlas* tileAtlas = nullptr;
+            const std::vector<TileCoverage>* tileCoverage = nullptr;
+            bool drawSecret = false;
+            const std::vector<std::uint16_t>* modelDrawnIcons = nullptr;
+            const TerrainReliefTable* reliefs = nullptr;
+            const std::unordered_set<std::uint32_t>* rotatedPlates = nullptr;
+        };
+        [[nodiscard]] static std::unordered_set<std::uint32_t> RotatedPlates(const Worlds::World& world);
+        [[nodiscard]] static std::uint64_t ChunkFingerprint(const ChunkBuildInputs& inputs, int chunkX, int chunkY,
+                                                           int chunkZ, const TerrainGiSettings* globalIllumination);
+        [[nodiscard]] static std::vector<std::array<int, 3>> ChunksReachedBy(const ChunkBuildInputs& inputs,
+                                                                            const Worlds::World::BlockChanges& changes,
+                                                                            bool globalIllumination);
+
         bool PatchModelCells(const Worlds::World& world, const Worlds::World::BlockChanges& changes,
                              const std::vector<std::uint16_t>& icons, bool drawSecret,
                              const std::vector<TileCoverage>& coverage);
@@ -295,20 +332,87 @@ namespace GalaxyEggbert::Game
         static ReliefMeshData BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
                                                              bool overhangs, const std::vector<ReliefCell>& cells);
         static std::uint64_t ReliefSignature(const std::vector<ReliefCell>& cells);
+
+        // One static chunk's meshes and its share of the totals.
+        struct StaticChunk
+        {
+            std::unique_ptr<GpuMeshParts> opaque;
+            std::unique_ptr<GpuMeshParts> transparent;
+            // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
+            std::unique_ptr<GpuMeshParts> cutout;
+            std::unique_ptr<GpuMeshParts> grass;
+            int blocks = 0;
+            int ragged = 0;
+            double sumX = 0, sumY = 0, sumZ = 0;
+        };
+        // What the CPU makes of one chunk (BuildChunk; it touches nothing of a renderer), uploaded by
+        // UploadChunk.
+        struct ChunkBuild
+        {
+            struct Relief
+            {
+                std::uint32_t key = 0;
+                Microsoft::Xna::Framework::Vector3 boxMin;
+                Microsoft::Xna::Framework::Vector3 boxMax;
+                std::vector<ReliefCell> cells;
+                CnaEngine::Graphics::MeshBuilder cubes = MakeLitTexturedMeshBuilder();
+                CnaEngine::Graphics::MeshBuilder grass = MakeLitTexturedMeshBuilder();
+                CnaEngine::Graphics::MeshBuilder cutouts = MakeLitTexturedMeshBuilder();
+            };
+            CnaEngine::Graphics::MeshBuilder opaque = MakeLitTexturedMeshBuilder();
+            CnaEngine::Graphics::MeshBuilder transparent = MakeLitTexturedMeshBuilder();
+            CnaEngine::Graphics::MeshBuilder cutout = MakeLitTexturedMeshBuilder();
+            CnaEngine::Graphics::MeshBuilder grass = MakeLitTexturedMeshBuilder();
+            std::vector<Relief> reliefs;
+            std::vector<AnimBlock> wind, water, lava, blitz, anim;
+            std::vector<TerrainModelCell> modelCells;
+            int blocks = 0;
+            int ragged = 0;
+            double sumX = 0, sumY = 0, sumZ = 0;
+        };
+        static ChunkBuild BuildChunk(const ChunkBuildInputs& inputs, int chunkX, int chunkY, int chunkZ);
+        // Uploads @p build as chunk @p chunkIndex (its relief chunks, its cells in the lists); @p rebuilt:
+        // replacing what the chunk was.
+        void UploadChunk(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const Worlds::World& world,
+                         const std::vector<TileCoverage>& tileCoverage, int chunkIndex, ChunkBuild build, bool rebuilt);
+        // After UploadChunk: the lists in the grid's order, the animated meshes made again where they
+        // changed, the totals.
+        void FinishChunks(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        [[nodiscard]] int ChunkIndex(int cx, int cy, int cz) const noexcept;
+        // Draws @p part of every chunk that has one.
+        template <typename Part, typename Effect>
+        void DrawChunks(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Part part, Effect& effect) const
+        {
+            for (const auto& chunk : m_staticChunks)
+            {
+                if (const auto& mesh = chunk.*part)
+                {
+                    mesh->Draw(device, effect);
+                }
+            }
+        }
+        [[nodiscard]] bool AnyChunk(std::unique_ptr<GpuMeshParts> StaticChunk::*part) const noexcept
+        {
+            return std::any_of(m_staticChunks.begin(), m_staticChunks.end(),
+                               [part](const StaticChunk& chunk) { return chunk.*part != nullptr; });
+        }
+        std::vector<StaticChunk> m_staticChunks;
+        int m_chunksPerAxis = 0;
+        int m_blocksPerAxis = 0;
+        std::unordered_map<std::uint32_t, std::size_t> m_reliefChunkIndex; // relief chunk key -> m_reliefChunks
+        bool m_drawSecret = false;
+        std::optional<TerrainGiSettings> m_giSettings; // Ultra's, kept for the chunks rebuilt
+        bool m_windChanged = false, m_waterChanged = false, m_lavaChanged = false, m_blitzChanged = false,
+             m_animChanged = false;
         const TerrainReliefTable* m_reliefs = nullptr;
         std::vector<ReliefChunk> m_reliefChunks;
         bool m_reliefOverhangs = false;
 
-        std::unique_ptr<GpuMeshParts> m_staticRenderer;
         bool m_ambientOcclusion = false;
         bool m_globalIllumination = false;
-        std::unique_ptr<GpuMeshParts> m_transparentStaticRenderer;
-        // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
-        std::unique_ptr<GpuMeshParts> m_cutoutRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> m_cutoutEffect;
         std::unique_ptr<GpuMeshParts> m_animRenderer;
         std::unique_ptr<GpuMeshParts> m_waterRenderer;
-        std::unique_ptr<GpuMeshParts> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
         // The lava cells, apart from m_animBlocks: all of them show the same frame (68-72) at a time,
