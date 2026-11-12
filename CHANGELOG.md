@@ -9,6 +9,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-11-12
+
+The goodbye screen's new address and the Setup's accelerometer only where there is one. Packages for
+Windows, Linux, Android and the web on GitHub (tag `v0.4.1`); Android's versionCode is 8. Network
+protocol 5: plays with 0.4.0 and 0.3.0.
+
 ### Changed
 
 - The goodbye screen gives the game's address as galaxyeggbert.com.
@@ -156,7 +162,8 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.0...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.1...develop
+[0.4.1]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.1.3...v0.2.0

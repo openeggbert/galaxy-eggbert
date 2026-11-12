@@ -1,6 +1,13 @@
-# Galaxy Eggbert 0.4.0
+# Galaxy Eggbert 0.4.1
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.4.1
+
+- **The goodbye screen** gives the game's home as **galaxyeggbert.com**.
+- **Setup:** the Accelerometer option and its sensitivity show only on a device that has an
+  accelerometer (phones and tablets); computers without one no longer show it.
+- 0.4.1 plays the network game with 0.4.0 and 0.3.0.
 
 ## New in 0.4.0
 
@@ -85,10 +92,10 @@ A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Andro
 
 | File | For |
 |---|---|
-| `GalaxyEggbert-0.4.0-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
-| `GalaxyEggbert-0.4.0-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
-| `GalaxyEggbert-0.4.0-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
-| `GalaxyEggbert-0.4.0-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
+| `GalaxyEggbert-0.4.1-windows-x86_64.zip` | 64-bit Windows; extract and run `GalaxyEggbert.exe` |
+| `GalaxyEggbert-0.4.1-linux-x86_64.tar.gz` | 64-bit Linux; extract and run `./run-galaxy-eggbert` |
+| `GalaxyEggbert-0.4.1-android-arm64.apk` | Android 7.0 or newer, arm64 phones and tablets |
+| `GalaxyEggbert-0.4.1-web.zip` | a web server: extract and serve the folder, open `GalaxyEggbert.html` |
 | `SHA256SUMS.txt` | checksums |
 
 ## Known limitations
