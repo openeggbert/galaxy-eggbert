@@ -175,7 +175,19 @@ namespace GalaxyEggbert::CNA
         }
         if (perfEnabled_)
         {
-            perfDrawSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - perfStart).count();
+            const double drawSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - perfStart).count();
+            if (drawSeconds > 0.020)
+            {
+                std::cout << "GalaxyEggbertCNA perf: long draw " << drawSeconds * 1000.0 << " ms (after update "
+                          << perfUpdates_ << ")" << std::endl;
+            }
+            if (perfUpdatesSinceDraw_ > 1)
+            {
+                std::cout << "GalaxyEggbertCNA perf: " << perfUpdatesSinceDraw_ << " updates caught up before a draw (update "
+                          << perfUpdates_ << ")" << std::endl;
+            }
+            perfUpdatesSinceDraw_ = 0;
+            perfDrawSeconds_ += drawSeconds;
             if (++perfFrames_ >= 120)
             {
                 std::cout << "GalaxyEggbertCNA perf: draw " << perfDrawSeconds_ * 1000.0 / perfFrames_

@@ -189,6 +189,12 @@ every shipped world, walks ahead two seconds, takes a screenshot and writes a li
 original game's Linux build, to see what the original does where the source leaves it open (never run
 or change the original in place).
 
+**Timing.** `GALAXY_PERF=1` makes the game print, as `GalaxyEggbertCNA perf:` lines, the draw's
+average every 120 frames, every terrain patch or chunk rebuild and its milliseconds, a world's
+presentation built and an editor edit shown, an update or a draw over 20 ms (with the update's number
+and the phase), and the updates CNA ran back to back to catch up before a draw. Under Xvfb the draws
+are a CPU rasteriser's (relative only); the updates' times are the game's own.
+
 ## Python checking tools
 
 All are read-only unless stated, run from the repo root with `python3`.

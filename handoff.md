@@ -8,6 +8,15 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-12 (fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian on branch `localization`; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## A faster editor and the rest of the stutter (2026-11-12, the owner) — done on branch `localization`
+
+The editor's edit goes through `RebuildWorldPresentation(/*editorEdit=*/true)`: the background kept for
+the same sky region, the terrain patched or rebuilt by chunks (`RefreshTerrainMeshIfChanged`) when the
+renderer was built from the same World (`terrainWorld_`); a world loaded still builds everything.
+`TerrainRenderer::RebuildChangedChunks` remakes the animated meshes at once (they missed a frame).
+`GALAXY_PERF=1` reports long updates, long draws and catch-ups (handbook 04-testing). OR-0074 has the
+numbers; open: GPU draws, web audio (CNA).
+
 ## Six more languages (2026-11-12, the owner) — done on branch `localization`
 
 Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (BD-0126, Q-023's last note): their tables

@@ -359,6 +359,19 @@ rewritten).
   with the reliefs), the golden frames byte-equal at all three effect levels and the golden trace,
   CTest 131/131. Approximation: at Ultra a change's light bake is refreshed within the rays' reach
   (12); the sun's ray from a face a bounce met (48) is not followed farther.
+- **2026-11-12 evening, the rest (the owner: "the rest of the stutter", "a faster editor"):** a chunk
+  rebuild cleared the world's lava, lightning and wind frames whenever a rebuilt chunk held any and
+  left them to the terrain's next Update, which in play comes before the refresh in the tick: the frame
+  after a blast near lava drew no lava (found by comparing a chunk-rebuilt terrain with a full build
+  after editor edits: equal but for those meshes). `RebuildChangedChunks` now makes them again at once,
+  at the step they showed. The editor no longer built its whole presentation after each edit (the
+  background picture decoded again, Ultra's sky light, a new terrain): `RebuildWorldPresentation(true)`
+  keeps the picture of the same region and patches or rebuilds the terrain's chunks as play does:
+  world065 6-7 ms an edit instead of 76 (Xvfb). `GALAXY_PERF=1` now names an update or a draw over 20 ms
+  and the updates CNA catches up before a draw: whole playthroughs of world065 (22 982 ticks) and
+  world105 (10 802) have no long update in play, only the world's load (161-176 ms) and the mission's
+  end (41-46 ms); their terrain changes were all patched. Left: the draws on a real GPU (not measurable
+  under Xvfb), and on the web the audio running on the main thread (CNA's).
 
 
 ## OR-0075 — lightning kills ghost Blupi; he falls and is opaque (owner 2026-11-06) — FIXED_AND_VERIFIED
