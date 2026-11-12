@@ -531,8 +531,7 @@ namespace GalaxyEggbert::CNA
         // The Setup's accelerometer (OR-0010): started while the setting is on and the device has
         // one; its sideways tilt steers as the pad's horizontal axis (InputPad.cpp:1932-1969).
         std::unique_ptr<Microsoft::Devices::Sensors::Accelerometer> accel_;
-        // Whether the device has one (asked once, AccelTurnInput) and what was reported of it (the log).
-        bool accelSupportProbed_ = false;
+        // Device support, probed once in the constructor; a failed Start also disables live reads.
         bool accelSupported_ = false;
         bool accelReported_ = false;
         int accelTurnsReported_ = 0; // the first few turns it starts, logged

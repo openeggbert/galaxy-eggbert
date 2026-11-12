@@ -12,6 +12,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 ### Changed
 
 - The goodbye screen gives the game's address as galaxyeggbert.com.
+- The Setup shows the Accelerometer option and its sensitivity only on a device that has an
+  accelerometer (the owner, 2026-11-12); a saved choice is kept for a device that has one.
 
 ## [0.4.0] — 2026-11-12
 

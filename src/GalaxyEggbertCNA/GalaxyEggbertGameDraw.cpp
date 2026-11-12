@@ -831,7 +831,8 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
                                     fadeOutPhase_, TerrainReliefWanted(), EffectsLevel(), saveData_.GetFrameRate(),
-                                    saveData_.GetTextureScale(), saveData_.GetPlayerName(saveData_.GetSelectedGamer()));
+                                    saveData_.GetTextureScale(), saveData_.GetPlayerName(saveData_.GetSelectedGamer()),
+                                    nicknameEditing_ || languagePicking_ ? std::nullopt : focusHighlight_);
                 if (nicknameEditing_ && phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
                     DrawNicknameEditing(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (languagePicking_)

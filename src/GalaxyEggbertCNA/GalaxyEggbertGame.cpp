@@ -192,6 +192,12 @@ namespace GalaxyEggbert::CNA
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
         // The network game where CNA has networking (not the web): the menu's Multiplayer.
         inputPad_.SetMultiplayerShown(NetSession::Available());
+        // CNA probes the platform each time: cache the device capability before either Setup can
+        // open, independently of the saved option. Keep that option for saves moved to a phone.
+        accelSupported_ = Microsoft::Devices::Sensors::Accelerometer::getIsSupportedProperty();
+        inputPad_.SetAccelerometerSupported(accelSupported_);
+        std::cout << "GalaxyEggbertCNA: accelerometer " << (accelSupported_ ? "present" : "not present")
+                  << "." << std::endl;
         keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
             using Microsoft::Xna::Framework::Input::Keys;
             // A demo or the menu's idle timer sees presses shorter than an update (DemoLiveInput);
@@ -788,15 +794,6 @@ namespace GalaxyEggbert::CNA
         if (!replayingResume_ && !demoActive_)
         {
             using Microsoft::Devices::Sensors::Accelerometer;
-            // Whether there is one, asked once: CNA asks the platform each time (on Android SDL lists
-            // the device's sensors), and this ran every tick.
-            if (saveData_.GetAccelActive() && !autoplay_ && !accelSupportProbed_)
-            {
-                accelSupportProbed_ = true;
-                accelSupported_ = Accelerometer::getIsSupportedProperty();
-                std::cout << "GalaxyEggbertCNA: accelerometer " << (accelSupported_ ? "present" : "not present")
-                          << "." << std::endl;
-            }
             const bool wanted = saveData_.GetAccelActive() && !autoplay_ && accelSupported_;
             if (wanted && !accel_)
             {

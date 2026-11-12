@@ -464,6 +464,7 @@ int main()
     {
         // SetupZoom (Y 320-390) and SetupAccel (Y 390-460) toggle too (OR-0010).
         InputPad pad;
+        pad.SetAccelerometerSupported(true);
         (void)pad.UpdateSetup(mouse(55, 355, true), kViewportW, kViewportH, false);
         const auto zoom = pad.UpdateSetup(mouse(55, 355, false), kViewportW, kViewportH, false);
         (void)pad.UpdateSetup(mouse(55, 425, true), kViewportW, kViewportH, false);
@@ -475,13 +476,69 @@ int main()
         // The accelerometer's sensitivity (the original's accelSlider, GameData data[7]): right of
         // "Accelerometer" in its row (Y 390-460), live only while the accelerometer is on.
         InputPad off;
+        off.SetAccelerometerSupported(true);
         const auto none = off.UpdateSetup(mouse(342, 439, true), kViewportW, kViewportH, false, false);
         check(none.accelSensitivity < 0, "Setup: no sensitivity slider while the accelerometer is off");
         InputPad on;
+        on.SetAccelerometerSupported(true);
         const auto mid = on.UpdateSetup(mouse(342, 439, true), kViewportW, kViewportH, false, true);
         const auto end = on.UpdateSetup(mouse(342, 439, false), kViewportW, kViewportH, false, true);
         check(mid.accelSensitivity >= 45 && mid.accelSensitivity <= 55 && end.volumeReleased && !end.accelToggled,
               "Setup: with the accelerometer on, its sensitivity slider reads about 50 at the track's middle");
+    }
+    {
+        // A phone's saved setting may be on when the save is opened on a sensorless desktop.
+        // Both Setup screens must ignore presses/drags in those slots and navigate only visible controls.
+        for (const bool showReset : {false, true})
+        {
+            InputPad pad;
+            pad.SetAccelerometerSupported(false);
+            for (const bool savedAccel : {false, true})
+            {
+                (void)pad.UpdateSetup(mouse(55, 425, true), kViewportW, kViewportH, showReset, savedAccel);
+                const auto toggle = pad.UpdateSetup(mouse(55, 425, false), kViewportW, kViewportH, showReset, savedAccel);
+                const auto drag = pad.UpdateSetup(mouse(342, 439, true), kViewportW, kViewportH, showReset, savedAccel);
+                const auto release = pad.UpdateSetup(mouse(430, 439, false), kViewportW, kViewportH, showReset, savedAccel);
+                check(!toggle.accelToggled && drag.accelSensitivity < 0 && release.accelSensitivity < 0 &&
+                          !release.volumeReleased,
+                      "Main/Play Setup without a sensor: hidden toggle and sensitivity ignore pointer input, saved on or off");
+
+                for (const auto [width, height] : {std::pair{640, 480}, std::pair{800, 480}, std::pair{1280, 720}})
+                {
+                    const float scale = static_cast<float>(height) / 480.0f;
+                    const auto targets = pad.SetupTargets(width, height, showReset, savedAccel);
+                    bool hiddenTarget = false;
+                    for (const auto& r : targets)
+                        hiddenTarget |= QuadBatch::InRect(55 * scale, 425 * scale, r) ||
+                                        QuadBatch::InRect(342 * scale, 439 * scale, r);
+                    check(!hiddenTarget, "Main/Play Setup focus targets exclude both sensor slots at every tested viewport");
+                    FocusNavigator navigator;
+                    FocusNavigator::Input arrow;
+                    arrow.down = true;
+                    auto out = navigator.Update(targets, arrow); // Frame rate
+                    out = navigator.Update(targets, arrow); // Sounds
+                    out = navigator.Update(targets, arrow); // Jump
+                    out = navigator.Update(targets, arrow); // Zoom
+                    check(out.active && std::fabs(out.x - 55 * scale) < 0.01f &&
+                              std::fabs(out.y - 355 * scale) < 0.01f,
+                          "Main/Play Setup: Down reaches Automatic zoom on action");
+                    out = navigator.Update(targets, arrow);
+                    check(out.x > 440 * scale,
+                          "Main/Play Setup: next Down skips hidden Accelerometer and Sensitivity to 3D effects");
+                }
+            }
+            pad.SetAccelerometerSupported(true);
+            const auto off = pad.SetupTargets(kViewportW, kViewportH, showReset, false);
+            const auto on = pad.SetupTargets(kViewportW, kViewportH, showReset, true);
+            const auto hasPoint = [](const auto& targets, float x, float y) {
+                return std::any_of(targets.begin(), targets.end(), [=](const auto& r) {
+                    return QuadBatch::InRect(x, y, r);
+                });
+            };
+            check(hasPoint(off, 55, 425) && !hasPoint(off, 342, 439) &&
+                      hasPoint(on, 55, 425) && hasPoint(on, 342, 439),
+                  "Main/Play Setup with a sensor: toggle always focusable, sensitivity only with the saved option on");
+        }
     }
     {
         // The volume sliders (2026-11-02, the owner's request): right of "Sound effects" in its row
