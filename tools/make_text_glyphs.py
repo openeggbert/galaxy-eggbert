@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adds the letters Czech, German and French need to text.png (owner Q-023, 2026-11-12).
+"""Adds the letters the game's languages need to text.png (owner Q-023, 2026-11-12).
 
 text.png (Content/icons/, 512x256, and its 2x sheet in Content/icons2x/) is Mobile Eggbert's font:
 16 x 8 cells of 32 px, black glyphs on clear texels, with French's 15 lower-case accented letters
@@ -53,7 +53,17 @@ GLYPHS = [
     ('ă', 'a', 'breve'), ('Ă', 'A', 'breve'), ('ș', 's', 'commabelow'), ('ț', 't', 'commabelow'),
     ('Ș', 'S', 'commabelow'), ('Ț', 'T', 'commabelow'), ('å', 'a', 'ring'), ('Å', 'A', 'ring'),
 ] + [(ch, '@' + ch, 'plain') for ch in 'бвгджзийклмнптфцчшщъыьэюяєґ'] + \
-    [(ch, '@' + ch, 'plain') for ch in 'БГДЖЗИЛПУФЦЧШЩЪЫЬЭЮЯЄҐ'] + [('Й', '@И', 'breve')]
+    [(ch, '@' + ch, 'plain') for ch in 'БГДЖЗИЛПУФЦЧШЩЪЫЬЭЮЯЄҐ'] + [('Й', '@И', 'breve')] + \
+    [
+    # 268 on (2026-11-12): Danish and Norwegian's æ ø (rendered: the sheet has no such strokes),
+    # Turkish's letters composed (ı the dotless i, İ the I with the i's dot), then Greek's letters that
+    # look like no Latin one (Α Β Ε Ζ Η Ι Κ Μ Ν Ο Ρ Τ Υ Χ ο, ό ί ϊ are drawn by Latin glyphs,
+    # TextMetrics::GlyphOf), rendered from Comic Relief.
+    ('æ', '@æ', 'plain'), ('Æ', '@Æ', 'plain'), ('ø', '@ø', 'plain'), ('Ø', '@Ø', 'plain'),
+    ('ğ', 'g', 'breve'), ('Ğ', 'G', 'breve'), ('ı', 'ı', 'plain'), ('İ', 'I', 'dot'),
+    ('ş', 's', 'cedilla'), ('Ş', 'S', 'cedilla'),
+] + [(ch, '@' + ch, 'plain') for ch in 'αβγδεζηθικλμνξπρσςτυφχψωάέήύώϋ'] + \
+    [(ch, '@' + ch, 'plain') for ch in 'ΓΔΘΛΞΠΣΦΨΩΆΈΉΊΌΎΏ']
 # The marks drawn above the letter (a capital, or an l, made shorter for them).
 ABOVE = {'acute', 'grave', 'circumflex', 'caron', 'diaeresis', 'ring', 'tilde', 'dot', 'dacute', 'breve'}
 SHEET_ROWS = 24  # the whole sheet: the original's 8 rows and Galaxy's 16

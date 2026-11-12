@@ -62,6 +62,12 @@ namespace
         Check(Glyphs("Аарой") == std::vector<int>{'A', 'a', 'p', 'o', TextMetrics::GlyphOf(U'й')} &&
                   TextMetrics::GlyphOf(U'й') >= TextMetrics::kFirstExtraGlyph,
               "a Cyrillic letter like a Latin one is its glyph, the others Galaxy's (Comic Relief)");
+        Check(Glyphs("Αλό") == std::vector<int>{'A', TextMetrics::GlyphOf(U'λ'), TextMetrics::GlyphOf(U'ó')} &&
+                  TextMetrics::GlyphOf(U'λ') >= TextMetrics::kFirstExtraGlyph &&
+                  TextMetrics::GlyphOf(U'ş') >= TextMetrics::kFirstExtraGlyph &&
+                  TextMetrics::GlyphOf(U'ø') >= TextMetrics::kFirstExtraGlyph &&
+                  TextMetrics::GlyphOf(U'ı') != TextMetrics::GlyphOf(U'i'),
+              "Greek like Latin (ό as ó), Greek's, Turkish's and Danish's own letters Galaxy's");
         bool widths = true;
         for (int glyph = TextMetrics::kFirstExtraGlyph;
              glyph < TextMetrics::kFirstExtraGlyph + static_cast<int>(std::size(TextMetrics::kExtraGlyphs)); ++glyph)
@@ -107,7 +113,12 @@ namespace
         for (const Language language : kLanguages)
             Check(ParseLanguage(LanguageCode(language)) == language && kLanguages[LanguageIndex(language)] == language,
                   "a language's code reads back as it, its index is its place");
-        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("fi-FI") && !ParseLanguage("fra") &&
+        Check(ParseLanguage("fi-FI") == Language::Finnish && ParseLanguage("da_DK.UTF-8") == Language::Danish &&
+                  ParseLanguage("nb-NO") == Language::Norwegian && ParseLanguage("no") == Language::Norwegian &&
+                  ParseLanguage("nn_NO") == Language::Norwegian && ParseLanguage("tr-TR") == Language::Turkish &&
+                  ParseLanguage("el-GR") == Language::Greek,
+              "Finnish, Danish, Norwegian (nb, no and nn), Turkish and Greek");
+        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("ja-JP") && !ParseLanguage("fra") &&
                   !ParseLanguage("") && !ParseLanguage("C"),
               "English, and no language for the others");
         SetLanguage(Language::English);
@@ -152,6 +163,14 @@ namespace
               "TrCount: Russian 2-4, 5+, 11, 21");
         SetLanguage(Language::Spanish);
         Check(TrCount("{0} place", "{0} places", 2, {"2"}) == "2 lugares" && Tr("Language") == "Idioma", "Spanish");
+        SetLanguage(Language::Finnish);
+        Check(TrCount("{0} place", "{0} places", 1, {"1"}) == "1 paikka" &&
+                  TrCount("{0} place", "{0} places", 3, {"3"}) == "3 paikkaa",
+              "TrCount: Finnish one and other");
+        SetLanguage(Language::Greek);
+        Check(Tr("Language") == "Γλώσσα" && TrFormat("Player {0}", {"A"}) == "Παίκτης A", "Greek");
+        SetLanguage(Language::Turkish);
+        Check(Tr("Language") == "Dil" && TrCount("{0} demo", "{0} demos", 2, {"2"}) == "2 demo", "Turkish");
         SetLanguage(Language::English);
     }
 

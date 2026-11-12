@@ -37,6 +37,11 @@ namespace GalaxyEggbert::Game
         Swedish,
         Russian,
         Ukrainian,
+        Finnish,
+        Danish,
+        Norwegian, // Bokmål (nb; the system's "no" and "nn" too)
+        Turkish,
+        Greek,
     };
 
     // Every language, in the enum's order (an index into kLanguages is the enum's value): the order of
@@ -45,7 +50,9 @@ namespace GalaxyEggbert::Game
                                               Language::Czech,     Language::Slovak,   Language::Spanish,
                                               Language::Italian,   Language::Polish,   Language::Portuguese,
                                               Language::Dutch,     Language::Hungarian, Language::Romanian,
-                                              Language::Swedish,   Language::Russian,  Language::Ukrainian};
+                                              Language::Swedish,   Language::Russian,  Language::Ukrainian,
+                                              Language::Finnish,   Language::Danish,   Language::Norwegian,
+                                              Language::Turkish,   Language::Greek};
     inline constexpr std::size_t kLanguageCount = std::size(kLanguages);
     [[nodiscard]] constexpr std::size_t LanguageIndex(Language language) noexcept
     {

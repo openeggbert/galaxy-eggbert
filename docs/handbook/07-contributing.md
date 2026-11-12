@@ -60,7 +60,8 @@ when called without arguments, paths from `BASH_SOURCE`, scratch output under `b
 ## Texts and languages
 
 Every text the player sees is in English, French, German, Czech, Slovak, Spanish, Italian, Polish,
-Brazilian Portuguese, Dutch, Hungarian, Romanian, Swedish, Russian and Ukrainian (owner Q-023, BD-0126;
+Brazilian Portuguese, Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian, Finnish, Danish, Norwegian
+(Bokmål), Turkish and Greek (owner Q-023, BD-0126;
 `src/GalaxyEggbert/Game/Localization.hpp`). The English is the key:
 
 - `Tr("Continue")` shows a text where it is written;
@@ -78,10 +79,11 @@ A new text needs its translation in every `src/GalaxyEggbert/Game/Translations<C
 source's group). `VerifyLocalization` (CTest) reads the sources'
 `Tr`/`TrMark`/`TrFormat`/`TrCount` literals and fails on one without a translation, on a translation no
 code asks for, on placeholders or end spaces that differ, and on a character text.png cannot draw (the
-original's lower-case à â é è ë ê ï î ô ù û ä ö ü ç, and Galaxy's glyphs 128-267 from
-`tools/make_text_glyphs.py`: the Latin letters with marks of the fifteen languages and their capitals,
-¿ ¡ °, the Cyrillic letters that look like no Latin one (rendered from the font Comic Relief, kept
-outside the repository; the look-alikes are mapped to Latin glyphs in `TextMetrics::GlyphOf`); no ß,
+original's lower-case à â é è ë ê ï î ô ù û ä ö ü ç, and Galaxy's glyphs 128-324 from
+`tools/make_text_glyphs.py`: the Latin letters with marks of the twenty languages and their capitals,
+¿ ¡ °, æ ø, the Cyrillic and Greek letters that look like no Latin one (rendered from the font Comic
+Relief, kept outside the repository; the look-alikes are mapped to Latin glyphs in
+`TextMetrics::GlyphOf`); no ß,
 write "ss"; write "oe" for the ligature). A letter more is a line in that script's table, run again, and its width in
 `TextMetrics::kWidth`. A language more: its enum value at the end of `Language` and `kLanguages`, its
 code and name in `Localization.cpp`, a table, a column in the training hints, a flag in

@@ -1640,7 +1640,7 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
-## BD-0126 — the game in fifteen languages, and a language picker of flags (owner, Q-023) — FIXED_AND_VERIFIED
+## BD-0126 — the game in twenty languages, and a language picker of flags (owner, Q-023) — FIXED_AND_VERIFIED
 
 - Original: Mobile Eggbert shows its texts in French or English, from the system's language
   (MyResource::Init: "fr" French, anything else English); there is no choice in the game. Its
@@ -1706,6 +1706,18 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   mission 11's hint, the editor's keys and tools, the galaxy, the goodbye, the network game's list, its
   nickname panel and a new game (`build-probe/l10n/<code>-*`); the system's language picked at the
   start for each of the fifteen locales.
+- **2026-11-12 evening, five more: Finnish, Danish, Norwegian (Bokmål), Turkish, Greek (the owner, after
+  0.3.0):** TranslationsFi/Da/Nb/Tr/El.cpp and their hints' columns; twenty languages, the picker 5 x 4
+  (cells 80 tall, the flag 57 x 38). text.png's glyphs 268-324: æ Æ ø Ø and Greek's letters without a
+  Latin look-alike rendered from Comic Relief (Α Β Ε Ζ Η Ι Κ Μ Ν Ο Ρ Τ Υ Χ ο drawn by Latin glyphs, ό ί ϊ by
+  ó í ï), Turkish's composed (ğ Ğ with the breve, ı the dotless i, İ with the i's dot, ş Ş with the
+  cedilla); glyphs 0-267 byte-equal. A system's "no" and "nn" choose Norwegian (Bokmål); Greek and the
+  new Latin letters transliterated for CNA's profile name. Flags drawn by `tools/make_flags.py`
+  (Finland's, Denmark's and Norway's crosses in their proportions, Turkey's crescent and star from its
+  flag law, Greece's stripes and canton). The editor's "Undo"/"Cancel" kept apart in each. Validation:
+  VerifyLocalization (392 texts in each of 19 tables, every character drawable, the codes and plurals),
+  VerifyNetProtocol, CTest 131/131; live in each of the five (`build-probe/l10n/<code>-*`), the picker of
+  twenty, and the system's language at the start for each locale.
 
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 

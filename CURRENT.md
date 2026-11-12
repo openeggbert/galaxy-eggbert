@@ -61,12 +61,13 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
-- Fifteen languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
-  Portuguese, then Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`
+- Twenty languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
+  Portuguese, then Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian (in 0.3.0), then Finnish,
+  Danish, Norwegian, Turkish, Greek 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`
   (Tr/TrMark/TrFormat/TrCount, the English as the key), the translations in `Translations<Code>.cpp`
   and the training hints' table; the system's language or the language picker (the menu's flag, the
   Setup's Language button; `language=` in savedata.txt); UTF-8 drawn by text.png's glyphs, the
-  original's and Galaxy's 128-267 (`tools/make_text_glyphs.py`, `TextMetrics`; the Cyrillic ones
+  original's and Galaxy's 128-324 (`tools/make_text_glyphs.py`, `TextMetrics`; the Cyrillic and Greek ones
   rendered from the font Comic Relief, outside the repository); network names in UTF-8
   (protocol 5: the limits count characters). Checked by `VerifyLocalization`; BD-0126.
 - The terrain is kept in chunks of 32^3; a change rebuilds only the chunks it reaches (2026-11-12,

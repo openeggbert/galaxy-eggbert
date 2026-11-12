@@ -37,6 +37,16 @@ namespace GalaxyEggbert::Game
     extern const std::size_t kRussianTranslationCount;
     extern const Translation kUkrainianTranslations[];
     extern const std::size_t kUkrainianTranslationCount;
+    extern const Translation kFinnishTranslations[];
+    extern const std::size_t kFinnishTranslationCount;
+    extern const Translation kDanishTranslations[];
+    extern const std::size_t kDanishTranslationCount;
+    extern const Translation kNorwegianTranslations[];
+    extern const std::size_t kNorwegianTranslationCount;
+    extern const Translation kTurkishTranslations[];
+    extern const std::size_t kTurkishTranslationCount;
+    extern const Translation kGreekTranslations[];
+    extern const std::size_t kGreekTranslationCount;
 
     namespace
     {
@@ -76,6 +86,7 @@ namespace GalaxyEggbert::Game
             {"en", "English"},  {"fr", "Français"}, {"de", "Deutsch"},  {"cs", "Čeština"},   {"sk", "Slovenčina"},
             {"es", "Español"},  {"it", "Italiano"}, {"pl", "Polski"},   {"pt", "Português"}, {"nl", "Nederlands"},
             {"hu", "Magyar"},   {"ro", "Română"},   {"sv", "Svenska"},  {"ru", "Русский"},   {"uk", "Українська"},
+            {"fi", "Suomi"},    {"da", "Dansk"},    {"nb", "Norsk"},    {"tr", "Türkçe"},    {"el", "Ελληνικά"},
         }};
     }
 
@@ -107,6 +118,11 @@ namespace GalaxyEggbert::Game
         }
         const char code[2] = {static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[0]))),
                               static_cast<char>(std::tolower(static_cast<unsigned char>(codeOrLocale[1])))};
+        // Norwegian: a system may say "no" (the macrolanguage) or "nn" (Nynorsk); the game speaks Bokmål.
+        if (std::string_view(code, 2) == "no" || std::string_view(code, 2) == "nn")
+        {
+            return Language::Norwegian;
+        }
         for (const Language language : kLanguages)
         {
             if (kInfo[LanguageIndex(language)].code == std::string_view(code, 2))
@@ -215,6 +231,11 @@ namespace GalaxyEggbert::Game
             case Language::Swedish: return {kSwedishTranslations, kSwedishTranslationCount};
             case Language::Russian: return {kRussianTranslations, kRussianTranslationCount};
             case Language::Ukrainian: return {kUkrainianTranslations, kUkrainianTranslationCount};
+            case Language::Finnish: return {kFinnishTranslations, kFinnishTranslationCount};
+            case Language::Danish: return {kDanishTranslations, kDanishTranslationCount};
+            case Language::Norwegian: return {kNorwegianTranslations, kNorwegianTranslationCount};
+            case Language::Turkish: return {kTurkishTranslations, kTurkishTranslationCount};
+            case Language::Greek: return {kGreekTranslations, kGreekTranslationCount};
             case Language::English: break;
         }
         return {};

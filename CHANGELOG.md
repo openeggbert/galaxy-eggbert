@@ -9,6 +9,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- The game in Finnish, Danish, Norwegian, Turkish and Greek: twenty languages in all. The font has
+  the letters they need (æ ø, Turkish's ğ ı İ ş, the Greek alphabet); the language picker shows twenty
+  flags in four rows.
+
 ## [0.3.0] — 2026-11-12
 
 Fifteen languages and a picker of flags, a faster editor. Packages for Windows, Linux, Android and
