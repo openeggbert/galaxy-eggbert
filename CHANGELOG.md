@@ -11,10 +11,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
-- The game in Slovak, Spanish, Italian, Polish and Brazilian Portuguese: nine languages in all. The
-  font has the letters they need.
-- A language picker: the main menu's flag and the Setup's Language button open the nine flags with
+- The game in Slovak, Spanish, Italian, Polish, Brazilian Portuguese, Dutch, Hungarian, Romanian,
+  Swedish, Russian and Ukrainian: fifteen languages in all. The font has the letters they need, the
+  Cyrillic ones too.
+- A language picker: the main menu's flag and the Setup's Language button open the fifteen flags with
   their languages' names; a press chooses one.
+
+### Changed
+
+- The network game counts a name's and a chat line's length in letters, not bytes, so that
+  Ukrainian's "Гравець A" is not cut: network protocol 5, 0.3.0 cannot play with 0.2.0.
+- The network game's buttons draw a long label smaller before they cut it.
 
 ### Fixed
 

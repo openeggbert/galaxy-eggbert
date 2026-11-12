@@ -61,13 +61,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
-- Nine languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
-  Portuguese 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`
+- Fifteen languages (French 2026-11-11; German, Czech, then Slovak, Spanish, Italian, Polish, Brazilian
+  Portuguese, then Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian 2026-11-12; owner Q-023): every text the player sees through `Localization.hpp`
   (Tr/TrMark/TrFormat/TrCount, the English as the key), the translations in `Translations<Code>.cpp`
   and the training hints' table; the system's language or the language picker (the menu's flag, the
   Setup's Language button; `language=` in savedata.txt); UTF-8 drawn by text.png's glyphs, the
-  original's and Galaxy's 128-205 (`tools/make_text_glyphs.py`, `TextMetrics`); network names in UTF-8
-  (protocol 4). Checked by `VerifyLocalization`; BD-0126.
+  original's and Galaxy's 128-267 (`tools/make_text_glyphs.py`, `TextMetrics`; the Cyrillic ones
+  rendered from the font Comic Relief, outside the repository); network names in UTF-8
+  (protocol 5: the limits count characters). Checked by `VerifyLocalization`; BD-0126.
 - The terrain is kept in chunks of 32^3; a change rebuilds only the chunks it reaches (2026-11-12,
   OR-0074): 5-7 ms instead of 60-70 in world065. Checked by `VerifyTerrainChunks`.
 - The network game (2026-11-10, owner Q-019; developed on branch `multiplayer`, **merged into

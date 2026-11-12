@@ -19,10 +19,11 @@ namespace GalaxyEggbert::Game::TextMetrics
     // Robert Vokac): pixels at scale 1 per glyph index. For printable ASCII
     // the glyph index is the character code (its table_char is the identity
     // there).
-    // Glyphs 128-205 are Galaxy's (tools/make_text_glyphs.py, owner Q-023 2026-11-12): the letters
+    // Glyphs 128-267 are Galaxy's (tools/make_text_glyphs.py, owner Q-023 2026-11-12): the letters
     // the game's languages need that the sheet had not, kExtraGlyphs below; their widths are their
-    // base letters' (ď, ľ, ł a little more: the caron beside the stem, the bar across it).
-    inline constexpr std::uint8_t kWidth[256] = {
+    // base letters' (ď, ľ, ł a little more: the caron beside the stem, the bar across it), the
+    // Cyrillic letters' their ink's, as the sheet's own.
+    inline constexpr std::uint8_t kWidth[384] = {
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 32, 14, 13, 15, 15, 15, 15,
         15, 15, 11, 12, 14, 13, 13, 15, 15, 14,
@@ -46,6 +47,11 @@ namespace GalaxyEggbert::Game::TextMetrics
         6, 9, 12, 14, 14, 16, 16, 22, 14, 5, 6, 14, 15, 22,
         15, 13, 15, 9, 16, 14, 14, 14, 18, 17, 16, 14, 22, 18, 19, 19,
         15, 14, 18, 22, 8,
+        // 206-267 (ő ű Ő Ű ă Ă ș ț Ș Ț å Å, then the Cyrillic letters drawn from Comic Relief)
+        14, 13, 22, 19, 15, 18, 14, 11, 18, 15, 15, 18, 14, 12, 12, 16,
+        18, 11, 15, 15, 12, 16, 19, 13, 14, 12, 21, 15, 13, 19, 21, 17,
+        20, 11, 12, 23, 12, 12, 12, 15, 15, 21, 26, 16, 19, 20, 25, 19,
+        18, 21, 16, 25, 27, 21, 29, 15, 17, 30, 16, 16, 15, 19,
     };
 
     // The glyph the original draws for a character it has no picture of (Text::GetOffset's
@@ -75,6 +81,11 @@ namespace GalaxyEggbert::Game::TextMetrics
         U'ĺ', U'ľ', U'ŕ', U'Ĺ', U'Ľ', U'Ŕ', U'ñ', U'Ñ', U'¿', U'¡', U'ì', U'ò', U'Ì', U'Ò',
         U'ą', U'ć', U'ę', U'ł', U'ń', U'ś', U'ź', U'ż', U'Ą', U'Ć', U'Ę', U'Ł', U'Ń', U'Ś', U'Ź', U'Ż',
         U'ã', U'õ', U'Ã', U'Õ', U'°',
+        U'ő', U'ű', U'Ő', U'Ű', U'ă', U'Ă', U'ș', U'ț', U'Ș', U'Ț', U'å', U'Å', U'б', U'в',
+        U'г', U'д', U'ж', U'з', U'и', U'й', U'к', U'л', U'м', U'н', U'п', U'т', U'ф', U'ц',
+        U'ч', U'ш', U'щ', U'ъ', U'ы', U'ь', U'э', U'ю', U'я', U'є', U'ґ', U'Б', U'Г', U'Д',
+        U'Ж', U'З', U'И', U'Л', U'П', U'У', U'Ф', U'Ц', U'Ч', U'Ш', U'Щ', U'Ъ', U'Ы', U'Ь',
+        U'Э', U'Ю', U'Я', U'Є', U'Ґ', U'Й',
     };
     inline constexpr int kFirstExtraGlyph = 128;
 
@@ -123,6 +134,31 @@ namespace GalaxyEggbert::Game::TextMetrics
             case U'“': case U'”': case U'«': case U'»': return '"';
             case U'–': case U'—': return '-';
             case U'º': return GlyphOf(U'°'); // Portuguese's "1º", "nº": the degree's ring
+            // The Cyrillic letters drawn as the Latin ones they look like (Russian, Ukrainian).
+            case U'а': return 'a';
+            case U'е': return 'e';
+            case U'ё': return GlyphOf(U'ë');
+            case U'о': return 'o';
+            case U'р': return 'p';
+            case U'с': return 'c';
+            case U'у': return 'y';
+            case U'х': return 'x';
+            case U'і': return 'i';
+            case U'ї': return GlyphOf(U'ï');
+            case U'А': return 'A';
+            case U'В': return 'B';
+            case U'Е': return 'E';
+            case U'Ё': return GlyphOf(U'Ë');
+            case U'К': return 'K';
+            case U'М': return 'M';
+            case U'Н': return 'H';
+            case U'О': return 'O';
+            case U'Р': return 'P';
+            case U'С': return 'C';
+            case U'Т': return 'T';
+            case U'Х': return 'X';
+            case U'І': return 'I';
+            case U'Ї': return GlyphOf(U'Ï');
             default: return kUnknownGlyph;
         }
     }

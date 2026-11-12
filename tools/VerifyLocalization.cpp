@@ -58,7 +58,10 @@ namespace
         Check(Glyphs("áčďěíňóřšťúůýž") == std::vector<int>{128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141},
               "Czech's letters are Galaxy's glyphs 128-141 (tools/make_text_glyphs.py)");
         Check(Glyphs("ÉÀÇÎÄŽ") == std::vector<int>{145, 160, 162, 166, 157, 156}, "a capital keeps its accent (Galaxy's glyphs)");
-        Check(Glyphs("ŸÅ") == std::vector<int>{'Y', 'A'}, "a capital the sheet has no picture of is its plain letter");
+        Check(Glyphs("Ÿ") == std::vector<int>{'Y'}, "a capital the sheet has no picture of is its plain letter");
+        Check(Glyphs("Аарой") == std::vector<int>{'A', 'a', 'p', 'o', TextMetrics::GlyphOf(U'й')} &&
+                  TextMetrics::GlyphOf(U'й') >= TextMetrics::kFirstExtraGlyph,
+              "a Cyrillic letter like a Latin one is its glyph, the others Galaxy's (Comic Relief)");
         bool widths = true;
         for (int glyph = TextMetrics::kFirstExtraGlyph;
              glyph < TextMetrics::kFirstExtraGlyph + static_cast<int>(std::size(TextMetrics::kExtraGlyphs)); ++glyph)
@@ -104,7 +107,7 @@ namespace
         for (const Language language : kLanguages)
             Check(ParseLanguage(LanguageCode(language)) == language && kLanguages[LanguageIndex(language)] == language,
                   "a language's code reads back as it, its index is its place");
-        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("hu-HU") && !ParseLanguage("fra") &&
+        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("fi-FI") && !ParseLanguage("fra") &&
                   !ParseLanguage("") && !ParseLanguage("C"),
               "English, and no language for the others");
         SetLanguage(Language::English);
@@ -136,6 +139,17 @@ namespace
                   TrCount("{0} place", "{0} places", 12, {"12"}) == "12 miejsc" &&
                   TrCount("{0} place", "{0} places", 22, {"22"}) == "22 miejsca",
               "TrCount: Polish 2-4 and 22-24 but not 12-14");
+        SetLanguage(Language::Romanian);
+        Check(TrCount("{0} place", "{0} places", 3, {"3"}) == "3 locuri" &&
+                  TrCount("{0} place", "{0} places", 20, {"20"}) == "20 de locuri" &&
+                  TrCount("{0} place", "{0} places", 119, {"119"}) == "119 locuri",
+              "TrCount: Romanian 2-19 and 20 with \"de\"");
+        SetLanguage(Language::Russian);
+        Check(TrCount("{0} place", "{0} places", 3, {"3"}) == "3 места" &&
+                  TrCount("{0} place", "{0} places", 5, {"5"}) == "5 мест" &&
+                  TrCount("{0} place", "{0} places", 11, {"11"}) == "11 мест" &&
+                  TrCount("{0} place", "{0} places", 21, {"21"}) == "21 место",
+              "TrCount: Russian 2-4, 5+, 11, 21");
         SetLanguage(Language::Spanish);
         Check(TrCount("{0} place", "{0} places", 2, {"2"}) == "2 lugares" && Tr("Language") == "Idioma", "Spanish");
         SetLanguage(Language::English);

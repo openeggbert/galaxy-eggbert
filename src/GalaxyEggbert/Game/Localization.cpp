@@ -1,5 +1,6 @@
 #include "Localization.hpp"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cctype>
@@ -24,6 +25,18 @@ namespace GalaxyEggbert::Game
     extern const std::size_t kPolishTranslationCount;
     extern const Translation kPortugueseTranslations[];
     extern const std::size_t kPortugueseTranslationCount;
+    extern const Translation kDutchTranslations[];
+    extern const std::size_t kDutchTranslationCount;
+    extern const Translation kHungarianTranslations[];
+    extern const std::size_t kHungarianTranslationCount;
+    extern const Translation kRomanianTranslations[];
+    extern const std::size_t kRomanianTranslationCount;
+    extern const Translation kSwedishTranslations[];
+    extern const std::size_t kSwedishTranslationCount;
+    extern const Translation kRussianTranslations[];
+    extern const std::size_t kRussianTranslationCount;
+    extern const Translation kUkrainianTranslations[];
+    extern const std::size_t kUkrainianTranslationCount;
 
     namespace
     {
@@ -61,7 +74,8 @@ namespace GalaxyEggbert::Game
         };
         constexpr std::array<LanguageInfo, kLanguageCount> kInfo{{
             {"en", "English"},  {"fr", "Français"}, {"de", "Deutsch"},  {"cs", "Čeština"},   {"sk", "Slovenčina"},
-            {"es", "Español"},  {"it", "Italiano"}, {"pl", "Polski"},   {"pt", "Português"},
+            {"es", "Español"},  {"it", "Italiano"}, {"pl", "Polski"},   {"pt", "Português"}, {"nl", "Nederlands"},
+            {"hu", "Magyar"},   {"ro", "Română"},   {"sv", "Svenska"},  {"ru", "Русский"},   {"uk", "Українська"},
         }};
     }
 
@@ -149,15 +163,36 @@ namespace GalaxyEggbert::Game
             return TrFormat(one, args);
         }
         std::string_view forms = Tr(other);
-        const auto bar = forms.find('|');
-        if (bar != std::string_view::npos)
+        if (forms.find('|') != std::string_view::npos)
         {
-            // The "few" form, then the "many" (the language's own rule; 0 is "many").
+            // The forms: "few", "many", and (Russian, Ukrainian) the one for 21, 31, ... (not 11).
+            std::string_view form[3];
+            std::size_t count_of_forms = 0;
+            for (std::size_t from = 0; count_of_forms < 3;)
+            {
+                const std::size_t bar = forms.find('|', from);
+                form[count_of_forms++] = forms.substr(from, bar == std::string_view::npos ? forms.npos : bar - from);
+                if (bar == std::string_view::npos) break;
+                from = bar + 1;
+            }
             const Language language = CurrentLanguage();
-            const long long tens = count % 100, units = count % 10;
-            const bool few = ((language == Language::Czech || language == Language::Slovak) && count >= 2 && count <= 4) ||
-                             (language == Language::Polish && units >= 2 && units <= 4 && !(tens >= 12 && tens <= 14));
-            forms = few ? forms.substr(0, bar) : forms.substr(bar + 1);
+            const long long n = count < 0 ? -count : count;
+            const long long tens = n % 100, units = n % 10;
+            const bool slavicFew = units >= 2 && units <= 4 && !(tens >= 12 && tens <= 14);
+            int which = 1; // many
+            switch (language)
+            {
+                case Language::Czech:
+                case Language::Slovak: which = n >= 2 && n <= 4 ? 0 : 1; break;
+                case Language::Polish: which = slavicFew ? 0 : 1; break;
+                case Language::Romanian: which = n == 0 || (tens >= 1 && tens <= 19) ? 0 : 1; break;
+                case Language::Russian:
+                case Language::Ukrainian:
+                    which = units == 1 && tens != 11 ? 2 : slavicFew ? 0 : 1;
+                    break;
+                default: which = 0; break;
+            }
+            forms = form[std::min<std::size_t>(static_cast<std::size_t>(which), count_of_forms - 1)];
         }
         return Format(forms, args);
     }
@@ -174,6 +209,12 @@ namespace GalaxyEggbert::Game
             case Language::Italian: return {kItalianTranslations, kItalianTranslationCount};
             case Language::Polish: return {kPolishTranslations, kPolishTranslationCount};
             case Language::Portuguese: return {kPortugueseTranslations, kPortugueseTranslationCount};
+            case Language::Dutch: return {kDutchTranslations, kDutchTranslationCount};
+            case Language::Hungarian: return {kHungarianTranslations, kHungarianTranslationCount};
+            case Language::Romanian: return {kRomanianTranslations, kRomanianTranslationCount};
+            case Language::Swedish: return {kSwedishTranslations, kSwedishTranslationCount};
+            case Language::Russian: return {kRussianTranslations, kRussianTranslationCount};
+            case Language::Ukrainian: return {kUkrainianTranslations, kUkrainianTranslationCount};
             case Language::English: break;
         }
         return {};

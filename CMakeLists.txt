@@ -61,6 +61,12 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Game/TranslationsIt.cpp
     src/GalaxyEggbert/Game/TranslationsPl.cpp
     src/GalaxyEggbert/Game/TranslationsPt.cpp
+    src/GalaxyEggbert/Game/TranslationsNl.cpp
+    src/GalaxyEggbert/Game/TranslationsHu.cpp
+    src/GalaxyEggbert/Game/TranslationsRo.cpp
+    src/GalaxyEggbert/Game/TranslationsSv.cpp
+    src/GalaxyEggbert/Game/TranslationsRu.cpp
+    src/GalaxyEggbert/Game/TranslationsUk.cpp
 )
 
 # =============================================================================
@@ -538,6 +544,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/TranslationsIt.cpp
         src/GalaxyEggbert/Game/TranslationsPl.cpp
         src/GalaxyEggbert/Game/TranslationsPt.cpp
+        src/GalaxyEggbert/Game/TranslationsNl.cpp
+        src/GalaxyEggbert/Game/TranslationsHu.cpp
+        src/GalaxyEggbert/Game/TranslationsRo.cpp
+        src/GalaxyEggbert/Game/TranslationsSv.cpp
+        src/GalaxyEggbert/Game/TranslationsRu.cpp
+        src/GalaxyEggbert/Game/TranslationsUk.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -786,6 +798,12 @@ add_executable(VerifyGESaveData
         src/GalaxyEggbert/Game/TranslationsIt.cpp
         src/GalaxyEggbert/Game/TranslationsPl.cpp
         src/GalaxyEggbert/Game/TranslationsPt.cpp
+        src/GalaxyEggbert/Game/TranslationsNl.cpp
+        src/GalaxyEggbert/Game/TranslationsHu.cpp
+        src/GalaxyEggbert/Game/TranslationsRo.cpp
+        src/GalaxyEggbert/Game/TranslationsSv.cpp
+        src/GalaxyEggbert/Game/TranslationsRu.cpp
+        src/GalaxyEggbert/Game/TranslationsUk.cpp
 )
 
 target_include_directories(VerifyGESaveData PRIVATE

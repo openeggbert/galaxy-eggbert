@@ -1897,8 +1897,13 @@ namespace GalaxyEggbert::Game
                 continue;
             }
             icon(held ? pressed : b.enabled ? normal : dead, b.rect, 21);
-            centred(text, fit(b.label, b.size, b.rect.x1 - b.rect.x0 - 8.0f * s), (b.rect.x0 + b.rect.x1) * 0.5f,
-                    (b.rect.y0 + b.rect.y1) * 0.5f - 15.0f * b.size * s, b.size);
+            // A label wider than its button is drawn smaller first (down to 70%), as the menu's are, and
+            // cut only beyond that ("Отправить сообщение", "Envoyer un message").
+            const float room = b.rect.x1 - b.rect.x0 - 8.0f * s;
+            const float width = TextMetrics::Width(b.label) * s;
+            const float size = width * b.size > room ? std::max(b.size * 0.7f, room / width) : b.size;
+            centred(text, fit(b.label, size, room), (b.rect.x0 + b.rect.x1) * 0.5f,
+                    (b.rect.y0 + b.rect.y1) * 0.5f - 15.0f * size * s, size);
         }
         for (const auto& line : lines)
         {
@@ -1941,7 +1946,7 @@ namespace GalaxyEggbert::Game
     {
         constexpr int kPickerBack = 100;
         constexpr int kPickerOutside = 101;
-        constexpr int kPickerColumns = 3;
+        constexpr int kPickerColumns = 5;
 
         struct PickerLayout
         {
@@ -1951,19 +1956,19 @@ namespace GalaxyEggbert::Game
             float s;
         };
 
-        // The panel in the 640x480 reference height, centred: the title, three rows of three flags, Back.
+        // The panel in the 640x480 reference height, centred: the title, three rows of five flags, Back.
         PickerLayout ComputePickerLayout(int viewportW, int viewportH) noexcept
         {
             PickerLayout l{};
             const float s = static_cast<float>(viewportH) / 480.0f;
             const float cx = static_cast<float>(viewportW) * 0.5f;
             l.s = s;
-            l.panel = {cx - 245.0f * s, 22.0f * s, cx + 245.0f * s, 468.0f * s};
+            l.panel = {cx - 312.0f * s, 22.0f * s, cx + 312.0f * s, 468.0f * s};
             for (std::size_t i = 0; i < kLanguageCount; ++i)
             {
                 const float col = static_cast<float>(i % kPickerColumns), row = static_cast<float>(i / kPickerColumns);
-                const float x0 = cx - 225.0f * s + col * 155.0f * s, y0 = 78.0f * s + row * 113.0f * s;
-                l.cells[i] = {x0, y0, x0 + 140.0f * s, y0 + 103.0f * s};
+                const float x0 = cx - 296.0f * s + col * 120.0f * s, y0 = 78.0f * s + row * 113.0f * s;
+                l.cells[i] = {x0, y0, x0 + 112.0f * s, y0 + 103.0f * s};
             }
             l.back = {cx - 80.0f * s, 418.0f * s, cx + 80.0f * s, 460.0f * s};
             return l;
@@ -2034,23 +2039,26 @@ namespace GalaxyEggbert::Game
         icon(panels, l.panel, kInitPanelIcon);
         icon(panels, l.panel, kInitPanelIcon);
         const float cx = (l.panel.x0 + l.panel.x1) * 0.5f;
-        centred(Tr("Language"), cx, 32.0f * s, 0.75f, 440.0f * s);
+        centred(Tr("Language"), cx, 32.0f * s, 0.75f, 560.0f * s);
         const float cells = static_cast<float>(kLanguageCount);
         for (std::size_t i = 0; i < kLanguageCount; ++i)
         {
             const Rect& r = l.cells[i];
             // The language the game speaks shows lit; so does the one being pressed.
-            const bool lit = kLanguages[i] == CurrentLanguage() || pickerActive_ == static_cast<int>(i);
-            icon(lit ? pressed : normal, r, 21);
+            const bool current = kLanguages[i] == CurrentLanguage();
+            const bool lit = current || pickerActive_ == static_cast<int>(i);
+            // The current language a little larger as well as lit, so it stands out among fifteen.
+            const float grow = current ? 4.0f * s : 0.0f;
+            icon(lit ? pressed : normal, Rect{r.x0 - grow, r.y0 - grow, r.x1 + grow, r.y1 + grow}, 21);
             const float mid = (r.x0 + r.x1) * 0.5f;
             if (flagsLoaded_)
             {
-                const float fw = 72.0f * s, fh = 48.0f * s;
+                const float fw = 69.0f * s, fh = 46.0f * s;
                 Quad flag{mid - fw * 0.5f, r.y0 + 12.0f * s, mid + fw * 0.5f, r.y0 + 12.0f * s + fh,
                           static_cast<float>(i) / cells, 0.0f, static_cast<float>(i + 1) / cells, 1.0f};
                 flags.push_back(flag);
             }
-            centred(LanguageName(kLanguages[i]), mid, r.y0 + 64.0f * s, 0.62f, 124.0f * s);
+            centred(LanguageName(kLanguages[i]), mid, r.y0 + 64.0f * s, 0.6f, 102.0f * s);
         }
         icon(pickerActive_ == kPickerBack ? pressed : normal, l.back, 21);
         centred(Tr("Back"), cx, l.back.y0 + 6.0f * s, 0.62f, 150.0f * s);
