@@ -6,9 +6,22 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-11 (English and French on branch `localization`, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-12 (the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## English and French (2026-11-11, owner Q-023) — done on branch `localization`, waiting for the owner
+## The terrain rebuilt by chunks (2026-11-12, the owner's choice) — done on branch `terrain-lag`
+
+The rest of the lag of the 0.1.0 report (OR-0074 in owner_reports.md has the numbers): a terrain change
+PatchModelCells refuses (dynamite cutting a saw, a drip, a fan) built the whole world's terrain on the
+main thread, 60-70 ms (150 at Ultra). `TerrainRenderer` keeps the static meshes in chunks of 32^3
+(`StaticChunk`; `BuildChunk` is the CPU part, `UploadChunk` the upload, `FinishChunks` the lists in
+grid order and the totals) and `RebuildChangedChunks` builds only the chunks `ChunksReachedBy` gives,
+called by `RefreshTerrainMeshIfChanged` after the model patch; a full build stays for an unknown
+history, ShowSecret and the models loaded. 5-7 ms in world065. `VerifyTerrainChunks` (CTest) guards the
+reach; golden frames byte-equal. Not done: the other parts of that report (the fixed-step catch-up
+after a long frame, web audio on the main thread); the editor still rebuilds its whole presentation
+after each edit (RebuildWorldPresentation).
+
+## English and French (2026-11-11, owner Q-023) — merged into develop 2026-11-12 (the owner's acceptance after the web and Android checks)
 
 Where: branch `localization`, worktree `../galaxy-eggbert-localization` (its own `build-cna-opengl3`,
 configured with `-DCNA_HOME=/rv/data/development/github.com/libcna/cna -DCNA_ENGINE_HOME=.../cna-engine

@@ -1744,7 +1744,7 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   (before: 27, 331 and 301 times); the demos replay equal (VerifyDemoReplays), golden trace and
   frames unchanged. Live: the lava death starts channels 8 and 74 once each (before 2 and 3), the
   saw's 75 once (before 4).
-- Not done: the lag the report also names has other parts too: a full terrain rebuild on the main
+- Not done (the terrain part done 2026-11-12, OR-0074: rebuilt by chunks): the lag the report also names has other parts too: a full terrain rebuild on the main
   thread when dynamite cuts a saw or drip (OR-0074), then the fixed-step catch-up firing several
   ticks' sounds at once, and on the web the audio running on the main thread between frames.
 

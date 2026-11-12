@@ -35,6 +35,7 @@ failure; sources in `tools/`):
 |---|---|
 | `VerifyBlupiMovement` | `BlupiController` against `world999`: walking, jumping, gravity, collision, crates as boxes, swimming, vehicles, one-shot sound cues. Runs from the repo root |
 | `VerifyInteractionSystem` | `InteractionSystem` against `world999`: lifts, crate push and pull timing against the original's tables, pickups, enemy and hazard contact, dynamite, doors. Runs from the repo root |
+| `VerifyTerrainChunks` | the static terrain's chunks: through hundreds of cells changed in four shipped worlds and across chunk faces on purpose, every chunk outside a change's reach (`TerrainRenderer::ChunksReachedBy`) keeps its fingerprint (its meshes after the occlusion bake, its lists, its reliefs); prints the chunks rebuilt per change and the CPU time of a whole world against one change |
 | `VerifyLocalization` | the texts in every language: UTF-8 drawn by text.png's glyphs (accented letters, broken sequences), every `Tr`/`TrMark`/`TrFormat` literal of `src/` and `include/` translated, no translation left over, placeholders kept, the training hints' French drawable. Takes the source directory |
 | `VerifyShippedWorlds` | every `worlds3d/*.vwr` loads through the game's reader, carries the mission number of its file name, gives `WorldRuntime` its objects, and survives load, save, load unchanged |
 | `VerifyBlockDefinitionsCsv` | `DumpBlockDefinitions --check tools/data/blocks.csv`: the committed CSV equals the C++ registry |

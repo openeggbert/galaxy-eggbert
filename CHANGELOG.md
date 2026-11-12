@@ -15,6 +15,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
   French), the editor and the network game. The language follows the system's; the Setup's new
   Language button (top right) switches English and French and is saved (BD-0126).
 
+### Fixed
+
+- A hitch when the terrain changes (dynamite cutting a saw, a drip or a fan): the terrain is kept in
+  chunks and only the few a change reaches are built again, about 5 ms instead of 60-70 (150 with
+  the Ultra effects) in a large world on a desktop (OR-0074).
+
 ## [0.1.3] — 2026-11-11
 
 The 1.5x speed moves to F4. Packages for Windows, Linux, Android and the web on GitHub (tag

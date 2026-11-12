@@ -341,6 +341,24 @@ rewritten).
   112/112; golden frames re-baselined only for world999's bridge exhibits (models instead of plates,
   ~650 pixels each), trace unchanged; screenshots `build-probe/bridge-stutter/`.
 - Left: a saw switch still rebuilds the whole terrain (~180 ms under xvfb) when it turns its saws.
+  (Since fixed: the saw switch's anim swap is patched, FindSawAnimSwaps; and on 2026-11-12 the rest,
+  below.)
+- **2026-11-12, the rest of the lag (owner's choice after the 0.1.x reports):** every other terrain
+  change (dynamite cutting a saw, a drip or a fan; any change PatchModelCells refuses) still built
+  the whole terrain on the main thread: 60-70 ms in world065 at the classic look, 150-160 ms with the
+  Ultra effects (the light bake), measured under Xvfb. The static terrain is now kept in chunks of
+  32^3 cells (TerrainRenderer::StaticChunk, drawn chunk by chunk) and a change rebuilds only the
+  chunks its cells reach (TerrainRenderer::ChunksReachedBy: 2 cells every way; along the four
+  horizontal lines up to 8 the tiles textured on one side and the still models that look that far;
+  Ultra's ray reach every way), 1.4 chunks a change on average: 5-7 ms in world065, 2.6-2.9 in
+  world105, 12-13 with Ultra and the reliefs. Checked: VerifyTerrainChunks (every chunk outside the
+  reach keeps its fingerprint through 210 changes in four shipped worlds and 120 placed across chunk
+  faces; it fails when the reach is cut to 1 or 3, or a line rule is dropped), live (a probe digging
+  holes in world065 and world105: vertex, primitive, block, animated, water, model and relief-chunk
+  counts and the centroid equal to a full build's after each change, at the classic look and at Ultra
+  with the reliefs), the golden frames byte-equal at all three effect levels and the golden trace,
+  CTest 131/131. Approximation: at Ultra a change's light bake is refreshed within the rays' reach
+  (12); the sun's ray from a face a bounce met (48) is not followed farther.
 
 
 ## OR-0075 — lightning kills ghost Blupi; he falls and is opaque (owner 2026-11-06) — FIXED_AND_VERIFIED
