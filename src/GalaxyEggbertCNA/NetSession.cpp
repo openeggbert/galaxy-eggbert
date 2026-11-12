@@ -154,10 +154,11 @@ namespace GalaxyEggbert::CNA
 #endif
             try
             {
-                // The services' own notices (signed in ...) in a corner, off the screens' buttons.
-                GS::Guide::setNotificationPositionProperty(GS::NotificationPosition::TopRight);
                 if (!GS::GamerServicesDispatcher::getIsInitializedProperty())
                     GS::GamerServicesDispatcher::Initialize(game_.getServicesProperty());
+                // The services' own notices (signed in ...) in a corner, off the screens' buttons. After
+                // Initialize: the Guide refuses every call before it, as XNA's does (CNA 643b97d5f).
+                GS::Guide::setNotificationPositionProperty(GS::NotificationPosition::TopRight);
             }
             catch (const std::exception& failure)
             {
