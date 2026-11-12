@@ -15,7 +15,7 @@ _Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish
   body ray pulls the eye into him), and with ghost off it sometimes moves jerkily (the owner plays at 144
   fps: interpolated draws, never measured). Reverted (`git revert`); a rework must be measured at 144 fps
   with interpolation, in ghost mode and for smoothness (eye acceleration/jerk) against the former
-  camera, and shown to the owner before it lands. The measurement itself
+  camera, and shown to the owner before it lands. **The owner (2026-11-12): keep the old camera; no rework.** The measurement itself
   (plans/audit/camera_quality_2026-11-12.md, tools/camera_probe.py) stays.
 - **"The camera is farther than before"**: not reproduced. Eye-to-Blupi median 3.74 blocks in 0.2.0 and
   develop, 60/144 fps, window/full screen; FOV 45 degrees, 16:9 fixed (build-probe/music/camera-distance.md
