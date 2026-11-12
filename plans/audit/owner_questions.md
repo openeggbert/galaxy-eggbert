@@ -355,7 +355,9 @@ with `SHA256SUMS.txt` and `RELEASE_NOTES.md` (1.0.0-rc1 built into `build-probe/
    `tools/release/make_linux_glibc235.sh`, SDL3 built there. **Open:** CNA needs libcurl 7.85 and 22.04 has
    7.81; building curl 8.5 from Ubuntu 24.04's signed source in the root was refused by the agent's
    permission check ("code from external"). Allow that build (or another source of libcurl >= 7.85), or
-   ship the older-systems archive without the network game?
+   ship the older-systems archive without the network game? **Answered 2026-11-12: skip it** (glibc
+   2.38+ stays the minimum; the root and the script stay ready). Next: replay the whole campaign, the
+   models' fidelity, controls and camera.
 3. **The version number.** `VERSION.txt` said 1.0.0-rc1 (Android's versionName reads it). Keep it?
    **Answered 2026-11-11: 0.1.0, not released yet**; versioned as CNA is (`docs/releasing.md`), the
    main menu shows the version and the build's date and time left of Play. The 0.1.0 packages for

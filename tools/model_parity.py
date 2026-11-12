@@ -27,6 +27,21 @@ NOTES = {
     "bd_plante3b_plante3b": "faithful: thin leaves, and the sprite is cut at its icon's bottom edge",
     "bd_plante3c_plante3c": "faithful: thin leaves, and the sprite is cut at its icon's bottom edge",
     "fish_poisson": "its head is rounder and larger than the sprites' (BB3D-032, open)",
+    # 2026-11-12 (the owner: the models' fidelity): looked at on their compare sheets.
+    "girder201_structure1": "faithful: the truss, its corner and centre plates as the sprite's; the thin "
+                            "bars and the frame's edge a pixel or two off at 32 pixels",
+    "barreplain_barre": "faithful: the pipe as the sprite's, a pixel higher; the sprite's dark lower "
+                        "edge is its shading",
+    "treasure421_porte2": "faithful: the post as the sprite's; the number plate is a decal "
+                          "(sign_decals.py --plate), not the model's",
+    "glu168_glu": "faithful: the creature as the sprite's; the glue on the floor is Blupi's own model "
+                  "flattened, drawn by the game",
+    "electro238_electro": "faithful: the ball and spring as the sprite's; the sparks are painted on the "
+                          "sprites and drawn as a decal (Q-005)",
+    "drip404_goutte03": "faithful: the drop as the sprite's; the model's flare at the ceiling is where "
+                        "it hangs from the block",
+    "drip404_goutte04": "adaptation: the second icon is a falling drop the scene holds at no time "
+                        "(min_iou=0.3); the first as the sprite's",
 }
 
 
