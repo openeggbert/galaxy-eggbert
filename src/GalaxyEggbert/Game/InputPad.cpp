@@ -3408,7 +3408,7 @@ namespace GalaxyEggbert::Game
                 if (info.galaxyGates >= 0)
                 {
                     // Right-aligned in the panel, smaller when it would reach the Blupi count.
-                    const std::string gates = TrFormat(info.galaxyGates == 1 ? " : {0} gate" : " : {0} gates",
+                    const std::string gates = TrCount(" : {0} gate", " : {0} gates", info.galaxyGates,
                                                        {std::to_string(info.galaxyGates)});
                     std::string named = info.galaxyName.empty() ? std::string(Tr("Galaxy")) : info.galaxyName;
                     const float right = layout.leftPanel.x1 - 8.0f * s;

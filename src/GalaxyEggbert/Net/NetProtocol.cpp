@@ -1,5 +1,7 @@
 #include "NetProtocol.hpp"
 
+#include <GalaxyEggbert/Game/TextMetrics.hpp>
+
 #include <cmath>
 #include <cstring>
 
@@ -94,9 +96,45 @@ namespace GalaxyEggbert::Net
     std::string CleanText(const std::string& text, std::size_t limit)
     {
         std::string out;
-        for (const char c : text)
+        for (std::size_t at = 0; at < text.size();)
         {
-            if (c >= 0x20 && c < 0x7f && out.size() < limit) out += c;
+            const std::size_t start = at;
+            const char32_t c = Game::TextMetrics::NextCodePoint(text, at);
+            const bool keep = (c >= 0x20 && c < 0x7f) ||
+                              (c >= 0xA0 && c != U'\uFFFD' && c <= 0x10FFFF && !(c >= 0xFDD0 && c <= 0xFDEF) &&
+                               (c & 0xFFFE) != 0xFFFE);
+            if (!keep) continue;
+            if (out.size() + (at - start) > limit) break;
+            out.append(text, start, at - start);
+        }
+        return out;
+    }
+
+    std::string AsciiText(const std::string& text, std::size_t limit)
+    {
+        // The Latin letters of the game's languages (and their neighbours) without their marks.
+        static constexpr struct { char32_t from; const char* to; } kPlain[] = {
+            {U'à', "a"}, {U'á', "a"}, {U'â', "a"}, {U'ã', "a"}, {U'ä', "a"}, {U'å', "a"}, {U'ç', "c"}, {U'č', "c"},
+            {U'ď', "d"}, {U'è', "e"}, {U'é', "e"}, {U'ê', "e"}, {U'ë', "e"}, {U'ě', "e"}, {U'ì', "i"}, {U'í', "i"},
+            {U'î', "i"}, {U'ï', "i"}, {U'ľ', "l"}, {U'ĺ', "l"}, {U'ñ', "n"}, {U'ň', "n"}, {U'ò', "o"}, {U'ó', "o"},
+            {U'ô', "o"}, {U'õ', "o"}, {U'ö', "o"}, {U'ŕ', "r"}, {U'ř', "r"}, {U'š', "s"}, {U'ť', "t"}, {U'ù', "u"},
+            {U'ú', "u"}, {U'û', "u"}, {U'ü', "u"}, {U'ů', "u"}, {U'ý', "y"}, {U'ÿ', "y"}, {U'ž', "z"}, {U'ß', "ss"},
+            {U'À', "A"}, {U'Á', "A"}, {U'Â', "A"}, {U'Ã', "A"}, {U'Ä', "A"}, {U'Å', "A"}, {U'Ç', "C"}, {U'Č', "C"},
+            {U'Ď', "D"}, {U'È', "E"}, {U'É', "E"}, {U'Ê', "E"}, {U'Ë', "E"}, {U'Ě', "E"}, {U'Ì', "I"}, {U'Í', "I"},
+            {U'Î', "I"}, {U'Ï', "I"}, {U'Ľ', "L"}, {U'Ĺ', "L"}, {U'Ñ', "N"}, {U'Ň', "N"}, {U'Ò', "O"}, {U'Ó', "O"},
+            {U'Ô', "O"}, {U'Õ', "O"}, {U'Ö', "O"}, {U'Ŕ', "R"}, {U'Ř', "R"}, {U'Š', "S"}, {U'Ť', "T"}, {U'Ù', "U"},
+            {U'Ú', "U"}, {U'Û', "U"}, {U'Ü', "U"}, {U'Ů', "U"}, {U'Ý', "Y"}, {U'Ÿ', "Y"}, {U'Ž', "Z"},
+        };
+        std::string out;
+        for (std::size_t at = 0; at < text.size();)
+        {
+            const char32_t c = Game::TextMetrics::NextCodePoint(text, at);
+            std::string piece;
+            if (c >= 0x20 && c < 0x7f) piece = static_cast<char>(c);
+            for (const auto& plain : kPlain)
+                if (plain.from == c) piece = plain.to;
+            if (out.size() + piece.size() > limit) break;
+            out += piece;
         }
         return out;
     }

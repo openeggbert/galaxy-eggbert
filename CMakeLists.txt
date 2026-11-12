@@ -54,6 +54,8 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
     src/GalaxyEggbert/Game/Localization.cpp
     src/GalaxyEggbert/Game/TranslationsFr.cpp
+    src/GalaxyEggbert/Game/TranslationsDe.cpp
+    src/GalaxyEggbert/Game/TranslationsCs.cpp
 )
 
 # =============================================================================
@@ -524,6 +526,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/Localization.cpp
         src/GalaxyEggbert/Game/TranslationsFr.cpp
+        src/GalaxyEggbert/Game/TranslationsDe.cpp
+        src/GalaxyEggbert/Game/TranslationsCs.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -765,6 +769,8 @@ add_executable(VerifyGESaveData
         src/GalaxyEggbert/Game/UserFolder.cpp
         src/GalaxyEggbert/Game/Localization.cpp
         src/GalaxyEggbert/Game/TranslationsFr.cpp
+        src/GalaxyEggbert/Game/TranslationsDe.cpp
+        src/GalaxyEggbert/Game/TranslationsCs.cpp
 )
 
 target_include_directories(VerifyGESaveData PRIVATE

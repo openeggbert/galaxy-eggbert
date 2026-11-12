@@ -6,7 +6,7 @@
 // that asks for them. Mobile Eggbert's own French where it has the text (MyResource::InitializeFR,
 // transcribed with the owner's approval: the menu's, the pause's and the Setup's buttons, the players'
 // panel); the rest, Galaxy's texts and Speedy Eggbert 2's network game, translated for Galaxy.
-// Capitals lose their accent on the screen (text.png has none) and "oe" stands for the ligature, as
+// Capitals keep their accent (Galaxy's glyphs, tools/make_text_glyphs.py) and "oe" stands for the ligature, as
 // the original writes "oeufs". VerifyLocalization keeps this table and the sources' Tr/TrMark/TrFormat
 // literals the same set; the training hints' French is in TrainingHints.cpp's own table.
 namespace GalaxyEggbert::Game

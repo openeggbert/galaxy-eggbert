@@ -6,9 +6,13 @@
 
 namespace GalaxyEggbert::Game
 {
-    // TranslationsFr.cpp.
+    // TranslationsFr.cpp, TranslationsDe.cpp, TranslationsCs.cpp.
     extern const Translation kFrenchTranslations[];
     extern const std::size_t kFrenchTranslationCount;
+    extern const Translation kGermanTranslations[];
+    extern const std::size_t kGermanTranslationCount;
+    extern const Translation kCzechTranslations[];
+    extern const std::size_t kCzechTranslationCount;
 
     namespace
     {
@@ -16,19 +20,31 @@ namespace GalaxyEggbert::Game
 
         using Table = std::unordered_map<std::string_view, std::string_view>;
 
-        const Table& FrenchTable()
+        Table Build(std::span<const Translation> translations)
         {
-            static const Table table = []
+            Table built;
+            built.reserve(translations.size());
+            for (const auto& translation : translations)
             {
-                Table built;
-                built.reserve(kFrenchTranslationCount);
-                for (std::size_t i = 0; i < kFrenchTranslationCount; ++i)
-                {
-                    built.emplace(kFrenchTranslations[i].english, kFrenchTranslations[i].text);
-                }
-                return built;
-            }();
-            return table;
+                built.emplace(translation.english, translation.text);
+            }
+            return built;
+        }
+
+        // The language's table, built on its first use.
+        const Table* TableOf(Language language)
+        {
+            static const Table french = Build(Translations(Language::French));
+            static const Table german = Build(Translations(Language::German));
+            static const Table czech = Build(Translations(Language::Czech));
+            switch (language)
+            {
+                case Language::French: return &french;
+                case Language::German: return &german;
+                case Language::Czech: return &czech;
+                case Language::English: break;
+            }
+            return nullptr;
         }
     }
 
@@ -44,12 +60,26 @@ namespace GalaxyEggbert::Game
 
     std::string_view LanguageCode(Language language) noexcept
     {
-        return language == Language::French ? "fr" : "en";
+        switch (language)
+        {
+            case Language::French: return "fr";
+            case Language::German: return "de";
+            case Language::Czech: return "cs";
+            case Language::English: break;
+        }
+        return "en";
     }
 
     std::string_view LanguageName(Language language) noexcept
     {
-        return language == Language::French ? "Français" : "English";
+        switch (language)
+        {
+            case Language::French: return "Français";
+            case Language::German: return "Deutsch";
+            case Language::Czech: return "Čeština";
+            case Language::English: break;
+        }
+        return "English";
     }
 
     std::optional<Language> ParseLanguage(std::string_view codeOrLocale) noexcept
@@ -68,18 +98,26 @@ namespace GalaxyEggbert::Game
         {
             return Language::English;
         }
+        if (first == 'd' && second == 'e')
+        {
+            return Language::German;
+        }
+        if (first == 'c' && second == 's')
+        {
+            return Language::Czech;
+        }
         return std::nullopt;
     }
 
     std::string_view Tr(std::string_view english) noexcept
     {
-        if (CurrentLanguage() != Language::French)
+        const Table* table = TableOf(CurrentLanguage());
+        if (table == nullptr)
         {
             return english;
         }
-        const Table& table = FrenchTable();
-        const auto found = table.find(english);
-        return found == table.end() ? english : found->second;
+        const auto found = table->find(english);
+        return found == table->end() ? english : found->second;
     }
 
     std::string Format(std::string_view pattern, std::initializer_list<std::string_view> args)
@@ -109,11 +147,32 @@ namespace GalaxyEggbert::Game
         return Format(Tr(english), args);
     }
 
+    std::string TrCount(std::string_view one, std::string_view other, long long count,
+                        std::initializer_list<std::string_view> args)
+    {
+        if (count == 1)
+        {
+            return TrFormat(one, args);
+        }
+        std::string_view forms = Tr(other);
+        const auto bar = forms.find('|');
+        if (bar != std::string_view::npos)
+        {
+            // Czech: 2-4 the first form, 0 and 5 and more the second.
+            const bool few = CurrentLanguage() == Language::Czech && count >= 2 && count <= 4;
+            forms = few ? forms.substr(0, bar) : forms.substr(bar + 1);
+        }
+        return Format(forms, args);
+    }
+
     std::span<const Translation> Translations(Language language) noexcept
     {
-        if (language == Language::French)
+        switch (language)
         {
-            return {kFrenchTranslations, kFrenchTranslationCount};
+            case Language::French: return {kFrenchTranslations, kFrenchTranslationCount};
+            case Language::German: return {kGermanTranslations, kGermanTranslationCount};
+            case Language::Czech: return {kCzechTranslations, kCzechTranslationCount};
+            case Language::English: break;
         }
         return {};
     }

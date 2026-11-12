@@ -14,6 +14,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 - The game in French: the menus, the Setup, the help, the training hints (Mobile Eggbert's own
   French), the editor and the network game. The language follows the system's; the Setup's new
   Language button (top right) switches English and French and is saved (BD-0126).
+- The game in German and Czech too; the Language button goes through the four. The font has the
+  letters they need, and capitals keep their accents (French's too). The network game carries names
+  with accents ("Hráč A"): it cannot be played with 0.1.x (network protocol 4).
 
 ### Fixed
 

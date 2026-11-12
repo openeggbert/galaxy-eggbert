@@ -30,6 +30,14 @@ int main()
     check(helloBack && helloBack->kind == MessageKind::Hello && helloBack->simulationRevision == 7 &&
               helloBack->contentHash == hello.contentHash && helloBack->name == "Player A",
           "Hello: revision, content hash and name come back");
+    // Names in UTF-8 (protocol 4: Czech's default "Hráč A").
+    hello.name = "Hráč A";
+    const auto czechBack = Decode(Encode(hello));
+    check(czechBack && czechBack->name == "Hráč A", "Hello: a UTF-8 name comes back whole");
+    check(CleanText("ab\x01" "c\xff\xc3", 15) == "abc", "CleanText: controls and broken sequences are left out");
+    check(CleanText("ččččččččč", 15) == "ččččččč", "CleanText: a character is never cut at the limit");
+    check(AsciiText("Hráč Žluťoučký ß", 30) == "Hrac Zlutoucky ss", "AsciiText: the letters without their marks");
+    hello.name = "Player A";
 
     Message lobby;
     lobby.kind = MessageKind::Lobby;
