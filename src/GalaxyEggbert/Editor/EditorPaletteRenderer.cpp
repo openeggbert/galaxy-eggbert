@@ -26,7 +26,6 @@ namespace GalaxyEggbert::Editor
         constexpr int kButtonColumns = 6;
         constexpr int kButtonSheetIconOffset = 6;
         constexpr float kGlyphCellPx = 32.0f;
-        constexpr int kGlyphColumns = 16;
         constexpr float kTextScale = 0.5f;
         constexpr float kSelectionPadding = 3.0f;
         constexpr int kSkyRegionCount = 32;
@@ -53,21 +52,17 @@ namespace GalaxyEggbert::Editor
 
         void AppendLabel(
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, std::string_view message,
-            float left, float top, float sheetWidth, float sheetHeight)
+            float left, float top, float sheetWidth, float sheetHeight, int textureScale)
         {
             float penX = left;
             for (std::size_t at = 0; at < message.size();)
             {
                 const int rank = GalaxyEggbert::Game::TextMetrics::NextGlyph(message, at);
-                const int column = rank % kGlyphColumns;
-                const int row = rank / kGlyphColumns;
+                const auto uv = GalaxyEggbert::Game::TextMetrics::GlyphUv(rank, sheetWidth, sheetHeight, textureScale);
                 const float glyphSize = kGlyphCellPx * kTextScale;
                 quads.push_back({
                     penX, top, penX + glyphSize, top + glyphSize,
-                    static_cast<float>(column) * kGlyphCellPx / sheetWidth,
-                    static_cast<float>(row) * kGlyphCellPx / sheetHeight,
-                    static_cast<float>(column + 1) * kGlyphCellPx / sheetWidth,
-                    static_cast<float>(row + 1) * kGlyphCellPx / sheetHeight,
+                    uv.u0, uv.v0, uv.u1, uv.v1,
                 });
                 penX += GalaxyEggbert::Game::TextMetrics::GlyphAdvance(rank) * kTextScale;
             }
@@ -356,7 +351,7 @@ namespace GalaxyEggbert::Editor
                     });
                     AppendLabel(
                         numberLabels, label, cell.x0 + 5.0f, cell.y0 + 5.0f,
-                        sheetWidth, sheetHeight);
+                        sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
                 }
                 impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
                 GalaxyEggbert::Game::QuadBatch::FlushQuads(
@@ -401,7 +396,7 @@ namespace GalaxyEggbert::Editor
                     cell.y0 + kGlyphCellPx * kTextScale + 6.0f,
                     0, 0, 1, 1,
                 });
-                AppendLabel(numberLabels, label, cell.x0 + 5.0f, cell.y0 + 5.0f, sheetWidth, sheetHeight);
+                AppendLabel(numberLabels, label, cell.x0 + 5.0f, cell.y0 + 5.0f, sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
             }
             impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
@@ -445,7 +440,7 @@ namespace GalaxyEggbert::Editor
                     axisLabels, kLabels[i],
                     button.x0 + ((button.x1 - button.x0) - LabelWidth(kLabels[i])) * 0.5f,
                     button.y0 + ((button.y1 - button.y0) - kGlyphCellPx * kTextScale) * 0.5f,
-                    sheetWidth, sheetHeight);
+                    sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
             }
             impl_->textEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
@@ -460,7 +455,7 @@ namespace GalaxyEggbert::Editor
                 placeLabel, placeText,
                 place.x0 + ((place.x1 - place.x0) - LabelWidth(placeText)) * 0.5f,
                 place.y0 + ((place.y1 - place.y0) - kGlyphCellPx * kTextScale) * 0.5f,
-                sheetWidth, sheetHeight);
+                sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
             impl_->textEffect->setDiffuseColorProperty({0.12f, 0.08f, 0.02f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, placeLabel,
@@ -493,7 +488,7 @@ namespace GalaxyEggbert::Editor
                 std::vector<GalaxyEggbert::Game::QuadBatch::Quad> coordinateLabel;
                 AppendLabel(
                     coordinateLabel, coordinates, coordinateRect.x0, coordinateRect.y0,
-                    sheetWidth, sheetHeight);
+                    sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
                 impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
                 GalaxyEggbert::Game::QuadBatch::FlushQuads(
                     device, *impl_->textEffect, impl_->textRenderer, coordinateLabel,
@@ -519,7 +514,7 @@ namespace GalaxyEggbert::Editor
                 GalaxyEggbert::Game::QuadBatch::FlushQuads(
                     device, *impl_->flatEffect, impl_->flatRenderer, plate, viewportWidth, viewportHeight, 0.6f);
                 std::vector<GalaxyEggbert::Game::QuadBatch::Quad> glyphs;
-                AppendLabel(glyphs, label.text.c_str(), left, top, sheetWidth, sheetHeight);
+                AppendLabel(glyphs, label.text.c_str(), left, top, sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
                 impl_->textEffect->setDiffuseColorProperty(label.colour);
                 GalaxyEggbert::Game::QuadBatch::FlushQuads(
                     device, *impl_->textEffect, impl_->textRenderer, glyphs, viewportWidth, viewportHeight, 1.0f);
@@ -550,7 +545,7 @@ namespace GalaxyEggbert::Editor
             for (std::size_t i = 0; i < state.statusLines.size(); ++i)
             {
                 AppendLabel(labels, state.statusLines[i].c_str(), kLeft, kTop + lineHeight * static_cast<float>(i),
-                            sheetWidth, sheetHeight);
+                            sheetWidth, sheetHeight, Game::TextureScaleOf(impl_->textTexture.get()));
             }
             impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
@@ -575,7 +570,7 @@ namespace GalaxyEggbert::Editor
             AppendLabel(
                 notice, kMessage, left, top,
                 Game::LogicalWidth(*impl_->textTexture),
-                Game::LogicalHeight(*impl_->textTexture));
+                Game::LogicalHeight(*impl_->textTexture), Game::TextureScaleOf(impl_->textTexture.get()));
             impl_->textEffect->setDiffuseColorProperty({1.0f, 0.05f, 0.05f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, notice,

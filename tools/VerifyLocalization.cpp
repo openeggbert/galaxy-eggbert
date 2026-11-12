@@ -10,11 +10,13 @@
 //    language, no translation is left without its literal, a translation keeps the English's {0},
 //    {1}... placeholders, and each of its characters has a glyph of its own (the training hints' own
 //    French table too).
+// 4. All 384 text, 24 pad and 20 flag cells keep the bilinear footprint inside their cell at 1x/2x.
 #include <GalaxyEggbert/Game/Localization.hpp>
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -38,6 +40,54 @@ namespace
         {
             ++failures;
             std::cout << "FAIL: " << what << "\n";
+        }
+    }
+
+    void CheckCell(const char* sheet, int cell, int columns, float cellW, float cellH,
+                   float sheetW, float sheetH, int scale, GalaxyEggbert::Game::AtlasUvRect uv)
+    {
+        // Work in physical texels, independently of the helper's logical-pixel inset.
+        const float left = float(cell % columns) * cellW * float(scale);
+        const float top = float(cell / columns) * cellH * float(scale);
+        const float right = left + cellW * float(scale);
+        const float bottom = top + cellH * float(scale);
+        const float x0 = uv.u0 * sheetW * float(scale), x1 = uv.u1 * sheetW * float(scale);
+        const float y0 = uv.v0 * sheetH * float(scale), y1 = uv.v1 * sheetH * float(scale);
+        constexpr float tolerance = 0.0002f; // normalized float UV round-trip
+        const auto near = [](float a, float b) { return std::abs(a - b) <= tolerance; };
+        bool ok = near(x0, left + 0.5f) && near(y0, top + 0.5f) &&
+                  near(x1, right - 0.5f) && near(y1, bottom - 0.5f) &&
+                  x0 < x1 && y0 < y1;
+        // Bilinear filtering reaches half a texel either side of each sample centre.
+        // Check endpoints too: magnification must never reach the neighbouring cell.
+        for (int sample = 0; sample <= 256; ++sample)
+        {
+            const float t = float(sample) / 256.0f;
+            const float x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
+            ok &= x - 0.5f >= left - tolerance && x + 0.5f <= right + tolerance &&
+                  y - 0.5f >= top - tolerance && y + 0.5f <= bottom + tolerance;
+        }
+        if (!ok)
+        {
+            std::cerr << sheet << " cell " << cell << " at " << scale << "x: UV escapes its cell or has the wrong inset\n";
+            Check(false, "atlas UV escapes its cell or has the wrong inset");
+        }
+    }
+
+    void CheckTextUv()
+    {
+        for (const int scale : {1, 2})
+        {
+            for (int glyph = 0; glyph < 16 * 24; ++glyph)
+                CheckCell("text", glyph, 16, 32, 32, 512, 768, scale,
+                          TextMetrics::GlyphUv(glyph, 512, 768, scale));
+            for (int icon = 0; icon < 8 * 3; ++icon)
+                CheckCell("pad", icon, 8, 140, 140, 1120, 420, scale,
+                          AtlasCellUv(icon, 8, 140, 140, 1120, 420, scale));
+            constexpr int flags = static_cast<int>(kLanguageCount);
+            for (int flag = 0; flag < flags; ++flag)
+                CheckCell("flags", flag, flags, 48, 32, 48 * flags, 32, scale,
+                          AtlasCellUv(flag, flags, 48, 32, 48 * flags, 32, scale));
         }
     }
 
@@ -454,6 +504,7 @@ int main(int argc, char** argv)
         std::cerr << "usage: VerifyLocalization <source dir>\n";
         return 2;
     }
+    CheckTextUv();
     CheckTextMetrics();
     CheckFormatAndParse();
     CheckTranslations(argv[1]);

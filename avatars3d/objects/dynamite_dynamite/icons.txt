@@ -3,5 +3,5 @@
 icon element 252 0.0000 0 0 0.981 60 0 0
 icon element 253 0.0000 0 0 0.970 60 0 0
 # Painted spark variants share 252's pose; decal drawn separately (IoU not measured).
-icon element 254 0.0000 0 0 0.000 60 0 0
-icon element 255 0.0000 0 0 0.000 60 0 0
+icon element 254 0.0000 0 0 0.959 60 0 0
+icon element 255 0.0000 0 0 0.966 60 0 0

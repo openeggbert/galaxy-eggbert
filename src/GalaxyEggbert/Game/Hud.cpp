@@ -80,7 +80,6 @@ namespace GalaxyEggbert::Game
         // A glyph is drawn at the pen and the pen advances by its real
         // proportional width (TextMetrics.hpp).
         constexpr float kGlyphCellPx = 32.0f;
-        constexpr int kGlyphCols = 16;
 
         // pad.png: 140px cells, 8 columns (sheet 1120x420).
         constexpr float kPadCellPx = 140.0f;
@@ -316,6 +315,7 @@ namespace GalaxyEggbert::Game
 
         const float textSheetW = LogicalWidth(textTexture_);
         const float textSheetH = LogicalHeight(textTexture_);
+        const int textTextureScale = TextureScaleOf(&textTexture_);
 
         // Non-Play phase overlay (plan.md HUD-023): the real HUD is fully
         // hidden, replaced by just this one big centered message.
@@ -330,17 +330,16 @@ namespace GalaxyEggbert::Game
             for (std::size_t at = 0; at < str.size();)
             {
                 const int rank = TextMetrics::NextGlyph(str, at);
-                const int gcol = rank % kGlyphCols;
-                const int grow = rank / kGlyphCols;
                 Quad q;
                 q.x0 = refToScreenX(penX);
                 q.y0 = refToScreenY(textY);
                 q.x1 = q.x0 + cellPx * scale;
                 q.y1 = q.y0 + cellPx * scale;
-                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 messageQuads.push_back(q);
                 penX += TextMetrics::GlyphAdvance(rank) * kMessageScale;
             }
@@ -518,17 +517,16 @@ namespace GalaxyEggbert::Game
             for (std::size_t at = 0; at < str.size();)
             {
                 const int rank = TextMetrics::NextGlyph(str, at);
-                const int gcol = rank % kGlyphCols;
-                const int grow = rank / kGlyphCols;
                 Quad q;
                 q.x0 = refToScreenX(penX);
                 q.y0 = refToScreenY(kPersoTextY);
                 q.x1 = q.x0 + cellPx * scale;
                 q.y1 = q.y0 + cellPx * scale;
-                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 textQuads.push_back(q);
                 penX += TextMetrics::GlyphAdvance(rank) * kPersoTextScale;
             }
@@ -583,14 +581,14 @@ namespace GalaxyEggbert::Game
             panel.y0 = refToScreenY(kPanelY0);
             panel.x1 = refToScreenX(kPanelX1);
             panel.y1 = refToScreenY(kPanelY1);
-            const int col = kPanelIcon % kPadCols;
-            const int row = kPanelIcon / kPadCols;
             const float padSheetW = LogicalWidth(padTexture_);
             const float padSheetH = LogicalHeight(padTexture_);
-            panel.u0 = (static_cast<float>(col) * kPadCellPx) / padSheetW;
-            panel.v0 = (static_cast<float>(row) * kPadCellPx) / padSheetH;
-            panel.u1 = (static_cast<float>(col + 1) * kPadCellPx) / padSheetW;
-            panel.v1 = (static_cast<float>(row + 1) * kPadCellPx) / padSheetH;
+            const auto uv = AtlasCellUv(kPanelIcon, kPadCols, kPadCellPx, kPadCellPx,
+                                        padSheetW, padSheetH, TextureScaleOf(&padTexture_));
+            panel.u0 = uv.u0;
+            panel.v0 = uv.v0;
+            panel.u1 = uv.u1;
+            panel.v1 = uv.v1;
             padQuads.push_back(panel);
 
             char text[16];
@@ -600,17 +598,16 @@ namespace GalaxyEggbert::Game
             for (std::size_t at = 0; at < str.size();)
             {
                 const int rank = TextMetrics::NextGlyph(str, at);
-                const int gcol = rank % kGlyphCols;
-                const int grow = rank / kGlyphCols;
                 Quad q;
                 q.x0 = refToScreenX(penX);
                 q.y0 = refToScreenY(kTreasureTextY);
                 q.x1 = q.x0 + kGlyphCellPx * scale;
                 q.y1 = q.y0 + kGlyphCellPx * scale;
-                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 textQuads.push_back(q);
                 penX += TextMetrics::GlyphAdvance(rank);
             }
@@ -639,14 +636,14 @@ namespace GalaxyEggbert::Game
             speedPanel.y0 = refToScreenY(kSpeedBaseY - kSpeedPadding);
             speedPanel.x1 = refToScreenX(5.0f + speedTextW + kSpeedPadding);
             speedPanel.y1 = refToScreenY(kSpeedBaseY + kSpeedTextH + kSpeedPadding);
-            const int speedCol = kPanelIcon % kPadCols;
-            const int speedRow = kPanelIcon / kPadCols;
             const float padSheetW = LogicalWidth(padTexture_);
             const float padSheetH = LogicalHeight(padTexture_);
-            speedPanel.u0 = (static_cast<float>(speedCol) * kPadCellPx) / padSheetW;
-            speedPanel.v0 = (static_cast<float>(speedRow) * kPadCellPx) / padSheetH;
-            speedPanel.u1 = (static_cast<float>(speedCol + 1) * kPadCellPx) / padSheetW;
-            speedPanel.v1 = (static_cast<float>(speedRow + 1) * kPadCellPx) / padSheetH;
+            const auto uv = AtlasCellUv(kPanelIcon, kPadCols, kPadCellPx, kPadCellPx,
+                                        padSheetW, padSheetH, TextureScaleOf(&padTexture_));
+            speedPanel.u0 = uv.u0;
+            speedPanel.v0 = uv.v0;
+            speedPanel.u1 = uv.u1;
+            speedPanel.v1 = uv.v1;
             padQuads.push_back(speedPanel);
 
             const float speedCellPx = kGlyphCellPx * kSpeedTextScale;
@@ -654,17 +651,16 @@ namespace GalaxyEggbert::Game
             for (std::size_t at = 0; at < speedText.size();)
             {
                 const int rank = TextMetrics::NextGlyph(speedText, at);
-                const int gcol = rank % kGlyphCols;
-                const int grow = rank / kGlyphCols;
                 Quad q;
                 q.x0 = refToScreenX(speedPenX);
                 q.y0 = refToScreenY(kSpeedBaseY);
                 q.x1 = q.x0 + speedCellPx * scale;
                 q.y1 = q.y0 + speedCellPx * scale;
-                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 textQuads.push_back(q);
                 speedPenX += TextMetrics::GlyphAdvance(rank) * kSpeedTextScale;
             }
@@ -696,14 +692,14 @@ namespace GalaxyEggbert::Game
             panel.y0 = refToScreenY(kHintPanelY0);
             panel.x1 = refToScreenX(kHintPanelX1);
             panel.y1 = refToScreenY(kHintPanelY1);
-            const int col = kPanelIcon % kPadCols;
-            const int row = kPanelIcon / kPadCols;
             const float padSheetW = LogicalWidth(padTexture_);
             const float padSheetH = LogicalHeight(padTexture_);
-            panel.u0 = (static_cast<float>(col) * kPadCellPx) / padSheetW;
-            panel.v0 = (static_cast<float>(row) * kPadCellPx) / padSheetH;
-            panel.u1 = (static_cast<float>(col + 1) * kPadCellPx) / padSheetW;
-            panel.v1 = (static_cast<float>(row + 1) * kPadCellPx) / padSheetH;
+            const auto uv = AtlasCellUv(kPanelIcon, kPadCols, kPadCellPx, kPadCellPx,
+                                        padSheetW, padSheetH, TextureScaleOf(&padTexture_));
+            panel.u0 = uv.u0;
+            panel.v0 = uv.v0;
+            panel.u1 = uv.u1;
+            panel.v1 = uv.v1;
             hintPanelQuads.push_back(panel);
 
             const std::string str(trainingHint);
@@ -716,17 +712,16 @@ namespace GalaxyEggbert::Game
             for (std::size_t at = 0; at < str.size();)
             {
                 const int rank = TextMetrics::NextGlyph(str, at);
-                const int gcol = rank % kGlyphCols;
-                const int grow = rank / kGlyphCols;
                 Quad q;
                 q.x0 = refToScreenX(penX);
                 q.y0 = refToScreenY(textY);
                 q.x1 = q.x0 + cellPx * scale;
                 q.y1 = q.y0 + cellPx * scale;
-                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
-                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
-                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
-                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
+                q.u0 = uv.u0;
+                q.v0 = uv.v0;
+                q.u1 = uv.u1;
+                q.v1 = uv.v1;
                 textQuads.push_back(q);
                 penX += TextMetrics::GlyphAdvance(rank) * textScale;
             }
@@ -749,21 +744,21 @@ namespace GalaxyEggbert::Game
             const float right=(float(viewportW)-offsetX)/scale-(rightTouchControls ? 250.f : 18.f);
             const float left=right-width;
             const float padW=LogicalWidth(padTexture_),padH=LogicalHeight(padTexture_);
-            const int col=kPanelIcon%kPadCols,row=kPanelIcon/kPadCols;
+            const auto panelUv = AtlasCellUv(kPanelIcon, kPadCols, kPadCellPx, kPadCellPx,
+                                             padW, padH, TextureScaleOf(&padTexture_));
             padQuads.push_back({refToScreenX(left-6),refToScreenY(top-3),refToScreenX(right+6),
-                refToScreenY(top+rowHeight*2+23),col*kPadCellPx/padW,row*kPadCellPx/padH,
-                (col+1)*kPadCellPx/padW,(row+1)*kPadCellPx/padH});
+                refToScreenY(top+rowHeight*2+23),panelUv.u0,panelUv.v0,panelUv.u1,panelUv.v1});
             for (std::size_t i=0;i<lines.size();++i)
             {
                 float penX=left+(width-TextMetrics::Width(lines[i])*textScale)*.5f;
                 const float y=top+rowHeight*float(i);
                 for (std::size_t at=0;at<lines[i].size();)
                 {
-                    const int rank=TextMetrics::NextGlyph(lines[i], at),gcol=rank%kGlyphCols,grow=rank/kGlyphCols;
+                    const int rank=TextMetrics::NextGlyph(lines[i], at);
+                    const auto uv = TextMetrics::GlyphUv(rank, textSheetW, textSheetH, textTextureScale);
                     const float cellPx=kGlyphCellPx*textScale*scale;
                     textQuads.push_back({refToScreenX(penX),refToScreenY(y),refToScreenX(penX)+cellPx,
-                        refToScreenY(y)+cellPx,gcol*kGlyphCellPx/textSheetW,grow*kGlyphCellPx/textSheetH,
-                        (gcol+1)*kGlyphCellPx/textSheetW,(grow+1)*kGlyphCellPx/textSheetH});
+                        refToScreenY(y)+cellPx,uv.u0,uv.v0,uv.u1,uv.v1});
                     penX+=TextMetrics::GlyphAdvance(rank)*textScale;
                 }
             }

@@ -6,8 +6,39 @@
 #include <string>
 #include <string_view>
 
+namespace GalaxyEggbert::Game
+{
+    struct AtlasUvRect
+    {
+        float u0, v0, u1, v1;
+    };
+
+    // Unguttered atlas cells must sample between their first and last texel centres:
+    // filtering at a cell edge blends its neighbour into a magnified quad. Dimensions
+    // are logical pixels; textureScale is that of the texture actually bound (1 or 2),
+    // including a per-sheet fallback to 1x. This changes UVs only, never quad geometry.
+    [[nodiscard]] inline constexpr AtlasUvRect AtlasCellUv(
+        int cell, int columns, float cellWidth, float cellHeight,
+        float sheetWidth, float sheetHeight, int textureScale) noexcept
+    {
+        const float inset = 0.5f / static_cast<float>(textureScale);
+        const float x = static_cast<float>(cell % columns) * cellWidth;
+        const float y = static_cast<float>(cell / columns) * cellHeight;
+        return {(x + inset) / sheetWidth, (y + inset) / sheetHeight,
+                (x + cellWidth - inset) / sheetWidth, (y + cellHeight - inset) / sheetHeight};
+    }
+}
+
 namespace GalaxyEggbert::Game::TextMetrics
 {
+    // text.png has 32-logical-pixel glyph cells in 16 columns. The inset is half
+    // a texel of the bound sheet, also when SetTextureScale selects its 2x twin.
+    [[nodiscard]] inline constexpr AtlasUvRect GlyphUv(
+        int glyph, float sheetWidth, float sheetHeight, int textureScale) noexcept
+    {
+        return AtlasCellUv(glyph, 16, 32.0f, 32.0f, sheetWidth, sheetHeight, textureScale);
+    }
+
     // text.png's proportional font, as Mobile Eggbert lays it out
     // (Text::DrawChar/GetCharWidth): a glyph is drawn at the pen position and
     // the pen then advances by its width plus one pixel. Every text layout

@@ -7,8 +7,9 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | Model | Source | Icons | IoU mean | IoU worst | Verdict |
 |---|---|---|---|---|---|
 | ammo_munitions-glu | Blupi/munitions-glu.rd4, camera 'Caméra 2' | 1 | 0.992 | 0.992 | faithful |
+| angel_blupi-ange | Blupi/blupi-ange.rd4, camera 'Caméra Jeu' | 12 | 0.972 | 0.965 | faithful |
 | barre_barre | Decor/barre.rd4, camera 'Caméra 2' | 1 | 0.888 | 0.888 | faithful |
-| barreplain_barre | Decor/barre.rd4, camera 'Caméra 2' | 1 | 0.833 | 0.833 | to look at |
+| barreplain_barre | Decor/barre.rd4, camera 'Caméra 2' | 1 | 0.833 | 0.833 | faithful: the pipe as the sprite's, a pixel higher; the sprite's dark lower edge is its shading |
 | bd_big0108_big0108 | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 0.979 | 0.979 | faithful |
 | bd_big02_big02 | Decor/palais/big02.rds, camera 'Caméra 2' | 1 | 0.992 | 0.992 | faithful |
 | bd_cabane_cabane | Explo/cabane.rd4, camera 'Caméra Jeu' | 1 | 0.993 | 0.993 | faithful |
@@ -41,29 +42,43 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | bd_plante3c_plante3c | Explo/plante3c.rd4, camera 'Caméra Jeu' | 1 | 0.686 | 0.686 | faithful: thin leaves, and the sprite is cut at its icon's bottom edge |
 | bd_vase1_vase1 | Decor/smooth/vase1.rds, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
 | bird_oiseau | Blupi/oiseau.rd4, camera 'Caméra 2' | 32 | 0.899 | 0.674 | faithful: its weakest icons are turning frames whose thin wings and legs land a pixel off at 60 pixels (compare sheet; live in 084) |
+| bridge364_grotte-fragile1 | Decor/grotte-fragile1.rd4, camera 'Caméra Jeu' | 9 | 0.872 | 0.858 | faithful |
 | bulldozer_tracks-profil | Blupi/tracks-profil.rd4, camera 'Caméra Jeu' | 11 | 0.969 | 0.922 | faithful |
 | column_support1 | Decor/support1.rd4, camera 'Caméra Jeu' | 1 | 0.921 | 0.921 | faithful |
+| conveyor311_chenille | Decor/chenille.rds, camera 'Caméra 2' | 6 | 0.959 | 0.950 | faithful |
 | creature_creature1 | Blupi/creature1.rds, camera 'Caméra 2' | 1 | 0.998 | 0.998 | faithful |
 | creature_creature1y | Blupi/creature1y.rds, camera 'Caméra 2' | 5 | 0.995 | 0.990 | faithful |
 | creature_creature2 | Blupi/creature2.rds, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
 | creature_creature3 | Blupi/creature3.rds, camera 'Caméra 2' | 1 | 0.998 | 0.998 | faithful |
 | creature_creature4 | Blupi/creature4.rds, camera 'Caméra 2' | 1 | 0.989 | 0.989 | faithful |
 | creature_creature5 | Blupi/creature5.rds, camera 'Caméra 2' | 1 | 0.978 | 0.978 | faithful |
+| crusher317_aplatisseur | Decor/aplatisseur.rd4, camera 'Caméra 2' | 7 | 0.974 | 0.948 | faithful |
 | decoy_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 6 | 0.957 | 0.906 | faithful |
 | decoygreen_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 6 | 0.957 | 0.906 | faithful |
+| door334_porte-r | Decor/porte-r.rd4, camera 'Caméra 2' | 1 | 0.983 | 0.983 | faithful |
+| door335_porte-v | Decor/porte-v.rd4, camera 'Caméra 2' | 1 | 0.983 | 0.983 | faithful |
+| door336_porte-b | Decor/porte-b.rd4, camera 'Caméra 2' | 1 | 0.983 | 0.983 | faithful |
 | drink_bouteille | Blupi/bouteille.rd4, camera 'Caméra Jeu' | 1 | 0.876 | 0.876 | faithful |
-| dynamite_dynamite | Decor/dynamite.rd4, camera 'Caméra 2' | 2 | 0.976 | 0.970 | faithful |
+| drip404_goutte01 | Decor/goutte/goutte01.rds, camera 'Caméra 2' | 1 | 0.901 | 0.901 | faithful |
+| drip404_goutte02 | Decor/goutte/goutte02.rds, camera 'Caméra 2' | 1 | 0.871 | 0.871 | faithful |
+| drip404_goutte03 | Decor/goutte/goutte03.rds, camera 'Caméra 2' | 1 | 0.821 | 0.821 | faithful: the drop as the sprite's; the model's flare at the ceiling is where it hangs from the block |
+| drip404_goutte04 | Decor/goutte/goutte04.rds, camera 'Caméra 2' | 2 | 0.623 | 0.441 | adaptation: the second icon is a falling drop the scene holds at no time (min_iou=0.3); the first as the sprite's |
+| dynamite_dynamite | Decor/dynamite.rd4, camera 'Caméra 2' | 4 | 0.969 | 0.959 | faithful |
 | egg_oeuf | Blupi/oeuf.rd4, camera 'Caméra 2' | 8 | 0.984 | 0.963 | faithful |
+| electro238_electro | Decor/electro.rd4, camera 'Caméra 2' | 5 | 0.810 | 0.794 | faithful: the ball and spring as the sprite's; the sparks are painted on the sprites and drawn as a decal (Q-005) |
+| emitter304_eclair | Decor/eclair.rd4, camera 'Caméra 2' | 1 | 0.940 | 0.940 | faithful |
 | exit_fleche | Blupi/fleche.rd4, camera 'Caméra 2' | 8 | 0.947 | 0.902 | faithful |
 | fan_ventillo-h | Decor/ventillo-h.rd4, camera 'Caméra 2' | 3 | 0.993 | 0.993 | faithful |
 | fish_poisson | Blupi/poisson.rd4, camera 'Caméra 2' | 11 | 0.942 | 0.926 | its head is rounder and larger than the sprites' (BB3D-032, open) |
 | follow_bombe-follow | Blupi/bombe-follow.rd4, camera 'Caméra 2' | 10 | 0.932 | 0.874 | faithful |
-| girder201_structure1 | Decor/structure1.rd4, camera 'Caméra 2' | 1 | 0.786 | 0.786 | to look at |
+| girder201_structure1 | Decor/structure1.rd4, camera 'Caméra 2' | 1 | 0.786 | 0.786 | faithful: the truss, its corner and centre plates as the sprite's; the thin bars and the frame's edge a pixel or two off at 32 pixels |
+| glu168_glu | Blupi/glu.rd4, camera 'Caméra Jeu' | 4 | 0.829 | 0.804 | faithful: the creature as the sprite's; the glue on the floor is Blupi's own model flattened, drawn by the game |
 | helicopter_helico-seul2 | Blupi/helico-seul2.rd4, camera 'Caméra Jeu' | 1 | 0.970 | 0.970 | faithful |
 | invert_panneau-invert | Blupi/panneau-invert.rd4, camera 'Caméra 2' | 8 | 0.999 | 0.998 | faithful |
 | key1_cle1 | Blupi/cle1.rd4, camera 'Caméra 2' | 7 | 0.962 | 0.945 | faithful |
 | key2_cle2 | Blupi/cle2.rd4, camera 'Caméra 2' | 7 | 0.962 | 0.945 | faithful |
 | key3_cle3 | Blupi/cle3.rd4, camera 'Caméra 2' | 7 | 0.962 | 0.945 | faithful |
+| lift29_techno29 | Decor/techno29.rd4, camera 'Caméra 2' | 1 | 0.942 | 0.942 | faithful |
 | lollipop_sucette | Blupi/sucette.rd4, camera 'Caméra 2' | 8 | 0.985 | 0.971 | faithful |
 | mine_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 18 | 0.943 | 0.880 | faithful |
 | movingmine_bombe-move | Blupi/bombe-move.rd4, camera 'Caméra 2' | 9 | 0.984 | 0.975 | faithful |
@@ -75,14 +90,20 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | pillar_colonne3 | Decor/smooth/colonne3.rds, camera 'Caméra 2' | 1 | 0.916 | 0.916 | faithful |
 | post182_porte1 | Decor/porte1.rd4, camera 'Caméra 2' | 1 | 0.956 | 0.956 | faithful |
 | projectile_balle-glu | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
+| rail398_mur06 | Decor/palais/mur06.rds, camera 'Caméra 2' | 1 | 0.987 | 0.987 | faithful |
+| saw378_scie | Decor/scie.rd4, camera 'Caméra 2' | 6 | 0.991 | 0.986 | faithful |
 | secretexit_cle | Blupi/cle.rd4, camera 'Caméra 2' | 7 | 0.963 | 0.945 | faithful |
+| sign174_world1 | Decor/world1.rd4, camera 'Caméra 2' | 8 | 0.995 | 0.995 | faithful |
+| spring211_ressort | Decor/ressort.rd4, camera 'Caméra 2' | 5 | 0.980 | 0.979 | faithful |
 | statue_statue | Decor/palais/statue.rds, camera 'Caméra Jeu' | 1 | 0.991 | 0.991 | faithful |
 | support3_support3 | Decor/support3.rd4, camera 'Caméra Jeu' | 1 | 0.989 | 0.989 | faithful |
 | support_support2 | Decor/support2.rd4, camera 'Caméra Jeu' | 1 | 0.995 | 0.995 | faithful |
+| switch384_interrupteur | Decor/interrupteur.rd4, camera 'Caméra 2' | 2 | 1.000 | 1.000 | faithful |
 | teleporter1_teleporteur1 | Decor/teleporteur1.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
 | teleporter2_teleporteur2 | Decor/teleporteur2.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
 | teleporter3_teleporteur3 | Decor/teleporteur3.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
 | teleporter4_teleporteur4 | Decor/teleporteur4.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
+| temp324_temporaire | Decor/temporaire.rd4, camera 'Caméra 2' | 6 | 0.990 | 0.985 | faithful |
 | tentacle_tenta01 | Decor/tentacule/tenta01.rds, camera 'Caméra 2' | 1 | 0.985 | 0.985 | faithful |
 | tentacle_tenta02 | Decor/tentacule/tenta02.rds, camera 'Caméra 2' | 1 | 0.986 | 0.986 | faithful |
 | tentacle_tenta03 | Decor/tentacule/tenta03.rds, camera 'Caméra 2' | 1 | 0.987 | 0.987 | faithful |
@@ -100,8 +121,11 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | tentacle_tenta15 | Decor/tentacule/tenta15.rds, camera 'Caméra 2' | 1 | 0.984 | 0.984 | faithful |
 | tentacle_tenta16 | Decor/tentacule/tenta16.rds, camera 'Caméra 2' | 1 | 0.994 | 0.994 | faithful |
 | tentacle_tenta17 | Decor/tentacule/tenta17.rds, camera 'Caméra 2' | 1 | 0.973 | 0.973 | faithful |
+| treasure421_porte2 | Decor/porte2.rd4, camera 'Caméra 2' | 19 | 0.799 | 0.799 | faithful: the post as the sprite's; the number plate is a decal (sign_decals.py --plate), not the model's |
 | treasure_coffre | Blupi/coffre.rd4, camera 'Caméra 2' | 12 | 0.964 | 0.950 | faithful |
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
+| worlddone166_world2b | Decor/world2b.rd4, camera 'Caméra 2' | 14 | 0.995 | 0.995 | faithful |
+| worldsign158_world2a | Decor/world2a.rd4, camera 'Caméra 2' | 15 | 0.995 | 0.995 | faithful |
 
-97 models: 88 match every icon at 0.85 or better; 9 below, each with its verdict.
+121 models: 107 match every icon at 0.85 or better; 14 below, each with its verdict.

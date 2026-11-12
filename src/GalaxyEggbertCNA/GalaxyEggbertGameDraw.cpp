@@ -71,7 +71,7 @@
 #include <optional>
 #include <set>
 #include <vector>
-#include "GameInternal.hpp"
+#include "GameHelpers.hpp"
 #include "NetGame.hpp"
 #include <GalaxyEggbert/Net/NetRules.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
@@ -96,8 +96,24 @@ namespace GalaxyEggbert::CNA
             const auto lerp = [t](const Microsoft::Xna::Framework::Vector3& a, const Microsoft::Xna::Framework::Vector3& b)
             { return a + (b - a) * t; };
             const Microsoft::Xna::Framework::Vector3 blupi(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-            const auto drawnEye = lerp(previousEye_, eye);
-            const auto drawnTarget = lerp(previousTarget_, target);
+            auto drawnEye = lerp(previousEye_, eye);
+            auto drawnTarget = lerp(previousTarget_, target);
+            if (cameraMode_ == CameraMode::ThirdPersonModel)
+            {
+                // Two safe ticks can straddle a corner. Protect the interpolated body too,
+                // including the interpolated shake, without changing the simulation camera.
+                const auto body = lerp(previousBlupi_, blupi);
+                const auto arm = drawnEye - body;
+                const float length = arm.Length();
+                if (length > 0.001f)
+                {
+                    const float safe = CameraWallDistance(worldRuntime_.GetWorld(), body,
+                                                          arm * (1.0f / length), length);
+                    const auto correction = arm * (safe / length - 1.0f);
+                    drawnEye += correction;
+                    drawnTarget += correction;
+                }
+            }
             if (drawnEye != drawnTarget)
             {
                 camera_.SetLookAt(drawnEye, drawnTarget);

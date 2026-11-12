@@ -1221,7 +1221,8 @@ namespace GalaxyEggbert::CNA
                        GalaxyEggbert::Editor::kEditorStarterSpawnRenderZ);
         }
         chaseCamera_.Reset(blupi_.GetYaw());
-        cameraSmoothedInitialized_ = false;
+        simulationChaseCamera_.Reset(blupi_.GetYaw());
+        cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
         missionStartPending_ = false;
         recordingResume_ = false;
 
@@ -1968,7 +1969,7 @@ namespace GalaxyEggbert::CNA
             n.spectating = true;
             n.soundsIn.clear();
             n.watched = at == playing.end() ? playing.front() : *at;
-            cameraSmoothedInitialized_ = false;
+            cameraSmoothedInitialized_ = false; simulationCameraInitialized_ = false;
         }
         else
         {
@@ -2035,7 +2036,7 @@ namespace GalaxyEggbert::CNA
         }
         constexpr float kDistance = 4.0f, kElevation = 0.35f;
         const Microsoft::Xna::Framework::Vector3 direction(bx * std::cos(kElevation), std::sin(kElevation), bz * std::cos(kElevation));
-        const float room = std::max(0.8f, RaymarchWallDistance(worldRuntime_.GetWorld(), target, direction, kDistance) - 0.2f);
+        const float room = std::max(0.8f, CameraWallDistance(worldRuntime_.GetWorld(), target, direction, kDistance) - 0.2f);
         const Microsoft::Xna::Framework::Vector3 eye = target + direction * std::min(kDistance, room);
         if (!cameraSmoothedInitialized_)
         {

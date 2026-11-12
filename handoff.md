@@ -8,6 +8,31 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## Text atlas bleeding (2026-11-12, the owner) — fixed, uncommitted on `localization`
+
+`TextMetrics::GlyphUv` insets every glyph by half a physical texel of the bound sheet (logical size
+and its actual `TextureScaleOf`, including 1x fallbacks). Every HUD/menu/editor text path uses it;
+positions, sizes, advances and both font sheets stay unchanged. `AtlasCellUv` in the same header
+does the same for pad icons (including HUD panels) and the menu/picker flags: both sheets have ink
+at neighbouring cell edges. `VerifyLocalization` checks all 384 glyphs, 24 pad cells and 20 flags at
+both scales, including their magnified bilinear footprint.
+
+Verified: `CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv cmake --build build-cna-opengl3 --parallel 6`;
+`ctest --test-dir build-cna-opengl3 -j4 --output-on-failure` **131/131**. Xvfb captures at 1920x1152:
+`build-probe/textbleed/{before,after}.png` (1x) and `{before,after}-2x.png`, matching crops of
+`pqrstuvwxyz`, Čeština, Русский and Ελληνικά; full frames and logs beside them. Before the fix all nine
+800x480 goldens matched. After it, each changes 659-660 pixels (0.1716-0.1719%), entirely within
+`[490,590) x [445,480)` in the lower-right UI; mean RGB error 0.0286-0.0298/255, maximum channel error
+82. **No golden references replaced.** Per-frame measurements: `build-probe/textbleed/golden-diff.csv`.
+
+The 2x sheet also has faint dots already inside some cells: e.g. ASCII `P`'s last physical row has
+alpha up to 50/255, versus zero in the 1x sheet. The half-texel inset prevents neighbouring-cell
+sampling but cannot remove ink inside the selected cell; a faint residual remains in the 2x
+Русский crop. Asset changes were explicitly excluded, so this is left for a separately scoped asset
+cleanup. Evidence and reproduction: `build-probe/textbleed/evidence.txt`. All 15 files dirty at the
+task's start (the chase-camera work and CURRENT.md included) retain their exact starting hashes.
+No commit or push made by this task.
+
 ## Five more languages (2026-11-12 evening, the owner after 0.3.0) — done on branch `localization`
 
 Finnish, Danish, Norwegian (Bokmål; the system's "no" and "nn" too), Turkish, Greek (BD-0126): their tables
