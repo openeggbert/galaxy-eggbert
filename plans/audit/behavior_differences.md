@@ -1640,7 +1640,7 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
-## BD-0126 — the game in French, and a Language button in the Setup (owner, Q-023) — FIXED_AND_VERIFIED
+## BD-0126 — the game in French, German and Czech, and a Language button in the Setup (owner, Q-023) — FIXED_AND_VERIFIED
 
 - Original: Mobile Eggbert shows its texts in French or English, from the system's language
   (MyResource::Init: "fr" French, anything else English); there is no choice in the game. Its
@@ -1660,6 +1660,19 @@ court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/gr
   translation left over, placeholders kept); CTest 130/130; live in French: the menu, the Setup and
   its Language both ways, the help, the demo positions, the network game's list, the editor, the
   galaxy, the goodbye, mission 11's first hint, the pause (`build-probe/l10n/`).
+- **2026-11-12, German and Czech (the owner's Q-023 answers):** two more languages, translated for
+  Galaxy (TranslationsDe.cpp, TranslationsCs.cpp, the training hints' columns; German without the
+  sharp s, written "ss"); the Language button goes English, Français, Deutsch, Čeština. text.png and
+  its 2x sheet have eight more rows (glyphs 128-170, `tools/make_text_glyphs.py`: the letters Czech,
+  German and French need, composed from the sheet's own strokes; the original's eight rows
+  unchanged); a capital with a mark is drawn a few pixels shorter so that the mark fits its cell, in
+  every language, French's É À Ç included (they were drawn without their accent before). Czech's
+  plurals (2-4, 5 and more): `TrCount`. The network game carries names and chat in UTF-8 (protocol 4,
+  "Hráč A"); CNA's local profile gets the name without its marks ("Hrac A", `Net::AsciiText`).
+  Validation: VerifyLocalization (391 texts in each language, every character drawable, Czech's
+  plural forms), VerifyNetProtocol (a UTF-8 name round trip), CTest 131/131; live in German and Czech:
+  the menu, the Setup, the help, the demo positions, the network game's list and nickname panel, the
+  editor, its tools and keys, the galaxy, the goodbye, mission 11's hint, the pause.
 
 ## BD-0125 — a 1.5x game speed on F4 (owner request; on F9 in 0.1.2) — FIXED_AND_VERIFIED
 

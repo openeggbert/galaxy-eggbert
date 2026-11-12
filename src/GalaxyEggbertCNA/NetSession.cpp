@@ -132,7 +132,8 @@ namespace GalaxyEggbert::CNA
         {
             // CNA's local offline profile, signed in when the services start (LocalProfiles.hpp);
             // with a server (SetServer) an account, through CNA's Guide.
-            const std::string profile = Net::CleanText(name, Net::kMaxName);
+            // ASCII: the profile name goes through the environment (and a Windows one's code page).
+            const std::string profile = Net::AsciiText(name, Net::kMaxName);
 #if defined(_WIN32)
             _putenv_s("CNA_GAMER_SERVICES_AUTO_SIGN_IN", server_.empty() ? profile.c_str() : "");
 #else

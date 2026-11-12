@@ -1753,8 +1753,8 @@ namespace GalaxyEggbert::CNA
             const auto& score = n.scores[static_cast<std::size_t>(i)];
             std::string line(place > 0 && place <= 4 ? Tr(kPlaces[place]) : Tr("playing"));
             line += "  " + score.name + " (" + std::string(Tr(Net::kTeamNames[score.team % Net::kTeams])) + ")  " +
-                    TrFormat(score.kills == 1 ? "{0} kill, " : "{0} kills, ", {std::to_string(score.kills)}) +
-                    TrFormat(score.deaths == 1 ? "{0} death" : "{0} deaths", {std::to_string(score.deaths)});
+                    TrCount("{0} kill, ", "{0} kills, ", score.kills, {std::to_string(score.kills)}) +
+                    TrCount("{0} death", "{0} deaths", score.deaths, {std::to_string(score.deaths)});
             lines.push_back(line);
         }
         return lines;

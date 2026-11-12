@@ -55,8 +55,15 @@ namespace
         Check(Glyphs("üàâéèëêïîôùûäöç") ==
                   std::vector<int>{15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
               "the 15 accented letters are glyphs 15-29 (Text::table_char)");
-        Check(Glyphs("ÉÀÇÎŸ") == std::vector<int>{'E', 'A', 'C', 'I', 'Y'},
-              "a capital is drawn without its accent");
+        Check(Glyphs("áčďěíňóřšťúůýž") == std::vector<int>{128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141},
+              "Czech's letters are Galaxy's glyphs 128-141 (tools/make_text_glyphs.py)");
+        Check(Glyphs("ÉÀÇÎÄŽ") == std::vector<int>{145, 160, 162, 166, 157, 156}, "a capital keeps its accent (Galaxy's glyphs)");
+        Check(Glyphs("ŸÅ") == std::vector<int>{'Y', 'A'}, "a capital the sheet has no picture of is its plain letter");
+        bool widths = true;
+        for (int glyph = TextMetrics::kFirstExtraGlyph;
+             glyph < TextMetrics::kFirstExtraGlyph + static_cast<int>(std::size(TextMetrics::kExtraGlyphs)); ++glyph)
+            widths = widths && TextMetrics::kWidth[glyph] > 0;
+        Check(widths, "every glyph of Galaxy's has a width");
         Check(Glyphs("’«» –") == std::vector<int>{'\'', '"', '"', ' ', '-'},
               "typographic quotes, spaces and dashes are their ASCII forms");
         Check(Glyphs("中") == std::vector<int>{TextMetrics::kUnknownGlyph}, "a character the sheet lacks is glyph 1");
@@ -87,7 +94,10 @@ namespace
         Check(ParseLanguage("fr") == Language::French && ParseLanguage("fr-CA") == Language::French &&
                   ParseLanguage("fr_FR.UTF-8") == Language::French && ParseLanguage("FR") == Language::French,
               "French codes and locale names");
-        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("cs-CZ") && !ParseLanguage("fra") &&
+        Check(ParseLanguage("de") == Language::German && ParseLanguage("de_AT.UTF-8") == Language::German &&
+                  ParseLanguage("cs-CZ") == Language::Czech && ParseLanguage("cs") == Language::Czech,
+              "German and Czech codes and locale names");
+        Check(ParseLanguage("en-US") == Language::English && !ParseLanguage("sk-SK") && !ParseLanguage("fra") &&
                   !ParseLanguage("") && !ParseLanguage("C"),
               "English, and no language for the others");
         SetLanguage(Language::English);
@@ -96,6 +106,19 @@ namespace
         Check(Tr("Continue") == "Continuer" && TrFormat("Player {0}", {"B"}) == "Joueur B",
               "French from the table (MyResource's TX_BUTTON_CONTINUE, TX_GAMER_TITLE)");
         Check(Tr("A text no one translated") == "A text no one translated", "a missing translation is the English");
+        // A number's noun: English and French one or other, Czech's two plurals (2-4, 0 and 5+).
+        SetLanguage(Language::English);
+        Check(TrCount("{0} place", "{0} places", 1, {"1"}) == "1 place" &&
+                  TrCount("{0} place", "{0} places", 0, {"0"}) == "0 places",
+              "TrCount: English one and other");
+        SetLanguage(Language::Czech);
+        Check(TrCount("{0} place", "{0} places", 1, {"1"}) == "1 místo" &&
+                  TrCount("{0} place", "{0} places", 3, {"3"}) == "3 místa" &&
+                  TrCount("{0} place", "{0} places", 5, {"5"}) == "5 míst" &&
+                  TrCount("{0} place", "{0} places", 0, {"0"}) == "0 míst",
+              "TrCount: Czech 1, 2-4, 0 and 5+");
+        SetLanguage(Language::German);
+        Check(TrCount("{0} place", "{0} places", 4, {"4"}) == "4 Orte" && Tr("Continue") == "Weiter", "German");
         SetLanguage(Language::English);
     }
 
@@ -192,13 +215,16 @@ namespace
         for (std::size_t i = 0; i < code.size(); ++i)
         {
             std::size_t length = 0;
-            for (const std::string_view name : {std::string_view("TrFormat"), std::string_view("TrMark"), std::string_view("Tr")})
+            for (const std::string_view name : {std::string_view("TrFormat"), std::string_view("TrMark"),
+                                                std::string_view("TrCount"), std::string_view("Tr")})
                 if (code.compare(i, name.size(), name) == 0)
                 {
                     length = name.size();
                     break;
                 }
             if (length == 0 || (i > 0 && IsIdentifier(code[i - 1])) || IsIdentifier(code[i + length])) continue;
+            // TrCount's keys are its first two arguments (the one and the other form).
+            int arguments = length == 7 && code.compare(i, 7, "TrCount") == 0 ? 2 : 1;
             std::size_t at = i + length;
             while (at < code.size() && std::isspace(static_cast<unsigned char>(code[at]))) ++at;
             if (at >= code.size() || code[at] != '(') continue;
@@ -244,7 +270,10 @@ namespace
                     if (depth == 0) break;
                     --depth;
                 }
-                else if (c == ',' && depth == 0) break;
+                else if (c == ',' && depth == 0)
+                {
+                    if (--arguments == 0) break;
+                }
                 ++at;
             }
             if (joining) keys.emplace(current, where);
@@ -336,8 +365,16 @@ namespace
             for (const auto& [key, text] : byKey)
             {
                 Check(keys.count(std::string(key)) != 0, name + ": a translation no code asks for: \"" + Shown(key) + "\"");
-                Check(Placeholders(key) == Placeholders(text),
-                      name + ": the placeholders differ: \"" + Shown(key) + "\" / \"" + Shown(text) + "\"");
+                // A plural's forms each keep the key's placeholders (TrCount: "few|many").
+                for (std::size_t from = 0;;)
+                {
+                    const std::size_t bar = text.find('|', from);
+                    const std::string_view form = text.substr(from, bar == std::string_view::npos ? text.npos : bar - from);
+                    Check(Placeholders(key) == Placeholders(form),
+                          name + ": the placeholders differ: \"" + Shown(key) + "\" / \"" + Shown(form) + "\"");
+                    if (bar == std::string_view::npos) break;
+                    from = bar + 1;
+                }
                 Check(!text.empty(), name + ": an empty translation of \"" + Shown(key) + "\"");
                 CheckDrawable(text, name);
             }

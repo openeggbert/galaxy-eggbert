@@ -772,7 +772,7 @@ namespace GalaxyEggbert::CNA
             {
                 // The spectator (Q-022): the world under the one watched, his name, the notices.
                 const auto& watched = net_->peers[static_cast<std::size_t>(net_->watched)];
-                std::vector<std::string> lines{TrFormat(watched.lives == 1 ? "Watching {0}  ({1} life)" : "Watching {0}  ({1} lives)",
+                std::vector<std::string> lines{TrCount("Watching {0}  ({1} life)", "Watching {0}  ({1} lives)", watched.lives,
                                                         {watched.name, std::to_string(watched.lives)}),
                                                std::string(Tr("Left / right: another player.  Space: the results."))};
                 const auto notices = NetNotices();

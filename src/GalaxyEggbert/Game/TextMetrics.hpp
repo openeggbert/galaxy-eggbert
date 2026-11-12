@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <string_view>
 
@@ -18,7 +19,10 @@ namespace GalaxyEggbert::Game::TextMetrics
     // Robert Vokac): pixels at scale 1 per glyph index. For printable ASCII
     // the glyph index is the character code (its table_char is the identity
     // there).
-    inline constexpr std::uint8_t kWidth[128] = {
+    // Glyphs 128-170 are Galaxy's (tools/make_text_glyphs.py, owner Q-023 2026-11-12): the letters
+    // Czech, German and French need that the sheet had not, kExtraGlyphs below; their widths are
+    // their base letters' (ď's a little more: its caron beside the stem).
+    inline constexpr std::uint8_t kWidth[256] = {
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 32, 14, 13, 15, 15, 15, 15,
         15, 15, 11, 12, 14, 13, 13, 15, 15, 14,
@@ -32,6 +36,12 @@ namespace GalaxyEggbert::Game::TextMetrics
         15, 15, 13, 14, 14, 6, 8, 14, 6, 21,
         16, 14, 14, 13, 12, 14, 11, 13, 13, 19,
         16, 15, 14, 10, 5, 11, 16, 0,
+        // 128-170 (á č ď ě í ň ó ř š ť ú ů ý ž, Á Č Ď É Ě Í Ň Ó Ř Š Ť Ú Ů Ý Ž, Ä Ö Ü,
+        // À Â Ç È Ê Ë Î Ï Ô Ù Û)
+        15, 13, 19, 15, 6, 16, 14, 12, 14, 11, 13, 13, 15, 14,
+        18, 17, 18, 16, 16, 15, 22, 22, 16, 18, 15, 19, 19, 18, 19,
+        18, 22, 19,
+        18, 18, 17, 16, 16, 16, 15, 15, 22, 19, 19,
     };
 
     // The glyph the original draws for a character it has no picture of (Text::GetOffset's
@@ -52,6 +62,15 @@ namespace GalaxyEggbert::Game::TextMetrics
     };
     inline constexpr int kFirstAccentedGlyph = 15;
 
+    // Galaxy's letters, glyphs 128 and on, in tools/make_text_glyphs.py's order (GLYPHS there).
+    inline constexpr char32_t kExtraGlyphs[] = {
+        U'á', U'č', U'ď', U'ě', U'í', U'ň', U'ó', U'ř', U'š', U'ť', U'ú', U'ů', U'ý', U'ž',
+        U'Á', U'Č', U'Ď', U'É', U'Ě', U'Í', U'Ň', U'Ó', U'Ř', U'Š', U'Ť', U'Ú', U'Ů', U'Ý', U'Ž',
+        U'Ä', U'Ö', U'Ü',
+        U'À', U'Â', U'Ç', U'È', U'Ê', U'Ë', U'Î', U'Ï', U'Ô', U'Ù', U'Û',
+    };
+    inline constexpr int kFirstExtraGlyph = 128;
+
     // The glyph text.png draws for code point c: ASCII and the 15 accented letters as themselves; a
     // capital or a letter the sheet has no accented picture of as its plain letter (French drops
     // the accent on a capital, which the sheet does not have); typographic spaces, quotes and
@@ -67,6 +86,13 @@ namespace GalaxyEggbert::Game::TextMetrics
             if (kAccented[i] == c)
             {
                 return kFirstAccentedGlyph + i;
+            }
+        }
+        for (int i = 0; i < static_cast<int>(std::size(kExtraGlyphs)); ++i)
+        {
+            if (kExtraGlyphs[i] == c)
+            {
+                return kFirstExtraGlyph + i;
             }
         }
         switch (c)

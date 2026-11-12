@@ -199,7 +199,7 @@ namespace GalaxyEggbert::Editor
         const std::string name = exported.filename().string();
         const auto recordings = GalaxyRecordings(gamerSlot_).size();
         const std::string with = recordings == 0 ? ""
-                                 : Game::TrFormat(recordings == 1 ? " ({0} demo with it)" : " ({0} demos with it)",
+                                 : Game::TrCount(" ({0} demo with it)", " ({0} demos with it)", recordings,
                                                   {std::to_string(recordings)});
         message_ = OfferDownload(exported, name) ? Game::TrFormat("Galaxy exported: downloaded as {0}{1}.", {name, with})
                                                  : Game::TrFormat("Galaxy exported to {0}{1}.", {exported.generic_string(), with});
@@ -467,11 +467,11 @@ namespace GalaxyEggbert::Editor
                 importMode_ = false;
                 result.imported = true;
                 const std::string placesText =
-                    Game::TrFormat(places == 1 ? "{0} place" : "{0} places", {std::to_string(places)});
+                    Game::TrCount("{0} place", "{0} places", places, {std::to_string(places)});
                 message_ = demos == 0 ? Game::TrFormat("{0}: {1} imported (Backups brings back the old ones).", {name, placesText})
                                       : Game::TrFormat("{0}: {1} and {2} (Pause > Record > Import) imported.",
                                                        {name, placesText,
-                                                        Game::TrFormat(demos == 1 ? "{0} demo" : "{0} demos",
+                                                        Game::TrCount("{0} demo", "{0} demos", demos,
                                                                        {std::to_string(demos)})});
             }
             armedImport_ = armedRow;

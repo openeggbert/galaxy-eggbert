@@ -61,11 +61,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
-- English and French (2026-11-11, owner Q-023; branch `localization`, not merged yet): every text
-  the player sees through `Localization.hpp` (Tr/TrMark/TrFormat, the English as the key), the French
-  in `TranslationsFr.cpp` and the training hints' table; the system's language or the Setup's
-  Language button (`language=` in savedata.txt); UTF-8 drawn by text.png's accented glyphs
-  (`TextMetrics`). Checked by `VerifyLocalization`; BD-0126.
+- English, French, German and Czech (French 2026-11-11, German and Czech 2026-11-12, owner Q-023;
+  in `develop`): every text the player sees through `Localization.hpp` (Tr/TrMark/TrFormat/TrCount,
+  the English as the key), the translations in `TranslationsFr/De/Cs.cpp` and the training hints'
+  table; the system's language or the Setup's Language button (`language=` in savedata.txt); UTF-8
+  drawn by text.png's glyphs, the original's and Galaxy's 128-170 (`tools/make_text_glyphs.py`,
+  `TextMetrics`); network names in UTF-8 (protocol 4). Checked by `VerifyLocalization`; BD-0126.
+- The terrain is kept in chunks of 32^3; a change rebuilds only the chunks it reaches (2026-11-12,
+  OR-0074): 5-7 ms instead of 60-70 in world065. Checked by `VerifyTerrainChunks`.
 - The network game (2026-11-10, owner Q-019; developed on branch `multiplayer`, **merged into
   `develop` 2026-11-11** by the owner, Q-020): Speedy Blupi 2's multiplayer over CNA SystemLink on a LAN, 2-4
   players, Linux and Android (not the web): the menu's Multiplayer, the games on the network, the

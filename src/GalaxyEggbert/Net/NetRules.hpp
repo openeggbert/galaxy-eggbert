@@ -105,8 +105,8 @@ namespace GalaxyEggbert::Net
     [[nodiscard]] inline std::string DieNotice(const std::string& name, int lives)    // 259-261
     {
         if (lives == 0) return Game::TrFormat("{0} has no life left !", {name});
-        if (lives == 1) return Game::TrFormat("{0} has only one more life left !", {name});
-        return Game::TrFormat("{0} has {1} lives left !", {name, std::to_string(lives)});
+        return Game::TrCount("{0} has only one more life left !", "{0} has {1} lives left !", lives,
+                             {name, std::to_string(lives)});
     }
 
     // Galaxy's (Q-022, not the original's): who got whom, beside PK_DIE's notice.

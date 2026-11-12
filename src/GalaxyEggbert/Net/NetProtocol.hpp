@@ -16,10 +16,11 @@ namespace GalaxyEggbert::Net
     // (the original applied whatever arrived; blupi_recon's validator is the model). No CNA here.
 
     inline constexpr std::uint16_t kProtocolId = 0x4547; // "GE"
-    inline constexpr std::uint8_t kProtocolVersion = 3; // 2: sounds, lifts, the aura, the cloud's touch, killers;
+    inline constexpr std::uint8_t kProtocolVersion = 4; // 2: sounds, lifts, the aura, the cloud's touch, killers;
                                                         // 3: the match's lives and time limit, TimeUp,
                                                         //    a world of the host's editor sent (WorldData),
-                                                        //    a dropped player back in the match (Rejoin, Snapshot)
+                                                        //    a dropped player back in the match (Rejoin, Snapshot);
+                                                        // 4: names and chat in UTF-8 ("Hráč A", Czech's default name)
     inline constexpr int kMaxPlayers = 4;     // the original's MAXNETPLAYER
     inline constexpr int kTeams = 4;          // yellow, orange, blue, green (the editor's starts)
     inline constexpr std::size_t kMaxName = 15;     // a CNA local profile's name
@@ -198,6 +199,10 @@ namespace GalaxyEggbert::Net
 
     // Whether the message must arrive (lobby, chat, events, deaths) or may be lost (poses).
     [[nodiscard]] bool IsReliable(MessageKind kind) noexcept;
-    // Printable ASCII of at most @p limit characters (what names and chat may hold).
+    // What names and chat may hold: printable ASCII and whole UTF-8 characters from U+00A0 on (no
+    // control, no broken sequence), at most @p limit bytes, a character never cut.
     [[nodiscard]] std::string CleanText(const std::string& text, std::size_t limit);
+    // @p text in printable ASCII, a Latin letter without its mark ("Hráč" -> "Hrac", "ß" -> "ss"), any
+    // other character left out: for CNA's local profile name.
+    [[nodiscard]] std::string AsciiText(const std::string& text, std::size_t limit);
 }
