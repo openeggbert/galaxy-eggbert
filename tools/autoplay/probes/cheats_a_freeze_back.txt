@@ -1,0 +1,9 @@
+# Brief A, mission 012. GALAXY_BACK_CHECKPOINTS=691
+wait 600
+type freeze
+wait 360
+type freeze
+type back
+wait 5
+expect lives = 3
+end

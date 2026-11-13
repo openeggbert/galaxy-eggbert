@@ -708,7 +708,8 @@ namespace GalaxyEggbert::CNA
                                              phase_ == GalaxyEggbert::Def::GamePhase::Wait ||
                                              phase_ == GalaxyEggbert::Def::GamePhase::Init ||
                                              phase_ == GalaxyEggbert::Def::GamePhase::Editor;
-            if (!phaseHasRealScreen)
+            const bool photo = cheatPhoto_ && phase_ == GalaxyEggbert::Def::GamePhase::Play;
+            if (!phaseHasRealScreen && !photo)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
                 // (not render-centered, WorldRuntime::kWorldCenterX/Z offset
@@ -917,7 +918,7 @@ namespace GalaxyEggbert::CNA
                     DrawNetScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 }
             }
-            else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !photo)
             {
                 if (tickInput_.touchControlsEnabled)
                     inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
@@ -1022,7 +1023,7 @@ namespace GalaxyEggbert::CNA
             // background swap and no phase change, so this draws LAST,
             // on top of the just-drawn Play controls above (only ever
             // shown during Play, see Update()'s own gating).
-            if (cheatMenuShown_ && phase_ == GalaxyEggbert::Def::GamePhase::Play)
+            if (cheatMenuShown_ && phase_ == GalaxyEggbert::Def::GamePhase::Play && !photo)
             {
                 inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
@@ -1031,7 +1032,7 @@ namespace GalaxyEggbert::CNA
             if (controlsHelp_.shown)
             {
                 inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                          controlsHelp_.cheats);
+                                          controlsHelp_.cheats, controlsHelp_.page);
             }
         }
     }

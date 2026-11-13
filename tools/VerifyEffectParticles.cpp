@@ -193,6 +193,33 @@ int main()
         Check(glows && dull, "the fire shines above white, the dust does not");
     }
 
+    {
+        EffectParticles frozen;
+        frozen.Advance(0);
+        frozen.Advance(1);
+        Feed(frozen,7,ParticleKind::Fire);
+        const auto before = frozen.Particles().front();
+        frozen.Burst(ParticleKind::Dust,1,SceneSheet::Element,kUv,Vector3(0,0,0),1);
+        frozen.Advance(2,true);
+        Feed(frozen,7,ParticleKind::Fire);
+        Check(frozen.Count() == 2 && frozen.Particles()[0].position == before.position &&
+              frozen.Particles()[0].age == before.age && frozen.Particles()[1].age == 1,
+              "freeze stops object effect motion/age/emission; Blupi's dust still moves");
+        std::vector<GalaxyEggbert::Game::SceneBillboardBatch> quads;
+        frozen.Append(quads,Vector3(1,0,0),Vector3(0,1,0),0.5f);
+        Check(quads.front().quads.front().center == before.position,
+              "frozen object particles do not interpolate back along their velocity");
+        for (int tick = 3; tick < 180; ++tick) { frozen.Advance(tick,true); Feed(frozen,7,ParticleKind::Fire); }
+        Check(frozen.Count() == 1 && frozen.Particles()[0].age == before.age,
+              "an explosion in progress stays frozen after its ordinary lifetime");
+        Feed(frozen,8,ParticleKind::Fire);
+        const auto count = frozen.Count();
+        Feed(frozen,8,ParticleKind::Fire);
+        Check(count == 2 && frozen.Count() == count, "a new frozen effect gets one visible piece, without repeated emission");
+        frozen.Advance(180,false);
+        Check(frozen.Particles()[0].age == before.age+1, "object particles resume when freeze ends");
+    }
+
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");
     return failures == 0 ? 0 : 1;
 }

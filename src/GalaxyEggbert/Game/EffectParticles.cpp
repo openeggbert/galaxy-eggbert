@@ -85,10 +85,12 @@ namespace GalaxyEggbert::Game
         m_particles.clear();
         m_tick = -1;
         m_stepped = 0;
+        m_objectsFrozen = false;
     }
 
-    void EffectParticles::Advance(int tick)
+    void EffectParticles::Advance(int tick, bool freezeObjects)
     {
+        m_objectsFrozen = freezeObjects;
         if (m_tick < 0 || tick < m_tick)
         {
             // The first frame, or the clock went back (a new mission, a restart): start afresh.
@@ -104,6 +106,7 @@ namespace GalaxyEggbert::Game
         {
             for (auto& p : m_particles)
             {
+                if (m_objectsFrozen && p.sourceObject >= 0) continue;
                 p.velocity = p.velocity * p.drag;
                 p.velocity.Y -= p.gravity;
                 p.position += p.velocity;
@@ -120,6 +123,18 @@ namespace GalaxyEggbert::Game
     void EffectParticles::Feed(int objectIndex, ParticleKind kind, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
                                const Vector3& center)
     {
+        if (m_objectsFrozen)
+        {
+            // An effect Blupi creates while frozen still has a visible, stationary first piece.
+            if (std::none_of(m_particles.begin(), m_particles.end(),
+                             [&](const auto& p) { return p.sourceObject == objectIndex; }))
+            {
+                const auto before = m_particles.size();
+                Emit(objectIndex, m_tick, kind, sheet, uv, center, 1);
+                if (m_particles.size() > before) m_particles.back().sourceObject = objectIndex;
+            }
+            return;
+        }
         // One emission per tick stepped, the earlier ones moved on by the ticks since.
         for (int back = m_stepped - 1; back >= 0; --back)
         {
@@ -185,6 +200,7 @@ namespace GalaxyEggbert::Game
         for (int piece = 0; piece < count; ++piece)
         {
             EffectParticle p;
+            p.sourceObject = burst < 0 ? objectIndex : -1;
             p.sheet = sheet;
             p.uv = uv;
             p.tint = tint;
@@ -293,13 +309,14 @@ namespace GalaxyEggbert::Game
             // Whole for its first half, then fading out.
             const float alpha = t < 0.5f ? 1.0f : 1.0f - (t - 0.5f) * 2.0f;
             SceneQuad quad;
-            quad.center = p.position - p.velocity * lag;
-            const float size = std::max(0.01f, p.size - p.growth * lag);
+            const float particleLag = m_objectsFrozen && p.sourceObject >= 0 ? 0.0f : lag;
+            quad.center = p.position - p.velocity * particleLag;
+            const float size = std::max(0.01f, p.size - p.growth * particleLag);
             quad.size = Vector2(size, size);
             quad.right = right;
             quad.up = up;
             quad.uv = p.uv;
-            quad.rotation = p.rotation - p.spin * lag;
+            quad.rotation = p.rotation - p.spin * particleLag;
             quad.color = Fade(p.tint, alpha);
             quad.glow = p.glow;
             batch->quads.push_back(quad);

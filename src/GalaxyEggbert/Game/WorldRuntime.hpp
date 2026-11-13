@@ -130,7 +130,8 @@ namespace GalaxyEggbert::Game
         // comment) and every MobileObjSpec's per-instance phase (same 20 fps
         // base rate, mobile-eggbert's original reference rate for
         // MoveObject animation).
-        void Update(float dt);
+        // Freeze only MoveObject clocks; terrain animation/hazard timing keeps running.
+        void Update(float dt, bool freezeObjects = false);
 
         [[nodiscard]] const Worlds::World& GetWorld() const { return *world_; }
 

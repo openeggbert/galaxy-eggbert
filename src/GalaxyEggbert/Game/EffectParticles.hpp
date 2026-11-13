@@ -52,6 +52,7 @@ namespace GalaxyEggbert::Game
         float spin = 0.0f;    // radians a tick
         float gravity = 0.0f; // blocks a tick a tick, down (negative rises)
         float drag = 1.0f;    // the velocity kept each tick
+        int sourceObject = -1; // a MoveObject effect; -1 for Blupi/world bursts
         int age = 0;
         int life = 30;        // ticks
         Microsoft::Xna::Framework::Color tint = Microsoft::Xna::Framework::Color::White;
@@ -64,7 +65,8 @@ namespace GalaxyEggbert::Game
         // At the simulation's tick `tick`: steps every particle through the ticks since the last call (none
         // in the same tick or while paused) and drops the dead. A tick going back (a new mission, a
         // restart) clears them.
-        void Advance(int tick);
+        // Freeze MoveObject pieces, while Blupi's dust/bubbles and the world's embers continue.
+        void Advance(int tick, bool freezeObjects = false);
         // An effect object shown this frame: `objectIndex` its slot, its sprite's sheet, rectangle and
         // centre. Emits its pieces for each tick Advance() stepped.
         void Feed(int objectIndex, ParticleKind kind, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
@@ -98,6 +100,7 @@ namespace GalaxyEggbert::Game
 
         int m_tick = -1;
         int m_stepped = 0;
+        bool m_objectsFrozen = false;
         std::vector<EffectParticle> m_particles;
     };
 }

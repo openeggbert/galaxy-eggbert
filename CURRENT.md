@@ -61,6 +61,16 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- MODERN cheats `mark`/`recall`, `photo` and `freeze` (2026-11-13,
+  `plans/codex/cheats_mark_recall_photo_freeze.md`): a repeatable, world-local marked tick restored
+  through resume replay; Play overlays hidden with the cheat keyboard/help still available; autonomous
+  MoveObjects and their effect particles frozen while Blupi, contacts, pickups and tile timing continue.
+  Freeze is inactive/refused in network matches. Cheat help has two origin-based pages, navigated by
+  keyboard/gamepad or pointer. Native build, 136/136 CTest, ten gameplay probes, exact rewind/resume
+  checks, a fresh-process Continue, nine unchanged golden views and the unchanged trace verified;
+  reviewed help/photo/frozen-object captures and report in `build-probe/cheats-a/`. Android/web and
+  physical touch/gamepad hardware were not tested for this change.
+
 - On-screen cheat keyboard (2026-11-13, `plans/codex/cheat_keyboard.md`): hold the mouse's left
   button or one unclaimed finger in the centre circle (11% of the smaller viewport side), or LT,
   for 120 ticks. QWERTY, F4-F8/F12 and close; arrows/d-pad/stick and A/Enter navigate, B closes.

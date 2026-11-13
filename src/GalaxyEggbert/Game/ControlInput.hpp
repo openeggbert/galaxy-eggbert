@@ -50,6 +50,27 @@ namespace GalaxyEggbert::Game
         bool f1WasDown = false;
         bool escapeWasDown = false;
         bool pointerCloseHeld = false;
+        int page = 0;
+        bool previousPageHeld = false, nextPageHeld = false, pagePointerHeld = false;
+
+        void OpenCheats() noexcept
+        {
+            shown = cheats = true;
+            page = 0;
+            previousPageHeld = nextPageHeld = pagePointerHeld = false;
+        }
+
+        [[nodiscard]] static int PageArrow(float x, float y, int width, int height) noexcept
+        {
+            const float scale = std::min(width/640.f,height/480.f);
+            if (scale <= 0) return 0;
+            x = (x - (width-640*scale)*.5f) / scale;
+            y = (y - (height-480*scale)*.5f) / scale;
+            if (y < 410 || y > 438) return 0;
+            if (x >= 200 && x <= 260) return -1;
+            if (x >= 370 && x <= 430) return 1;
+            return 0;
+        }
 
         [[nodiscard]] static bool OverClose(float x, float y, int width, int height) noexcept
         {
@@ -60,11 +81,25 @@ namespace GalaxyEggbert::Game
         }
 
         [[nodiscard]] bool Update(const Microsoft::Xna::Framework::Input::KeyboardState& keys,
-            bool pointerDown=false, bool overClose=false) noexcept
+            bool pointerDown=false, bool overClose=false, int pageArrow=0) noexcept
         {
             using Microsoft::Xna::Framework::Input::Keys;
             const bool wasPointerHeld=pointerCloseHeld;
             if (!pointerDown) pointerCloseHeld=false;
+            const bool wasPagePointerHeld = pagePointerHeld;
+            if (!pointerDown) pagePointerHeld = false;
+            const bool previous = keys.IsKeyDown(Keys::Left) || keys.IsKeyDown(Keys::A) ||
+                keys.IsKeyDown(Keys::PageUp) || keys.IsKeyDown(Keys::LeftShift); // gamepad LB
+            const bool next = keys.IsKeyDown(Keys::Right) || keys.IsKeyDown(Keys::D) ||
+                keys.IsKeyDown(Keys::PageDown) || keys.IsKeyDown(Keys::RightControl); // gamepad RB
+            if (shown && cheats)
+            {
+                if ((previous && !previousPageHeld) || (next && !nextPageHeld) ||
+                    (pointerDown && !wasPagePointerHeld && pageArrow != 0)) page = 1 - page;
+                if (pointerDown) pagePointerHeld = true;
+            }
+            previousPageHeld = previous;
+            nextPageHeld = next;
             const bool wasShown = shown;
             const bool f1 = keys.IsKeyDown(Keys::F1);
             const bool escape = keys.IsKeyDown(Keys::Escape);

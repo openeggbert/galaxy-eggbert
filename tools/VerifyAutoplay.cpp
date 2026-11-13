@@ -442,6 +442,24 @@ int main()
               "resume v7 round trip retains world identity, compass, debug, cheat lock and all raw inputs");
         check(text.starts_with("GALAXY_RESUME 7\n"), "resume writes format version 7");
         {
+            auto withCheats = log;
+            withCheats.start.photo = withCheats.start.freeze = true;
+            ResumeLog restored;
+            check(ResumeLog::Parse(withCheats.Serialize(), "test build", restored) &&
+                  restored.start == withCheats.start && restored.runs == withCheats.runs,
+                  "optional photo/freeze start metadata round-trips for Continue and demos");
+            check(text.find("OBJECT_CHEATS") == std::string::npos &&
+                  !parsed.start.photo && !parsed.start.freeze,
+                  "existing v7 logs without object-cheat metadata keep false defaults");
+            auto bad = withCheats.Serialize();
+            const auto body = ResumeLog::VerifiedBody(bad);
+            bad = *body;
+            bad.replace(bad.find("OBJECT_CHEATS"),13,"UNKNOWN_FLAGS");
+            check(!ResumeLog::Parse(ResumeLog::AppendChecksum(bad), "test build", restored),
+                  "unknown start metadata is refused transactionally");
+        }
+
+        {
             ResumeLog original = log;
             original.runs = {{5, log.runs[0].input}, {3, log.runs[1].input}, {7, log.runs[0].input}};
             auto trimmed = original;

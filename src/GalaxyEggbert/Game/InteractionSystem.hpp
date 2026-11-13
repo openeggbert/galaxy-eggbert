@@ -277,7 +277,9 @@ namespace GalaxyEggbert::Game
                     // continues; contacts, electro, waking followers and Perso detection do not.
                     // Active homing (8026) and dynamite blasts (9167) are reference exceptions.
                     bool blupiCanInteract = true,
-                    std::optional<float> blupiFireYaw = std::nullopt);
+                    std::optional<float> blupiFireYaw = std::nullopt,
+                    // Galaxy's MODERN freeze: autonomous objects stop; player contacts/actions run.
+                    bool freezeObjects = false);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

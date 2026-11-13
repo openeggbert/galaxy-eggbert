@@ -11,6 +11,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- Type `mark` / `recall` to remember and return to a moment in a single-player world, `photo`
+  to hide Play overlays, and `freeze` to stop objects while Blupi moves. Cheat help has two
+  pages, switched with keyboard/gamepad navigation or its on-screen arrows.
 - An on-screen cheat keyboard: hold the centre of the play view or gamepad LT for two seconds;
   tap its keys or use the arrows/d-pad and A/Enter. The game keeps running beneath it.
 - Type `back` during a single-player mission to rewind five seconds; repeat to go farther.

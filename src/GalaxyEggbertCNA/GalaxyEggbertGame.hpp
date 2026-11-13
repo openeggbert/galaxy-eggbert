@@ -845,7 +845,8 @@ namespace GalaxyEggbert::CNA
         bool BeginResume(GalaxyEggbert::Game::ResumeLog log, bool inProcess = false);
         void ReplayBatch();
         [[nodiscard]] float ResumeReplaySeconds() const;
-        void RewindBack();
+        void RewindToTick(std::uint64_t target, const char* notice);
+        [[nodiscard]] const char* TimelineCheatRefusal() const;
         void CaptureBackCheckpoint();
         void CheckResumeSelftest();
         [[nodiscard]] std::map<std::string, std::string> ResumeSignature() const;
@@ -862,6 +863,10 @@ namespace GalaxyEggbert::CNA
         bool recordingResume_ = false;
         bool replayingResume_ = false;
         bool backPending_ = false, backReplaying_ = false;
+        bool markPending_ = false, recallPending_ = false;
+        std::optional<std::uint64_t> markedTick_;
+        std::string rewindNotice_;
+        bool cheatPhoto_ = false, cheatFreeze_ = false;
         std::chrono::steady_clock::time_point resumeReplayBegan_{};
         std::uint64_t resumeReplayTotal_ = 0;
         // Mission-start cheat values missing from ResumeStart: FPS and labels survive loading;
@@ -869,7 +874,7 @@ namespace GalaxyEggbert::CNA
         // the on-disk Continue format and fresh-process behaviour alone.
         struct ResumeLocalCheats
         {
-            bool fps = false, superBlupi = false;
+            bool fps = false, superBlupi = false, photo = false, freeze = false;
             int zoomStep = 0;
             std::vector<std::string> active;
         } resumeLocalCheats_;
@@ -897,6 +902,7 @@ namespace GalaxyEggbert::CNA
             GalaxyEggbert::Def::GameSpeed gameSpeed = GalaxyEggbert::Def::GameSpeed::Normal;
             bool quickCheat = false, openDoors = false, showSecret = false, compass = false, debug = false;
             bool cheatsLocked = false, cheatsLockedForRun = false;
+            bool photo = false, freeze = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;

@@ -151,9 +151,10 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
-        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatZoomStep_, activeCheats_};
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
-        backPending_ = backReplaying_ = false;
+        backPending_ = backReplaying_ = markPending_ = recallPending_ = false;
+        markedTick_.reset();
         resumeLog_ = {};
         auto& start = resumeLog_.start;
         start.build = ResumeBuild();
@@ -169,6 +170,8 @@ namespace GalaxyEggbert::CNA
         start.showSecret = cheatShowSecret_;
         start.compass = cheatCompass_;
         start.debug = cheatDebug_;
+        start.photo = cheatPhoto_;
+        start.freeze = cheatFreeze_;
         start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -234,6 +237,8 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatPhoto_ = start.photo && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -256,15 +261,22 @@ namespace GalaxyEggbert::CNA
         if (inProcess)
         {
             cheatFps_ = resumeLocalCheats_.fps;
+            cheatPhoto_ = resumeLocalCheats_.photo;
+            cheatFreeze_ = resumeLocalCheats_.freeze;
             cheatZoomStep_ = resumeLocalCheats_.zoomStep;
             activeCheats_ = resumeLocalCheats_.active;
             blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
         }
         else
         {
+            markedTick_.reset();
+            std::erase(activeCheats_, "photo");
+            std::erase(activeCheats_, "freeze");
+            if (cheatPhoto_) activeCheats_.emplace_back("photo");
+            if (cheatFreeze_) activeCheats_.emplace_back("freeze");
             // A Continue becomes the start of a new in-process rewind history, with exactly
             // today's fresh-process defaults for state absent from the file format.
-            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatZoomStep_, activeCheats_};
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatZoomStep_, activeCheats_};
             backCheckpoints_.clear();
         }
         replayRun_ = 0;
@@ -316,7 +328,7 @@ namespace GalaxyEggbert::CNA
         if (backReplaying_)
         {
             backReplaying_ = false;
-            ShowDemoNotice("back -5 s");
+            ShowDemoNotice(rewindNotice_);
             if (std::getenv("GALAXY_BACK_CHECKPOINTS"))
             {
                 const auto expected = backCheckpoints_.find(resumeTicks_);
@@ -452,25 +464,41 @@ namespace GalaxyEggbert::CNA
         std::ostringstream out;
         out << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
             << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
-            << cheatCompass_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
+            << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
         result["cheat toggles"] = out.str();
         result["cheat keyboard"] = inputPad_.CheatKeys().StateSignature();
+        result["controls help"] = std::to_string(controlsHelp_.shown) + " " +
+            std::to_string(controlsHelp_.cheats) + " " + std::to_string(controlsHelp_.page);
         return result;
     }
 
-    void GalaxyEggbertGame::RewindBack()
+    const char* GalaxyEggbertGame::TimelineCheatRefusal() const
     {
-        backPending_ = false;
+        if (replayingResume_) return "replay";
+        if (demoActive_ || demoRecording_ || demoRecordArmed_) return "demo";
+        if (editorPlayTestActive_) return "editor play-test";
+        if (NetMatchActive()) return "network match";
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
+            fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
+            interaction_.ExitReached() || winCheerActive_) return "mission ending or not in Play";
+        if (!recordingResume_ || missionStartPending_) return "no mission log";
+        return nullptr;
+    }
+
+    void GalaxyEggbertGame::RewindToTick(std::uint64_t target, const char* notice)
+    {
         auto log = resumeLog_;
-        const auto removed = log.DropLastTicks(300);
-        const auto target = log.TickCount();
+        target = std::min(target, log.TickCount());
+        const auto removed = log.DropLastTicks(log.TickCount() - target);
         if (BeginResume(std::move(log), true))
         {
             backReplaying_ = true;
-            std::cout << "GalaxyEggbertCNA: back removed " << removed << " ticks, replay to " << target << "." << std::endl;
+            rewindNotice_ = notice;
+            if (markedTick_ && target < *markedTick_) markedTick_.reset();
+            std::cout << "GalaxyEggbertCNA: " << notice << " removed " << removed << " ticks, replay to " << target << "." << std::endl;
         }
-        else ShowDemoNotice("back: world changed; cannot rewind");
+        else ShowDemoNotice(std::string(notice) + ": world changed; cannot rewind");
     }
 
     // ---- Main-menu demos (DemoReplay.hpp) ----
@@ -637,6 +665,8 @@ namespace GalaxyEggbert::CNA
             demoSaved_.showSecret = cheatShowSecret_;
             demoSaved_.compass = cheatCompass_;
             demoSaved_.debug = cheatDebug_;
+            demoSaved_.photo = cheatPhoto_;
+            demoSaved_.freeze = cheatFreeze_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
             demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
@@ -678,6 +708,8 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatPhoto_ = start.photo && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -692,6 +724,8 @@ namespace GalaxyEggbert::CNA
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
         ResetMissionInput();
         activeCheats_.clear();
+        if (cheatPhoto_) activeCheats_.emplace_back("photo");
+        if (cheatFreeze_) activeCheats_.emplace_back("freeze");
         if (cheatCompass_) activeCheats_.push_back("compass");
         if (cheatDebug_) activeCheats_.push_back("debug");
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
@@ -814,6 +848,8 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = demoSaved_.showSecret;
         cheatCompass_ = demoSaved_.compass;
         cheatDebug_ = demoSaved_.debug;
+        cheatPhoto_ = demoSaved_.photo;
+        cheatFreeze_ = demoSaved_.freeze;
         inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;

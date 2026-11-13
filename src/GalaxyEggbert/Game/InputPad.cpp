@@ -984,7 +984,7 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                    int viewportW, int viewportH, bool cheats)
+                                    int viewportW, int viewportH, bool cheats, int page)
     {
         if (!loaded_ || viewportW <= 0 || viewportH <= 0) return;
         const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
@@ -1005,18 +1005,28 @@ namespace GalaxyEggbert::Game
         if (cheats)
         {
             // The cheat list stays English (the owner's Q-023: a tester's tool, as the debug panel).
-            line("Galaxy Eggbert - Cheats", 28, 22, 0.85f);
+            page = std::clamp(page, 0, 1);
+            line(page == 0 ? "Speedy Blupi / Mobile Eggbert" : "Galaxy Eggbert", 28, 22, 0.75f, 500);
             line("Type a word during play (no Enter needed).", 28, 54, 0.45f);
             int count = 0;
             const auto* words = TypedCheatWords(count);
-            const int perColumn = (count + 1) / 2;
+            std::vector<const TypedCheatWord*> entries;
             for (int i = 0; i < count; ++i)
+                if (words[i].HelpPage() == page) entries.push_back(&words[i]);
+            // Page two retains space for the next three Galaxy words. No table-index split.
+            const int perColumn = (static_cast<int>(entries.size()) + 1) / 2;
+            const bool dense = perColumn > 10;
+            for (int i = 0; i < static_cast<int>(entries.size()); ++i)
             {
                 const float x = i < perColumn ? 28.0f : 335.0f;
-                const float y = 78.0f + float(i % perColumn) * std::min(27.0f, 350.0f / perColumn);
-                line(words[i].word, x, y, perColumn > 13 ? 0.44f : 0.48f);
-                line(words[i].description, x, y + 13.0f, perColumn > 13 ? 0.37f : 0.4f);
+                const float y = 78.0f + float(i % perColumn) * (dense ? 24.0f : 32.0f);
+                const float room = i < perColumn ? kLeftRoom : kRightRoom;
+                line(entries[i]->word, x, y, dense ? 0.4f : 0.48f, room);
+                line(entries[i]->description, x, y + (dense ? 13.0f : 17.0f), dense ? 0.33f : 0.4f, room);
             }
+            line("[<]", 210, 416, 0.65f);
+            line(page == 0 ? "1/2" : "2/2", 295, 416, 0.65f);
+            line("[>]", 380, 416, 0.65f);
         }
         else
         {
@@ -3032,18 +3042,22 @@ namespace GalaxyEggbert::Game
             {"iovercraft", TypedCheat::IOvercraft, "Ride an overcraft"},
             {"udynamite", TypedCheat::UDynamite, "Give one dynamite stick"},
             {"weelkeys", TypedCheat::WeelKeys, "Give all three keys"},
-            {"quick", TypedCheat::Quick, "Toggle F7/F8 speed shortcuts"},
-            {"ghost", TypedCheat::Ghost, "Toggle ghost mode (pass walls)"},
-            {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance"},
-            {"help", TypedCheat::Help, "List cheats and explanations"},
-            {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
-            {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
-            {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
-            {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
-            {"fps", TypedCheat::Fps, "Show or hide the frames per second"},
-            {"position", TypedCheat::Position, "Show or hide Blupi's position (x y z)"},
-            {"honest", TypedCheat::Honest, "Lock every cheat until the game quits"},
-            {"back", TypedCheat::Back, "Go back 5 seconds (again: further)"},
+            {"quick", TypedCheat::Quick, "Toggle F7/F8 speed shortcuts", CheatOrigin::MobileEggbert},
+            {"ghost", TypedCheat::Ghost, "Toggle ghost mode (pass walls)", CheatOrigin::MobileEggbert},
+            {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance", CheatOrigin::MobileEggbert},
+            {"help", TypedCheat::Help, "List cheats and explanations", CheatOrigin::GalaxyEggbert},
+            {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)", CheatOrigin::MobileEggbert},
+            {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows", CheatOrigin::GalaxyEggbert},
+            {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles", CheatOrigin::GalaxyEggbert},
+            {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel", CheatOrigin::MobileEggbert},
+            {"fps", TypedCheat::Fps, "Show or hide the frames per second", CheatOrigin::GalaxyEggbert},
+            {"position", TypedCheat::Position, "Show or hide Blupi's position (x y z)", CheatOrigin::GalaxyEggbert},
+            {"honest", TypedCheat::Honest, "Lock every cheat until the game quits", CheatOrigin::GalaxyEggbert},
+            {"back", TypedCheat::Back, "Go back 5 seconds (again: further)", CheatOrigin::GalaxyEggbert},
+            {"mark", TypedCheat::Mark, "Remember this moment in the world", CheatOrigin::GalaxyEggbert},
+            {"recall", TypedCheat::Recall, "Return to the marked moment", CheatOrigin::GalaxyEggbert},
+            {"photo", TypedCheat::Photo, "Toggle a world view without overlays", CheatOrigin::GalaxyEggbert},
+            {"freeze", TypedCheat::Freeze, "Toggle frozen objects; Blupi still moves", CheatOrigin::GalaxyEggbert},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

@@ -1,0 +1,10 @@
+# Mission 012: moving a mark replaces it; GALAXY_BACK_CHECKPOINTS=795.
+wait 600
+type mark
+hold 180 up
+type mark
+wait 60
+type recall
+wait 5
+expect lives = 3
+end

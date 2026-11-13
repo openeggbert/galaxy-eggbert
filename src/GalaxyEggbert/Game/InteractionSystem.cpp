@@ -1174,12 +1174,12 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
                                       bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden,
                                       bool blupiFocused, bool blupiOutOfPlay, bool blupiCanInteract,
-                                      std::optional<float> blupiFireYaw)
+                                      std::optional<float> blupiFireYaw, bool freezeObjects)
     {
         events_.clear();
         deathObject_ = -1;
         ridingLift_ = false;
-        TickByeBye(dt);
+        if (!freezeObjects) TickByeBye(dt);
         // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), out of the
         // contact box (MoveObjectTouches) by then.
         if (contactGrace_)
@@ -1396,17 +1396,6 @@ namespace GalaxyEggbert::Game
                 }
             }
 
-            // INFRA-006 2nd family (plan.md §7): the 17 purely-cosmetic
-            // particle/effect types (VISUAL-008/009/010/012/013/014/015,
-            // CAM-009-adjacent, PICKUP-078/080, Clear3Ascend/"158") that just
-            // self-expire after a fixed `phase` lifetime -- see
-            // kExpiringParticleHandlers/TryTickExpiringParticle() above for
-            // the full per-type table and the two real shapes it preserves.
-            if (TryTickExpiringParticle(obj))
-            {
-                continue;
-            }
-
             // Platform lift patrol (ObjectType1/47/48): the original's step machine for every
             // MoveObject (Decor::MoveObjectStepLine, lifts included) -- dwell timeStopStart,
             // advance over stepAdvance ticks, dwell timeStopEnd, recede over stepRecede -- so
@@ -1414,7 +1403,7 @@ namespace GalaxyEggbert::Game
             // step (D43; they used to ping-pong at `speed` with no dwell).
             if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift)
             {
-                AdvancePatrolStep(obj, dt);
+                if (!freezeObjects) AdvancePatrolStep(obj, dt);
 
                 // Platform lift riding (plan.md E3D-MIG-152): this is the
                 // exact lift Blupi was standing on before the patrol step
@@ -1436,10 +1425,10 @@ namespace GalaxyEggbert::Game
                     switch (GetObjectDefinition(obj.type).liftConveyorDirection)
                     {
                         case LiftConveyorDirection::PositiveX:
-                            nudgeX = kConveyorNudgeSpeed * dt;
+                            nudgeX = freezeObjects ? 0.0f : kConveyorNudgeSpeed * dt;
                             break;
                         case LiftConveyorDirection::NegativeX:
-                            nudgeX = -kConveyorNudgeSpeed * dt;
+                            nudgeX = freezeObjects ? 0.0f : -kConveyorNudgeSpeed * dt;
                             break;
                         case LiftConveyorDirection::None:
                         default:
@@ -1457,429 +1446,446 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
-            // Crates (ObjectType12) are pushed and pulled by UpdateCratePush(), called before
-            // this; the gate (Decor.cpp:6130-6132: every vehicle mode, Balloon, Ecrase) is kept
-            // here only so a crate's way through this loop is what it was.
-            if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle &&
-                blupiCanPushCrate && !blupiBallooned)
+            // One gate around autonomous expiry, doors, fuses, bridge steps, follower AI,
+            // patrols and shooting. Contact reactions below and Blupi's actions remain live.
+            if (!freezeObjects)
             {
-                continue;
-            }
-
-            // Door-opening slide effect (ObjectType22, plan.md E3D-MIG-160,
-            // real `Decor::OpenDoor` ~11667): slides up by exactly one grid
-            // unit over the real `Config::ScaleTime(50)` = 50 ticks (2.5s
-            // at the 20Hz reference rate obj.phase already advances at),
-            // then self-destructs -- a one-shot animation, not the generic
-            // dwell/advance/dwell/recede patrol (which loops and doesn't
-            // fit a "play once and vanish" effect), so it's handled
-            // directly here instead.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType22)
-            {
-                constexpr float kSlideTicks = 50.0f;
-                const float t = std::min(obj.phase / kSlideTicks, 1.0f);
-                obj.currentY = obj.posStartY + t;
-                if (obj.phase >= kSlideTicks)
+                // INFRA-006 2nd family (plan.md §7): the 17 purely-cosmetic
+                // particle/effect types (VISUAL-008/009/010/012/013/014/015,
+                // CAM-009-adjacent, PICKUP-078/080, Clear3Ascend/"158") that just
+                // self-expire after a fixed `phase` lifetime -- see
+                // kExpiringParticleHandlers/TryTickExpiringParticle() above for
+                // the full per-type table and the two real shapes it preserves.
+                if (TryTickExpiringParticle(obj))
                 {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Dynamite fuse (ObjectType56, plan.md E3D-MIG-155) -- real
-            // 9-blast sequence at fixed ticks (Decor.cpp ~8252-8296),
-            // verified directly against the source, not just the reference
-            // doc's rounded "~200px/~100px" summary: tick 50 is the center
-            // blast (dx,dy)=(0,0); 53=(-100,8); 55=(80,10); 56=(-15,-100);
-            // 59=(20,70); 62=(30,-50); 64=(-40,30); 67=(-180,10); 69=
-            // (200,-10) -- real pixel offsets, /64 to this engine's grid
-            // units (real dx -> this engine's X, real dy -> this engine's Y,
-            // same X/Y-only 2D-source convention already used for blupih/
-            // blupit/follower; Z is always 0, no real source axis maps to
-            // it). obj.phase already advances at the real 20Hz reference
-            // rate (WorldRuntime::Update()); reconstructing the phase as
-            // of the START of this frame (`prevPhase`) lets each blast fire
-            // on the exact frame its tick is crossed, not every frame after.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56)
-            {
-                struct Blast { float tick, dx, dy; };
-                static constexpr Blast kBlasts[] = {
-                    {50.0f, 0.0f / 64.0f, 0.0f / 64.0f},
-                    {53.0f, -100.0f / 64.0f, 8.0f / 64.0f},
-                    {55.0f, 80.0f / 64.0f, 10.0f / 64.0f},
-                    {56.0f, -15.0f / 64.0f, -100.0f / 64.0f},
-                    {59.0f, 20.0f / 64.0f, 70.0f / 64.0f},
-                    {62.0f, 30.0f / 64.0f, -50.0f / 64.0f},
-                    {64.0f, -40.0f / 64.0f, 30.0f / 64.0f},
-                    {67.0f, -180.0f / 64.0f, 10.0f / 64.0f},
-                    {69.0f, 200.0f / 64.0f, -10.0f / 64.0f},
-                };
-                const float prevPhase = obj.phase - dt * 20.0f;
-                for (const auto& blast : kBlasts)
-                {
-                    if (prevPhase < blast.tick && obj.phase >= blast.tick)
-                    {
-                        const float centerX = obj.currentX + blast.dx;
-                        const float centerY = obj.currentY + blast.dy;
-                        const float centerZ = obj.currentZ;
-
-                        // Real dynamite-blast explosion flash (plan.md
-                        // VISUAL-008, ObjectType8, Decor.cpp:9065) -- one
-                        // instance per blast, at its own center, not just
-                        // the central (dx=0,dy=0) one.
-                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, centerX, centerY, centerZ, pendingSpawns);
-
-                        if (blast.dx == 0.0f && blast.dy == 0.0f)
-                        {
-                            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, centerX, centerY, centerZ);
-                            // Real camera shake (plan.md CAM-008,
-                            // Decor::DynamiteStart(), Decor.cpp:9068-9070,
-                            // confirmed via direct source read): SmallShake
-                            // fires ONLY for the center blast (dx=0,dy=0),
-                            // not for every peripheral tick in the 9-blast
-                            // sequence.
-                            events_.push_back(Event{EventKind::SmallShakeTriggered});
-                        }
-
-                        // Real 128x128px (2x2 tile) area -- +-1 grid unit
-                        // in X/Y around the blast center, same Z.
-                        constexpr float kBlastHalfExtent = 1.0f;
-
-                        // The tiles it clears (Decor.cpp:9078-9096): saws (378/379) and drips
-                        // (404/410) in its own row and the one above. Galaxy's saws lie in the
-                        // floor, a row under the original's (the floor convention, GP-0450), so
-                        // for saws the rows are the floor and his own; its drips hang as the
-                        // original's, from the ceiling (BD-0033). Until 2026-11-03 only his own row
-                        // was cleared and drips not at all, so a blast never cut a floor saw
-                        // (BD-0046). Across X and Z +-1 cell (in 3D each blast reaches as far along
-                        // Z as along X; 2026-10-25).
-                        const int wx0 = static_cast<int>(std::round(centerX - kBlastHalfExtent)) +
-                                        WorldRuntime::kWorldCenterX;
-                        const int wx1 = static_cast<int>(std::round(centerX + kBlastHalfExtent)) +
-                                        WorldRuntime::kWorldCenterX;
-                        const int wz0 = static_cast<int>(std::round(centerZ - kBlastHalfExtent)) +
-                                        WorldRuntime::kWorldCenterZ;
-                        const int wz1 = static_cast<int>(std::round(centerZ + kBlastHalfExtent)) +
-                                        WorldRuntime::kWorldCenterZ;
-                        const int wy = static_cast<int>(std::round(centerY));
-                        const int axis = static_cast<int>(world.blocksPerAxis());
-                        for (int y = wy - 1; y <= wy + 1; ++y)
-                        {
-                            for (int wz = std::max(0, wz0); y >= 0 && y < axis && wz <= std::min(axis - 1, wz1); ++wz)
-                            {
-                                for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
-                                {
-                                    const auto blockType = world.getBlock(static_cast<std::uint16_t>(wx),
-                                                                           static_cast<std::uint16_t>(y),
-                                                                           static_cast<std::uint16_t>(wz))
-                                                                .type();
-                                    const bool saw = blockType == GalaxyEggbert::BlockTypes::Saw ||
-                                                     blockType == GalaxyEggbert::BlockTypes::SawStopped;
-                                    const bool drip = blockType == GalaxyEggbert::BlockTypes::Drip || blockType == 410;
-                                    if ((saw && y <= wy) || (drip && y >= wy))
-                                    {
-                                        worldRuntime.GetWorldMutable().setBlock(
-                                            static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(y),
-                                            static_cast<std::uint16_t>(wz),
-                                            Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-                                    }
-                                }
-                            }
-                        }
-
-                        // Destroy every enemy/crate/object overlapping the
-                        // blast rect, from the real explicit type list
-                        // (Decor.cpp ~9102-9132, ported exactly, not
-                        // approximated) -- crates are destroyed as a full
-                        // linked group (real SearchLinkCaisse), everything
-                        // else is a plain deactivate. The blast flash itself
-                        // is spawned above; no further per-victim debris
-                        // visual is modeled (real source has none either --
-                        // ObjectType8 above is the only cosmetic effect at
-                        // this site).
-                        for (auto& victim : objects)
-                        {
-                            if (!victim.active || &victim == &obj)
-                            {
-                                continue;
-                            }
-                            if (!GetObjectDefinition(victim.type).dynamiteDestructible)
-                            {
-                                continue;
-                            }
-                            if (std::fabs(victim.currentX - centerX) > kBlastHalfExtent + 0.5f ||
-                                std::fabs(victim.currentY - centerY) > kBlastHalfExtent + 0.5f ||
-                                std::fabs(victim.currentZ - centerZ) > kBlastHalfExtent + 0.5f)
-                            {
-                                continue;
-                            }
-                            if (GetObjectDefinition(victim.type).semanticKind ==
-                                ObjectSemanticKind::StaticObstacle)
-                            {
-                                std::vector<MobileObjSpec*> linked;
-                                linked.push_back(&victim);
-                                bool addedAny = true;
-                                while (addedAny)
-                                {
-                                    addedAny = false;
-                                    for (auto& other : objects)
-                                    {
-                                        if (!other.active ||
-                                            GetObjectDefinition(other.type).semanticKind !=
-                                                ObjectSemanticKind::StaticObstacle) continue;
-                                        if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
-                                        bool touches = false;
-                                        for (auto* member : linked)
-                                        {
-                                            if (std::fabs(other.currentX - member->currentX) < 1.5f &&
-                                                std::fabs(other.currentY - member->currentY) < 1.5f &&
-                                                std::fabs(other.currentZ - member->currentZ) < 1.5f)
-                                            {
-                                                touches = true;
-                                                break;
-                                            }
-                                        }
-                                        if (touches)
-                                        {
-                                            linked.push_back(&other);
-                                            addedAny = true;
-                                        }
-                                    }
-                                }
-                                for (auto* member : linked)
-                                {
-                                    // Each linked crate flies away, spinning 7-22 a tick either way
-                                    // (Decor.cpp:9142-9156; BD-0049).
-                                    ByeByePiece piece;
-                                    piece.look = *member;
-                                    piece.x = member->currentX;
-                                    piece.y = member->currentY;
-                                    piece.z = member->currentZ;
-                                    const int spin = std::uniform_int_distribution<int>(7, 22)(rng_);
-                                    const bool reverse = std::uniform_int_distribution<int>(0, 99)(rng_) % 2 == 0;
-                                    ByeByeAdd(piece, static_cast<float>(reverse ? -spin : spin), 1.0f);
-                                    member->active = false;
-                                }
-                            }
-                            else
-                            {
-                                Retire(victim);
-                            }
-                        }
-
-                        // Blupi dies within a cell of the blast (Decor.cpp:9160-9166: his position
-                        // from 64 px before to 60 px past the blast's, X and Y; BD-0046: it was a
-                        // cell and a half), unless shielded, hidden or SuperBlupi
-                        // (blupiInvincible). Screen y grows downward: up in Galaxy is before.
-                        // Along Z, which the original's scattered blasts do not reach, the
-                        // neighbouring cell as well (2026-10-25: in front of or behind the stick).
-                        const float blupiDX = blupiX - centerX;
-                        const float blupiDY = centerY - blupiY; // screen y
-                        if (!blupiInvincible && blupiDX > -1.0f && blupiDX < 60.0f / 64.0f && blupiDY > -1.0f &&
-                            blupiDY < 60.0f / 64.0f && std::fabs(blupiZ - centerZ) <= kBlastHalfExtent + 0.5f)
-                        {
-                            events_.push_back(Event{EventKind::Died});
-                            // Real LoseLife()/respawn deferred to the death-lock resolution point
-                            // (death-VFX follow-up) -- deterministic Clear1 (no VFX, matches
-                            // `159`), shouldRespawn=false, confirmed no `m_blupiRestart=true` near
-                            // this real site (Decor.cpp:9168-9173).
-                            Event deathLockEvent{EventKind::DeathLockRequested};
-                            deathLockEvent.deathLockKind = PendingDeathKind::Clear1;
-                            deathLockEvent.deathLockShouldRespawn = false;
-                            ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
-                        }
-                    }
-                }
-                if (obj.phase >= 70.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Bridge construction (ObjectType52, plan.md PICKUP-064, real
-            // Decor.cpp ~8540-8562): each tick writes the real
-            // `table_bridge` icon at that phase BOTH to this object's own
-            // sprite AND directly into the live terrain grid cell at its
-            // spawn position -- ground collision genuinely toggles across
-            // the sequence (icons 367-372 and the -1 "no tile" sentinel are
-            // non-solid per real `table_decor_quart`/this engine's own
-            // `BlockTypes::isMobileTransparent()`, already confirmed to
-            // agree). The original's own table (Tables.cpp:1473, D53): the
-            // bridge shakes 365/366 and holds him for 16 ticks, crumbles
-            // through 367-372, is gone until tick 140 and comes back.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52)
-            {
-                static constexpr std::array<std::int16_t, 157> kBridgeTable = [] {
-                    std::array<std::int16_t, 157> table{};
-                    for (int t = 0; t < 157; ++t) table[t] = -1;
-                    for (int t = 0; t < 16; ++t) table[t] = static_cast<std::int16_t>(t % 2 == 0 ? 365 : 366);
-                    for (int t = 16; t < 28; ++t) table[t] = static_cast<std::int16_t>(367 + (t - 16) / 2);
-                    for (int t = 140; t < 156; ++t) table[t] = static_cast<std::int16_t>(372 - (t - 140) / 2);
-                    table[156] = 364;
-                    return table;
-                }();
-                constexpr float kProgressSoundTick = 137.0f;
-
-                const float prevPhase = obj.phase - dt * 20.0f;
-                if (prevPhase < kProgressSoundTick && obj.phase >= kProgressSoundTick)
-                {
-                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel73, obj.currentX, obj.currentY, obj.currentZ);
-                }
-
-                const int tick = std::clamp(static_cast<int>(obj.phase), 0, 156);
-                const int icon = kBridgeTable[static_cast<std::size_t>(tick)];
-
-                const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
-                const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
-                const int gy = static_cast<int>(std::lround(obj.currentY));
-                const int axis = static_cast<int>(world.blocksPerAxis());
-                if (gx >= 0 && gx < axis && gy >= 0 && gy < axis && gz >= 0 && gz < axis)
-                {
-                    worldRuntime.GetWorldMutable().setBlock(
-                        static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                        static_cast<std::uint16_t>(gz),
-                        Worlds::Block::make(GalaxyEggbert::BlockTypes::fromMobileIconId(icon)));
-                }
-
-                if (obj.phase >= 157.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Follower wake-up (ObjectType96 -> 97, plan.md E3D-MIG-137,
-            // real Decor.cpp:9646-9678 `MoveObjectFollow`) -- a dormant
-            // follower promotes to the homing type the instant Blupi comes
-            // within its padded detection box, playing its wake sound
-            // (real channel 92) exactly once at the transition. Does NOT
-            // `continue` -- a follower that wakes this exact frame also
-            // takes its first homing step this same frame, below.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 && blupiCanInteract && !blupiHidden)
-            {
-                const float fwdx = obj.currentX - blupiX;
-                const float fwdy = obj.currentY - blupiY;
-                const float fwdz = obj.currentZ - blupiZ;
-                if (std::fabs(fwdx) < kFollowerWakeAcross && std::fabs(fwdz) < kFollowerWakeAcross &&
-                    fwdy < kFollowerWakeOver && fwdy > -kFollowerWakeUnder)
-                {
-                    obj.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
-                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel92, obj.currentX, obj.currentY, obj.currentZ);
-                }
-            }
-
-            // Follower homing (ObjectType97, plan.md E3D-MIG-137, real
-            // Decor.cpp:8025-8064) -- once awake, steps X and Y
-            // independently (Chebyshev-style, NOT a normalized diagonal)
-            // toward Blupi's live position every frame at
-            // kFollowerHomingSpeed -- and, in 3D (2026-10-25), Z the same way,
-            // or a follower at another depth could never reach him. Collapses posStart/posEnd to the new
-            // position every successful step (matching the real source's
-            // own `posStart = posEnd = end`), which naturally makes the
-            // generic patrol-turn block below a no-op for this object (its
-            // own `posStart != posEnd` guard), exactly like the real
-            // source's generic dwell/advance/dwell/recede block becomes a
-            // no-op immediately after this same real function's homing
-            // branch runs -- no separate type exclusion needed.
-            //
-            // Blocked-path self-destruct (real: `TestPath` fails ->
-            // `ObjectDelete` + a real `ObjectType9` explosion + channel 10,
-            // `Decor.cpp:8025-8064`) is modeled as a single-point solid
-            // check at the destination cell via `BlupiController::
-            // IsSolidAt` (this file's own existing tile-grid convention,
-            // e.g. `SearchAirDistance`) -- real `TestPath` sweeps a
-            // rectangle, not a point, same simplification as every other
-            // collision check in this file. The cosmetic `ObjectType9`
-            // debris flash (plan.md VISUAL-008) and real `SmallShake`
-            // camera shake (`m_decorAction = GalaxyEggbert::Def::DecorAction::SmallShake`,
-            // `Decor.cpp:8062-8063`, plan.md CAM-008 -- this exact site was
-            // missed by that earlier audit) are both now modeled too,
-            // found and fixed 2026-07-14 (this class's own real `-1`
-            // blank-frame renderer support, added for the bullet-splat
-            // effect, already covers `table_explo2`'s own sentinels). Real
-            // `end.X/Y -= 34` pre-offset before the spawn is the same 2D
-            // sprite-corner-anchoring artifact already dismissed for every
-            // other real `ObjectStart(..., 0)` site this session -- spawns
-            // at the follower's own position instead. `continue`s on self-destruct so an already-destroyed
-            // follower can't also register a contact-kill against Blupi
-            // this same frame via the generic hazard check below; falls
-            // through (no `continue`) on a successful step, since that
-            // check is exactly how a follower that catches up to Blupi is
-            // supposed to kill him.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97 && !blupiHidden)
-            {
-                float endX = obj.currentX;
-                float endY = obj.currentY;
-                const float stepAmount = kFollowerHomingSpeed * dt;
-                if (endX < blupiX) endX = std::min(endX + stepAmount, blupiX);
-                else if (endX > blupiX) endX = std::max(endX - stepAmount, blupiX);
-                if (endY < blupiY) endY = std::min(endY + stepAmount, blupiY);
-                else if (endY > blupiY) endY = std::max(endY - stepAmount, blupiY);
-                float endZ = obj.currentZ;
-                if (endZ < blupiZ) endZ = std::min(endZ + stepAmount, blupiZ);
-                else if (endZ > blupiZ) endZ = std::max(endZ - stepAmount, blupiZ);
-
-                int fgx, fgy, fgz;
-                ToGridCell(world, endX, endY, endZ, fgx, fgy, fgz);
-                if (IsSolidAt(worldRuntime, fgx, fgy, fgz))
-                {
-                    Retire(obj);
-                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, endX, endY, endZ);
-                    AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
-                                          pendingSpawns);
-                    events_.push_back(Event{EventKind::SmallShakeTriggered});
                     continue;
                 }
-                obj.currentX = obj.posStartX = obj.posEndX = endX;
-                obj.currentY = obj.posStartY = obj.posEndY = endY;
-                obj.currentZ = obj.posStartZ = obj.posEndZ = endZ;
-            }
 
-            // Real shared patrol-turn mechanic (plan.md E3D-MIG-131) --
-            // every remaining MoveObject type (enemies, pickups, etc., NOT
-            // lifts/crates handled above). Does NOT `continue`: the wasp/
-            // hazard/pickup contact checks below must see this frame's
-            // freshly-updated currentX/Y/Z, not last frame's position. A
-            // no-op if posStart==posEnd, matching the real guard exactly
-            // (stationary objects never advance patrolStep/patrolTime).
-            if (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY || obj.posStartZ != obj.posEndZ)
-            {
-                const int prevPatrolStep = obj.patrolStep;
-                const float prevPatrolTime = obj.patrolTime;
-                AdvancePatrolStep(obj, dt);
-
-                // Stationary shooters (ObjectType32 blupih / 33 blupit,
-                // plan.md E3D-MIG-134) -- attack timing is gated on the
-                // dwell step (1 or 3) and exact dwell-frame BEFORE this
-                // frame's AdvancePatrolStep() call, using CrossedTick() on
-                // the pre-call patrolTime -- not the post-call value, which
-                // may already belong to a different patrolStep if the
-                // dwell happened to end this same frame.
-                if (prevPatrolStep == 1 || prevPatrolStep == 3)
+                // Crates (ObjectType12) are pushed and pulled by UpdateCratePush(), called before
+                // this; the gate (Decor.cpp:6130-6132: every vehicle mode, Balloon, Ecrase) is kept
+                // here only so a crate's way through this loop is what it was.
+                if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle &&
+                    blupiCanPushCrate && !blupiBallooned)
                 {
-                    const float dtTicks = dt * kTicksPerSecond;
-                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 && CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                    continue;
+                }
+
+                // Door-opening slide effect (ObjectType22, plan.md E3D-MIG-160,
+                // real `Decor::OpenDoor` ~11667): slides up by exactly one grid
+                // unit over the real `Config::ScaleTime(50)` = 50 ticks (2.5s
+                // at the 20Hz reference rate obj.phase already advances at),
+                // then self-destructs -- a one-shot animation, not the generic
+                // dwell/advance/dwell/recede patrol (which loops and doesn't
+                // fit a "play once and vanish" effect), so it's handled
+                // directly here instead.
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType22)
+                {
+                    constexpr float kSlideTicks = 50.0f;
+                    const float t = std::min(obj.phase / kSlideTicks, 1.0f);
+                    obj.currentY = obj.posStartY + t;
+                    if (obj.phase >= kSlideTicks)
                     {
-                        FireBlupihShot(obj, world, sound, pendingSpawns);
+                        obj.active = false;
                     }
-                    else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
+                    continue;
+                }
+
+                // Dynamite fuse (ObjectType56, plan.md E3D-MIG-155) -- real
+                // 9-blast sequence at fixed ticks (Decor.cpp ~8252-8296),
+                // verified directly against the source, not just the reference
+                // doc's rounded "~200px/~100px" summary: tick 50 is the center
+                // blast (dx,dy)=(0,0); 53=(-100,8); 55=(80,10); 56=(-15,-100);
+                // 59=(20,70); 62=(30,-50); 64=(-40,30); 67=(-180,10); 69=
+                // (200,-10) -- real pixel offsets, /64 to this engine's grid
+                // units (real dx -> this engine's X, real dy -> this engine's Y,
+                // same X/Y-only 2D-source convention already used for blupih/
+                // blupit/follower; Z is always 0, no real source axis maps to
+                // it). obj.phase already advances at the real 20Hz reference
+                // rate (WorldRuntime::Update()); reconstructing the phase as
+                // of the START of this frame (`prevPhase`) lets each blast fire
+                // on the exact frame its tick is crossed, not every frame after.
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56)
+                {
+                    struct Blast { float tick, dx, dy; };
+                    static constexpr Blast kBlasts[] = {
+                        {50.0f, 0.0f / 64.0f, 0.0f / 64.0f},
+                        {53.0f, -100.0f / 64.0f, 8.0f / 64.0f},
+                        {55.0f, 80.0f / 64.0f, 10.0f / 64.0f},
+                        {56.0f, -15.0f / 64.0f, -100.0f / 64.0f},
+                        {59.0f, 20.0f / 64.0f, 70.0f / 64.0f},
+                        {62.0f, 30.0f / 64.0f, -50.0f / 64.0f},
+                        {64.0f, -40.0f / 64.0f, 30.0f / 64.0f},
+                        {67.0f, -180.0f / 64.0f, 10.0f / 64.0f},
+                        {69.0f, 200.0f / 64.0f, -10.0f / 64.0f},
+                    };
+                    const float prevPhase = obj.phase - dt * 20.0f;
+                    for (const auto& blast : kBlasts)
                     {
-                        const bool alongZ = std::fabs(obj.posEndZ - obj.posStartZ) > std::fabs(obj.posEndX - obj.posStartX);
-                        const float start = alongZ ? obj.posStartZ : obj.posStartX;
-                        const float end = alongZ ? obj.posEndZ : obj.posEndX;
-                        const bool aboutToWalkPositive =
-                            (start < end && prevPatrolStep == 1) || (start > end && prevPatrolStep == 3);
-                        if (CrossedTick(prevPatrolTime, dtTicks, 3.0f))
+                        if (prevPhase < blast.tick && obj.phase >= blast.tick)
                         {
-                            FireBlupitShot(obj, aboutToWalkPositive ? -1.0f : 1.0f, alongZ, world, sound, pendingSpawns);
+                            const float centerX = obj.currentX + blast.dx;
+                            const float centerY = obj.currentY + blast.dy;
+                            const float centerZ = obj.currentZ;
+
+                            // Real dynamite-blast explosion flash (plan.md
+                            // VISUAL-008, ObjectType8, Decor.cpp:9065) -- one
+                            // instance per blast, at its own center, not just
+                            // the central (dx=0,dy=0) one.
+                            AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, centerX, centerY, centerZ, pendingSpawns);
+
+                            if (blast.dx == 0.0f && blast.dy == 0.0f)
+                            {
+                                sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, centerX, centerY, centerZ);
+                                // Real camera shake (plan.md CAM-008,
+                                // Decor::DynamiteStart(), Decor.cpp:9068-9070,
+                                // confirmed via direct source read): SmallShake
+                                // fires ONLY for the center blast (dx=0,dy=0),
+                                // not for every peripheral tick in the 9-blast
+                                // sequence.
+                                events_.push_back(Event{EventKind::SmallShakeTriggered});
+                            }
+
+                            // Real 128x128px (2x2 tile) area -- +-1 grid unit
+                            // in X/Y around the blast center, same Z.
+                            constexpr float kBlastHalfExtent = 1.0f;
+
+                            // The tiles it clears (Decor.cpp:9078-9096): saws (378/379) and drips
+                            // (404/410) in its own row and the one above. Galaxy's saws lie in the
+                            // floor, a row under the original's (the floor convention, GP-0450), so
+                            // for saws the rows are the floor and his own; its drips hang as the
+                            // original's, from the ceiling (BD-0033). Until 2026-11-03 only his own row
+                            // was cleared and drips not at all, so a blast never cut a floor saw
+                            // (BD-0046). Across X and Z +-1 cell (in 3D each blast reaches as far along
+                            // Z as along X; 2026-10-25).
+                            const int wx0 = static_cast<int>(std::round(centerX - kBlastHalfExtent)) +
+                                            WorldRuntime::kWorldCenterX;
+                            const int wx1 = static_cast<int>(std::round(centerX + kBlastHalfExtent)) +
+                                            WorldRuntime::kWorldCenterX;
+                            const int wz0 = static_cast<int>(std::round(centerZ - kBlastHalfExtent)) +
+                                            WorldRuntime::kWorldCenterZ;
+                            const int wz1 = static_cast<int>(std::round(centerZ + kBlastHalfExtent)) +
+                                            WorldRuntime::kWorldCenterZ;
+                            const int wy = static_cast<int>(std::round(centerY));
+                            const int axis = static_cast<int>(world.blocksPerAxis());
+                            for (int y = wy - 1; y <= wy + 1; ++y)
+                            {
+                                for (int wz = std::max(0, wz0); y >= 0 && y < axis && wz <= std::min(axis - 1, wz1); ++wz)
+                                {
+                                    for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
+                                    {
+                                        const auto blockType = world.getBlock(static_cast<std::uint16_t>(wx),
+                                                                               static_cast<std::uint16_t>(y),
+                                                                               static_cast<std::uint16_t>(wz))
+                                                                    .type();
+                                        const bool saw = blockType == GalaxyEggbert::BlockTypes::Saw ||
+                                                         blockType == GalaxyEggbert::BlockTypes::SawStopped;
+                                        const bool drip = blockType == GalaxyEggbert::BlockTypes::Drip || blockType == 410;
+                                        if ((saw && y <= wy) || (drip && y >= wy))
+                                        {
+                                            worldRuntime.GetWorldMutable().setBlock(
+                                                static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(y),
+                                                static_cast<std::uint16_t>(wz),
+                                                Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Destroy every enemy/crate/object overlapping the
+                            // blast rect, from the real explicit type list
+                            // (Decor.cpp ~9102-9132, ported exactly, not
+                            // approximated) -- crates are destroyed as a full
+                            // linked group (real SearchLinkCaisse), everything
+                            // else is a plain deactivate. The blast flash itself
+                            // is spawned above; no further per-victim debris
+                            // visual is modeled (real source has none either --
+                            // ObjectType8 above is the only cosmetic effect at
+                            // this site).
+                            for (auto& victim : objects)
+                            {
+                                if (!victim.active || &victim == &obj)
+                                {
+                                    continue;
+                                }
+                                if (!GetObjectDefinition(victim.type).dynamiteDestructible)
+                                {
+                                    continue;
+                                }
+                                if (std::fabs(victim.currentX - centerX) > kBlastHalfExtent + 0.5f ||
+                                    std::fabs(victim.currentY - centerY) > kBlastHalfExtent + 0.5f ||
+                                    std::fabs(victim.currentZ - centerZ) > kBlastHalfExtent + 0.5f)
+                                {
+                                    continue;
+                                }
+                                if (GetObjectDefinition(victim.type).semanticKind ==
+                                    ObjectSemanticKind::StaticObstacle)
+                                {
+                                    std::vector<MobileObjSpec*> linked;
+                                    linked.push_back(&victim);
+                                    bool addedAny = true;
+                                    while (addedAny)
+                                    {
+                                        addedAny = false;
+                                        for (auto& other : objects)
+                                        {
+                                            if (!other.active ||
+                                                GetObjectDefinition(other.type).semanticKind !=
+                                                    ObjectSemanticKind::StaticObstacle) continue;
+                                            if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
+                                            bool touches = false;
+                                            for (auto* member : linked)
+                                            {
+                                                if (std::fabs(other.currentX - member->currentX) < 1.5f &&
+                                                    std::fabs(other.currentY - member->currentY) < 1.5f &&
+                                                    std::fabs(other.currentZ - member->currentZ) < 1.5f)
+                                                {
+                                                    touches = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (touches)
+                                            {
+                                                linked.push_back(&other);
+                                                addedAny = true;
+                                            }
+                                        }
+                                    }
+                                    for (auto* member : linked)
+                                    {
+                                        // Each linked crate flies away, spinning 7-22 a tick either way
+                                        // (Decor.cpp:9142-9156; BD-0049).
+                                        ByeByePiece piece;
+                                        piece.look = *member;
+                                        piece.x = member->currentX;
+                                        piece.y = member->currentY;
+                                        piece.z = member->currentZ;
+                                        const int spin = std::uniform_int_distribution<int>(7, 22)(rng_);
+                                        const bool reverse = std::uniform_int_distribution<int>(0, 99)(rng_) % 2 == 0;
+                                        ByeByeAdd(piece, static_cast<float>(reverse ? -spin : spin), 1.0f);
+                                        member->active = false;
+                                    }
+                                }
+                                else
+                                {
+                                    Retire(victim);
+                                }
+                            }
+
+                            // Blupi dies within a cell of the blast (Decor.cpp:9160-9166: his position
+                            // from 64 px before to 60 px past the blast's, X and Y; BD-0046: it was a
+                            // cell and a half), unless shielded, hidden or SuperBlupi
+                            // (blupiInvincible). Screen y grows downward: up in Galaxy is before.
+                            // Along Z, which the original's scattered blasts do not reach, the
+                            // neighbouring cell as well (2026-10-25: in front of or behind the stick).
+                            const float blupiDX = blupiX - centerX;
+                            const float blupiDY = centerY - blupiY; // screen y
+                            if (!blupiInvincible && blupiDX > -1.0f && blupiDX < 60.0f / 64.0f && blupiDY > -1.0f &&
+                                blupiDY < 60.0f / 64.0f && std::fabs(blupiZ - centerZ) <= kBlastHalfExtent + 0.5f)
+                            {
+                                events_.push_back(Event{EventKind::Died});
+                                // Real LoseLife()/respawn deferred to the death-lock resolution point
+                                // (death-VFX follow-up) -- deterministic Clear1 (no VFX, matches
+                                // `159`), shouldRespawn=false, confirmed no `m_blupiRestart=true` near
+                                // this real site (Decor.cpp:9168-9173).
+                                Event deathLockEvent{EventKind::DeathLockRequested};
+                                deathLockEvent.deathLockKind = PendingDeathKind::Clear1;
+                                deathLockEvent.deathLockShouldRespawn = false;
+                                ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
+                            }
                         }
-                        if (CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                    }
+                    if (obj.phase >= 70.0f)
+                    {
+                        obj.active = false;
+                    }
+                    continue;
+                }
+
+                // Bridge construction (ObjectType52, plan.md PICKUP-064, real
+                // Decor.cpp ~8540-8562): each tick writes the real
+                // `table_bridge` icon at that phase BOTH to this object's own
+                // sprite AND directly into the live terrain grid cell at its
+                // spawn position -- ground collision genuinely toggles across
+                // the sequence (icons 367-372 and the -1 "no tile" sentinel are
+                // non-solid per real `table_decor_quart`/this engine's own
+                // `BlockTypes::isMobileTransparent()`, already confirmed to
+                // agree). The original's own table (Tables.cpp:1473, D53): the
+                // bridge shakes 365/366 and holds him for 16 ticks, crumbles
+                // through 367-372, is gone until tick 140 and comes back.
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52)
+                {
+                    static constexpr std::array<std::int16_t, 157> kBridgeTable = [] {
+                        std::array<std::int16_t, 157> table{};
+                        for (int t = 0; t < 157; ++t) table[t] = -1;
+                        for (int t = 0; t < 16; ++t) table[t] = static_cast<std::int16_t>(t % 2 == 0 ? 365 : 366);
+                        for (int t = 16; t < 28; ++t) table[t] = static_cast<std::int16_t>(367 + (t - 16) / 2);
+                        for (int t = 140; t < 156; ++t) table[t] = static_cast<std::int16_t>(372 - (t - 140) / 2);
+                        table[156] = 364;
+                        return table;
+                    }();
+                    constexpr float kProgressSoundTick = 137.0f;
+
+                    const float prevPhase = obj.phase - dt * 20.0f;
+                    if (prevPhase < kProgressSoundTick && obj.phase >= kProgressSoundTick)
+                    {
+                        sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel73, obj.currentX, obj.currentY, obj.currentZ);
+                    }
+
+                    const int tick = std::clamp(static_cast<int>(obj.phase), 0, 156);
+                    const int icon = kBridgeTable[static_cast<std::size_t>(tick)];
+
+                    const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
+                    const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
+                    const int gy = static_cast<int>(std::lround(obj.currentY));
+                    const int axis = static_cast<int>(world.blocksPerAxis());
+                    if (gx >= 0 && gx < axis && gy >= 0 && gy < axis && gz >= 0 && gz < axis)
+                    {
+                        worldRuntime.GetWorldMutable().setBlock(
+                            static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                            static_cast<std::uint16_t>(gz),
+                            Worlds::Block::make(GalaxyEggbert::BlockTypes::fromMobileIconId(icon)));
+                    }
+
+                    if (obj.phase >= 157.0f)
+                    {
+                        obj.active = false;
+                    }
+                    continue;
+                }
+
+                // Follower wake-up (ObjectType96 -> 97, plan.md E3D-MIG-137,
+                // real Decor.cpp:9646-9678 `MoveObjectFollow`) -- a dormant
+                // follower promotes to the homing type the instant Blupi comes
+                // within its padded detection box, playing its wake sound
+                // (real channel 92) exactly once at the transition. Does NOT
+                // `continue` -- a follower that wakes this exact frame also
+                // takes its first homing step this same frame, below.
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 && blupiCanInteract && !blupiHidden)
+                {
+                    const float fwdx = obj.currentX - blupiX;
+                    const float fwdy = obj.currentY - blupiY;
+                    const float fwdz = obj.currentZ - blupiZ;
+                    if (std::fabs(fwdx) < kFollowerWakeAcross && std::fabs(fwdz) < kFollowerWakeAcross &&
+                        fwdy < kFollowerWakeOver && fwdy > -kFollowerWakeUnder)
+                    {
+                        obj.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
+                        sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel92, obj.currentX, obj.currentY, obj.currentZ);
+                    }
+                }
+
+                // Follower homing (ObjectType97, plan.md E3D-MIG-137, real
+                // Decor.cpp:8025-8064) -- once awake, steps X and Y
+                // independently (Chebyshev-style, NOT a normalized diagonal)
+                // toward Blupi's live position every frame at
+                // kFollowerHomingSpeed -- and, in 3D (2026-10-25), Z the same way,
+                // or a follower at another depth could never reach him. Collapses posStart/posEnd to the new
+                // position every successful step (matching the real source's
+                // own `posStart = posEnd = end`), which naturally makes the
+                // generic patrol-turn block below a no-op for this object (its
+                // own `posStart != posEnd` guard), exactly like the real
+                // source's generic dwell/advance/dwell/recede block becomes a
+                // no-op immediately after this same real function's homing
+                // branch runs -- no separate type exclusion needed.
+                //
+                // Blocked-path self-destruct (real: `TestPath` fails ->
+                // `ObjectDelete` + a real `ObjectType9` explosion + channel 10,
+                // `Decor.cpp:8025-8064`) is modeled as a single-point solid
+                // check at the destination cell via `BlupiController::
+                // IsSolidAt` (this file's own existing tile-grid convention,
+                // e.g. `SearchAirDistance`) -- real `TestPath` sweeps a
+                // rectangle, not a point, same simplification as every other
+                // collision check in this file. The cosmetic `ObjectType9`
+                // debris flash (plan.md VISUAL-008) and real `SmallShake`
+                // camera shake (`m_decorAction = GalaxyEggbert::Def::DecorAction::SmallShake`,
+                // `Decor.cpp:8062-8063`, plan.md CAM-008 -- this exact site was
+                // missed by that earlier audit) are both now modeled too,
+                // found and fixed 2026-07-14 (this class's own real `-1`
+                // blank-frame renderer support, added for the bullet-splat
+                // effect, already covers `table_explo2`'s own sentinels). Real
+                // `end.X/Y -= 34` pre-offset before the spawn is the same 2D
+                // sprite-corner-anchoring artifact already dismissed for every
+                // other real `ObjectStart(..., 0)` site this session -- spawns
+                // at the follower's own position instead. `continue`s on self-destruct so an already-destroyed
+                // follower can't also register a contact-kill against Blupi
+                // this same frame via the generic hazard check below; falls
+                // through (no `continue`) on a successful step, since that
+                // check is exactly how a follower that catches up to Blupi is
+                // supposed to kill him.
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97 && !blupiHidden)
+                {
+                    float endX = obj.currentX;
+                    float endY = obj.currentY;
+                    const float stepAmount = kFollowerHomingSpeed * dt;
+                    if (endX < blupiX) endX = std::min(endX + stepAmount, blupiX);
+                    else if (endX > blupiX) endX = std::max(endX - stepAmount, blupiX);
+                    if (endY < blupiY) endY = std::min(endY + stepAmount, blupiY);
+                    else if (endY > blupiY) endY = std::max(endY - stepAmount, blupiY);
+                    float endZ = obj.currentZ;
+                    if (endZ < blupiZ) endZ = std::min(endZ + stepAmount, blupiZ);
+                    else if (endZ > blupiZ) endZ = std::max(endZ - stepAmount, blupiZ);
+
+                    int fgx, fgy, fgz;
+                    ToGridCell(world, endX, endY, endZ, fgx, fgy, fgz);
+                    if (IsSolidAt(worldRuntime, fgx, fgy, fgz))
+                    {
+                        Retire(obj);
+                        sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, endX, endY, endZ);
+                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
+                                              pendingSpawns);
+                        events_.push_back(Event{EventKind::SmallShakeTriggered});
+                        continue;
+                    }
+                    obj.currentX = obj.posStartX = obj.posEndX = endX;
+                    obj.currentY = obj.posStartY = obj.posEndY = endY;
+                    obj.currentZ = obj.posStartZ = obj.posEndZ = endZ;
+                }
+
+                // Real shared patrol-turn mechanic (plan.md E3D-MIG-131) --
+                // every remaining MoveObject type (enemies, pickups, etc., NOT
+                // lifts/crates handled above). Does NOT `continue`: the wasp/
+                // hazard/pickup contact checks below must see this frame's
+                // freshly-updated currentX/Y/Z, not last frame's position. A
+                // no-op if posStart==posEnd, matching the real guard exactly
+                // (stationary objects never advance patrolStep/patrolTime).
+                if (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY || obj.posStartZ != obj.posEndZ)
+                {
+                    const int prevPatrolStep = obj.patrolStep;
+                    const float prevPatrolTime = obj.patrolTime;
+                    AdvancePatrolStep(obj, dt);
+
+                    // Stationary shooters (ObjectType32 blupih / 33 blupit,
+                    // plan.md E3D-MIG-134) -- attack timing is gated on the
+                    // dwell step (1 or 3) and exact dwell-frame BEFORE this
+                    // frame's AdvancePatrolStep() call, using CrossedTick() on
+                    // the pre-call patrolTime -- not the post-call value, which
+                    // may already belong to a different patrolStep if the
+                    // dwell happened to end this same frame.
+                    if (prevPatrolStep == 1 || prevPatrolStep == 3)
+                    {
+                        const float dtTicks = dt * kTicksPerSecond;
+                        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 && CrossedTick(prevPatrolTime, dtTicks, 21.0f))
                         {
-                            FireBlupitShot(obj, aboutToWalkPositive ? 1.0f : -1.0f, alongZ, world, sound, pendingSpawns);
+                            FireBlupihShot(obj, world, sound, pendingSpawns);
+                        }
+                        else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
+                        {
+                            const bool alongZ = std::fabs(obj.posEndZ - obj.posStartZ) > std::fabs(obj.posEndX - obj.posStartX);
+                            const float start = alongZ ? obj.posStartZ : obj.posStartX;
+                            const float end = alongZ ? obj.posEndZ : obj.posEndX;
+                            const bool aboutToWalkPositive =
+                                (start < end && prevPatrolStep == 1) || (start > end && prevPatrolStep == 3);
+                            if (CrossedTick(prevPatrolTime, dtTicks, 3.0f))
+                            {
+                                FireBlupitShot(obj, aboutToWalkPositive ? -1.0f : 1.0f, alongZ, world, sound, pendingSpawns);
+                            }
+                            if (CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                            {
+                                FireBlupitShot(obj, aboutToWalkPositive ? 1.0f : -1.0f, alongZ, world, sound, pendingSpawns);
+                            }
                         }
                     }
                 }
+
             }
 
             // MoveObjectDetect (Decor.cpp:9692-9696) returns no contact for a ghost.

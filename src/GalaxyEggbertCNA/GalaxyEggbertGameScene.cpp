@@ -261,7 +261,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // The explosions, splashes and sparks: their sprites become particles (EffectParticles.hpp).
-        effectParticles_.Advance(worldRuntime_.GetAnimPhase());
+        effectParticles_.Advance(worldRuntime_.GetAnimPhase(), cheatFreeze_ && !NetMatchActive());
         for (auto& batch : frame.billboards)
         {
             auto& quads = batch.quads;

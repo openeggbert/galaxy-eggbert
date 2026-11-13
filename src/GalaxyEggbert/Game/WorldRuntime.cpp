@@ -686,7 +686,7 @@ namespace GalaxyEggbert::Game
         return false;
     }
 
-    void WorldRuntime::Update(float dt)
+    void WorldRuntime::Update(float dt, bool freezeObjects)
     {
         // Raw animation tick (2026-07-09, fixed from a flat 6fps clock
         // shared by every animated tile type -- reported live as "elements
@@ -714,9 +714,9 @@ namespace GalaxyEggbert::Game
         // other target FPS values, see Config.hpp).
         constexpr float kMoveObjectPhaseTicksPerSecond = 20.0f;
         const float phaseDelta = dt * kMoveObjectPhaseTicksPerSecond;
-        for (auto& obj : mobileObjects_)
+        if (!freezeObjects)
         {
-            obj.phase += phaseDelta;
+            for (auto& obj : mobileObjects_) obj.phase += phaseDelta;
         }
     }
 

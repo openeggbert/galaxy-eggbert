@@ -1,0 +1,9 @@
+# Brief A, mission 012. GALAXY_BACK_CHECKPOINTS=435
+wait 600
+type mark
+hold 120 up
+type back
+type recall
+wait 5
+expect lives = 3
+end

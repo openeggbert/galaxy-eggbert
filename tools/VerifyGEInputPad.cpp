@@ -198,6 +198,42 @@ int main()
     }
 
     {
+        using namespace Microsoft::Xna::Framework::Input;
+        ControlsHelp help;
+        const Keys switching[] = {Keys::Left,Keys::Right,Keys::A,Keys::D,Keys::PageUp,Keys::PageDown,
+                                  Keys::LeftShift,Keys::RightControl};
+        for (Keys key : switching)
+        {
+            help.OpenCheats();
+            (void)help.Update(KeyboardState{key});
+            check(help.shown && help.page == 1, "cheat help: each navigation key changes page");
+            (void)help.Update(KeyboardState{key});
+            check(help.page == 1, "cheat help: holding navigation does not repeat");
+            (void)help.Update({});
+            (void)help.Update(KeyboardState{key});
+            check(help.page == 0, "cheat help: next press returns to the other page");
+        }
+        for (const auto size : {std::pair{800,480},std::pair{800,360}})
+        {
+            const float scale = size.second/480.f, ox = (size.first-640*scale)/2;
+            for (float x : {230.f,400.f})
+            {
+                help.OpenCheats();
+                const int arrow = ControlsHelp::PageArrow(ox+x*scale,418*scale,size.first,size.second);
+                (void)help.Update({},true,false,arrow);
+                check(arrow != 0 && help.page == 1, "cheat help: both scaled pointer arrows change page");
+                (void)help.Update({},true,false,arrow);
+                check(help.page == 1, "cheat help: held mouse/touch changes page only once");
+            }
+        }
+        help.OpenCheats();
+        check(help.page == 0, "opening cheats always starts on page one");
+        help.cheats = false;
+        (void)help.Update(KeyboardState{Keys::Right});
+        check(help.page == 0, "F1 controls help has no page navigation");
+    }
+
+    {
         InputPad pad;
         const auto press = pad.UpdateInit(mouse(585, 50, true), kViewportW, kViewportH);
         const auto held = pad.UpdateInit(mouse(585, 50, true), kViewportW, kViewportH);
@@ -1157,7 +1193,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 34;
+        bool all = count == 38;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1166,16 +1202,31 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 34 words including back fire and have an explanation");
-        bool backDistinct = true;
+        check(all, "Typed cheats: all 38 words including mark/recall/photo/freeze fire and have an explanation");
+        bool distinct = true, origins = true;
+        int pages[2]{};
+        const std::unordered_set<std::string> galaxy{
+            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze"};
+        const std::unordered_set<std::string> mobile{"quick", "ghost", "zoom", "debug", "cheats"};
         for (int i = 0; i < count; ++i)
         {
-            if (words[i].cheat == TC::Back) continue;
             const std::string word = words[i].word;
-            backDistinct &= !word.starts_with("back") && !word.ends_with("back") &&
-                            !std::string("back").ends_with(word);
+            ++pages[words[i].HelpPage()];
+            origins &= (words[i].HelpPage() == 1) == galaxy.contains(word);
+            origins &= (words[i].origin == InputPad::CheatOrigin::MobileEggbert) == mobile.contains(word);
+            if (words[i].cheat != TC::Back && words[i].cheat != TC::Mark && words[i].cheat != TC::Recall &&
+                words[i].cheat != TC::Photo && words[i].cheat != TC::Freeze) continue;
+            for (int j = 0; j < count; ++j)
+            {
+                if (i == j) continue;
+                const std::string other = words[j].word;
+                distinct &= !other.starts_with(word) && !word.starts_with(other) &&
+                    !other.ends_with(word) && !word.ends_with(other);
+            }
         }
-        check(backDistinct, "back neither prefixes nor shares a matched suffix with another cheat");
+        check(distinct, "new cheats neither prefix nor share matched suffixes with another word");
+        check(origins && pages[0] == 27 && pages[1] == 11,
+              "every word belongs to exactly one origin/page; original and Mobile words fill page one");
         {
             InputPad reset;
             type(reset, "ba");

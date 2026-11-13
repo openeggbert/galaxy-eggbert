@@ -211,7 +211,7 @@ namespace GalaxyEggbert::Game
 
         // Galaxy's F1 overlay: black text over a translucent white panel.
         void DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool cheats = false);
+                              int viewportW, int viewportH, bool cheats = false, int page = 0);
 
         // Pause-row buttons. showBack/showRestart mirror the real
         // conditional visibility (`mission!=1`, `mission!=1 &&
@@ -655,6 +655,10 @@ namespace GalaxyEggbert::Game
             Position,     // "position" (MODERN): show or hide Blupi's place in the world (x= y= z=), in the list
             Honest,       // "honest" (MODERN): every cheat off and locked until the game quits (fairplay too)
             Back,         // "back" (MODERN): rewind five seconds, again to go farther
+            Mark,         // "mark" (MODERN): remember this timeline tick
+            Recall,       // "recall" (MODERN): rewind to the remembered tick
+            Photo,        // "photo" (MODERN): hide Play overlays
+            Freeze,       // "freeze" (MODERN): stop autonomous MoveObjects
         };
         struct TypedCheatResult
         {
@@ -664,11 +668,15 @@ namespace GalaxyEggbert::Game
             TypedCheat cheat = TypedCheat::None;
         };
         // The word table, in the original's order (`InputPad.cpp:715-741`).
+        enum class CheatOrigin { SpeedyBlupi, MobileEggbert, GalaxyEggbert };
         struct TypedCheatWord
         {
             const char* word;
             TypedCheat cheat;
             const char* description;
+            CheatOrigin origin = CheatOrigin::SpeedyBlupi;
+            [[nodiscard]] constexpr int HelpPage() const noexcept
+            { return origin == CheatOrigin::GalaxyEggbert ? 1 : 0; }
         };
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
         void SetCheatEntryLocked(bool locked) noexcept;

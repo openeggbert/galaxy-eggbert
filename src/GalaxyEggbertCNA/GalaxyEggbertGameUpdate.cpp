@@ -283,10 +283,18 @@ namespace GalaxyEggbert::CNA
             resumeLog_.Append(tickInput_);
             ++resumeTicks_;
             CaptureBackCheckpoint();
-            if (backPending_) RewindBack();
+            if (markPending_)
+            {
+                markedTick_ = resumeLog_.TickCount();
+                ShowDemoNotice("mark");
+                std::cout << "GalaxyEggbertCNA: mark at tick " << *markedTick_ << "." << std::endl;
+            }
+            if (backPending_)
+                RewindToTick(resumeTicks_ > 300 ? resumeTicks_ - 300 : 0, "back -5 s");
+            else if (recallPending_ && markedTick_) RewindToTick(*markedTick_, "recall");
             else CheckResumeSelftest();
         }
-        backPending_ = false;
+        backPending_ = markPending_ = recallPending_ = false;
         if (demoRecording_)
         {
             demoRecordLog_.Append(tickInput_);
@@ -344,7 +352,8 @@ namespace GalaxyEggbert::CNA
             }
         }
         if (controlsHelp_.Update(helpKeys,helpPointerDown,
-            GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight)))
+            GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight),
+            GalaxyEggbert::Game::ControlsHelp::PageArrow(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight)))
         {
             suspendCheatKeyboard();
             inputPad_.ResetTouchState();
@@ -443,7 +452,7 @@ namespace GalaxyEggbert::CNA
             NetBeforeStep();
         }
 
-        worldRuntime_.Update(simDt);
+        worldRuntime_.Update(simDt, cheatFreeze_ && !netMatch);
 
         const bool worldLeft = terrainRenderer_ && UpdateTickWorld(dt, simDt, padPlayInput, inputPadClaimedMouse);
         if (netMatch && NetMatchActive()) NetAfterStep();
@@ -1967,7 +1976,7 @@ namespace GalaxyEggbert::CNA
                              inHelicopter, blupi_.IsHidden(),
                              // m_blupiFocus or in the air (Decor.cpp:5788-5790): not while he
                              // takes a pickup, teleports, waves goodbye or cheers on the ground.
-                             BlupiFocused(), BlupiOutOfPlay(), interactsWithWorld, blupi_.GetYaw());
+                             BlupiFocused(), BlupiOutOfPlay(), interactsWithWorld, blupi_.GetYaw(), cheatFreeze_ && !NetMatchActive());
         RefreshTerrainMeshIfChanged();
 
         // The action button with nothing to do, standing still: he shakes his head (Non, 18
@@ -3560,14 +3569,14 @@ namespace GalaxyEggbert::CNA
             // UpdateCheatGesture()'s own class comment for the real-
             // behavior citation and the "layered, not exclusive"
             // input-sharing caveat.
-            if (!virtualKey.capture && !cheatMenuShown_)
+            if (!cheatPhoto_ && !virtualKey.capture && !cheatMenuShown_)
             {
                 if (inputPad_.UpdateCheatGesture(mouse, viewport.getWidthProperty(), viewport.getHeightProperty()))
                 {
                     cheatMenuShown_ = true;
                 }
             }
-            else if (!virtualKey.capture)
+            else if (!cheatPhoto_ && !virtualKey.capture)
             {
                 const int cheatPressed = inputPad_.UpdateCheatMenu(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
@@ -3616,6 +3625,8 @@ namespace GalaxyEggbert::CNA
                     case TC::Compass: toggle("compass"); break;
                     case TC::Debug: toggle("debug"); break;
                     case TC::Fps: toggle("fps"); break;
+                    case TC::Photo: toggle("photo"); break;
+                    case TC::Freeze: if (!NetMatchActive()) toggle("freeze"); break;
                     case TC::Position: toggle("position"); break;
                     case TC::Zoom:
                     {
@@ -3713,7 +3724,8 @@ namespace GalaxyEggbert::CNA
             // 10-tap gesture above (layered, not exclusive -- same
             // idiom as the typed-cheat methods).
             const bool f12Down = virtualPhaseKeys.IsKeyDown(Keys::F12);
-            if (GalaxyEggbert::Game::kCheatsEnabled && !inputPad_.IsCheatEntryLocked() && f12Down && !f12KeyWasDown_)
+            // Photo hides this menu too; opening it invisibly would trap the cheat keyboard.
+            if (!cheatPhoto_ && GalaxyEggbert::Game::kCheatsEnabled && !inputPad_.IsCheatEntryLocked() && f12Down && !f12KeyWasDown_)
             {
                 cheatMenuShown_ = !cheatMenuShown_;
                 inputPad_.CheatKeys().Close();

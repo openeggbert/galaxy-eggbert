@@ -133,6 +133,87 @@ int main(int argc, char** argv)
     InteractionSystem interaction;
     constexpr float dt = 1.0f / 60.0f;
 
+    // MODERN freeze stops autonomous MoveObjects, preserving the player's contact/action path.
+    {
+        WorldRuntime frozen;
+        check(frozen.LoadFromVwrFile(worldPath), "freeze fixture loads");
+        auto& objects = frozen.GetMobileObjectsMutable();
+        objects.clear();
+        const auto make = [](Def::ObjectType type, float x = 0.0f, float y = 10.0f) {
+            MobileObjSpec obj;
+            obj.type = type;
+            obj.currentX = obj.posStartX = x; obj.posEndX = x + 4;
+            obj.currentY = obj.posStartY = obj.posEndY = y;
+            obj.currentZ = obj.posStartZ = obj.posEndZ = 0;
+            obj.patrolStep = 2;
+            obj.stepAdvanceTicks = obj.stepRecedeTicks = 100;
+            return obj;
+        };
+        for (auto type : {Def::ObjectType::ObjectType1, Def::ObjectType::ObjectType2,
+                         Def::ObjectType::ObjectType22, Def::ObjectType::ObjectType23,
+                         Def::ObjectType::ObjectType8, Def::ObjectType::ObjectType38,
+                         Def::ObjectType::ObjectType97, Def::ObjectType::ObjectType56,
+                         Def::ObjectType::ObjectType32, Def::ObjectType::ObjectType52})
+            objects.push_back(make(type));
+        objects[4].phase = 38; // explosion immediately before expiry
+        objects[7].phase = 49; // fuse immediately before a blast
+        InteractionSystem sys;
+        const auto update = [&](float x, float y, float z, bool freeze = true) {
+            frozen.Update(dt, freeze);
+            sys.Update(dt, frozen, x,y,z,0,sound, false,false, 1,0,false,
+                       true,true,true,true, false,false,false,true,false,true,0,false,
+                       false,false,false,true,false,true,std::nullopt,freeze);
+        };
+        const auto state = [&] {
+            std::vector<std::array<float,8>> values;
+            for (const auto& obj : objects)
+                values.push_back({obj.currentX,obj.currentY,obj.currentZ,obj.phase,
+                    float(obj.patrolStep),obj.patrolTime,float(obj.active),float(obj.type)});
+            return values;
+        };
+        const auto before = state();
+        const int tiles = frozen.GetAnimPhase();
+        for (int i = 0; i < 180; ++i) update(30,30,30);
+        check(state() == before, "freeze: lift, enemy, door, shot, explosion, falling arc, follower, fuse, shooter and bridge stay exact");
+        check(frozen.GetAnimPhase() > tiles, "freeze: world tile animations and hazard clock keep ticking");
+        // Walking onto a frozen lift still establishes support, with zero carried displacement.
+        update(0,LiftRiderCenterY(10),0);
+        check(sys.IsRidingLift() && sys.RideDeltaX() == 0 && sys.RideDeltaZ() == 0,
+              "freeze: standing on a lift still rides/supports Blupi");
+        update(30,30,30,false);
+        check(objects[0].currentX != before[0][0] && objects[1].currentX != before[1][0] &&
+              objects[2].currentY != before[2][1] && objects[3].currentX != before[3][0] &&
+              objects[5].currentX != before[5][0] && objects[6].currentX != before[6][0],
+              "unfreeze: lift, patrol, door, projectile, falling arc and follower resume");
+        for (auto type : {Def::ObjectType::ObjectType2,Def::ObjectType::ObjectType23})
+        {
+            objects = {make(type,0,10)};
+            update(0,10,0);
+            check(hasEvent(sys,InteractionSystem::EventKind::Died), "freeze: enemy and projectile contacts still hurt");
+        }
+        objects = {make(Def::ObjectType::ObjectType5,0,10)};
+        update(0,10,0);
+        check(hasEvent(sys,InteractionSystem::EventKind::VoyageRequested), "freeze: a touched treasure still starts its voyage");
+        const int treasures = sys.TreasuresCollected();
+        sys.BeginVoyage(frozen,InteractionSystem::VoyageKind::Treasure,6,false,0,0,100,100,sound);
+        for (int i = 0; i < 200; ++i) update(30,30,30);
+        check(!sys.VoyageActive() && sys.TreasuresCollected() == treasures+1,
+              "freeze: pickup voyage completes and credits its reward");
+        objects = {make(Def::ObjectType::ObjectType12,0,10)};
+        objects[0].posEndX = 0;
+        for (int x = 47; x <= 55; ++x)
+            for (int z = 49; z <= 51; ++z)
+                for (int y = 9; y <= 11; ++y)
+                    frozen.GetWorldMutable().setBlock(x,y,z,Worlds::Block::make(y == 9 ? 261 : 0));
+        CrateSim b; b.x = -1.1f; b.y = 10;
+        for (int i = 0; i < 60; ++i)
+        {
+            CrateTick(sys,frozen,b,dt,true);
+            update(b.x,b.y,b.z);
+        }
+        check(objects[0].currentX > 0 && b.x > -1.1f, "freeze: Blupi and a pushed crate still move together");
+    }
+
     // 1. Platform lift (ObjectType1, placed at world (0,4,-22)..(0,9,-22) per
     // tools/GenerateSampleWorld3D.cpp's "plateau -> crow's-nest lift") should
     // patrol: its currentY should move away from its start position after

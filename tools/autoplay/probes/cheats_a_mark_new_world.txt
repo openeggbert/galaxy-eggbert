@@ -1,0 +1,11 @@
+# A new mission clears its predecessor's mark, preserving the persistent display/object toggles.
+type mark
+type freeze
+type photo
+type alltreasure
+type endgoal
+until mission = 10 max 1000
+type recall
+wait 30
+expect mission = 10
+end

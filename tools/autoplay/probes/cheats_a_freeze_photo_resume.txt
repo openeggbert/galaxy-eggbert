@@ -1,0 +1,8 @@
+# Brief A, mission 012. GALAXY_RESUME_SELFTEST=1000
+wait 600
+type freeze
+type photo
+hold 150 up
+wait 600
+expect lives = 3
+end

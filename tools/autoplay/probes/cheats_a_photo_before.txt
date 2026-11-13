@@ -1,0 +1,8 @@
+# Brief A, mission 012. GALAXY_BACK_CHECKPOINTS=417
+wait 600
+type photo
+wait 100
+type back
+wait 5
+expect lives = 3
+end

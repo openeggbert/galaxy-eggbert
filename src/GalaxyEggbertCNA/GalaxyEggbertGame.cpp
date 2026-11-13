@@ -1498,20 +1498,27 @@ namespace GalaxyEggbert::CNA
         switch (cheat)
         {
             case TC::Back:
+            case TC::Mark:
+            case TC::Recall:
             {
-                const char* reason = nullptr;
-                if (replayingResume_) reason = "replay";
-                else if (demoActive_ || demoRecording_ || demoRecordArmed_) reason = "demo";
-                else if (editorPlayTestActive_) reason = "editor play-test";
-                else if (NetMatchActive()) reason = "network match";
-                else if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
-                         fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
-                         interaction_.ExitReached() || winCheerActive_) reason = "mission ending or not in Play";
-                else if (!recordingResume_ || missionStartPending_) reason = "no mission log";
-                if (reason) std::cout << "GalaxyEggbertCNA: back ignored: " << reason << "." << std::endl;
-                else backPending_ = true;
+                const char* word = cheat == TC::Back ? "back" : cheat == TC::Mark ? "mark" : "recall";
+                if (const auto* reason = TimelineCheatRefusal())
+                    std::cout << "GalaxyEggbertCNA: " << word << " ignored: " << reason << "." << std::endl;
+                else if (cheat == TC::Back) backPending_ = true;
+                else if (cheat == TC::Mark) markPending_ = true;
+                else if (markedTick_) recallPending_ = true;
+                else ShowDemoNotice("recall: no mark");
                 break;
             }
+            case TC::Photo:
+                cheatPhoto_ = !cheatPhoto_;
+                if (cheatPhoto_) cheatMenuShown_ = false;
+                break;
+            case TC::Freeze:
+                if (NetMatchActive())
+                    std::cout << "GalaxyEggbertCNA: freeze ignored: network match." << std::endl;
+                else cheatFreeze_ = !cheatFreeze_;
+                break;
             case TC::OpenDoors:
                 ApplyCheat(1);
                 interaction_.CheatAllKeys(); // InputPad.cpp:838-841
@@ -1559,8 +1566,7 @@ namespace GalaxyEggbert::CNA
                 cheatZoomStep_ = (cheatZoomStep_ + 1) % 5; // 1x, 2x, 4x, 8x, 16x (6 %), back to 1x
                 break;
             case TC::Help:
-                controlsHelp_.shown = true;
-                controlsHelp_.cheats = true;
+                controlsHelp_.OpenCheats();
                 break;
             case TC::Compass:
                 cheatCompass_ = !cheatCompass_;
@@ -1608,7 +1614,7 @@ namespace GalaxyEggbert::CNA
         else inputPad_.SetCheatEntryLocked(true);
         cheatMenuShown_ = false;
         blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
-        cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = false;
+        cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = cheatPhoto_ = cheatFreeze_ = false;
         cheatZoomStep_ = 0;
         if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
             gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;

@@ -78,6 +78,9 @@ namespace GalaxyEggbert::Game
             << start.quickCheat << ' ' << start.openDoors << ' ' << start.showSecret << ' ' << start.compass << ' '
             << start.cheatsLocked << ' ' << start.debug << ' '
             << start.cameraMode << '\n' << std::quoted(start.saveData) << '\n';
+        // Optional named start metadata: old v7 resumes and shipped demos retain false defaults.
+        // Only non-default values add a record, keeping ordinary recordings byte-compatible.
+        if (start.photo || start.freeze) out << "OBJECT_CHEATS " << start.photo << ' ' << start.freeze << '\n';
         out << runs.size() << ' ' << TickCount() << '\n';
         for (const auto& run : runs)
         {
@@ -162,6 +165,13 @@ namespace GalaxyEggbert::Game
             s.cameraMode < 0 || s.cameraMode > 1 || s.cheatsLocked < 0 || s.cheatsLocked > 2 || s.saveData.size() > 16384 ||
             !std::isfinite(s.x) || !std::isfinite(s.y) || !std::isfinite(s.z) || !std::isfinite(s.yaw))
             return false;
+        s.photo = s.freeze = false;
+        in >> std::ws;
+        if (in.peek() == 'O')
+        {
+            std::string tag;
+            if (!(in >> tag >> s.photo >> s.freeze) || tag != "OBJECT_CHEATS") return false;
+        }
         std::uint64_t runCount, ticks, actualTicks = 0;
         if (!(in >> runCount >> ticks) || ticks > kMaxTicks || runCount > ticks) return false;
         parsed.runs.clear();

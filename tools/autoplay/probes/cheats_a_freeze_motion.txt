@@ -1,0 +1,15 @@
+# Brief A, mission 012. Moving lifts and Blupi, freeze on/off.
+wait 60
+type freeze
+shots 1
+wait 1
+trace 180
+hold 180 up
+shots 1
+wait 1
+type freeze
+wait 180
+shots 1
+wait 1
+expect lives = 3
+end
