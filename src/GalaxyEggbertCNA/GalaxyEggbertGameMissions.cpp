@@ -167,6 +167,9 @@ namespace GalaxyEggbert::CNA
         if (keys.lookUp) down.insert(Keys::RightShift);
         if (keys.fire) down.insert(Keys::F);
         if (keys.pause) down.insert(Keys::Escape);
+        if (keys.cheatKeyboard) down.insert(GalaxyEggbert::Game::CheatKeyboard::kHoldKey);
+        if (keys.confirm) down.insert(Keys::Enter);
+        autoplayPointer_ = keys;
         if (keys.letter >= 'a' && keys.letter <= 'z')
             down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
         autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);
@@ -630,6 +633,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
+        if (next != GalaxyEggbert::Def::GamePhase::Play) inputPad_.CheatKeys().Close();
         languagePicking_ = false; // the language picker belongs to the screen it was opened over
         using GalaxyEggbert::Def::GamePhase;
         if (next != GamePhase::Pause) demoSlotsShown_ = false;

@@ -318,6 +318,19 @@ namespace GalaxyEggbert::CNA
         sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
 
         constexpr float dt = 1.0f / 60.0f;
+        const auto suspendCheatKeyboard = [&] {
+            std::vector<GalaxyEggbert::Game::CheatKeyboard::Pointer> pointers;
+            if (tickInput_.buttons & 1u) pointers.push_back({-2,float(tickInput_.mouseX),float(tickInput_.mouseY)});
+            using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+            for (const auto& t : tickInput_.touches)
+                if (t.state == int(TouchLocationState::Pressed) || t.state == int(TouchLocationState::Moved))
+                    pointers.push_back({t.id,t.x,t.y});
+            inputPad_.CheatKeys().Update(false,tickInput_.viewportWidth,tickInput_.viewportHeight,
+                                         CurrentKeyboardState(),pointers);
+        };
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
+            fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None || controlsHelp_.shown || cheatMenuShown_)
+            suspendCheatKeyboard();
         const auto helpKeys = CurrentKeyboardState();
         auto helpMouse=CurrentMouseState();
         bool helpPointerDown=helpMouse.getLeftButtonProperty()==Microsoft::Xna::Framework::Input::ButtonState::Pressed;
@@ -333,6 +346,7 @@ namespace GalaxyEggbert::CNA
         if (controlsHelp_.Update(helpKeys,helpPointerDown,
             GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight)))
         {
+            suspendCheatKeyboard();
             inputPad_.ResetTouchState();
             mouseLookActive_ = false;
             pauseKeyWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Escape);
@@ -1357,7 +1371,7 @@ namespace GalaxyEggbert::CNA
         // interactive-object system in GalaxyEggbertCNA yet. LShift
         // crouches and RShift looks up; RCtrl backs up (2026-11-02).
         using Microsoft::Xna::Framework::Input::Keys;
-        const auto keys = inputPad_.FilterGameplayKeyboard(CurrentKeyboardState());
+        const auto keys = inputPad_.FilterGameplayKeyboard(inputPad_.CheatKeys().FilterGameplay(CurrentKeyboardState()));
         const auto directions = GalaxyEggbert::Game::ReadPlayDirections(keys);
         float turnInput = directions.turn;
         float moveInput = directions.move;
@@ -3456,7 +3470,7 @@ namespace GalaxyEggbert::CNA
 
     // UpdateTickScreens in play: the on-screen pad, the mouse look and drag, the zoom, the cheats' keys.
     // True when the tick ends here.
-    bool GalaxyEggbertGame::UpdateScreenPlay(const Microsoft::Xna::Framework::Input::KeyboardState& phaseKeys,
+    bool GalaxyEggbertGame::UpdateScreenPlay(Microsoft::Xna::Framework::Input::KeyboardState& phaseKeys,
                                             const Microsoft::Xna::Framework::Graphics::Viewport& viewport,
                                             GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse,
                                             bool& mousePausePressed)
@@ -3486,7 +3500,8 @@ namespace GalaxyEggbert::CNA
             const auto mouse = touchQuietFrames_ > 0 ? Microsoft::Xna::Framework::Input::MouseState{}
                                                      : CurrentMouseState();
             // Invisible desktop controls must not claim clicks intended for the camera.
-            if (tickInput_.touchControlsEnabled)
+            const bool keyboardWasOpen = inputPad_.CheatKeys().Visible();
+            if (tickInput_.touchControlsEnabled && !keyboardWasOpen)
             {
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
@@ -3495,9 +3510,10 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.ResetTouchState();
             }
+            const bool playMouseClaimed = inputPadClaimedMouse;
             {
                 GalaxyEggbert::Game::InputPad::PlayInput touchInput;
-                if (inputPad_.UpdatePlayTouches(touches, viewport.getWidthProperty(),
+                if (!keyboardWasOpen && inputPad_.UpdatePlayTouches(touches, viewport.getWidthProperty(),
                                                 viewport.getHeightProperty(), touchInput))
                 {
                     inputPadClaimedMouse = true;
@@ -3511,6 +3527,30 @@ namespace GalaxyEggbert::CNA
                 padPlayInput.backUpHeld = padPlayInput.backUpHeld || touchInput.backUpHeld;
                 padPlayInput.crouchHeld = padPlayInput.crouchHeld || touchInput.crouchHeld;
             }
+            std::vector<GalaxyEggbert::Game::CheatKeyboard::Pointer> cheatPointers;
+            if (mouse.getLeftButtonProperty() == ButtonState::Pressed)
+                cheatPointers.push_back({-2,float(mouse.getXProperty()),float(mouse.getYProperty()),playMouseClaimed});
+            for (const auto& t : touches)
+                if (!t.released) cheatPointers.push_back({t.id,t.x,t.y,
+                    !keyboardWasOpen && inputPad_.PlayTouchClaimed(t,viewport.getWidthProperty(),viewport.getHeightProperty())});
+            const auto virtualKey = inputPad_.CheatKeys().Update(
+                GalaxyEggbert::Game::kCheatsEnabled && !inputPad_.IsCheatEntryLockedForRun() &&
+                !cheatMenuShown_ && !controlsHelp_.shown && !demoActive_ && !editorPlayTestActive_ &&
+                !NetTypingInMatch() && !NetRemotePaused() && fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None,
+                viewport.getWidthProperty(),viewport.getHeightProperty(),phaseKeys,cheatPointers);
+            if (virtualKey.capture)
+            {
+                padPlayInput = {};
+                inputPad_.ResetTouchState();
+                inputPadClaimedMouse = true;
+                mouseLookActive_ = false;
+                phaseKeys = inputPad_.CheatKeys().FilterGameplay(phaseKeys);
+            }
+            auto cheatKeys = phaseKeys.GetPressedKeys();
+            std::unordered_set<Keys> combined(cheatKeys.begin(),cheatKeys.end());
+            if (virtualKey.key != Keys::None) combined.insert(virtualKey.key);
+            const auto virtualPhaseKeys = Microsoft::Xna::Framework::Input::KeyboardState(combined);
+            const int orderedLetter = inputPad_.CheatKeys().OrderedLetter(tickInput_.cheatLetter,virtualKey.key,phaseKeys);
             mousePausePressed = padPlayInput.pausePressed;
 
             // Hidden cheat menu (2026-07-13, plan.md CHEAT-001..009):
@@ -3520,14 +3560,14 @@ namespace GalaxyEggbert::CNA
             // UpdateCheatGesture()'s own class comment for the real-
             // behavior citation and the "layered, not exclusive"
             // input-sharing caveat.
-            if (!cheatMenuShown_)
+            if (!virtualKey.capture && !cheatMenuShown_)
             {
                 if (inputPad_.UpdateCheatGesture(mouse, viewport.getWidthProperty(), viewport.getHeightProperty()))
                 {
                     cheatMenuShown_ = true;
                 }
             }
-            else
+            else if (!virtualKey.capture)
             {
                 const int cheatPressed = inputPad_.UpdateCheatMenu(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
@@ -3546,10 +3586,11 @@ namespace GalaxyEggbert::CNA
             // menu above, same "layered" idiom already established
             // there.
             const auto typedCheat = inputPad_.UpdateTypedGhostCheat(
-                phaseKeys, /*isPlayPhase=*/true, tickInput_.cheatLetter);
+                virtualPhaseKeys, /*isPlayPhase=*/true, orderedLetter);
             ApplyTypedCheat(typedCheat.cheat);
             if (typedCheat.cheat == InputPad::TypedCheat::Help)
             {
+                inputPad_.CheatKeys().Close();
                 inputPad_.ResetTouchState();
                 mouseLookActive_ = false;
                 return true;
@@ -3622,13 +3663,13 @@ namespace GalaxyEggbert::CNA
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
             }
-            const bool f5Down = phaseKeys.IsKeyDown(Keys::F5);
+            const bool f5Down = virtualPhaseKeys.IsKeyDown(Keys::F5);
             if (f5Down && !f5KeyWasDown_)
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
             }
             f5KeyWasDown_ = f5Down;
-            const bool f6Down = phaseKeys.IsKeyDown(Keys::F6);
+            const bool f6Down = virtualPhaseKeys.IsKeyDown(Keys::F6);
             if (f6Down && !f6KeyWasDown_)
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
@@ -3638,7 +3679,7 @@ namespace GalaxyEggbert::CNA
             // Not F9 (0.1.2 had it there): CNA's Game::PollEvents takes F9 itself, simulating a lost
             // graphics context (on the web lost until F10, its restore), UB-013; F2 and F4 are the
             // free ones.
-            const bool f4Down = phaseKeys.IsKeyDown(Keys::F4);
+            const bool f4Down = virtualPhaseKeys.IsKeyDown(Keys::F4);
             if (f4Down && !f4KeyWasDown_)
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::OneAndHalf;
@@ -3646,13 +3687,13 @@ namespace GalaxyEggbert::CNA
             f4KeyWasDown_ = f4Down;
             if (quickCheatEnabled_)
             {
-                const bool f7Down = phaseKeys.IsKeyDown(Keys::F7);
+                const bool f7Down = virtualPhaseKeys.IsKeyDown(Keys::F7);
                 if (f7Down && !f7KeyWasDown_)
                 {
                     gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Faster;
                 }
                 f7KeyWasDown_ = f7Down;
-                const bool f8Down = phaseKeys.IsKeyDown(Keys::F8);
+                const bool f8Down = virtualPhaseKeys.IsKeyDown(Keys::F8);
                 if (f8Down && !f8KeyWasDown_)
                 {
                     gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fastest;
@@ -3661,7 +3702,7 @@ namespace GalaxyEggbert::CNA
             }
             // Tab: the original's toggles Slow<->Normal (InputPad.cpp:657-676); Galaxy's steps 0.5, 0.25,
             // 0.125 and back to normal (the owner, 2026-11-09).
-            const bool tabDown = phaseKeys.IsKeyDown(Keys::Tab);
+            const bool tabDown = virtualPhaseKeys.IsKeyDown(Keys::Tab);
             if (tabDown && !tabKeyWasDown_)
             {
                 gameSpeed_ = GalaxyEggbert::Def::NextSlowSpeed(gameSpeed_);
@@ -3671,12 +3712,14 @@ namespace GalaxyEggbert::CNA
             // overlay (InputPad.cpp:678-683), alongside the existing
             // 10-tap gesture above (layered, not exclusive -- same
             // idiom as the typed-cheat methods).
-            const bool f12Down = phaseKeys.IsKeyDown(Keys::F12);
+            const bool f12Down = virtualPhaseKeys.IsKeyDown(Keys::F12);
             if (GalaxyEggbert::Game::kCheatsEnabled && !inputPad_.IsCheatEntryLocked() && f12Down && !f12KeyWasDown_)
             {
                 cheatMenuShown_ = !cheatMenuShown_;
+                inputPad_.CheatKeys().Close();
             }
             f12KeyWasDown_ = f12Down;
+            if (inputPad_.IsCheatEntryLockedForRun()) inputPad_.CheatKeys().Close();
         return false;
     }
 

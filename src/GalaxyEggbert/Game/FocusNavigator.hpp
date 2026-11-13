@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -100,6 +102,16 @@ namespace GalaxyEggbert::Game
             hasLast_ = false;
             clickPhase_ = 0;
             count_ = 0;
+        }
+
+        // In-process resume verification, including the pending synthetic click release.
+        [[nodiscard]] std::string StateSignature() const
+        {
+            std::ostringstream out;
+            out << std::setprecision(9) << active_ << ' ' << focused_ << ' ' << hasLast_ << ' ' << count_
+                << ' ' << clickPhase_ << ' ' << clickX_ << ' ' << clickY_ << ' '
+                << last_.x0 << ' ' << last_.y0 << ' ' << last_.x1 << ' ' << last_.y1;
+            return out.str();
         }
 
         // The target an arrow (dx, dy: -1, 0 or 1) leads to from @p from: of those whose centre lies

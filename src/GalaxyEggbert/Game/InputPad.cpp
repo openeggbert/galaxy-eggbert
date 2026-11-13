@@ -717,6 +717,7 @@ namespace GalaxyEggbert::Game
 
     void InputPad::ResetMissionInput() noexcept
     {
+        cheatKeyboard_.Reset();
         ResetTouchState();
         dpadTouchId_ = actionTouchId_ = pauseTouchId_ = backUpTouchId_ = crouchTouchId_ = forwardTouchId_ = -1;
         cheatActiveControl_ = -1;
@@ -1059,16 +1060,21 @@ namespace GalaxyEggbert::Game
                 TrMark("LB: crouch / dive"),
                 TrMark("LB + Down: pull crate"),
                 TrMark("Y: look up"),
-                TrMark("Start / Back: pause / continue")};
+                TrMark("Start / Back: pause / continue"),
+                TrMark("LT (2 s): cheat keyboard")};
             y = 90;
-            for (const char* label : gamepad) { line(Tr(label), 335, y, 0.48f, kRightRoom); y += 17; }
-            line(Tr("MOUSE"), 335, 285, 0.65f, kRightRoom);
-            line(Tr("Left click: menu buttons"), 335, 313, 0.48f, kRightRoom);
-            line(Tr("Hold left + drag: look around"), 335, 330, 0.48f, kRightRoom);
-            line(Tr("Walking returns the camera"), 335, 347, 0.48f, kRightRoom);
-            line(Tr("Touch Fire: tank / helicopter glue"), 335, 366, 0.48f, kRightRoom);
-            line(Tr("Touch controls: touch screens only"), 335, 383, 0.48f, kRightRoom);
-            line(kCheatsEnabled ? Tr("Type help: cheats explained") : Tr("Cheats disabled"), 335, 405, 0.48f, kRightRoom);
+            for (const char* label : gamepad)
+            {
+                if (!kCheatsEnabled && std::string_view(label).starts_with("LT")) continue;
+                line(Tr(label),335,y,0.48f,kRightRoom); y += 17;
+            }
+            line(Tr("MOUSE"), 335, 285 + (kCheatsEnabled ? 17 : 0), 0.65f, kRightRoom);
+            line(Tr("Left click: menu buttons"), 335, 313 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
+            line(Tr("Hold left + drag: look around"), 335, 330 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
+            line(Tr("Walking returns the camera"), 335, 347 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
+            line(Tr("Touch Fire: tank / helicopter glue"), 335, 366 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
+            line(Tr("Touch controls: touch screens only"), 335, 383 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
+            line(kCheatsEnabled ? Tr("Type help: cheats explained") : Tr("Cheats disabled"), 335, 405 + (kCheatsEnabled ? 17 : 0), 0.48f, kRightRoom);
         }
         line(Tr("[Close]"), 550, 25, .55f, 75.0f);
         line(Tr("Game paused - F1 or Esc to close"), 28, 439, 0.6f, 590.0f);
@@ -1218,6 +1224,7 @@ namespace GalaxyEggbert::Game
                                 int viewportW, int viewportH, PlayInput& outInput) noexcept
     {
         outInput = PlayInput{};
+        if (cheatKeyboard_.Visible()) { ResetTouchState(); return true; }
 
         // Hit-testing is pure layout math -- deliberately NOT gated on
         // loaded_ (unlike DrawPlay()/DrawPause() below), so controls still
@@ -1302,9 +1309,64 @@ namespace GalaxyEggbert::Game
         return activeControl_ != -1;
     }
 
+    bool InputPad::PlayTouchClaimed(const TouchPoint& t, int w, int h) const noexcept
+    {
+        const auto m = Metrics(w,h);
+        return t.id == dpadTouchId_ || t.id == actionTouchId_ || t.id == pauseTouchId_ ||
+               t.id == backUpTouchId_ || t.id == crouchTouchId_ || t.id == forwardTouchId_ ||
+               InRect(t.x,t.y,PlayJumpRect(m,jumpRight_)) ||
+               (vehicleFireEnabled_ && InRect(t.x,t.y,PlayFireRect(m,jumpRight_)));
+    }
+
+    void InputPad::DrawCheatKeyboard(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h)
+    {
+        if (!loaded_ || !cheatKeyboard_.Visible()) return;
+        std::vector<Quad> normal, pressed, labels;
+        const float s = float(h) / kRefH;
+        const auto& keys = cheatKeyboard_.KeysOnScreen();
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            const auto& key = keys[i];
+            const auto& r = key.rect;
+            Quad q{r.x0,r.y0,r.x1,r.y1,0,0,0,0};
+            PadIconUv(21,LogicalWidth(padTexture_),LogicalHeight(padTexture_),q.u0,q.v0,q.u1,q.v1,
+                      TextureScaleOf(&padTexture_));
+            (cheatKeyboard_.Focused() == int(i) ? pressed : normal).push_back(q);
+            using Microsoft::Xna::Framework::Input::Keys;
+            const int code = int(key.code);
+            const std::string face = key.code == Keys::None ? std::string(Tr("Cancel"))
+                : code >= int(Keys::A) && code <= int(Keys::Z)
+                ? std::string(1,char('A' + code - int(Keys::A))) : "F" + std::to_string(code - int(Keys::F1) + 1);
+            // Shrunk to the key's width when a translation of Cancel is long.
+            const float size = std::min({0.8f, (r.y1 - r.y0) / (40.0f * s),
+                                         (r.x1 - r.x0) * 0.85f / (std::max(1.0f, TextMetrics::Width(face)) * s)});
+            AppendGamerLabel(labels,face,(r.x0+r.x1)*0.5f - TextMetrics::Width(face)*size*s*0.5f,
+                             (r.y0+r.y1)*0.5f - 16.0f*size*s,size,s);
+        }
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        // Cover notices and training hints as well as the world: their letters must not show
+        // through the original pad icons' translucent centres.
+        const std::vector<Quad> panel{{0,0,float(w),keys.back().rect.y1 + std::max(2.0f,std::min(w,h)/120.0f),0,0,1,1}};
+        FlushQuads(device,*helpPanelEffect_,helpPanelRenderer_,panel,w,h,1.0f);
+        if (const int at = cheatKeyboard_.Focused(); at >= 0 && at < int(keys.size()))
+        {
+            const auto& r = keys[at].rect;
+            const std::vector<Quad> border{{r.x0-2,r.y0-2,r.x1+2,r.y1+2,0,0,1,1}};
+            const auto colour = helpPanelEffect_->getDiffuseColorProperty();
+            helpPanelEffect_->setDiffuseColorProperty({1.0f,0.48f,0.0f});
+            FlushQuads(device,*helpPanelEffect_,helpPanelRenderer_,border,w,h,1.0f);
+            helpPanelEffect_->setDiffuseColorProperty(colour);
+        }
+        FlushQuads(device,*padEffect_,padRenderer_,normal,w,h,1.0f);
+        FlushQuads(device,*padEffect_,padPressedRenderer_,pressed,w,h,1.0f);
+        FlushQuads(device,*textEffect_,textRenderer_,labels,w,h,1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     bool InputPad::UpdatePlayTouches(const std::vector<TouchPoint>& contacts, int viewportW, int viewportH,
                                        PlayInput& outInput) noexcept
     {
+        if (cheatKeyboard_.Visible()) { outInput = {}; ResetTouchState(); return true; }
         auto touches=contacts;
         for (auto& t : touches)
             if (!t.released && std::none_of(previousPlayTouches_.begin(),previousPlayTouches_.end(),

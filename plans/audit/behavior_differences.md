@@ -2221,3 +2221,17 @@ moving-state replay matches flag/velocity. Formatter tests cover clock rate,3D c
 wrapped yaw and slow speed; all29 words/lock/round-trip tests pass. An isolated OFF verifier passes
 while primary cache stays ON. Live toggle, heli, fairplay, help and touch checked;113/113 CTest pass.
 Evidence: build-probe/debug-cheat/. No gameplay mutation or sibling change.
+
+
+## BD-0127 — on-screen cheat keyboard activation (owner, 2026-11-13) — INTENDED_DIFFERENCE
+
+| Reference | Galaxy | Reason / verification |
+|---|---|---|
+| Mobile MODERN `InputPad.cpp:44-55,274-330,456-575`: hold the top-left rectangle for one second; QWERTY and F5-F8/F12, all pointer input captured, game running. | Hold an unclaimed left-button press or one finger inside the centre circle (radius 11% of the smaller viewport side) for 120 ticks / two seconds. LT (`OemPipe`) also opens; d-pad/stick/arrows and A/Enter navigate, B or a second LT hold closes. F4 (1.5x) added alongside Galaxy's F5-F8/F12; a two-key-wide Cancel (translated) closes. Keys fire once on press. | Owner's explicit centre/circle/two-second and gamepad choices; keeps the top-left available for notices while closed. Keyboard draws over that list while open. Logic in `CheatKeyboard.hpp`, tests in `VerifyGEInputPad`/`VerifyAutoplay`; raw recorded input drives every step, mission reset clears it and `ResumeCheckSignature` checks all its state. |
+
+Validation (native, 2026-11-13): 136/136 CTest; pointer `zoom` replay equal at tick 170 and
+LT/d-pad/A `zoom` replay equal at tick 194 (keyboard still open in both); all nine golden images
+and the golden trace unchanged. Silent Xvfb mouse hold and a real SDL virtual controller both
+activate `zoom`; captures include 800x360, closed/open/active and the visible orange focus.
+Evidence: `build-probe/cheat-keyboard/`; run directories removed. Android/web and physical
+mobile/controller hardware not tested.

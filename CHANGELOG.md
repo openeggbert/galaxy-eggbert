@@ -11,6 +11,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- An on-screen cheat keyboard: hold the centre of the play view or gamepad LT for two seconds;
+  tap its keys or use the arrows/d-pad and A/Enter. The game keeps running beneath it.
 - Type `back` during a single-player mission to rewind five seconds; repeat to go farther.
   Long rewinds and Continue replays show a loading screen with their actual progress.
 

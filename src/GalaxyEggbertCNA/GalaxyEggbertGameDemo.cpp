@@ -455,6 +455,7 @@ namespace GalaxyEggbert::CNA
             << cheatCompass_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
         result["cheat toggles"] = out.str();
+        result["cheat keyboard"] = inputPad_.CheatKeys().StateSignature();
         return result;
     }
 

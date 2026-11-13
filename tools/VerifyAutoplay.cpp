@@ -514,6 +514,26 @@ int main()
               "a mission saved before its first tick can resume");
     }
 
+    {
+        Autoplay autoplay;
+        std::string error;
+        check(autoplay.Parse("pointer 2 400 180 down\npointer 1 70 100\nhold 2 lt\nhold 1 confirm\nend\n",error),
+              "pointer and LT/confirm autoplay commands parse");
+        AutoplayState state;
+        auto a = autoplay.Step(state); ++state.tick;
+        auto b = autoplay.Step(state); ++state.tick;
+        auto c = autoplay.Step(state); ++state.tick;
+        auto d = autoplay.Step(state); ++state.tick;
+        auto e = autoplay.Step(state); ++state.tick;
+        auto f = autoplay.Step(state);
+        check(a.pointer && a.pointerDown && a.pointerX == 400 && a.pointerY == 180 && b.pointerDown &&
+              c.pointer && !c.pointerDown && c.pointerX == 70 && c.pointerY == 100 &&
+              d.cheatKeyboard && e.cheatKeyboard && f.confirm,
+              "pointer coordinates/button, LT and confirm hold exactly their tick counts");
+        for (const auto* bad : {"pointer 0 1 2", "pointer 2 1", "pointer 2 1 2 up", "pointer 2 1 2 down extra"})
+            check(!autoplay.Parse(bad,error), "malformed pointer command is refused");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

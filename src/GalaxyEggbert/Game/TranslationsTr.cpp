@@ -87,6 +87,7 @@ namespace GalaxyEggbert::Game
         {"A: jump / helicopter up", "A: zıpla / helikopter yukarı"},
         {"A: Play / Continue in menus", "A: menülerde Oyna / Devam"},
         {"B / X: action / enter / leave", "B / X: eylem / bin / in"},
+        {"LT (2 s): cheat keyboard", "LT (2 sn): hile klavyesi"},
         {"RT: vehicle glue shot / drop", "RT: araç tutkalı at / bırak"},
         {"RB: back up", "RB: geri git"},
         {"LB: crouch / dive", "LB: eğil / dal"},

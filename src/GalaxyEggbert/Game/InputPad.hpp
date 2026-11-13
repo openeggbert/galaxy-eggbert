@@ -2,6 +2,7 @@
 
 #include "QuadBatch.hpp"
 #include "ScreenKeyboard.hpp"
+#include "CheatKeyboard.hpp"
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Def/GamePhase.hpp>
@@ -121,6 +122,12 @@ namespace GalaxyEggbert::Game
         // misfire the wrong one.
         void ResetTouchState() noexcept;
         void ResetMissionInput() noexcept;
+        CheatKeyboard& CheatKeys() noexcept { return cheatKeyboard_; }
+        const CheatKeyboard& CheatKeys() const noexcept { return cheatKeyboard_; }
+        struct TouchPoint;
+        [[nodiscard]] bool PlayTouchClaimed(const TouchPoint& touch, int w, int h) const noexcept;
+        void DrawCheatKeyboard(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h);
+
 
         // Additional input derived from the on-screen Play controls, meant
         // to be OR'd/combined with keyboard input by the caller (mouse and
@@ -988,6 +995,8 @@ namespace GalaxyEggbert::Game
         int pickerActive_ = -1;
         bool pickerMouseWasDown_ = true;
         bool mouseWasDown_ = false;
+        CheatKeyboard cheatKeyboard_;
+
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;
         int forwardTouchId_ = -1; // SetAccelerometerMode(): the Forward button's finger

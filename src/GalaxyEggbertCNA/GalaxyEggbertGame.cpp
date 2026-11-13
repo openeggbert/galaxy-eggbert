@@ -602,6 +602,12 @@ namespace GalaxyEggbert::CNA
             mouse.getRightButtonProperty(), mouse.getXButton1Property(), mouse.getXButton2Property()};
         for (unsigned i = 0; i < 5; ++i)
             if (buttons[i] == ButtonState::Pressed) tickInput_.buttons |= 1u << i;
+        if (autoplay_ && autoplayPointer_.pointer)
+        {
+            tickInput_.mouseX = autoplayPointer_.pointerX;
+            tickInput_.mouseY = autoplayPointer_.pointerY;
+            tickInput_.buttons = autoplayPointer_.pointerDown ? 1u : 0u;
+        }
         const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
         tickInput_.viewportWidth = viewport.getWidthProperty();
         tickInput_.viewportHeight = viewport.getHeightProperty();

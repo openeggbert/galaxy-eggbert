@@ -61,6 +61,15 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- On-screen cheat keyboard (2026-11-13, `plans/codex/cheat_keyboard.md`): hold the mouse's left
+  button or one unclaimed finger in the centre circle (11% of the smaller viewport side), or LT,
+  for 120 ticks. QWERTY, F4-F8/F12 and close; arrows/d-pad/stick and A/Enter navigate, B closes.
+  The game runs beneath it; captured pointers and navigation do not reach play controls or camera.
+  LT uses the recorded `OemPipe` key. Reset and in-process replay checks include its state.
+  136/136 CTest, pointer and LT/d-pad/A resume checks equal, all nine goldens and the trace
+  unchanged; silent Xvfb mouse/SDL virtual-gamepad captures and an 800x360 view in
+  `build-probe/cheat-keyboard/`. Physical mobile/controller hardware and Android/web not tested.
+
 - The MODERN typed cheat `back` (2026-11-13, `plans/codex/back_cheat.md`) drops the last 300
   input ticks and reconstructs the earlier moment through the resume replay; repeat to go farther,
   or back to the mission start when fewer ticks remain. Restricted to ordinary single-player Play.

@@ -736,6 +736,7 @@ namespace GalaxyEggbert::CNA
         // `--autoplay` (EnableAutoplay()): the script, the keys it holds this tick, its trace file.
         std::unique_ptr<GalaxyEggbert::Game::Autoplay> autoplay_;
         Microsoft::Xna::Framework::Input::KeyboardState autoplayKeys_;
+        GalaxyEggbert::Game::AutoplayKeys autoplayPointer_;
         std::FILE* autoplayTrace_ = nullptr;
         int autoplayTick_ = 0;
         // The typed cheat `zoom` (OR-0079): the chase camera's step out, 0 (normal) to 4; the view is
@@ -817,7 +818,7 @@ namespace GalaxyEggbert::CNA
         bool UpdateTickCamera(float dt, float simDt, const Microsoft::Xna::Framework::Input::KeyboardState& keys,
                               bool inputPadClaimedMouse, bool crouchHeld, bool lookUpHeld, float moveInput, float turnInput);
         bool UpdateTickEvents(int gameOverCountBeforeUpdate, bool wasBallooned);
-        bool UpdateScreenPlay(const Microsoft::Xna::Framework::Input::KeyboardState& phaseKeys,
+        bool UpdateScreenPlay(Microsoft::Xna::Framework::Input::KeyboardState& phaseKeys,
                               const Microsoft::Xna::Framework::Graphics::Viewport& viewport,
                               GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse,
                               bool& mousePausePressed);

@@ -52,6 +52,8 @@ namespace GalaxyEggbert::Game
             else if (name == "crouch") keys.crouch = true;
             else if (name == "lookup") keys.lookUp = true;
             else if (name == "fire") keys.fire = true;
+            else if (name == "lt") keys.cheatKeyboard = true;
+            else if (name == "confirm") keys.confirm = true;
             else if (name == "pause") keys.pause = true;
             else return false;
             return true;
@@ -229,6 +231,19 @@ namespace GalaxyEggbert::Game
                     {
                         return fail("unknown key '" + key + "'");
                     }
+                }
+            }
+            else if (verb == "pointer")
+            {
+                command.kind = Kind::Hold;
+                command.keys.pointer = true;
+                if (!(words >> command.ticks >> command.keys.pointerX >> command.keys.pointerY) || command.ticks <= 0)
+                    return fail("needs ticks and viewport X Y");
+                std::string option, extra;
+                if (words >> option)
+                {
+                    if (option != "down" || (words >> extra)) return fail("expected optional down");
+                    command.keys.pointerDown = true;
                 }
             }
             else if (verb == "type")

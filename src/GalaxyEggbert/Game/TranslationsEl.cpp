@@ -88,6 +88,7 @@ namespace GalaxyEggbert::Game
         {"A: jump / helicopter up", "A: άλμα / ελικόπτερο πάνω"},
         {"A: Play / Continue in menus", "A: Παίξε / Συνέχεια στα μενού"},
         {"B / X: action / enter / leave", "B / X: ενέργεια / μπες / βγες"},
+        {"LT (2 s): cheat keyboard", "LT (2 δ.): πληκτρολόγιο κωδικών"},
         {"RT: vehicle glue shot / drop", "RT: βολή κόλλας οχήματος / άφησε"},
         {"RB: back up", "RB: όπισθεν"},
         {"LB: crouch / dive", "LB: σκύψε / βουτιά"},

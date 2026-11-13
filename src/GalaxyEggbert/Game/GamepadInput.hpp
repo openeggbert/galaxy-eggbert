@@ -7,7 +7,7 @@
 // keyboard's Right Ctrl), LB crouches (Left Shift), Y looks up (Right Shift), Start pauses.
 // Engine-independent: the host fills GamepadFrame from CNA's GamePadState each frame and presses
 // the keys GamepadKeys() names, so the gamepad drives every phase the keyboard does (the menus'
-// Escape, the cheat words aside).
+// Escape). LT holds open the cheat keyboard (OemPipe in the recorded input).
 
 namespace GalaxyEggbert::Game
 {
@@ -38,6 +38,7 @@ namespace GalaxyEggbert::Game
         kPadCrouch = 1u << 7,   // Left Shift
         kPadLookUp = 1u << 8,   // Right Shift
         kPadPause = 1u << 9,    // Escape
+        kPadCheatKeyboard = 1u << 12, // OemPipe, LT: hold for the cheats keyboard
         kPadFire = 1u << 11,    // F, right trigger
         kPadConfirm = 1u << 10, // Enter (A in the menus too)
     };
@@ -55,6 +56,7 @@ namespace GalaxyEggbert::Game
         if (now.dpadRight || now.leftX > t) keys |= kPadRight;
         if (now.a) keys |= kPadJump | kPadConfirm;
         if (now.b || now.x) keys |= kPadAction;
+        if (now.leftTrigger > kGamepadAxisThreshold) keys |= kPadCheatKeyboard;
         if (now.rightTrigger > kGamepadAxisThreshold) keys |= kPadFire;
         if (now.rightShoulder) keys |= kPadBackUp;
         if (now.leftShoulder) keys |= kPadCrouch;

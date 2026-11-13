@@ -13,6 +13,8 @@
 //   wait N                     no keys for N ticks (1/60 s each)
 //   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup fire
 //                              pause (Escape: Pause and back; 2026-11-11, the network tests)
+//   pointer N X Y [down]       pointer at viewport pixels for N ticks (released unless down)
+//   hold N lt|confirm          LT mapped key / A-or-Enter keyboard confirmation
 //   type WORD                  type lowercase letters, each followed by a release tick (cheats)
 //   face DEG                   turn on the spot until facing DEG
 //   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
@@ -122,6 +124,9 @@ namespace GalaxyEggbert::Game
         bool jump = false, action = false, crouch = false, lookUp = false;
         bool fire = false; // F: the tank's shot, the helicopter's glue (2026-11-10, the network tests)
         bool pause = false; // Escape: Pause, and back to Play (2026-11-11, the network tests)
+        bool cheatKeyboard = false, confirm = false;
+        bool pointer = false, pointerDown = false;
+        int pointerX = 0, pointerY = 0;
         char letter = 0;
     };
 

@@ -193,7 +193,7 @@ namespace GalaxyEggbert::CNA::detail
                 {kPadUp, Keys::Up}, {kPadDown, Keys::Down}, {kPadLeft, Keys::Left}, {kPadRight, Keys::Right},
                 {kPadJump, Keys::LeftControl}, {kPadAction, Keys::Space}, {kPadBackUp, Keys::RightControl},
                 {kPadCrouch, Keys::LeftShift}, {kPadLookUp, Keys::RightShift}, {kPadPause, Keys::Escape},
-                {kPadConfirm, Keys::Enter}, {kPadFire, Keys::F}};
+                {kPadConfirm, Keys::Enter}, {kPadFire, Keys::F}, {kPadCheatKeyboard, CheatKeyboard::kHoldKey}};
             for (const auto& [bit, key] : map)
             {
                 if (pad & bit)

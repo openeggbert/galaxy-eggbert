@@ -1026,6 +1026,8 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !controlsHelp_.shown && !cheatMenuShown_)
+                inputPad_.DrawCheatKeyboard(device,viewport.getWidthProperty(),viewport.getHeightProperty());
             if (controlsHelp_.shown)
             {
                 inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
