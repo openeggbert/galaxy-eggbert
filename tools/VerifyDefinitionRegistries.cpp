@@ -280,23 +280,50 @@ int main()
             drawn += icon >= 0 ? 1 : 0;
         }
         Check(drawnWhenDeadly && drawn == 75, "the lightning (305) is drawn only while it is deadly");
-        // The original picks the frame at random (Decor.cpp:1079-1082); a fixed shuffle stands in:
-        // each bag of three strikes holds 305, 306 and 307 once, and the order is not 305, 306, 307 over.
-        bool bagsFull = true;
-        bool notInTurn = false;
-        for (int bag = 0; bag < 8; ++bag)
+        // Decor.cpp:1079-1083 picks independently per drawn cell. A coordinate/strike hash keeps
+        // that variety reproducible, with repeats allowed (no bags of three).
+        bool perCellTiming = true, deterministic = true, columnsDiffer = true, axesDiffer = true;
+        bool varies = false, repeats = false;
+        int seen = 0;
+        for (int tick = 0; tick < 300; ++tick)
         {
-            int seen = 0;
-            for (int k = 0; k < 3; ++k)
+            int columnFrames = 0;
+            const bool deadly = tick % 100 < 50 && tick % 2 == 0;
+            for (int y = 25; y <= 32; ++y)
             {
-                const int strike = bag * 3 + k;
-                const int icon = ResolveBlockAnimationIcon(BlockTypes::Blitz, strike * 2);
-                seen |= 1 << (icon - 305);
-                notInTurn = notInTurn || icon != 305 + strike % 3;
+                const int icon = ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick, -24, y, 0);
+                perCellTiming = perCellTiming && (deadly ? icon >= 305 && icon <= 307 : icon == -1);
+                deterministic = deterministic &&
+                    icon == ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick, -24, y, 0) &&
+                    icon == ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick + 100, -24, y, 0, false);
+                if (icon >= 305 && icon <= 307) columnFrames |= 1 << (icon - 305);
+                if (deadly && tick >= 2)
+                {
+                    const int previous = ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick - 2, -24, y, 0);
+                    repeats = repeats || icon == previous;
+                }
             }
-            bagsFull = bagsFull && seen == 7;
+            if (!deadly) continue;
+            columnsDiffer = columnsDiffer && (columnFrames & (columnFrames - 1)) != 0;
+            const int origin = ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick, 0, 0, 0);
+            deterministic = deterministic && origin == ResolveBlockAnimationIcon(BlockTypes::Blitz, tick);
+            if (origin >= 305 && origin <= 307) seen |= 1 << (origin - 305);
+            varies = varies || origin != ResolveBlockAnimationIconAt(BlockTypes::Blitz, 0, 0, 0, 0);
+            // All coordinate axes matter, including signed world-space X/Z at the renderer seam.
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                bool differs = false;
+                for (int n = -8; n <= 8; ++n)
+                    differs = differs || origin != ResolveBlockAnimationIconAt(BlockTypes::Blitz, tick,
+                        axis == 0 ? n : 0, axis == 1 ? n : 0, axis == 2 ? n : 0);
+                axesDiffer = axesDiffer && differs;
+            }
         }
-        Check(bagsFull && notInTurn, "the lightning's frames come in shuffled bags of 305-307, not in turn");
+        Check(perCellTiming, "per-cell lightning is invisible on every non-strike tick");
+        Check(deterministic, "lightning frames repeat for the same inputs and after the 100-tick cycle");
+        Check(columnsDiffer, "several cells in one lightning column differ on each strike");
+        Check(varies && seen == 7, "one lightning cell varies across strikes and shows all three frames");
+        Check(axesDiffer && repeats, "lightning hashes all three coordinates and allows consecutive repeats");
     }
     Check(GetBlockDefinition(BlockTypes::FanLeft).fanDirection ==
               BlockFanDirection::NegativeX,

@@ -143,7 +143,9 @@ namespace GalaxyEggbert
         // 11 x + 7 row on and at its own pace (a divisor of 3 + (17 x + 13 row) % 3), as the
         // original draws them (Decor.cpp:1069-1078, 1032-1043, 1055-1061; row = its j, down);
         // depth adds 11 z (or 13 z) -- Galaxy's own, so cells side by side in depth differ too
-        // (BD-0065). Every other tile as ResolveAnimationIcon.
+        // (BD-0065). Lightning picks 305-307 by hashing (x, y, z, strike), independently per cell,
+        // allowing repeats, on the same visible ticks as ResolveAnimationIcon (Decor.cpp:1079-1083).
+        // Every other tile as ResolveAnimationIcon.
         // The spike trap snaps (table_decor_piege2, 4 frames at 2 ticks) while Blupi is not focused --
         // dying, taking a pickup, teleporting... (Decor.cpp:1032-1037; BD-0067).
         [[nodiscard]] int ResolveAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z,

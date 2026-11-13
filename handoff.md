@@ -8,6 +8,32 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## Lightning per cell (2026-11-13, owner's brief) — implemented, no commit or push
+
+`plans/codex/lightning_per_cell.md`: `ResolveAnimationIconAt` hashes each lightning cell's X/Y/Z and
+strike to 305-307 (the former `bagHash` mixer, repeats allowed). `TerrainRenderer` caches by the
+25 visible strikes, skips hidden ticks and clears the cache when the cells change. Hazard timing,
+point lights/glow and zaps retain their existing timing. The verifier covers independent cells,
+all three frames, variation over strikes, determinism, coordinate axes, repeats and invisible ticks.
+
+Built in `build-cna-opengl3/` with four jobs and the prescribed cache environment; **136/136 CTest**
+pass, including all ten demo replays with player files unchanged. Each graphical test needs its own
+Xvfb: an initial shared display let concurrent windows trigger focus loss and delete the demo test's
+sentinel resume file. `build-probe/lightning/bin/xvfb-run` isolates each display using rootless
+Xvfb over loopback, without Unix sockets or lock files in `/tmp`; `TMPDIR` and caches are in the
+evidence directory. No source changes were needed for this test setup.
+
+All nine golden views and the unchanged movement trace pass. Updated only the six tick-60/120
+images at effects off/medium/high: respectively 14/17, 67/71 and 66/70 changed pixels, entirely the
+bolt (and its antialiasing); all tick-180 images unchanged. Before/after/masks:
+`build-probe/lightning/golden-lightning-diff.png`, counts in `golden-diff.csv`. Live world032's
+columns: `strike-00.png`, `strike-01.png` (cycle ticks 0/2), `hidden-phase-01.png`, `two-strikes.png`;
+the probe's before/after autoplay traces are byte-equal. Reproduction script: `strikes.txt`,
+spawn `48,10,43,0` (ghost holds the camera above the floor). Logs and full frames in that directory.
+World025's existing full autoplay playthrough also passes (13,680 ticks, `world025-playthrough.log`).
+Backlog item 7, the animation audit and the changelog are updated. No sibling or release/site files
+touched; the concurrent agent's changes are preserved.
+
 ## The owner's reports of 2026-11-12 evening: camera, dots under letters, music — done, merged into develop
 
 - **Chase camera: REVERTED.** The fix (`66031dea`) measured well in autoplay (60 Hz, no interpolation,

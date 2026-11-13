@@ -58,7 +58,7 @@ exactly as the original's tables do, wherever a pose exists for every icon of th
    traced whether the original draws the Hide table there.
 6. **ObjectType 31 (charge pickup) shows the electrode's model** with no pose for its sixth frame, 243
    (UNKNOWN, small): never placed in a shipped level.
-7. Cosmetic: lightning frames in turn not at random, spring phase offset, fish head rounder (MATCH with notes).
+7. Cosmetic: spring phase offset, fish head rounder (MATCH with notes); lightning cells now flicker independently (2026-11-13).
 8. Explosions, splashes, the shield orb, the pickup sparkles and trails stay animated billboards by decision
    (no Ray Dream scene): STATIC_BY_DESIGN.
 9. In first-person camera no Blupi model is drawn, so none of the clips shows (design).
@@ -255,7 +255,7 @@ yaw/mirror, or a decal), 84 are single-icon statics.
 | Pickup effects, shield orb and trails, explosions 8-11, 90-93, splashes 14/15/35/98-100, pollution 36, clear 37, goo, magic/shield/tresor tracks 27/57/39, invert bursts 41/42, electric arc 38, shield pickup 25, charge sparks (explo/element effect icons) | table-driven sprites (tables transcribed in ObjectIcons.cpp) | billboards animated by the same tables; no Ray Dream scene exists for them (render_representation.csv VIS-0524-0526, decision 2026-10-24) | STATIC_BY_DESIGN (animated 2D by decision) | models would need new art |
 | Blupi's own overlays: shield orb (table_shield_blupi 16 f), shield sparkles (table_shieldloop), power stars (table_magicloop), drink bubbles (table_drinkoffset 0/7/22) | Decor.cpp:787-801, 868-880 | billboards, 2 ticks a frame, 3 bubbles rising 3 px a tick (GalaxyEggbertGame.cpp:7867-7960) | MATCH | |
 | Door opening (ObjectType22): the door's sprite slides up one cell in 50 ticks | Decor.cpp:11650-11690 | OpenDoorAt spawns the slide object (InteractionSystem.cpp:408-421); it draws through ObjectSprite and so as the door's model where one exists (334-336, 421-439) | MATCH (code read, not seen live) | |
-| Lightning bolt 305-307 | drawn at random frame while BlitzActif (Decor.cpp:1079-1085) | generated 3D bolt, frames by turn instead of random (BlockDefinitionRegistry.cpp:171-178) | MATCH | order not random (cosmetic) |
+| Lightning bolt 305-307 | drawn at random frame while BlitzActif (Decor.cpp:1079-1085) | generated 3D bolt, each cell hashes its coordinates and strike to 305-307 (2026-11-13) | MATCH | reproducible per-cell randomness |
 
 ## 3. Tiles
 
@@ -271,7 +271,7 @@ The original animates exactly these tile icons in `Decor::Build` (Decor.cpp:1010
 | 378 saw / 379 stopped saw | table_decor_scie 6 f, per-cell offset; a stored 379 stands still (:1060, ActiveSwitch) | sawFrames divisor 1 with offset; SawStopped = 379 only | MATCH | |
 | 324 temporary saucer | table_decor_temp 20 f, m_time/4 (:1065) | tempFrames divisor 4; model | MATCH | |
 | 92 / 91 water | eau1 6 f at /3 with offset; eau2 6 f at 3 + (17i+13j)%3 (:1070-1078) | water1/water2 with the same divisors and offsets | MATCH | cube textured with the frames (no scene) |
-| 305 lightning | random 305-307, only while BlitzActif | cycled 305-307 on even ticks of the first half of 100 | MATCH | order |
+| 305 lightning | random 305-307, only while BlitzActif | per-cell hash picks 305-307 on even ticks of the first half of 100 | MATCH | reproducible per-cell randomness |
 | 110/114/118/122 wind streaks | table_decor_ventg/d/h/b, 4 f, m_time/1 (:1085-1102) | per-tick frames, two crossed plates (TerrainRenderer.hpp:273, OR-0065) | MATCH | |
 | 126/129/132/135 fans | 3 f at m_time/2 (:1104-1122) | fan model poses, divisor 2 (BlockDefinitionRegistry.cpp:189-192) | MATCH | |
 | 211 spring | table_ressort, m_time/2 + i*7 (:926-929) | SpringFrameIcon | MATCH | |
@@ -310,7 +310,7 @@ Verdict: MATCH.
 | 4 | DONE 2026-11-07 (BD-0084): the original draws Hide (276-284) through the life-loss window; Galaxy plays the `Hide` clip there now | small | was the only unknown about a built clip |
 | 5 | Look at ObjectType31's frames 238-243 (electrode model, no pose for 243) | small | never placed in a shipped level |
 | 6 | Turn clips for vehicles/swim/air from the `Turn*` icon tables | large | by design today; only if the owner wants the original's swing |
-| 7 | 2026-11-07: the lightning's frames come in shuffled bags of 305-307 (a reproducible stand-in for the original's `m_random->Next(305, 308)`; every bolt cell still shows the same frame at a time, the original draws each cell's own). Kept: the spring's phase (x+z)*7, the 3D form of the original's column i*7 (with x alone, springs in a row along Z would bounce together); the fish head (BB3D-032: every hypothesis tested, reopen only if the owner names it; D11 was closed without it) | small | negligible |
+| 7 | 2026-11-13: each lightning cell independently picks 305-307 by a hash of its coordinates and strike (a reproducible stand-in for the original's `m_random->Next(305, 308)`, repeats allowed); meshes cached by the 25 visible strikes, timing unchanged. Kept: the spring's phase (x+z)*7, the 3D form of the original's column i*7 (with x alone, springs in a row along Z would bounce together); the fish head (BB3D-032: every hypothesis tested, reopen only if the owner names it; D11 was closed without it) | small | negligible |
 
 ## 6. What could not be verified
 

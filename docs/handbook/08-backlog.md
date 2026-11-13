@@ -28,10 +28,11 @@ after 3 ticks, the skateboard spins, TakeDynamite plays and holds Blupi 18 ticks
   never placed in a shipped level.
 - Item 6: turn clips for vehicles, swimming and the air from the `Turn*` icon tables. Large, and by
   design today (the model yaws over the original's own turn time).
-- Item 7: the lightning's frames are shuffled now (2026-11-07). Kept on purpose: the spring's phase
+- Item 7: the lightning's cells flicker independently now (2026-11-13): a reproducible hash of the
+  cell and strike picks 305-307, with repeats allowed, as the original's random draws.
+  Kept on purpose: the spring's phase
   `(x+z)*7` (the 3D form of the original's column offset) and the fish head (BB3D-032, every hypothesis
-  tested; reopen only if the owner names it). One difference stays: every bolt cell shows the same frame
-  at a time, the original draws each cell's own random frame.
+  tested; reopen only if the owner names it).
 
 Other known gaps:
 

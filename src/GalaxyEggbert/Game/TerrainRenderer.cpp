@@ -1341,7 +1341,7 @@ namespace GalaxyEggbert::Game
         if (m_blitzChanged)
         {
             m_blitzFrames.clear();
-            m_blitzIcon = -1;
+            m_blitzStrike = -1;
         }
         if (m_windChanged)
         {
@@ -1713,10 +1713,14 @@ namespace GalaxyEggbert::Game
         }
         if (!m_blitzBlocks.empty())
         {
-            m_blitzIcon = AnimIcon(GalaxyEggbert::BlockTypes::Blitz, animPhase);
-            if (m_blitzFrames.find(m_blitzIcon) == m_blitzFrames.end())
+            // One mesh per visible strike: every cell hashes that strike to its own frame.
+            // Hidden ticks have no mesh or cache entry; at most 25 meshes survive until a cell changes.
+            const auto& animation = GalaxyEggbert::GetBlockDefinition(GalaxyEggbert::BlockTypes::Blitz).animation;
+            m_blitzStrike = AnimIcon(GalaxyEggbert::BlockTypes::Blitz, animPhase) < 0
+                                ? -1 : (std::max(0, animPhase) % animation.frameCount) / 2;
+            if (m_blitzStrike >= 0 && m_blitzFrames.find(m_blitzStrike) == m_blitzFrames.end())
             {
-                m_blitzFrames[m_blitzIcon] = RebuildAnimatedRenderer(device, m_blitzBlocks, animPhase);
+                m_blitzFrames[m_blitzStrike] = RebuildAnimatedRenderer(device, m_blitzBlocks, animPhase);
             }
         }
         if (!m_windBlocks.empty())
@@ -2113,7 +2117,7 @@ namespace GalaxyEggbert::Game
                                             const TerrainShading* shading) const
     {
         Microsoft::Xna::Framework::Graphics::Effect* waterEffect = shading != nullptr ? shading->water : nullptr;
-        const auto blitz = m_blitzFrames.find(m_blitzIcon);
+        const auto blitz = m_blitzFrames.find(m_blitzStrike);
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
         const GpuMeshParts* windRenderer =
             m_windFrame >= 0 ? m_windFrames[static_cast<std::size_t>(m_windFrame)].get() : nullptr;

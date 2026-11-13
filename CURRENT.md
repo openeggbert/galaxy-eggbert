@@ -61,6 +61,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Lightning cells flicker independently (2026-11-13, `plans/codex/lightning_per_cell.md`): each
+  cell's coordinates and strike hash to frame 305-307, with repeats allowed; the 25 strike meshes
+  are cached until the cells change. Visibility, hazard timing, lights and zap timing stay the same.
+  `VerifyDefinitionRegistries`, 136/136 CTest, nine golden views (six lightning-only references
+  updated), the unchanged golden trace and live strikes in world032; evidence `build-probe/lightning/`.
 - Setup's Accelerometer and Sensitivity controls are hidden and ignore input on devices without
   a sensor (2026-11-12, owner's request); support is probed once at startup, independently of the
   saved option, which is preserved. Both Setup screens support arrow/gamepad focus over their

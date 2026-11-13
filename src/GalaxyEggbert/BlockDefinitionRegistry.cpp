@@ -14,6 +14,27 @@ namespace GalaxyEggbert
     {
         using namespace BlockTypes;
 
+        // The former bagHash mixer, with unsigned arithmetic for stable wraparound on every platform.
+        std::uint32_t AnimationHash(std::uint32_t value) noexcept
+        {
+            std::uint32_t x = value + 0x9e3779b9u;
+            x ^= x >> 16;
+            x *= 0x7feb352du;
+            x ^= x >> 15;
+            x *= 0x846ca68bu;
+            x ^= x >> 16;
+            return x;
+        }
+
+        int BlitzFrame(int x, int y, int z, int strike) noexcept
+        {
+            auto hash = AnimationHash(static_cast<std::uint32_t>(x));
+            hash = AnimationHash(hash ^ static_cast<std::uint32_t>(y));
+            hash = AnimationHash(hash ^ static_cast<std::uint32_t>(z));
+            hash = AnimationHash(hash ^ static_cast<std::uint32_t>(strike));
+            return Blitz + static_cast<int>(hash % 3);
+        }
+
         template<std::size_t N>
         void SetAnimation(BlockDefinition& definition, std::uint16_t base,
                           const int (&frames)[N], int divisor)
@@ -171,28 +192,17 @@ namespace GalaxyEggbert
         };
         constexpr int marineFrames[11] = {203, 204, 205, 206, 207, 208, 207, 206, 205, 204, 203};
         // The lightning (Decor::BlitzActif, Decor.cpp:620-634, 1079): drawn, and deadly, only on
-        // the even ticks of the first half of its 100-tick cycle, a frame of 305-307 each time. The
-        // original picks one at random (m_random->Next(305, 308)); here a fixed shuffle stands in for
-        // it, so that runs stay reproducible: the 25 strikes in bags of three, each bag the three
-        // frames in an order a hash of the bag picks (they took turns 305, 306, 307 before,
-        // 2026-11-07). -1: not drawn (D51).
-        constexpr int blitzOrders[6][3] = {
-            {305, 306, 307}, {305, 307, 306}, {306, 305, 307}, {306, 307, 305}, {307, 305, 306}, {307, 306, 305}};
-        const auto bagHash = [](std::uint32_t bag) {
-            std::uint32_t x = bag + 0x9e3779b9u;
-            x ^= x >> 16;
-            x *= 0x7feb352du;
-            x ^= x >> 15;
-            x *= 0x846ca68bu;
-            x ^= x >> 16;
-            return x;
-        };
+        // the even ticks of the first half of its 100-tick cycle. The original picks 305-307
+        // independently for each drawn cell (m_random->Next(305, 308), Decor.cpp:1079-1083).
+        // Hash (x, y, z, strike) instead, allowing repeats and keeping demos/captures reproducible.
+        // This table is the origin's frames; ResolveAnimationIconAt picks each cell's own frame.
+        // The renderer caches by strike (0-24), not icon. -1: not drawn (D51).
         int blitzFrames[100];
         for (int tick = 0; tick < 100; ++tick)
         {
             const int strike = tick / 2;
             blitzFrames[tick] = (tick % 2 == 0 && tick < 50)
-                                    ? blitzOrders[bagHash(static_cast<std::uint32_t>(strike / 3)) % 6][strike % 3]
+                                    ? BlitzFrame(0, 0, 0, strike)
                                     : -1;
         }
 
@@ -360,6 +370,12 @@ namespace GalaxyEggbert
         if (!animation.IsAnimated())
         {
             return static_cast<int>(Get(type).textureIcon);
+        }
+        if (type == Blitz)
+        {
+            const int cycle = std::max(0, rawTick) % animation.frameCount;
+            return animation.frames[static_cast<std::size_t>(cycle)] < 0
+                       ? -1 : BlitzFrame(x, y, z, cycle / 2);
         }
         // Non-negative terms whatever the cell (the offsets matter only modulo the cycle): the
         // original's row j grows downward, so -y.

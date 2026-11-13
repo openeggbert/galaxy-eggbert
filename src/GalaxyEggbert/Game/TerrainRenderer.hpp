@@ -150,7 +150,7 @@ namespace GalaxyEggbert::Game
         // lights).
         [[nodiscard]] std::vector<Microsoft::Xna::Framework::Vector3> LavaCells() const;
         [[nodiscard]] std::vector<Microsoft::Xna::Framework::Vector3> BlitzCells() const;
-        [[nodiscard]] bool BlitzShown() const noexcept { return m_blitzIcon >= 0 && m_blitzFrames.count(m_blitzIcon) != 0 && m_blitzFrames.at(m_blitzIcon) != nullptr; }
+        [[nodiscard]] bool BlitzShown() const noexcept { return m_blitzStrike >= 0 && m_blitzFrames.count(m_blitzStrike) != 0 && m_blitzFrames.at(m_blitzStrike) != nullptr; }
 
         // Draws the grass-top overlay (icon 107 blocks' real grass texture,
         // NEXT.md §8 task 3) with a SEPARATE effect/texture bind from the
@@ -421,10 +421,10 @@ namespace GalaxyEggbert::Game
         std::vector<AnimBlock> m_lavaBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_lavaFrames;
         int m_lavaIcon = -1; // the step of the lava cycle shown (each cell its own frame on it, BD-0065)
-        // The lightning cells likewise (Q-002: each frame's 3D bolt built once).
+        // The lightning cells likewise (Q-002): one mesh per strike, each cell its own 3D bolt frame.
         std::vector<AnimBlock> m_blitzBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_blitzFrames;
-        int m_blitzIcon = -1;
+        int m_blitzStrike = -1; // visible strike 0-24, or -1 (no mesh drawn)
         // The wind cells (110-125, OR-0065): the original's streaks move a frame every tick
         // (Decor.cpp:1085-1102, table_decor_ventg/d/h/b[m_time % 4], every cell on the same frame);
         // each of the four frames' meshes built once, when first shown. Each cell is two crossed
