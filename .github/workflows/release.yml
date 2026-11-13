@@ -204,11 +204,12 @@ jobs:
         id: siblings
         uses: ./galaxy-eggbert/.github/actions/checkout-siblings
 
+      # libz-mingw-w64-dev: sharp-runtime's io-compression module finds ZLIB for the target.
       - name: Install cross-build dependencies
         run: |
           apt-get install -y --no-install-recommends \
             build-essential cmake ninja-build pkg-config ccache python3 \
-            g++-mingw-w64-x86-64 curl unzip zip nlohmann-json3-dev tzdata
+            g++-mingw-w64-x86-64 libz-mingw-w64-dev curl unzip zip nlohmann-json3-dev tzdata
 
       # curl.se retires old downloads; keep the verified archive itself, not just the install.
       - name: Cache Windows libcurl archive
