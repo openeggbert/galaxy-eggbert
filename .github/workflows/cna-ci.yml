@@ -10,7 +10,7 @@
 #   python3 tools/ci_pin_siblings.py       (or --check to report drift without writing)
 # NEXT.md is frozen history; the script is the way to bump these pins.
 # mobile-eggbert is a separate, sparse (worlds/ only) checkout -- test DATA, not a build
-# dependency (never add_subdirectory()'d); see the Checkout mobile-eggbert step below.
+# dependency (never add_subdirectory()'d); see .github/actions/checkout-siblings/action.yml.
 
 name: GalaxyEggbertCNA CI
 
@@ -36,58 +36,10 @@ jobs:
         with:
           path: galaxy-eggbert
 
-      - name: Checkout cna
-        uses: actions/checkout@v4
+      - name: Checkout pinned siblings
+        uses: ./galaxy-eggbert/.github/actions/checkout-siblings
         with:
-          repository: libcna/cna
-          # Updated with cna-engine and the other locally verified siblings by the pin script.
-          ref: 594eb28dc5129b20c822d51032fd0c02e20a55d8 # v0.2.0-626-g594eb28dc
-          path: cna
-          submodules: true # non-recursive on purpose -- avoids SDL_mixer's own nested
-                            # optional-codec submodules this project's CMake args disable
-
-      - name: Checkout cna-engine
-        uses: actions/checkout@v4
-        with:
-          repository: libcna/cna-engine
-          ref: 6737a1cf0895df3e4de73776ad1052e06e49541f
-          path: cna-engine
-
-      - name: Checkout easy-gl
-        uses: actions/checkout@v4
-        with:
-          repository: libcna/easy-gl
-          ref: b582bd85f646678d1de38473160defed4729f323 # v0.1.1-2-gb582bd8
-          path: easy-gl
-
-      - name: Checkout sharp-runtime
-        uses: actions/checkout@v4
-        with:
-          repository: libcna/sharp-runtime
-          ref: c793ef3e886043b565749b071c6514cedc805b75 # v0.2.0-4-gc793ef3e
-          path: sharp-runtime
-
-      # ../easy-gl/CMakeLists.txt adds ../meta-gl: a transitive build dependency.
-      - name: Checkout meta-gl
-        uses: actions/checkout@v4
-        with:
-          repository: libcna/meta-gl
-          ref: 795bcdcfe9e2c418ced189717d3699cbb0847cc0 # v0.4.1-2-g795bcdc
-          path: meta-gl
-
-      # VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna (CMakeLists.txt WORKING_DIRECTORY =
-      # repo root) read real "../mobile-eggbert/worlds/*.txt" files directly off disk, not
-      # embedded fixtures -- a genuine test-data dependency, not a build dependency (mobile-eggbert
-      # is never add_subdirectory()'d). Sparse-checkout just worlds/ (a few MB): the full repo is
-      # ~2.3 GB, almost all of it Content/ (sprite sheets/sounds) neither test needs.
-      - name: Checkout mobile-eggbert (worlds/ only)
-        uses: actions/checkout@v4
-        with:
-          repository: openeggbert/mobile-eggbert
-          ref: f96f02f2515a9c0a79e986da3b87ab17c8095b49
-          path: mobile-eggbert
-          sparse-checkout: worlds
-          sparse-checkout-cone-mode: true
+          mobile-eggbert: 'true'
 
       # CNA's devices-tests.yml build dependencies, plus wayland-protocols as in its
       # general-tests-ci.yml: the installed Wayland headers select CNA's -wayland SDL cache,

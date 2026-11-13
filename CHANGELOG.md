@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Changed
+
+- Releases are built and published by GitHub Actions from a version tag.
+
 ## [0.4.1] — 2026-11-12
 
 The goodbye screen's new address and the Setup's accelerometer only where there is one. Packages for

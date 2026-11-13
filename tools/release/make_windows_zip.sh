@@ -12,9 +12,9 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 build="$(cd "$1" && pwd)"
 out="$(mkdir -p "$2" && cd "$2" && pwd)"
 version="$(head -n1 "$repo/VERSION.txt" | tr -d '[:space:]')"
-export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+export CCACHE_DIR="${CCACHE_DIR:-/rv/cnaccache}" CCACHE_BASEDIR="${CCACHE_BASEDIR:-/rv}"
 grep -q 'mingw' "$build/CMakeCache.txt" || { echo "$build is not a MinGW cross-build" >&2; exit 1; }
-cmake --build "$build" --target GalaxyEggbertCNA --parallel 6
+cmake --build "$build" --target GalaxyEggbertCNA --parallel "${GALAXY_BUILD_JOBS:-4}"
 name="GalaxyEggbert-$version-windows-x86_64"
 stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip"

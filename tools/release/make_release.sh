@@ -24,15 +24,15 @@ out="$(mkdir -p "$2" && cd "$2" && pwd)"
 android=1
 [[ "${3:-}" == "--no-android" ]] && android=0
 version="$(head -n1 "$repo/VERSION.txt" | tr -d '[:space:]')"
-export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+export CCACHE_DIR="${CCACHE_DIR:-/rv/cnaccache}" CCACHE_BASEDIR="${CCACHE_BASEDIR:-/rv}"
 
 echo "== Galaxy Eggbert $version"
 grep -q '^CMAKE_BUILD_TYPE:STRING=Release$' "$build/CMakeCache.txt" ||
     { echo "$build is not a Release build" >&2; exit 1; }
 
 echo "== Linux archive"
-cmake --build "$build" --target GalaxyEggbertCNA --parallel 6
-cmake --build "$build" --target package --parallel 6
+cmake --build "$build" --target GalaxyEggbertCNA --parallel "${GALAXY_BUILD_JOBS:-4}"
+cmake --build "$build" --target package --parallel "${GALAXY_BUILD_JOBS:-4}"
 linux="GalaxyEggbert-$version-linux-x86_64.tar.gz"
 mv "$build/$linux" "$out/$linux"
 need="$( (objdump -T "$build/GalaxyEggbert"
@@ -42,19 +42,10 @@ echo "   $linux: needs glibc $need or newer"
 
 if (( android )); then
     echo "== Android APK (arm64-v8a)"
-    (cd "$repo/android" &&
-     JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}" ./gradlew --no-daemon assembleRelease \
-         -PgalaxyAbis=arm64-v8a) # not android.injected.build.abi: that makes a test-only APK
-    apk="$repo/android/app/build/outputs/apk/release/app-release.apk"
-    cp "$apk" "$out/GalaxyEggbert-$version-android-arm64.apk"
+    "$repo/tools/release/make_android_apk.sh" "$out"
 fi
 
 echo "== Notes and checksums"
 cp "$repo/packaging/RELEASE_NOTES.md" "$out/RELEASE_NOTES.md"
-# Every package of this version in <out-dir>: the Windows and web zips too, when
-# make_windows_zip.sh and make_web_zip.sh put them there first.
-# nullglob: a kind of package not made (no APK with --no-android) is left out, not an error.
-(cd "$out" && shopt -s nullglob &&
- packages=(GalaxyEggbert-"$version"-*.tar.gz GalaxyEggbert-"$version"-*.zip GalaxyEggbert-"$version"-*.apk) &&
- sha256sum "${packages[@]}" > SHA256SUMS.txt && cat SHA256SUMS.txt)
+"$repo/tools/release/make_checksums.sh" "$out"
 echo "== Done: $out"

@@ -81,6 +81,20 @@ permission check refused that build ("code from external") and a download of Kit
 it: it needs the owner's permission. Without a newer libcurl the only other way is a build without gamer
 services, i.e. without the network game.
 
+## Release CI (2026-11-13, the owner) — committed, not yet run on GitHub
+
+`.github/workflows/release.yml`: a pushed `vX.Y.Z` tag checks the metadata
+(`tools/release/check_release_metadata.sh`), builds and checks Linux (Debian 13 container, ctest, a
+read-only Greek start under Xvfb), Windows (MinGW in Debian 13, the PE imports via
+`tools/release/check_windows_zip.py`), web (emsdk 6.0.9) and Android (signed arm64, certificate
+fingerprint and versionName checked), then publishes the GitHub release with SHA256SUMS.txt. A manual run
+(`gh workflow run release.yml --ref <branch>`) only keeps the packages as artifacts. The sibling pins
+moved into `.github/actions/checkout-siblings/action.yml` (shared with cna-ci.yml; `ci_pin_siblings.py`
+writes there) and were raised to what 0.4.1 was built with: CNA `011460b7f`, sharp-runtime `de06c17c`,
+meta-gl `333d777` (cna-engine stays `6737a1c`: the local `04ab7b3` is unpushed and unused by the game).
+Open: a first dry run on GitHub, and the four Android signing secrets (`docs/releasing.md`), which only
+the owner may add. The website is still updated by hand. Brief: `plans/codex/release_ci.md`.
+
 ## Release 0.4.1 (2026-11-12, the owner) — tagged and published
 
 `v0.4.1` (b59e0a00): the goodbye screen names galaxyeggbert.com; the Setup's Accelerometer option only

@@ -59,6 +59,85 @@ While the major version is 0, a minor version (0.2.0) may change saved games, wo
 or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `alpha.N` → `beta.N`
 → `rc.N`, ordered as Semantic Versioning orders them: `0.1.0-rc.1` precedes `0.1.0`.
 
+## Releasing from GitHub Actions
+
+After updating the version, Android's versionCode, changelog and release notes, commit the
+reviewed release and push its annotated `vX.Y.Z` tag. `.github/workflows/release.yml` checks the
+metadata, builds Linux, Windows, web and Android in parallel, checks each package, and publishes
+the GitHub release with the four packages and `SHA256SUMS.txt`. A version containing `-` is marked
+as a pre-release. Only the publishing job has `contents: write` permission.
+
+Use the workflow's **Run workflow** button on any branch for a dry run, or:
+
+```bash
+gh workflow run release.yml --repo openeggbert/galaxy-eggbert --ref <branch>
+```
+
+A manual run never publishes, even if run against a tag. Packages are kept as workflow artifacts
+for 14 days. Without signing secrets, a dry run skips Android with a notice; a tag run fails
+instead of publishing an incomplete release.
+
+The owner must add these four repository Actions secrets, using the **existing release key**
+(a newly generated key cannot update installed copies):
+
+| Secret | Local source |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | base64 of the keystore named by `storeFile` in `android/key.properties` |
+| `ANDROID_KEYSTORE_PASSWORD` | `storePassword` in `android/key.properties` |
+| `ANDROID_KEY_ALIAS` | `keyAlias` in `android/key.properties` |
+| `ANDROID_KEY_PASSWORD` | `keyPassword` in `android/key.properties` |
+
+Resolve a relative `storeFile` from `android/app/`, as Gradle does. From the owner's machine, set
+the keystore from its absolute path; the other three commands prompt for the corresponding
+values from `android/key.properties`, without putting passwords in shell history:
+
+```bash
+base64 -w0 /absolute/path/to/the/existing-release.keystore |
+    gh secret set ANDROID_KEYSTORE_BASE64 --repo openeggbert/galaxy-eggbert
+gh secret set ANDROID_KEYSTORE_PASSWORD --repo openeggbert/galaxy-eggbert
+gh secret set ANDROID_KEY_ALIAS --repo openeggbert/galaxy-eggbert
+gh secret set ANDROID_KEY_PASSWORD --repo openeggbert/galaxy-eggbert
+```
+
+CI decodes the keystore in the runner's temporary directory and writes an absolute `storeFile`
+into `android/key.properties`; both files are deleted by an `always()` cleanup step. No signing
+material belongs in tracked files.
+
+The jobs check:
+
+- **Metadata:** tag = `v` + VERSION.txt, a dated changelog heading, release notes naming the
+  version, and Android's versionCode greater than the preceding `v*` tag. Dry runs check the
+  version, changelog and notes without comparing tags.
+- **Linux:** Release/OPENGL33 on Debian 13 (the FFmpeg 7 ABI), every target built and every CTest
+  run, then the unpacked archive started under Xvfb/Mesa from a read-only directory as an
+  unprivileged user. It must still run after 40 seconds and log Greek selected from `el_GR.UTF-8`.
+- **Windows:** Debian 13's MinGW cross-build, hash-verified Windows libcurl, then the executable's
+  and every bundled DLL's imports checked against the bundle and an explicit system-DLL list.
+  This job does not run wine.
+- **Web:** emsdk 6.0.9, Release/WEBGL2 with the local build's WasmFS and single-threaded options;
+  tests, Draco and optional Devices/CNAExt modules disabled, vendored SDL bootstrapped on the
+  runner. The zip must contain nonempty HTML, JS, WASM, data and `Content/music`.
+- **Android:** Temurin JDK 21, NDK 29.0.14206865, CMake 4.1.2, signed arm64 APK. `apksigner` must
+  verify the release certificate SHA-256
+  `4cb06914c5c08f8a207e9cc4fe39ae8f754daf104d9af60fdc48ec51d22a8baf`, and `aapt` must report
+  VERSION.txt as versionName.
+
+All packages use the checked commit's time for `SOURCE_DATE_EPOCH` and `TZ=Europe/Prague`, so
+their menu stamps agree. ccache, CNA's platform SDL prebuilts (keyed on both SDL submodule
+commits), emsdk, the Windows curl archive and Gradle are cached. The siblings' pins live once in
+`.github/actions/checkout-siblings/action.yml`, shared with the ordinary CNA CI; continue updating
+them with `tools/ci_pin_siblings.py` after local verification.
+
+Re-run failed jobs from the Actions run after fixing a transient failure or adding missing
+secrets. Once all package jobs pass, publishing calculates their checksums. If the release
+already exists (for example a previous upload stopped partway through), publishing uses
+`gh release upload --clobber` to replace the assets. A tag's source and metadata must already be
+correct; source fixes require a reviewed commit and a new version tag.
+
+The manual steps below remain the fallback. Local release scripts honor `CCACHE_DIR` and
+`CCACHE_BASEDIR`, defaulting to `/rv/cnaccache` and `/rv`, and use `GALAXY_BUILD_JOBS` (default 4).
+The website (`web/` and galaxyeggbert.com) is still updated by hand.
+
 ## Cutting a release (only when the owner asks)
 
 1. **The version.** Set `VERSION.txt` (and raise Android's `versionCode` when an APK will be
@@ -66,8 +145,8 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
 2. **The changelog.** Move what is under `## [Unreleased]` in `CHANGELOG.md` into
    `## [x.y.z] — YYYY-MM-DD`, add its link at the bottom, and update
    `packaging/RELEASE_NOTES.md`.
-3. **Build and test** in the existing Release trees (`../CLAUDE.md`: reuse them, at most six
-   jobs), then make the packages into one `<out-dir>` (e.g. `build-probe/release/<version>`), the
+3. **For the manual fallback, build and test** in the existing Release trees (`../CLAUDE.md`: reuse
+   them, at most six jobs), then make the packages into one `<out-dir>` (e.g. `build-probe/release/<version>`), the
    zips first so that the checksums cover them:
 
    ```bash
@@ -82,8 +161,9 @@ or controls; a patch version (0.1.1) only fixes. Pre-release identifiers are `al
 4. **Commit** the version-bearing files by name (`VERSION.txt`, `CHANGELOG.md`,
    `packaging/RELEASE_NOTES.md`, `android/app/build.gradle` when `versionCode` changed).
 5. **Tag** with a `v` prefix, annotated: `git tag -a v0.1.0 -m "Galaxy Eggbert 0.1.0"`.
-6. **Push and publish only when the owner asks** (`git push origin HEAD`, `git push origin v0.1.0`),
-   then a GitHub release of the tag with the packages, SHA256SUMS.txt and the notes (Q-018):
+6. **Push and publish only when the owner asks** (`git push origin HEAD`, `git push origin v0.1.0`).
+   The tag push starts the Actions release above. For a manual fallback, make a GitHub release of
+   the tag with the packages, SHA256SUMS.txt and the notes (Q-018):
 
    ```bash
    gh release create v0.1.0 --repo openeggbert/galaxy-eggbert --title "Galaxy Eggbert 0.1.0" \

@@ -1,0 +1,566 @@
+# Packages are checked before publishing; workflow_dispatch keeps the same outputs as artifacts.
+name: Galaxy Eggbert release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: galaxy-release-${{ github.ref }}
+  # A newer branch dry run may replace an older one; a tag release must finish.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  TZ: Europe/Prague
+  GALAXY_BUILD_JOBS: '4'
+
+jobs:
+  metadata:
+    name: Check release metadata
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      prerelease: ${{ steps.metadata.outputs.prerelease }}
+      epoch: ${{ steps.stamp.outputs.epoch }}
+    steps:
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+          # The versionCode comparison needs the preceding release tag and its files.
+          fetch-depth: 0
+
+      # checkout can leave a pushed annotated tag as a lightweight local ref; the check needs the
+      # tag object.
+      - name: Fetch the tags as they are on GitHub
+        working-directory: galaxy-eggbert
+        run: git fetch --force --tags --quiet origin
+
+      - name: Check version, notes and Android versionCode
+        id: metadata
+        working-directory: galaxy-eggbert
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: tools/release/check_release_metadata.sh "$RELEASE_TAG"
+
+      - name: Use the commit time for every package's stamp
+        id: stamp
+        working-directory: galaxy-eggbert
+        run: echo "epoch=$(git show -s --format=%ct HEAD)" >> "$GITHUB_OUTPUT"
+
+  linux:
+    name: Linux (Debian 13, OPENGL33)
+    needs: metadata
+    runs-on: ubuntu-24.04
+    container: debian:13
+    timeout-minutes: 60
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      SOURCE_DATE_EPOCH: ${{ needs.metadata.outputs.epoch }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # checkout needs git for the sibling submodules, before any source is fetched.
+      - name: Install checkout dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      # ${{ github.workspace }} names the host's path inside a container; $GITHUB_WORKSPACE is the
+      # container's own.
+      - name: Point ccache at the container's workspace
+        run: |
+          echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+
+      - name: Checkout pinned siblings
+        id: siblings
+        uses: ./galaxy-eggbert/.github/actions/checkout-siblings
+        with:
+          mobile-eggbert: 'true'
+
+      # Debian 13 supplies the FFmpeg 7 ABI the owner's Linux releases use.
+      - name: Install system dependencies
+        run: |
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config ccache python3 \
+            libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-jackd2-dev \
+            libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+            libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libthai-dev libwayland-dev wayland-protocols libdecor-0-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev \
+            libcurl4-openssl-dev nlohmann-json3-dev libzstd-dev libopus-dev \
+            xvfb xauth libgl1-mesa-dri locales tzdata util-linux
+          echo 'el_GR.UTF-8 UTF-8' >> /etc/locale.gen
+          locale-gen el_GR.UTF-8
+
+      - name: Cache vendored SDL prebuilt tree
+        uses: actions/cache@v4
+        with:
+          path: cna/.sdl-prebuilt-Linux-x86_64*
+          key: release-sdl-debian13-linux-${{ steps.siblings.outputs.sdl }}-${{ steps.siblings.outputs.sdl-mixer }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: release-ccache-debian13-linux-${{ github.sha }}
+          restore-keys: |
+            release-ccache-debian13-linux-
+
+      - name: Configure
+        run: |
+          cmake -S galaxy-eggbert -B galaxy-eggbert/build-cna -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DGALAXY_EGGBERT_BUILD_CNA=ON \
+            -DCNA_GRAPHICS_RENDERER=OPENGL33 \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+
+      - name: Build everything and run ctest
+        run: |
+          cmake --build galaxy-eggbert/build-cna --parallel "$GALAXY_BUILD_JOBS"
+          ctest --test-dir galaxy-eggbert/build-cna --parallel "$GALAXY_BUILD_JOBS" --output-on-failure
+
+      - name: Make Linux archive
+        run: galaxy-eggbert/tools/release/make_release.sh galaxy-eggbert/build-cna galaxy-eggbert/release --no-android
+
+      - name: Smoke test the read-only archive in Greek
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          set -euo pipefail
+          smoke=$(mktemp -d "$RUNNER_TEMP/galaxy-linux.XXXXXX")
+          chmod 755 "$smoke"
+          mkdir "$smoke/unpacked" "$smoke/user"
+          chmod 777 "$smoke/user"
+          tar -xzf "galaxy-eggbert/release/GalaxyEggbert-$RELEASE_VERSION-linux-x86_64.tar.gz" -C "$smoke/unpacked"
+          chmod -R a-w "$smoke/unpacked"
+          bundle="$smoke/unpacked/GalaxyEggbert-$RELEASE_VERSION-linux-x86_64"
+          # Container steps are root; nobody makes the read-only test meaningful.
+          status=0
+          (cd "$bundle" && runuser -u nobody -- env \
+            SDL_AUDIODRIVER=dummy LIBGL_ALWAYS_SOFTWARE=1 \
+            GALAXY_USER_DIR="$smoke/user" HOME="$smoke/user" \
+            LANG=el_GR.UTF-8 LC_ALL=el_GR.UTF-8 \
+            timeout 40 xvfb-run -a -s '-screen 0 1024x768x24' ./run-galaxy-eggbert) \
+            > "$smoke/game.log" 2>&1 || status=$?
+          if [[ "$status" != 124 ]] || ! grep -Fq 'GalaxyEggbertCNA: language el' "$smoke/game.log"; then
+            echo "Linux smoke test failed (exit $status)" >&2
+            tail -n 100 "$smoke/game.log"
+            exit 1
+          fi
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: galaxy-eggbert/release/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows (Debian 13, MinGW OPENGL33)
+    needs: metadata
+    runs-on: ubuntu-24.04
+    container: debian:13
+    timeout-minutes: 60
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      SOURCE_DATE_EPOCH: ${{ needs.metadata.outputs.epoch }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install checkout dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      # ${{ github.workspace }} names the host's path inside a container; $GITHUB_WORKSPACE is the
+      # container's own.
+      - name: Point ccache at the container's workspace
+        run: |
+          echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+
+      - name: Checkout pinned siblings
+        id: siblings
+        uses: ./galaxy-eggbert/.github/actions/checkout-siblings
+
+      - name: Install cross-build dependencies
+        run: |
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config ccache python3 \
+            g++-mingw-w64-x86-64 curl unzip zip nlohmann-json3-dev tzdata
+
+      # curl.se retires old downloads; keep the verified archive itself, not just the install.
+      - name: Cache Windows libcurl archive
+        id: curl-cache
+        uses: actions/cache@v4
+        with:
+          path: downloads/curl-8.22.0_3-win64-mingw.zip
+          key: release-curl-8.22.0_3-win64-mingw-f38b0ac2e3a280fd414b607c874a21e6dd4d1ed0e2ae622afbf0020917446561
+
+      - name: Download Windows libcurl
+        if: steps.curl-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p downloads
+          curl --fail --location --retry 3 \
+            https://curl.se/windows/dl-8.22.0_3/curl-8.22.0_3-win64-mingw.zip \
+            -o downloads/curl-8.22.0_3-win64-mingw.zip
+
+      - name: Verify and unpack Windows libcurl
+        run: |
+          echo 'f38b0ac2e3a280fd414b607c874a21e6dd4d1ed0e2ae622afbf0020917446561  downloads/curl-8.22.0_3-win64-mingw.zip' | sha256sum -c -
+          unzip -q downloads/curl-8.22.0_3-win64-mingw.zip -d downloads
+
+      - name: Cache vendored SDL prebuilt tree
+        uses: actions/cache@v4
+        with:
+          path: cna/.sdl-prebuilt-Windows-x86_64*
+          key: release-sdl-debian13-windows-${{ steps.siblings.outputs.sdl }}-${{ steps.siblings.outputs.sdl-mixer }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: release-ccache-debian13-windows-${{ github.sha }}
+          restore-keys: |
+            release-ccache-debian13-windows-
+
+      # CNA builds SDL at configure time and caches SDL3_DIR/SDL3_mixer_DIR for the DLL fallback.
+      - name: Configure
+        run: |
+          cmake -S galaxy-eggbert -B galaxy-eggbert/build-windows -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/cna/cmake/toolchains/mingw-w64.cmake" \
+            -DCMAKE_BUILD_TYPE=Release -DCNA_GRAPHICS_RENDERER=OPENGL33 \
+            -DCURL_INCLUDE_DIR="$GITHUB_WORKSPACE/downloads/curl-8.22.0_3-win64-mingw/include" \
+            -DCURL_LIBRARY="$GITHUB_WORKSPACE/downloads/curl-8.22.0_3-win64-mingw/lib/libcurl.dll.a" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCNA_USE_CCACHE=ON
+
+      - name: Make Windows zip
+        run: galaxy-eggbert/tools/release/make_windows_zip.sh galaxy-eggbert/build-windows galaxy-eggbert/release
+
+      - name: Check all packaged PE imports
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          python3 galaxy-eggbert/tools/release/check_windows_zip.py \
+            "galaxy-eggbert/release/GalaxyEggbert-$RELEASE_VERSION-windows-x86_64.zip"
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: galaxy-eggbert/release/*-windows-x86_64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  web:
+    name: Web (emsdk 6.0.9, WEBGL2)
+    needs: metadata
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.metadata.outputs.epoch }}
+      EMSDK_VERSION: '6.0.9'
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+    steps:
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      - name: Checkout pinned siblings
+        id: siblings
+        uses: ./galaxy-eggbert/.github/actions/checkout-siblings
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build ccache python3 zip nlohmann-json3-dev
+
+      - name: Cache emsdk install
+        id: emsdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: release-emsdk-${{ runner.os }}-${{ env.EMSDK_VERSION }}
+
+      - name: Install emsdk (cache miss only)
+        if: steps.emsdk-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+          cd ~/emsdk
+          ./emsdk install "$EMSDK_VERSION"
+
+      - name: Activate emsdk
+        run: |
+          cd ~/emsdk
+          ./emsdk activate "$EMSDK_VERSION"
+
+      - name: Cache vendored SDL prebuilt tree
+        uses: actions/cache@v4
+        with:
+          path: cna/.sdl-prebuilt-emscripten
+          key: release-sdl-web-6.0.9-${{ steps.siblings.outputs.sdl }}-${{ steps.siblings.outputs.sdl-mixer }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: release-ccache-web-6.0.9-${{ github.sha }}
+          restore-keys: |
+            release-ccache-web-6.0.9-
+
+      # Match the local web tree's WasmFS and disabled threads, tests, Draco and optional modules.
+      # Its system-SDL setting points at a local prebuilt; CI must bootstrap vendored SDL instead.
+      - name: Configure
+        run: |
+          source "$HOME/emsdk/emsdk_env.sh"
+          emcmake cmake -S galaxy-eggbert -B galaxy-eggbert/build-web -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCNA_GRAPHICS_RENDERER=WEBGL2 \
+            -DBUILD_TESTING=OFF -DCNA_ENABLE_DRACO=OFF \
+            -DCNA_DEVICES=OFF -DCNA_CNAEXT=OFF \
+            -DCNA_EMSCRIPTEN_USE_WASMFS=ON -DCNA_ENABLE_EMSCRIPTEN_THREADS=OFF \
+            -DCNA_USE_SYSTEM_SDL=OFF \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+
+      - name: Make web zip
+        run: |
+          EMSDK_ENV="$HOME/emsdk/emsdk_env.sh" \
+            galaxy-eggbert/tools/release/make_web_zip.sh galaxy-eggbert/build-web galaxy-eggbert/release
+
+      - name: Check web payload
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import zipfile
+          version = os.environ['RELEASE_VERSION']
+          root = f'GalaxyEggbert-{version}-web/'
+          with zipfile.ZipFile(f'galaxy-eggbert/release/{root[:-1]}.zip') as bundle:
+              names = set(bundle.namelist())
+              for suffix in ('html', 'js', 'wasm', 'data'):
+                  name = root + 'GalaxyEggbert.' + suffix
+                  assert name in names and bundle.getinfo(name).file_size > 0, name
+              assert any(name.startswith(root + 'Content/music/') and
+                         not name.endswith('/') and bundle.getinfo(name).file_size > 0
+                         for name in names), 'Content/music is missing or empty'
+          PY
+
+      - name: Upload web package
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-web
+          path: galaxy-eggbert/release/*-web.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Android (arm64, release key)
+    needs: metadata
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.metadata.outputs.epoch }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+    steps:
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      - name: Check signing secrets
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$KEYSTORE_BASE64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+              echo '::error::Tag releases require ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.'
+              exit 1
+            fi
+            echo '::notice::Android APK skipped: configure all four Android signing secrets to include it in a dry run.'
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout pinned siblings
+        if: steps.signing.outputs.available == 'true'
+        id: siblings
+        uses: ./galaxy-eggbert/.github/actions/checkout-siblings
+
+      - name: Set up JDK 21 and cache Gradle
+        if: steps.signing.outputs.available == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+          cache-dependency-path: |
+            galaxy-eggbert/android/**/*.gradle
+            galaxy-eggbert/android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Install native build tools
+        if: steps.signing.outputs.available == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ccache ninja-build nlohmann-json3-dev
+          # Not reliably on PATH on the runner image; the preinstalled command-line tools are.
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            'ndk;29.0.14206865' 'cmake;4.1.2' 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Cache vendored SDL prebuilt tree
+        if: steps.signing.outputs.available == 'true'
+        uses: actions/cache@v4
+        with:
+          path: cna/.sdl-prebuilt-Android-*
+          key: release-sdl-android-arm64-ndk29-${{ steps.siblings.outputs.sdl }}-${{ steps.siblings.outputs.sdl-mixer }}
+
+      - name: Cache ccache
+        if: steps.signing.outputs.available == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: release-ccache-android-arm64-ndk29-${{ github.sha }}
+          restore-keys: |
+            release-ccache-android-arm64-ndk29-
+
+      - name: Prepare release signing
+        if: steps.signing.outputs.available == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          umask 077
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+          keystore = Path(os.environ['RUNNER_TEMP']) / 'galaxy-release.keystore'
+          keystore.write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'], validate=True))
+          # Java Properties needs escaped backslashes, separators and whitespace in passwords.
+          def escape(value):
+              utf16 = value.encode('utf-16-be')
+              return ''.join({'\\': '\\\\', '\n': '\\n', '\r': '\\r', '\t': '\\t',
+                              ' ': '\\ ', '=': '\\=', ':': '\\:', '#': '\\#', '!': '\\!'}.get(c, c)
+                             if 32 <= ord(c) <= 126 else '\\u%04x' % ord(c)
+                             for c in (chr(int.from_bytes(utf16[i:i+2], 'big'))
+                                       for i in range(0, len(utf16), 2)))
+          values = {'storeFile': str(keystore.resolve()), 'storePassword': os.environ['STORE_PASSWORD'],
+                    'keyAlias': os.environ['KEY_ALIAS'], 'keyPassword': os.environ['KEY_PASSWORD']}
+          Path('galaxy-eggbert/android/key.properties').write_text(
+              ''.join(f'{key}={escape(value)}\n' for key, value in values.items()), encoding='ascii')
+          PY
+
+      - name: Make Android APK
+        if: steps.signing.outputs.available == 'true'
+        run: galaxy-eggbert/tools/release/make_android_apk.sh galaxy-eggbert/release
+
+      - name: Check APK certificate and version
+        if: steps.signing.outputs.available == 'true'
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          set -euo pipefail
+          apk="galaxy-eggbert/release/GalaxyEggbert-$RELEASE_VERSION-android-arm64.apk"
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          "$tools/apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/apk-certs.txt"
+          cat "$RUNNER_TEMP/apk-certs.txt"
+          fingerprint=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/apk-certs.txt")
+          [[ "$fingerprint" == 4cb06914c5c08f8a207e9cc4fe39ae8f754daf104d9af60fdc48ec51d22a8baf ]]
+          "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/apk-badging.txt"
+          grep '^package:' "$RUNNER_TEMP/apk-badging.txt"
+          grep -Fq "versionName='$RELEASE_VERSION'" "$RUNNER_TEMP/apk-badging.txt"
+
+      - name: Upload Android package
+        if: steps.signing.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-android
+          path: galaxy-eggbert/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove release signing files
+        if: always()
+        run: rm -f "$RUNNER_TEMP/galaxy-release.keystore" galaxy-eggbert/android/key.properties
+
+  publish:
+    name: Publish checked packages
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: [metadata, linux, windows, web, android]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Only this job can write a release; building tagged source needs no write token.
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      - name: Download checked packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: galaxy-eggbert/release
+
+      - name: Make checksums and publish
+        working-directory: galaxy-eggbert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+          PRERELEASE: ${{ needs.metadata.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          packages=(
+            "release/GalaxyEggbert-$RELEASE_VERSION-linux-x86_64.tar.gz"
+            "release/GalaxyEggbert-$RELEASE_VERSION-windows-x86_64.zip"
+            "release/GalaxyEggbert-$RELEASE_VERSION-web.zip"
+            "release/GalaxyEggbert-$RELEASE_VERSION-android-arm64.apk"
+          )
+          for package in "${packages[@]}"; do test -s "$package"; done
+          tools/release/make_checksums.sh release
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" --clobber "${packages[@]}" release/SHA256SUMS.txt
+          else
+            flags=()
+            [[ "$PRERELEASE" != true ]] || flags+=(--prerelease)
+            gh release create "$RELEASE_TAG" --title "Galaxy Eggbert $RELEASE_VERSION" \
+              --notes-file packaging/RELEASE_NOTES.md --verify-tag "${flags[@]}" \
+              "${packages[@]}" release/SHA256SUMS.txt
+          fi

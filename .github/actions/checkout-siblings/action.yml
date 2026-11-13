@@ -1,0 +1,77 @@
+# Both CI and releases use the exact siblings verified together locally.
+name: Checkout pinned siblings
+description: Check out the CNA dependencies beside galaxy-eggbert, with optional test worlds.
+inputs:
+  mobile-eggbert:
+    description: Whether to fetch the reference worlds needed by ctest (true or false).
+    default: 'false'
+outputs:
+  sdl:
+    description: SDL submodule commit, for the platform's prebuilt cache.
+    value: ${{ steps.sdlsha.outputs.sdl }}
+  sdl-mixer:
+    description: SDL_mixer submodule commit, for the platform's prebuilt cache.
+    value: ${{ steps.sdlsha.outputs.sdl-mixer }}
+runs:
+  using: composite
+  steps:
+    - name: Checkout cna
+      uses: actions/checkout@v4
+      with:
+        repository: libcna/cna
+        # Updated with cna-engine and the other locally verified siblings by the pin script.
+        ref: 011460b7fb39a5288dc96060f35b39b65787bfe0 # v0.2.0-897-g011460b7f (the CNA 0.4.1 was built against)
+        path: cna
+        submodules: true # non-recursive on purpose -- avoids SDL_mixer's own nested
+                          # optional-codec submodules this project's CMake args disable
+
+    - name: Checkout cna-engine
+      uses: actions/checkout@v4
+      with:
+        repository: libcna/cna-engine
+        ref: 6737a1cf0895df3e4de73776ad1052e06e49541f
+        path: cna-engine
+
+    - name: Checkout easy-gl
+      uses: actions/checkout@v4
+      with:
+        repository: libcna/easy-gl
+        ref: b582bd85f646678d1de38473160defed4729f323 # v0.1.1-2-gb582bd8
+        path: easy-gl
+
+    - name: Checkout sharp-runtime
+      uses: actions/checkout@v4
+      with:
+        repository: libcna/sharp-runtime
+        ref: de06c17c1f02e480c69473b42796a7194edd17fb # v0.2.0-12-gde06c17c
+        path: sharp-runtime
+
+    # ../easy-gl/CMakeLists.txt adds ../meta-gl: a transitive build dependency.
+    - name: Checkout meta-gl
+      uses: actions/checkout@v4
+      with:
+        repository: libcna/meta-gl
+        ref: 333d777fadbe53613a9c2eead358ffbfe6a2ef33 # v0.4.1-9-g333d777
+        path: meta-gl
+
+    # VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna (CMakeLists.txt WORKING_DIRECTORY =
+    # repo root) read real "../mobile-eggbert/worlds/*.txt" files directly off disk, not
+    # embedded fixtures -- a genuine test-data dependency, not a build dependency (mobile-eggbert
+    # is never add_subdirectory()'d). Sparse-checkout just worlds/ (a few MB): the full repo is
+    # ~2.3 GB, almost all of it Content/ (sprite sheets/sounds) neither test needs.
+    - name: Checkout mobile-eggbert (worlds/ only)
+      if: inputs.mobile-eggbert == 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: openeggbert/mobile-eggbert
+        ref: f96f02f2515a9c0a79e986da3b87ab17c8095b49
+        path: mobile-eggbert
+        sparse-checkout: worlds
+        sparse-checkout-cone-mode: true
+
+    - name: Record SDL submodule commits
+      id: sdlsha
+      shell: bash
+      run: |
+        echo "sdl=$(git -C cna/third_party/SDL rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        echo "sdl-mixer=$(git -C cna/third_party/SDL_mixer rev-parse HEAD)" >> "$GITHUB_OUTPUT"

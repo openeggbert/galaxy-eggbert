@@ -16,7 +16,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
-WORKFLOW = ROOT / ".github/workflows/cna-ci.yml"
+WORKFLOW = ROOT / ".github/actions/checkout-siblings/action.yml"
 SIBLINGS = (
     ("cna", "../../libcna/cna", "libcna/cna", "Checkout cna"),
     ("cna-engine", "../../libcna/cna-engine", "libcna/cna-engine", "Checkout cna-engine"),
@@ -137,15 +137,15 @@ def main():
         if args.check:
             print("".join(difflib.unified_diff(
                 original.splitlines(keepends=True), updated.splitlines(keepends=True),
-                fromfile="a/.github/workflows/cna-ci.yml",
-                tofile="b/.github/workflows/cna-ci.yml",
+                fromfile="a/.github/actions/checkout-siblings/action.yml",
+                tofile="b/.github/actions/checkout-siblings/action.yml",
             )), end="")
             print("Sibling pins are out of date; run python3 tools/ci_pin_siblings.py.")
             return 1
         if WORKFLOW.read_bytes().decode("utf-8") != original:
             raise RuntimeError("Workflow changed during inspection; rerun the script")
         WORKFLOW.write_bytes(updated.encode("utf-8"))
-        print("Updated .github/workflows/cna-ci.yml; verify the local build and tests.")
+        print("Updated .github/actions/checkout-siblings/action.yml; verify the local build and tests.")
         return 0
     except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
         print(f"ERROR: {error}\nWorkflow was not written.", file=sys.stderr)

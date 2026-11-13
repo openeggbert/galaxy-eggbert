@@ -111,6 +111,12 @@ content-authoring UX, but not new gameplay mechanics.
 - A goodbye on quitting from the menu (2026-11-10, as Speedy Blupi's edition): thanks and credits
   over the title scene, a key, click, button or touch closes the game. Galaxy's own loading screen
   shows from the first frame (the logo until the title scene is up), not Mobile Eggbert's.
+- Release CI (2026-11-13, the owner's request; brief `plans/codex/release_ci.md`): `.github/workflows/release.yml`
+  builds/checks Linux (Debian 13), MinGW Windows, web and signed arm64 Android after a metadata
+  gate, publishes only on a version-tag push, and keeps branch dry runs as artifacts. Sibling pins
+  are shared with CNA CI in `.github/actions/checkout-siblings/action.yml`. Added with syntax and
+  existing-tag metadata checks only; **not yet run on GitHub**. Requires the four Android signing
+  secrets in `docs/releasing.md`. No local build or release made for this task.
 - Release packages (2026-11-10): `tools/release/make_release.sh` makes the Linux archive (CPack,
   versioned from `VERSION.txt`, with LICENSE, THIRD_PARTY.txt, RELEASE_NOTES.md; it needs glibc
   2.38 and the system's FFmpeg) and the release-signed Android APK (arm64), with SHA256SUMS.txt.

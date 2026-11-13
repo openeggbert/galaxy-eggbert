@@ -14,12 +14,12 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 build="$(cd "$1" && pwd)"
 out="$(mkdir -p "$2" && cd "$2" && pwd)"
 version="$(head -n1 "$repo/VERSION.txt" | tr -d '[:space:]')"
-export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+export CCACHE_DIR="${CCACHE_DIR:-/rv/cnaccache}" CCACHE_BASEDIR="${CCACHE_BASEDIR:-/rv}"
 grep -q 'Emscripten' "$build/CMakeCache.txt" || { echo "$build is not an Emscripten build" >&2; exit 1; }
 emsdk_env="${EMSDK_ENV:-$HOME/emsdk/emsdk_env.sh}"
 # shellcheck disable=SC1090
 [[ -f "$emsdk_env" ]] && source "$emsdk_env" > /dev/null 2>&1
-cmake --build "$build" --target GalaxyEggbertCNA --parallel 6
+cmake --build "$build" --target GalaxyEggbertCNA --parallel "${GALAXY_BUILD_JOBS:-4}"
 name="GalaxyEggbert-$version-web"
 stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip"
