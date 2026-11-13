@@ -8,6 +8,26 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## High model shadows (2026-11-13, owner's brief) — implemented, no commit or push
+
+`plans/codex/shadows_high_check.md`: `SceneShaders.cpp` compares each PCF tap at the receiver
+plane's depth, reducing near/far depth biases from 0.3108/0.9065 to 0.02072/0.0777 light-space
+blocks and model normal offsets from 0.05/0.12 to 0.015/0.06. Same cascades, sun, camera, caster
+lists and default Off. Ten campaign views in 020/022/025/041/045/051, Off/High pairs and High
+before/after sheets: `build-probe/shadows/`. Shadow-factor diagnostics prove terrain/model
+receiving and self-shadowing; the house recess already casts correctly, but High retains ambient,
+fill and 67% of its key even in full shadow. Finer resolution alone would not make it the sprite.
+Model-on-sprite receiving is wired but the underwater view does not isolate a model's silhouette
+on a sprite. No obvious acne, missing caster, floor leak or cascade cut/pop in the sampled views;
+the cadence check used normal play, not autoplay's every-frame far map. Limits and proposed-only
+resolution costs: `build-probe/shadows/report.md`.
+
+Four-job build in the existing tree, 136/136 CTest, nine goldens and the unchanged trace pass.
+Off/Low/Medium each byte-identical at all three ticks. Reviewed/replaced only the three High
+references (about 5% pixels, mean RGB change ~0.11/255); Ultra before/after kept without adding
+a baseline. Temporary model shadow-factor code removed and the exact tested source restored
+and rebuilt. No assets, worlds, siblings, gameplay or user files changed; no commit or push.
+
 ## Lightning per cell (2026-11-13, owner's brief) — implemented, no commit or push
 
 `plans/codex/lightning_per_cell.md`: `ResolveAnimationIconAt` hashes each lightning cell's X/Y/Z and

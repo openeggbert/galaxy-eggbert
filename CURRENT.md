@@ -61,6 +61,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- High/Ultra sun-shadow contacts (2026-11-13, `plans/codex/shadows_high_check.md`): receiver-plane
+  PCF allows smaller depth/model-normal biases, reducing detached contacts and lost small
+  self-shadows. Campaign captures and temporary shadow-factor diagnostics confirm models receive
+  terrain/model shadows, self-shadow and cast onto terrain. The house recess already receives a
+  shadow; High's retained ambient/fill and 67% key contribution keep it bright. Off remains the
+  default; Off/Low/Medium goldens are byte-identical. 136/136 CTest, nine golden views and the
+  unchanged trace pass; only the three High references updated. Full report and limitations,
+  including the unisolated model-on-sprite overlap: `build-probe/shadows/report.md`.
 - Lightning cells flicker independently (2026-11-13, `plans/codex/lightning_per_cell.md`): each
   cell's coordinates and strike hash to frame 305-307, with repeats allowed; the 25 strike meshes
   are cached until the cells change. Visibility, hazard timing, lights and zap timing stay the same.

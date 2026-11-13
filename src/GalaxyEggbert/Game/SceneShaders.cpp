@@ -135,7 +135,7 @@ float UnpackDepth(vec4 c)
 }
 // One map's light at p (its clip space): a 3x3 tent of comparisons, bilinearly weighted (16 samples),
 // so a shadow's edge is soft, not stepped.
-float Pcf(sampler2D map, vec3 p, float texel, float bias)
+float Pcf(sampler2D map, vec3 p, float texel, float bias, vec2 slope)
 {
     vec2 coord = (p.xy * 0.5 + 0.5) / texel - 0.5;
     vec2 base = floor(coord);
@@ -147,11 +147,24 @@ float Pcf(sampler2D map, vec3 p, float texel, float bias)
         for (int x = 0; x < 4; ++x)
         {
             float wx = x == 0 ? 1.0 - f.x : (x == 3 ? f.x : 1.0);
-            float stored = UnpackDepth(texture(map, (base + vec2(float(x) - 1.0, float(y) - 1.0) + 0.5) * texel));
-            lit += (p.z - bias <= stored ? 1.0 : 0.0) * wx * wy;
+            vec2 uv = (base + vec2(float(x) - 1.0, float(y) - 1.0) + 0.5) * texel;
+            float stored = UnpackDepth(texture(map, uv));
+            // Compare each tap at the receiver's depth there. A constant bias large enough for
+            // the whole filter on a sloping face loses contacts and small self-shadows.
+            float receiver = p.z + dot(slope, uv - (p.xy * 0.5 + 0.5));
+            lit += (receiver - bias <= stored ? 1.0 : 0.0) * wx * wy;
         }
     }
     return lit / 9.0;
+}
+// Receiver-plane depth gradient in shadow UV space. Evaluate before the cascade branches so
+// neighbouring fragments supply derivatives even where they choose different cascades.
+vec2 ReceiverSlope(vec3 p)
+{
+    vec3 dx = dFdx(p), dy = dFdy(p);
+    float det = dx.x * dy.y - dx.y * dy.x;
+    if (abs(det) < 1e-10) return vec2(0.0);
+    return 2.0 * vec2(dy.y * dx.z - dx.y * dy.z, dx.x * dy.z - dy.x * dx.z) / det;
 }
 // How far inside a map's square p is (0 at its edge, 1 a tenth in).
 float Inside(vec3 p)
@@ -168,11 +181,12 @@ float SunLight()
     if (uShadow.x < 0.5) return 1.0;
     vec3 near = vLightPos.xyz / vLightPos.w;
     vec3 far = vLightPosFar.xyz / vLightPosFar.w;
+    vec2 nearSlope = ReceiverSlope(near), farSlope = ReceiverSlope(far);
     float inNear = Inside(near);
     float inFar = Inside(far);
-    float farLight = inFar > 0.0 ? mix(1.0, Pcf(uShadowMapFar, far, uShadowFar.x, uShadowFar.y), inFar) : 1.0;
+    float farLight = inFar > 0.0 ? mix(1.0, Pcf(uShadowMapFar, far, uShadowFar.x, uShadowFar.y, farSlope), inFar) : 1.0;
     if (inNear <= 0.0) return farLight;
-    return mix(farLight, Pcf(uShadowMap, near, uShadow.y, uShadow.z), inNear);
+    return mix(farLight, Pcf(uShadowMap, near, uShadow.y, uShadow.z, nearSlope), inNear);
 }
 // The point lights on a surface turned `n` (or facing them all when hasNormal is false).
 vec3 PointLights(vec3 n, bool hasNormal)
@@ -342,8 +356,8 @@ void main()
     vNormal = mat3(World) * (mat3(skin) * aNormal);
     vWorld = world.xyz;
     vDepth = -view.z;
-    vLightPos = uLightViewProj * vec4(world.xyz + normalize(vNormal) * 0.05, 1.0);
-    vLightPosFar = uLightViewProjFar * vec4(world.xyz + normalize(vNormal) * 0.12, 1.0);
+    vLightPos = uLightViewProj * vec4(world.xyz + normalize(vNormal) * 0.015, 1.0);
+    vLightPosFar = uLightViewProjFar * vec4(world.xyz + normalize(vNormal) * 0.06, 1.0);
 }
 )";
         const char* const kModelFragment = R"(
@@ -1167,10 +1181,10 @@ void main()
         SetMatrix(effect, "uLightViewProj", m_lightViewProjection[0]);
         SetMatrix(effect, "uLightViewProjFar", m_lightViewProjection[1]);
         const float texel = 1.0f / static_cast<float>(m_shadowSize);
-        // A shadow takes 55 % of the sun's light (the terrain); the bias about a sixth of a block of depth
-        // (the far cascade's texels are larger: a larger bias).
-        effect.SetUniformVec4("uShadow", m_shadowValid ? 1.0f : 0.0f, texel, 0.0012f, 0.55f);
-        effect.SetUniformVec2("uShadowFar", texel, 0.0035f);
+        // Receiver-plane comparisons cover the filter's slope; only a small residual depth bias
+        // remains (orthographic depth range 259 blocks: 0.021 near, 0.078 far).
+        effect.SetUniformVec4("uShadow", m_shadowValid ? 1.0f : 0.0f, texel, 0.00008f, 0.55f);
+        effect.SetUniformVec2("uShadowFar", texel, 0.0003f);
         if (m_shadowValid)
         {
             effect.SetTexture(1, *m_shadowMaps[0]);
