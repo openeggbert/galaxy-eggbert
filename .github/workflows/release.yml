@@ -522,7 +522,7 @@ jobs:
     needs: [metadata, linux, windows, web, android]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    # Only this job can write a release; building tagged source needs no write token.
+    # Publishing needs a write token; the sites job has its own branch/deployment permissions.
     permissions:
       contents: write
     steps:
@@ -565,3 +565,89 @@ jobs:
               --notes-file packaging/RELEASE_NOTES.md --verify-tag "${flags[@]}" \
               "${packages[@]}" release/SHA256SUMS.txt
           fi
+
+  sites:
+    name: Update both release websites
+    needs: [metadata, publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && needs.metadata.outputs.prerelease == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: write
+    env:
+      RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - name: Checkout the project site's branch, with protocol history
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+          path: galaxy-eggbert
+
+      - name: Checkout galaxyeggbert.com with its deploy key
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/galaxyeggbert.com
+          ref: main
+          path: galaxyeggbert.com
+          ssh-key: ${{ secrets.GALAXYEGGBERT_COM_DEPLOY_KEY }}
+
+      - name: Download the published release's checked packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: packages
+
+      - name: Update the sites from the dated changelog and packages
+        working-directory: galaxy-eggbert
+        run: |
+          set -euo pipefail
+          release_date=$(python3 - <<'PY'
+          import os, re, subprocess
+          version = os.environ['RELEASE_VERSION']
+          changelog = subprocess.check_output(['git', 'show', f'v{version}:CHANGELOG.md'], text=True)
+          match = re.search(r'^## \[' + re.escape(version) + r'\] — (\d{4}-\d{2}-\d{2})$', changelog, re.M)
+          if not match:
+              raise SystemExit('Missing dated release changelog entry')
+          print(match[1])
+          PY
+          )
+          python3 tools/release/update_sites.py --version "$RELEASE_VERSION" --date "$release_date" \
+            --packages ../packages --site ../galaxyeggbert.com --web-dir web
+
+      - name: Commit and push the project site, retrying one rejected push
+        working-directory: galaxy-eggbert
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- web
+          if ! git diff --cached --quiet; then
+            git commit -m "web: release $RELEASE_VERSION"
+            if ! git push origin HEAD:develop; then
+              git pull --rebase origin develop
+              git push origin HEAD:develop
+            fi
+          fi
+
+      - name: Commit and push galaxyeggbert.com
+        working-directory: galaxyeggbert.com
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html play/index.html play/game
+          if ! git diff --cached --quiet; then
+            git commit -m "Galaxy Eggbert $RELEASE_VERSION: version and download links, the web build, the network versions that play together"
+            git push origin HEAD:main
+          fi
+
+      # GITHUB_TOKEN pushes do not trigger pages.yml. Dispatch even on a retry with no new commit.
+      - name: Deploy the project site to Pages
+        working-directory: galaxy-eggbert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --ref develop

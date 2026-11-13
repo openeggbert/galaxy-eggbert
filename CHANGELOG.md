@@ -13,6 +13,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 - Lightning cells flicker independently, as in the original.
 - Releases are built and published by GitHub Actions from a version tag.
+- Both websites and the online game update automatically after a final release.
 
 ## [0.4.1] — 2026-11-12
 

@@ -65,7 +65,8 @@ After updating the version, Android's versionCode, changelog and release notes, 
 reviewed release and push its annotated `vX.Y.Z` tag. `.github/workflows/release.yml` checks the
 metadata, builds Linux, Windows, web and Android in parallel, checks each package, and publishes
 the GitHub release with the four packages and `SHA256SUMS.txt`. A version containing `-` is marked
-as a pre-release. Only the publishing job has `contents: write` permission.
+as a pre-release. Publishing and the sites job have `contents: write`; the sites job also has
+`actions: write` to dispatch the project site's Pages workflow.
 
 Use the workflow's **Run workflow** button on any branch for a dry run, or:
 
@@ -136,7 +137,66 @@ correct; source fixes require a reviewed commit and a new version tag.
 
 The manual steps below remain the fallback. Local release scripts honor `CCACHE_DIR` and
 `CCACHE_BASEDIR`, defaulting to `/rv/cnaccache` and `/rv`, and use `GALAXY_BUILD_JOBS` (default 4).
-The website (`web/` and galaxyeggbert.com) is still updated by hand.
+The websites are updated automatically after a final release, as described below.
+
+## The websites after a release
+
+After `publish` succeeds for a final version tag, the `sites` job updates both websites from
+that release's four workflow artifacts. Pre-releases and branch dry runs skip it. It checks out
+`develop` with all tags for the project site (`web/`), and `main` of
+`openeggbert/galaxyeggbert.com` for the presentation site and online game. The Python 3 standard
+library script `tools/release/update_sites.py` never commits; CI commits only changed site files
+as `github-actions[bot]`, pushes the two branches, and explicitly dispatches `pages.yml` on
+`develop` because a `GITHUB_TOKEN` push does not start another workflow. A rejected project-site
+push is rebased once and retried. The presentation site's push starts its legacy Pages build.
+No change means no commit.
+
+The owner must add **`GALAXYEGGBERT_COM_DEPLOY_KEY`** to this game repository's Actions secrets:
+the private half of a dedicated SSH deploy key whose public half is installed with **Allow write
+access** in `openeggbert/galaxyeggbert.com` → Settings → Deploy keys. The checkout action uses it
+only for that repository; never commit the key. Both repositories must allow the bot/key to push
+their respective branches. This setup and the first live CI run remain an owner action.
+
+Current-release HTML fields have explicit `data-release` spans (version, ISO date, long English
+date, hero headline and network compatibility), `data-release-href` URL templates with
+`{version}`, and `data-release-size` package names. Description meta elements use
+`data-release-content` templates; the VideoGame JSON-LD uses the exact `softwareVersion` and
+`downloadUrl` keys. Keep these markers when editing the pages. Historical sections and rows
+have separate version identifiers and insertion comments; they are never rewritten. The Releases
+search entry records `releaseCurrent` and `releaseVersions` to add keywords only once.
+Package sizes are rounded up to MiB (displayed as MB, matching the existing site). Protocol
+compatibility is read from `kProtocolVersion` at stable `vX.Y.Z` tags, excluding later releases;
+for an untagged local rehearsal only, the new protocol comes from the worktree.
+
+The dated changelog entry's first paragraph becomes the summary. Its `### Added`, `### Changed`,
+`### Fixed` (or other category) bullets become the new "New in X.Y.Z" section; the overview gets a
+history row, and search gets the version and summary words. An optional comment inside the entry
+sets the presentation site's news line:
+
+```markdown
+<!-- site-headline: twenty languages and a faster editor -->
+```
+
+This produces "Version X.Y.Z is out: twenty languages and a faster editor". Without the comment,
+only the news line's version changes; its existing headline stays. Review the headline's link by
+hand if a new topic needs a different destination. Historical marketing prose, platform status,
+requirements, screenshots and language counts stay editorial work.
+
+Manual fallback (no builds or commits are performed by this command):
+
+```bash
+python3 tools/release/update_sites.py --version 0.4.1 --date 2026-11-12 \
+  --packages build-probe/release/0.4.1 --site ../galaxyeggbert.com --web-dir web --dry-run
+# Review the diff, then repeat without --dry-run to write it.
+```
+
+Use the four real packages for that version. The web zip is validated, unpacked in a temporary
+folder under the package directory, and copied by the presentation site's `tools/update-web-build.sh`.
+`--dry-run` prints diffs (content-change notices for game files), writing nothing. A second run is
+a no-op. For a rehearsal, copy both sites and packages under `build-probe/sites-test/` and pass
+`--changelog build-probe/sites-test/CHANGELOG.md` with a copied, pretend release entry. Once reviewed,
+commit and push each site's changes manually if CI is unavailable; dispatch `pages.yml` on `develop`
+if its push used `GITHUB_TOKEN`. Rerunning the release's sites job is safe after a transient failure.
 
 ## Cutting a release (only when the owner asks)
 

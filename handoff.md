@@ -107,7 +107,19 @@ permission check refused that build ("code from external") and a download of Kit
 it: it needs the owner's permission. Without a newer libcurl the only other way is a build without gamer
 services, i.e. without the network game.
 
-## Release CI (2026-11-13, the owner) — committed, not yet run on GitHub
+## The websites after a release (2026-11-13, the owner) — committed, waiting on the deploy key
+
+After a final (not pre-release) tag publishes, release.yml's `sites` job runs
+`tools/release/update_sites.py` on `develop`'s `web/` and on galaxyeggbert.com (markers
+`data-release*` on the current-version spots; a "New in" section and a history row from the CHANGELOG
+entry; the hero headline from an optional `<!-- site-headline: … -->` in that entry; the network line
+from each tag's `kProtocolVersion`; the web build copied into `play/game`), commits as
+github-actions[bot], pushes both and dispatches pages.yml. Checked: 0.4.1 changes nothing, a pretend
+0.4.2 looks like the hand updates (`build-probe/sites-test/final/0.4.2.diff`). Open: the secret
+`GALAXYEGGBERT_COM_DEPLOY_KEY` (the permission check refused my creating it; the owner adds it) and a
+first live run. Brief: `plans/codex/site_update_ci.md`.
+
+## Release CI (2026-11-13, the owner) — committed, dry runs green on GitHub
 
 `.github/workflows/release.yml`: a pushed `vX.Y.Z` tag checks the metadata
 (`tools/release/check_release_metadata.sh`), builds and checks Linux (Debian 13 container, ctest, a

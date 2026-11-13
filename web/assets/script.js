@@ -42,6 +42,8 @@
    {
     "t": "Releases",
     "u": "releases.html",
+    "releaseCurrent": "0.4.1",
+    "releaseVersions": ["0.4.1"],
     "k": "releases galaxy eggbert 0.4.1: the packages for windows, linux, android and the web, what they need, and how to install and run them. new in 0.4.1 goodbye galaxyeggbert.com accelerometer new in 0.4.0 finnish danish norwegian turkish greek twenty languages new in 0.3.0 fifteen languages slovak spanish italian polish portuguese dutch hungarian romanian swedish russian ukrainian flags new in 0.2.0 french german czech languages what a release contains files windows linux requirements install and run saved games android web known limitations of 0.2.0 licences making the packages"
    },
    {
