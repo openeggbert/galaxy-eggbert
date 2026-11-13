@@ -1193,7 +1193,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 38;
+        bool all = count == 41;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1202,11 +1202,11 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 38 words including mark/recall/photo/freeze fire and have an explanation");
+        check(all, "Typed cheats: all 41 words including freecam/xray/hitbox fire and have an explanation");
         bool distinct = true, origins = true;
         int pages[2]{};
         const std::unordered_set<std::string> galaxy{
-            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze"};
+            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox"};
         const std::unordered_set<std::string> mobile{"quick", "ghost", "zoom", "debug", "cheats"};
         for (int i = 0; i < count; ++i)
         {
@@ -1215,7 +1215,8 @@ int main()
             origins &= (words[i].HelpPage() == 1) == galaxy.contains(word);
             origins &= (words[i].origin == InputPad::CheatOrigin::MobileEggbert) == mobile.contains(word);
             if (words[i].cheat != TC::Back && words[i].cheat != TC::Mark && words[i].cheat != TC::Recall &&
-                words[i].cheat != TC::Photo && words[i].cheat != TC::Freeze) continue;
+                words[i].cheat != TC::Photo && words[i].cheat != TC::Freeze && words[i].cheat != TC::Freecam &&
+                words[i].cheat != TC::Xray && words[i].cheat != TC::Hitbox) continue;
             for (int j = 0; j < count; ++j)
             {
                 if (i == j) continue;
@@ -1225,7 +1226,7 @@ int main()
             }
         }
         check(distinct, "new cheats neither prefix nor share matched suffixes with another word");
-        check(origins && pages[0] == 27 && pages[1] == 11,
+        check(origins && pages[0] == 27 && pages[1] == 14,
               "every word belongs to exactly one origin/page; original and Mobile words fill page one");
         {
             InputPad reset;

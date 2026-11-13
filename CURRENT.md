@@ -61,6 +61,16 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- MODERN cheats `freecam`, `xray`, `hitbox` (2026-11-13,
+  `plans/codex/cheats_freecam_xray_hitbox.md`): freecam holds the whole world at the tick's
+  world-step gate and flies at 6 cells/s (arrows/WASD move/turn, Ctrl up, Shift down, drag look);
+  Pause preserves it, leaving the world or clearing cheats ends it, network matches refuse it.
+  Xray draws remaining registry-classified pickups/exits and the five secret wall tiles through
+  walls; hitbox draws the collision code's movement/contact/ride/crate boxes. Both draw unlit
+  after the effects finish. Replay/rewind/recall exact, 136/136 CTest, nine unchanged golden views
+  and the unchanged trace; Off/High/Ultra campaign and Off/High hitbox captures reviewed.
+  Evidence and limitations: `build-probe/cheats-b/report.md`.
+
 - MODERN cheats `mark`/`recall`, `photo` and `freeze` (2026-11-13,
   `plans/codex/cheats_mark_recall_photo_freeze.md`): a repeatable, world-local marked tick restored
   through resume replay; Play overlays hidden with the cheat keyboard/help still available; autonomous

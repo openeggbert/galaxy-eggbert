@@ -87,6 +87,7 @@ namespace GalaxyEggbert
         // plates, the Temp saucers). Standalone saws are passable too, with a separate disk
         // contact test. None is a floor or ceiling to him.
         bool decor = false;
+        bool secretPassage = false; // solid-looking, intentionally passable wall families
 
         BlockHazardKind hazard = BlockHazardKind::None;
         BlockFanDirection fanDirection = BlockFanDirection::None;

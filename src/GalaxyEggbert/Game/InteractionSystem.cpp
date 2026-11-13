@@ -896,33 +896,11 @@ namespace GalaxyEggbert::Game
         bool MoveObjectTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz, float widen = 0.0f,
                                float above = 0.0f, float below = 0.0f)
         {
-            using T = GalaxyEggbert::Def::ObjectType;
-            float objAcross = 28.0f, objTop = 36.0f, objBottom = 60.0f;
-            if (type == T::ObjectType3)
-            {
-                objTop = 0.0f;
-                objBottom = 24.0f;
-            }
-            else if (type == T::ObjectType17 || type == T::ObjectType20 || type == T::ObjectType44 ||
-                     type == T::ObjectType54)
-            {
-                objTop = 16.0f;
-                objBottom = 44.0f;
-            }
-            else if (type == T::ObjectType23)
-            {
-                objAcross = 16.0f;
-                objTop = 10.0f;
-                objBottom = 28.0f;
-            }
-            const float reach = (28.0f + 2.0f * widen + objAcross) * 0.5f / 64.0f;
-            if (std::fabs(dx) >= reach || std::fabs(dz) >= reach)
-            {
-                return false;
-            }
-            const float blupiTop = 11.0f - above, blupiBottom = 58.0f + below;
-            const float dyScreen = -dy * 64.0f; // screen y grows downward
-            return objTop + dyScreen < blupiBottom && objBottom + dyScreen > blupiTop;
+            const auto object = InteractionSystem::ObjectContactBox(type,0,0,0);
+            const auto blupi = InteractionSystem::BlupiContactBox(0,0,0,widen,above,below);
+            const float reach = blupi.maxX + object.maxX;
+            return std::fabs(dx) < reach && std::fabs(dz) < reach &&
+                   object.maxY + dy > blupi.minY && object.minY + dy < blupi.maxY;
         }
 
         // Real `BlupiElectro` aura (plan.md `068`, Decor.cpp:9610-9638,
@@ -1224,7 +1202,8 @@ namespace GalaxyEggbert::Game
             // Over its cube or with a foot still on its edge (kFootReach, the vertigo test's foot):
             // walking off at the cell's boundary he would otherwise be neither on the lift nor over
             // the ledge beside it for a frame, sink below the ledge's top and drop (D54).
-            constexpr float kFootReach = 0.5f + 0.15f;
+            const auto rideBox = LiftRideBox(0,0,0);
+            const float kFootReach = (rideBox.maxX-rideBox.minX)*0.5f;
             const float liftStandY = LiftRiderCenterY(candidate.currentY);
             if (std::fabs(blupiX - candidate.currentX) < kFootReach && std::fabs(blupiZ - candidate.currentZ) < kFootReach &&
                 std::fabs(blupiY - liftStandY) < 0.2f)
@@ -3258,6 +3237,44 @@ namespace GalaxyEggbert::Game
             }
         }
         objects.push_back(spec);
+    }
+
+    SolidBox InteractionSystem::ObjectContactBox(GalaxyEggbert::Def::ObjectType type, float x, float y, float z) noexcept
+    {
+            using T = GalaxyEggbert::Def::ObjectType;
+            float objAcross = 28.0f, objTop = 36.0f, objBottom = 60.0f;
+            if (type == T::ObjectType3)
+            {
+                objTop = 0.0f;
+                objBottom = 24.0f;
+            }
+            else if (type == T::ObjectType17 || type == T::ObjectType20 || type == T::ObjectType44 ||
+                     type == T::ObjectType54)
+            {
+                objTop = 16.0f;
+                objBottom = 44.0f;
+            }
+            else if (type == T::ObjectType23)
+            {
+                objAcross = 16.0f;
+                objTop = 10.0f;
+                objBottom = 28.0f;
+            }
+            const float across = objAcross * 0.5f / 64.0f;
+            return {x-across,x+across,y+(60.0f-objBottom)/64.0f,y+(60.0f-objTop)/64.0f,z-across,z+across};
+    }
+
+    SolidBox InteractionSystem::BlupiContactBox(float x, float y, float z, float widen, float above, float below) noexcept
+    {
+        const float across = (28.0f + 2.0f * widen) * 0.5f / 64.0f;
+        return {x-across,x+across,y+(2.0f-below)/64.0f,y+(49.0f+above)/64.0f,z-across,z+across};
+    }
+
+    SolidBox InteractionSystem::LiftRideBox(float x, float y, float z) noexcept
+    {
+        constexpr float kFootReach = 0.5f + 0.15f;
+        const float top = LiftRiderCenterY(y);
+        return {x-kFootReach,x+kFootReach,top-0.2f,top+0.2f,z-kFootReach,z+kFootReach};
     }
 
     bool InteractionSystem::BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz)

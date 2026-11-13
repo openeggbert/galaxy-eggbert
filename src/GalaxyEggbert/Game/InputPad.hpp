@@ -659,6 +659,9 @@ namespace GalaxyEggbert::Game
             Recall,       // "recall" (MODERN): rewind to the remembered tick
             Photo,        // "photo" (MODERN): hide Play overlays
             Freeze,       // "freeze" (MODERN): stop autonomous MoveObjects
+            Freecam,      // MODERN: hold the world and fly the camera
+            Xray,         // MODERN: objectives and secret passages through walls
+            Hitbox,       // MODERN: the collision geometry
         };
         struct TypedCheatResult
         {

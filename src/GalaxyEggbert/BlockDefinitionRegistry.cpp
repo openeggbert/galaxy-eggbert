@@ -327,6 +327,9 @@ namespace GalaxyEggbert
         setSigns(WorldDone10, 5, 10);
         definitions_[ReturnSign].worldSelectIndex = 199;
 
+        // The secret wall families documented beside kSolidIn3DDecor and in EditorVariants.
+        for (const auto icon : {22, 73, 85, 86, 339}) definitions_[icon].secretPassage = true;
+
         // Decor (D41): empty-mask tiles with no role, everything else above being set.
         for (std::uint16_t icon = 1; icon <= MaxObjectMIcon; ++icon)
         {

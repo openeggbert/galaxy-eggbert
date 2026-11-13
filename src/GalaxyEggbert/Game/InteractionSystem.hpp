@@ -471,6 +471,13 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool ContactGraceActive() const noexcept { return contactGrace_; }
         // Blupi touches an object of this type (object minus Blupi, cells): the original's boxes
         // (Decor::MoveObjectDetect, BD-0021), for the caller's own contacts (vehicles, BD-0024).
+        // The exact MoveObjectDetect contact box, in relative collision coordinates (Y before -0.5 render shift).
+        [[nodiscard]] static SolidBox ObjectContactBox(GalaxyEggbert::Def::ObjectType type,
+                                                       float x, float y, float z) noexcept;
+        [[nodiscard]] static SolidBox BlupiContactBox(float x, float y, float z,
+                                                     float widen = 0, float above = 0, float below = 0) noexcept;
+        // Riding accepts Blupi's feet in this volume; its middle Y is the platform's top.
+        [[nodiscard]] static SolidBox LiftRideBox(float x, float y, float z) noexcept;
         [[nodiscard]] static bool BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz);
         // Decor::MockeryDetect (Decor.cpp:9518-9601; BD-0044): the taunt an enemy beside Blupi, or
         // lava or a crusher under his jump, calls for -- Mockery (63) at one ahead of him, Mockeryi

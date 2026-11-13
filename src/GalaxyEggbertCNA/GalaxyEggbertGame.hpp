@@ -867,6 +867,14 @@ namespace GalaxyEggbert::CNA
         std::optional<std::uint64_t> markedTick_;
         std::string rewindNotice_;
         bool cheatPhoto_ = false, cheatFreeze_ = false;
+        bool cheatFreecam_ = false, cheatXray_ = false, cheatHitbox_ = false;
+        float freecamYaw_ = 0.0f, freecamPitch_ = 0.0f;
+        Microsoft::Xna::Framework::Vector3 freecamReturnEye_, freecamReturnTarget_;
+        void StopFreecam();
+        std::map<std::string,std::string> freecamWorldCheck_; // opt-in QA only
+        int freecamWorldPhase_ = 0;
+        std::optional<std::uint32_t> xraySecretRevision_;
+        std::vector<GalaxyEggbert::Game::SolidBox> xraySecretBoxes_;
         std::chrono::steady_clock::time_point resumeReplayBegan_{};
         std::uint64_t resumeReplayTotal_ = 0;
         // Mission-start cheat values missing from ResumeStart: FPS and labels survive loading;
@@ -875,6 +883,7 @@ namespace GalaxyEggbert::CNA
         struct ResumeLocalCheats
         {
             bool fps = false, superBlupi = false, photo = false, freeze = false;
+            bool xray = false, hitbox = false, freecam = false; // a new mission always starts with freecam off
             int zoomStep = 0;
             std::vector<std::string> active;
         } resumeLocalCheats_;
@@ -902,7 +911,7 @@ namespace GalaxyEggbert::CNA
             GalaxyEggbert::Def::GameSpeed gameSpeed = GalaxyEggbert::Def::GameSpeed::Normal;
             bool quickCheat = false, openDoors = false, showSecret = false, compass = false, debug = false;
             bool cheatsLocked = false, cheatsLockedForRun = false;
-            bool photo = false, freeze = false;
+            bool photo = false, freeze = false, xray = false, hitbox = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;

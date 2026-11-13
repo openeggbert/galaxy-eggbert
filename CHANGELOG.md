@@ -11,6 +11,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- Type `freecam` to hold the world and fly the camera (arrows/WASD turn and move, Ctrl up,
+  Shift down, drag to look; combine with `photo`), `xray` to reveal remaining pickups,
+  exits and secret walls, and `hitbox` to see the actual collision boxes through walls.
+
 - Type `mark` / `recall` to remember and return to a moment in a single-player world, `photo`
   to hide Play overlays, and `freeze` to stop objects while Blupi moves. Cheat help has two
   pages, switched with keyboard/gamepad navigation or its on-screen arrows.

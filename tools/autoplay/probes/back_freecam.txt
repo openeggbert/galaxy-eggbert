@@ -1,0 +1,13 @@
+# Brief B, mission 012. GALAXY_BACK_CHECKPOINTS=535 (300 ticks before back).
+# Fly while the simulation stands still; turn the camera back off, then rewind across it.
+wait 600
+type freecam
+hold 40 up jump
+hold 30 right
+hold 30 down crouch
+type freecam
+hold 100 up
+type back
+wait 5
+expect lives = 3
+end

@@ -362,6 +362,8 @@ namespace GalaxyEggbert::CNA
             menuConfirmWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Enter);
             return;
         }
+        const auto phaseBeforeTick = phase_;
+        const float phaseTimeBeforeTick = phaseTimeSeconds_;
         phaseTimeSeconds_ += dt;
 
         // Real fade-out phase-transition commit (plan.md MENU-088/089) --
@@ -450,6 +452,20 @@ namespace GalaxyEggbert::CNA
             NetAgePeers(dt);
             if (NetRemotePaused()) return;
             NetBeforeStep();
+        }
+
+        // One hold gate: no Blupi, object, hazard, interaction, animation or world clock step.
+        // Screens above still handle Pause, typed cheats and the on-screen keyboard.
+        if (cheatFreecam_ && !netMatch)
+        {
+            if (phase_ == phaseBeforeTick) phaseTimeSeconds_ = phaseTimeBeforeTick;
+            const auto keys = inputPad_.FilterGameplayKeyboard(inputPad_.CheatKeys().FilterGameplay(CurrentKeyboardState()));
+            const auto directions = GalaxyEggbert::Game::ReadPlayDirections(keys);
+            UpdateTickCamera(dt, 0.0f, keys, inputPadClaimedMouse,
+                keys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::LeftShift) || padPlayInput.crouchHeld, padPlayInput.jumpHeld,
+                std::clamp(directions.move + padPlayInput.moveInput, -1.0f, 1.0f),
+                std::clamp(directions.turn + padPlayInput.turnInput, -1.0f, 1.0f));
+            return;
         }
 
         worldRuntime_.Update(simDt, cheatFreeze_ && !netMatch);
@@ -2862,6 +2878,36 @@ namespace GalaxyEggbert::CNA
                                              float turnInput)
     {
         using Microsoft::Xna::Framework::Input::Keys;
+        if (cheatFreecam_)
+        {
+            // Recorded tick input only; the ordinary frame interpolation interpolates this pose.
+            const auto mouse = CurrentMouseState();
+            int x = mouse.getXProperty(), y = mouse.getYProperty();
+            bool held = mouse.getLeftButtonProperty() == Microsoft::Xna::Framework::Input::ButtonState::Pressed;
+            using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+            for (const auto& touch : tickInput_.touches)
+                if (touch.state == int(TouchLocationState::Pressed) || touch.state == int(TouchLocationState::Moved))
+                { x = int(touch.x); y = int(touch.y); held = true; break; }
+            held = held && !inputPadClaimedMouse;
+            if (held && mouseLookActive_)
+            {
+                freecamYaw_ += (x - lastMouseX_) * 0.008f;
+                freecamPitch_ = std::clamp(freecamPitch_ - (y - lastMouseY_) * 0.008f, -1.45f, 1.45f);
+            }
+            mouseLookActive_ = held;
+            lastMouseX_ = x; lastMouseY_ = y;
+            freecamYaw_ += turnInput * 2.0f * dt;
+            using Microsoft::Xna::Framework::Vector3;
+            const Vector3 forward(std::sin(freecamYaw_) * std::cos(freecamPitch_), std::sin(freecamPitch_),
+                                  -std::cos(freecamYaw_) * std::cos(freecamPitch_));
+            const bool up = keys.IsKeyDown(Keys::LeftControl) || lookUpHeld;
+            const Vector3 motion = forward * moveInput + Vector3(0.0f, float(up) - float(crouchHeld), 0.0f);
+            const float length = motion.Length();
+            const auto eye = camera_.Position() + motion * (6.0f * dt / std::max(1.0f, length));
+            cameraTarget_ = eye + forward;
+            camera_.SetLookAt(eye, cameraTarget_);
+            return false;
+        }
         // Camera-mode toggle (2026-07-09, NEXT.md §3) -- F3 since
         // 2026-10-25 (was "C"; letters are typed cheats), edge-detected
         // (same pattern as demo_avatar's Space-toggle) so a held key
@@ -3641,6 +3687,12 @@ namespace GalaxyEggbert::CNA
                     case TC::Compass: toggle("compass"); break;
                     case TC::Debug: toggle("debug"); break;
                     case TC::Fps: toggle("fps"); break;
+                    case TC::Freecam:
+                        std::erase(activeCheats_, "freecam");
+                        if (cheatFreecam_) activeCheats_.emplace_back("freecam");
+                        break;
+                    case TC::Xray: toggle("xray"); break;
+                    case TC::Hitbox: toggle("hitbox"); break;
                     case TC::Photo: toggle("photo"); break;
                     case TC::Freeze: if (!NetMatchActive()) toggle("freeze"); break;
                     case TC::Position: toggle("position"); break;

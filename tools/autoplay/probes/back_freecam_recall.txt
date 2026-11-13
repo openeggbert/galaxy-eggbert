@@ -1,0 +1,13 @@
+# Brief B, mission 012. GALAXY_BACK_CHECKPOINTS=691; mark inside freecam.
+wait 600
+type freecam
+hold 70 up
+type mark
+hold 130 jump right
+type freecam
+hold 50 up
+type recall
+wait 5
+type freecam
+expect lives = 3
+end

@@ -151,7 +151,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
-        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatZoomStep_, activeCheats_};
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
         backPending_ = backReplaying_ = markPending_ = recallPending_ = false;
         markedTick_.reset();
@@ -172,6 +172,8 @@ namespace GalaxyEggbert::CNA
         start.debug = cheatDebug_;
         start.photo = cheatPhoto_;
         start.freeze = cheatFreeze_;
+        start.xray = cheatXray_;
+        start.hitbox = cheatHitbox_;
         start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -239,6 +241,8 @@ namespace GalaxyEggbert::CNA
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
         cheatPhoto_ = start.photo && GalaxyEggbert::Game::kCheatsEnabled;
         cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatXray_ = start.xray && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatHitbox_ = start.hitbox && GalaxyEggbert::Game::kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -263,6 +267,9 @@ namespace GalaxyEggbert::CNA
             cheatFps_ = resumeLocalCheats_.fps;
             cheatPhoto_ = resumeLocalCheats_.photo;
             cheatFreeze_ = resumeLocalCheats_.freeze;
+            cheatXray_ = resumeLocalCheats_.xray;
+            cheatHitbox_ = resumeLocalCheats_.hitbox;
+            cheatFreecam_ = resumeLocalCheats_.freecam;
             cheatZoomStep_ = resumeLocalCheats_.zoomStep;
             activeCheats_ = resumeLocalCheats_.active;
             blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
@@ -272,11 +279,15 @@ namespace GalaxyEggbert::CNA
             markedTick_.reset();
             std::erase(activeCheats_, "photo");
             std::erase(activeCheats_, "freeze");
+            std::erase(activeCheats_, "xray");
+            std::erase(activeCheats_, "hitbox");
             if (cheatPhoto_) activeCheats_.emplace_back("photo");
             if (cheatFreeze_) activeCheats_.emplace_back("freeze");
+            if (cheatXray_) activeCheats_.emplace_back("xray");
+            if (cheatHitbox_) activeCheats_.emplace_back("hitbox");
             // A Continue becomes the start of a new in-process rewind history, with exactly
             // today's fresh-process defaults for state absent from the file format.
-            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatZoomStep_, activeCheats_};
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatZoomStep_, activeCheats_};
             backCheckpoints_.clear();
         }
         replayRun_ = 0;
@@ -464,9 +475,15 @@ namespace GalaxyEggbert::CNA
         std::ostringstream out;
         out << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
             << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
-            << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
+            << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << cheatFreecam_ << ' ' << cheatXray_ << ' ' << cheatHitbox_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
         result["cheat toggles"] = out.str();
+        out.str("");
+        out << std::setprecision(std::numeric_limits<float>::max_digits10)
+            << freecamYaw_ << ' ' << freecamPitch_ << ' '
+            << freecamReturnEye_.X << ' ' << freecamReturnEye_.Y << ' ' << freecamReturnEye_.Z << ' '
+            << freecamReturnTarget_.X << ' ' << freecamReturnTarget_.Y << ' ' << freecamReturnTarget_.Z;
+        result["free camera"] = out.str();
         result["cheat keyboard"] = inputPad_.CheatKeys().StateSignature();
         result["controls help"] = std::to_string(controlsHelp_.shown) + " " +
             std::to_string(controlsHelp_.cheats) + " " + std::to_string(controlsHelp_.page);
@@ -667,6 +684,8 @@ namespace GalaxyEggbert::CNA
             demoSaved_.debug = cheatDebug_;
             demoSaved_.photo = cheatPhoto_;
             demoSaved_.freeze = cheatFreeze_;
+            demoSaved_.xray = cheatXray_;
+            demoSaved_.hitbox = cheatHitbox_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
             demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
@@ -710,6 +729,8 @@ namespace GalaxyEggbert::CNA
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
         cheatPhoto_ = start.photo && GalaxyEggbert::Game::kCheatsEnabled;
         cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatXray_ = start.xray && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatHitbox_ = start.hitbox && GalaxyEggbert::Game::kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -726,6 +747,8 @@ namespace GalaxyEggbert::CNA
         activeCheats_.clear();
         if (cheatPhoto_) activeCheats_.emplace_back("photo");
         if (cheatFreeze_) activeCheats_.emplace_back("freeze");
+        if (cheatXray_) activeCheats_.emplace_back("xray");
+        if (cheatHitbox_) activeCheats_.emplace_back("hitbox");
         if (cheatCompass_) activeCheats_.push_back("compass");
         if (cheatDebug_) activeCheats_.push_back("debug");
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
@@ -850,6 +873,8 @@ namespace GalaxyEggbert::CNA
         cheatDebug_ = demoSaved_.debug;
         cheatPhoto_ = demoSaved_.photo;
         cheatFreeze_ = demoSaved_.freeze;
+        cheatXray_ = demoSaved_.xray;
+        cheatHitbox_ = demoSaved_.hitbox;
         inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;

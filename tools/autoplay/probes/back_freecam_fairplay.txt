@@ -1,0 +1,13 @@
+# Brief B, mission 012. All three toggles cleared and the world moves again.
+wait 600
+type freecam
+hold 60 up jump
+type xray
+type hitbox
+type fairplay
+hold 120 up
+expect lives = 3
+type fairplay
+type honest
+wait 10
+end

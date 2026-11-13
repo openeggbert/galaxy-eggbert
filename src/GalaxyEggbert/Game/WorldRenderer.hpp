@@ -1,4 +1,5 @@
 #pragma once
+#include <CnaEngine/Graphics/DebugDraw.hpp>
 
 // WorldRenderer -- draws the 3D world from a SceneFrame (SceneFrame.hpp: what to draw; this: how).
 // It holds what drawing needs from frame to frame (the per-frame GPU meshes, the decal effect, the
@@ -64,6 +65,9 @@ namespace GalaxyEggbert::Game
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
                   const WorldRenderAssets& assets, const TerrainDrawnHook& terrainDrawn = {});
+        // Unlit, depth-free aids on the finished image, at every effects level.
+        void DrawAids(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                      const WorldRenderAssets& assets);
         // The 3D effects' shadow map (SceneShaders.hpp): what throws a shadow, drawn from the sun into its
         // target. Before Draw() and before anything is drawn into the frame's own target; leaves the
         // screen bound. Nothing without the effects or where the device cannot.
@@ -143,5 +147,7 @@ namespace GalaxyEggbert::Game
         bool m_sceneShading = false; // this frame's terrain drawn with m_scene (medium and high)
         bool m_modelShading = false; // ... and the models, cubes and grass (high)
         WorldRenderStatistics m_statistics;
+        CnaEngine::Graphics::DebugDraw m_aidLines;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> m_aidEffect;
     };
 }

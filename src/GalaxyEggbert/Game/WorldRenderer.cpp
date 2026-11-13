@@ -151,6 +151,64 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    void WorldRenderer::DrawAids(Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                                 const WorldRenderAssets& assets)
+    {
+        if (frame.aidBoxes.empty() && frame.xrayMarkers.empty()) return;
+        CnaEngine::Graphics::Camera camera;
+        camera.SetMatrices(frame.camera.view, frame.camera.projection);
+        const auto inv = Matrix::Invert(frame.camera.view);
+        const auto right = inv.getRightProperty(), up = inv.getUpProperty();
+        const auto forward = -inv.getBackwardProperty();
+        const float pixelSize = 2.0f * std::tan(frame.camera.fieldOfView*.5f) /
+                                std::max(1,device.getViewportProperty().getHeightProperty());
+        m_aidLines.Clear();
+        for (const auto& box : frame.aidBoxes) m_aidLines.Box(box.center,box.size,box.color);
+        const auto oldDepth = device.getDepthStencilStateProperty();
+        const auto oldBlend = device.getBlendStateProperty();
+        const auto oldRaster = device.getRasterizerStateProperty();
+        device.setDepthStencilStateProperty(Graphics::DepthStencilState::None);
+        device.setBlendStateProperty(Graphics::BlendState::NonPremultiplied);
+        device.setRasterizerStateProperty(Graphics::RasterizerState::CullNone);
+        if (!m_aidEffect)
+        {
+            m_aidEffect = std::make_unique<Graphics::BasicEffect>(device);
+            m_aidEffect->setTextureEnabledProperty(true);
+            m_aidEffect->setLightingEnabledProperty(false);
+            m_aidEffect->setFogEnabledProperty(false);
+        }
+        SetCamera(*m_aidEffect,frame.camera);
+        // One sprite batch per sheet, usual icons with a coloured diamond, at least 24 pixels.
+        for (auto sheet : {SceneSheet::Element,SceneSheet::ObjectM})
+        {
+            auto mesh = MakeTexturedMeshBuilder();
+            for (const auto& marker : frame.xrayMarkers)
+            {
+                if (marker.sheet != sheet) continue;
+                const float depth = Vector3::Dot(marker.center-frame.camera.position,forward);
+                if (depth <= .05f) continue;
+                const float size = std::max(.65f,24.0f*pixelSize*depth);
+                mesh.AddBillboard(marker.center,Vector2(size,size),right,up,marker.uv);
+                const auto r = right*(size*.75f), u = up*(size*.75f);
+                m_aidLines.Line(marker.center+r,marker.center+u,marker.color);
+                m_aidLines.Line(marker.center+u,marker.center-r,marker.color);
+                m_aidLines.Line(marker.center-r,marker.center-u,marker.color);
+                m_aidLines.Line(marker.center-u,marker.center+r,marker.color);
+            }
+            const auto* effect = SheetEffect(sheet,assets);
+            if (!mesh.Mesh().Empty() && effect)
+            {
+                m_aidEffect->setTextureProperty(effect->getTextureProperty());
+                auto gpu = CnaEngine::Graphics::GpuMesh::Upload(device,mesh.Mesh(),CnaEngine::Graphics::VertexLayout::PositionTexture());
+                gpu.Draw(device,*m_aidEffect);
+            }
+        }
+        m_aidLines.Draw(device,camera,false);
+        device.setDepthStencilStateProperty(oldDepth);
+        device.setBlendStateProperty(oldBlend);
+        device.setRasterizerStateProperty(oldRaster);
+    }
+
     void WorldRenderer::DrawBackground(Graphics::GraphicsDevice& device, const SceneFrame& frame,
                                        const WorldRenderAssets& assets)
     {

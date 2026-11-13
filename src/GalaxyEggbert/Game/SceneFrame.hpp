@@ -195,6 +195,20 @@ namespace GalaxyEggbert::Game
         std::vector<SceneBillboardBatch> particles; // the explosions, splashes and sparks
     };
 
+    struct SceneAidBox
+    {
+        Microsoft::Xna::Framework::Vector3 center, size;
+        Microsoft::Xna::Framework::Color color;
+    };
+
+    struct SceneXrayMarker
+    {
+        Microsoft::Xna::Framework::Vector3 center;
+        Microsoft::Xna::Framework::Color color;
+        SceneSheet sheet = SceneSheet::Element;
+        CnaEngine::Graphics::UvRect uv;
+    };
+
     struct SceneFrame
     {
         SceneCamera camera;
@@ -230,9 +244,13 @@ namespace GalaxyEggbert::Game
         std::vector<SceneQuad> marine;
 
         SceneEffects effects;
+        std::vector<SceneAidBox> aidBoxes;
+        std::vector<SceneXrayMarker> xrayMarkers;
 
         void Clear()
         {
+            aidBoxes.clear();
+            xrayMarkers.clear();
             world = terrain = false;
             reportReliefTiming = false;
             cubes.clear();

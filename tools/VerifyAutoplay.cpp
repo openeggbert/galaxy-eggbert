@@ -444,12 +444,13 @@ int main()
         {
             auto withCheats = log;
             withCheats.start.photo = withCheats.start.freeze = true;
+            withCheats.start.xray = withCheats.start.hitbox = true;
             ResumeLog restored;
             check(ResumeLog::Parse(withCheats.Serialize(), "test build", restored) &&
                   restored.start == withCheats.start && restored.runs == withCheats.runs,
-                  "optional photo/freeze start metadata round-trips for Continue and demos");
+                  "optional object/display start metadata round-trips for Continue and demos");
             check(text.find("OBJECT_CHEATS") == std::string::npos &&
-                  !parsed.start.photo && !parsed.start.freeze,
+                  !parsed.start.photo && !parsed.start.freeze && !parsed.start.xray && !parsed.start.hitbox,
                   "existing v7 logs without object-cheat metadata keep false defaults");
             auto bad = withCheats.Serialize();
             const auto body = ResumeLog::VerifiedBody(bad);

@@ -81,6 +81,7 @@ namespace GalaxyEggbert::Game
         // Optional named start metadata: old v7 resumes and shipped demos retain false defaults.
         // Only non-default values add a record, keeping ordinary recordings byte-compatible.
         if (start.photo || start.freeze) out << "OBJECT_CHEATS " << start.photo << ' ' << start.freeze << '\n';
+        if (start.xray || start.hitbox) out << "DISPLAY_CHEATS " << start.xray << ' ' << start.hitbox << '\n';
         out << runs.size() << ' ' << TickCount() << '\n';
         for (const auto& run : runs)
         {
@@ -171,6 +172,13 @@ namespace GalaxyEggbert::Game
         {
             std::string tag;
             if (!(in >> tag >> s.photo >> s.freeze) || tag != "OBJECT_CHEATS") return false;
+        }
+        s.xray = s.hitbox = false;
+        in >> std::ws;
+        if (in.peek() == 'D')
+        {
+            std::string tag;
+            if (!(in >> tag >> s.xray >> s.hitbox) || tag != "DISPLAY_CHEATS") return false;
         }
         std::uint64_t runCount, ticks, actualTicks = 0;
         if (!(in >> runCount >> ticks) || ticks > kMaxTicks || runCount > ticks) return false;

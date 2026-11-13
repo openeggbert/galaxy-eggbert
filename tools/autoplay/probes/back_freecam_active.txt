@@ -1,0 +1,10 @@
+# Brief B, mission 012. GALAXY_BACK_CHECKPOINTS=701; target is inside freecam.
+wait 600
+type freecam
+hold 300 up jump
+hold 80 right
+type back
+wait 5
+type freecam
+expect lives = 3
+end

@@ -724,6 +724,8 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::RebuildWorldPresentation(bool editorEdit)
     {
+        xraySecretRevision_.reset(); // including a new world with the same block revision
+        xraySecretBoxes_.clear();
         const auto editStarted = std::chrono::steady_clock::now();
         // Re-derive skyRegion/missionNumber/mobileObjects_ from the World
         // itself first (plan.md EDITOR-109): the world editor mutates the

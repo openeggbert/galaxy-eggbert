@@ -1,0 +1,16 @@
+# Brief B, mission 012. GALAXY_RESUME_SELFTEST=680 or 850; recorded mouse drag during freecam.
+wait 600
+type freecam
+pointer 1 180 120 down
+pointer 1 250 140 down
+pointer 1 310 170 down
+pointer 1 380 160 down
+pointer 1 380 160
+hold 150 up
+hold 1 pause
+wait 15
+hold 1 pause
+wait 60
+type freecam
+expect lives = 3
+end

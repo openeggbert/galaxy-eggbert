@@ -536,6 +536,12 @@ int main()
               "enemy Blupi: the tank fires, turns, fires");
     }
 
+    for (int icon=1; icon<=GalaxyEggbert::BlockDefinitionRegistry::MaxObjectMIcon; ++icon)
+    {
+        const auto& d=GalaxyEggbert::GetBlockDefinition(icon);
+        Check(d.secretPassage==IsOneOf(icon,{22,73,85,86,339}),"xray secret families are classified in the block registry");
+        if (d.secretPassage) Check(d.collisionMask==0 && d.decor,"secret passage stays passable decor");
+    }
     if (failures != 0)
     {
         std::cerr << failures << " definition-registry check(s) failed.\n";

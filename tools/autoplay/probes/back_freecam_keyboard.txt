@@ -1,0 +1,13 @@
+# Brief B, mission 012. GALAXY_RESUME_SELFTEST=700: freecam+photo with LT keyboard open.
+wait 600
+type freecam
+type photo
+hold 60 lt
+shots 1
+wait 90
+hold 1 pause
+wait 1
+type freecam
+wait 10
+expect lives = 3
+end

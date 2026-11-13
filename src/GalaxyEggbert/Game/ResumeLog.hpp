@@ -45,7 +45,7 @@ namespace GalaxyEggbert::Game
         bool quickCheat = false, openDoors = false, showSecret = false;
         bool compass = false;
         bool debug = false;
-        bool photo = false, freeze = false;
+        bool photo = false, freeze = false, xray = false, hitbox = false;
         int cheatsLocked = 0; // 1 fairplay's lock, 2 honest's (the rest of the run; InputPad.hpp)
         int cameraMode = 1;
         // Settings and campaign doors as they were at the start, before any pause/setup edits.

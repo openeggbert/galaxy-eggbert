@@ -90,6 +90,15 @@ namespace GalaxyEggbert::Game
         // + 48 of 60 px (Decor::BlupiRect), 18 px each side of his middle. In 3D on X and Z alike;
         // on foot and swimming (a vehicle keeps its point).
         static constexpr float kBodyHalfWidth = 18.0f / 64.0f;
+        static constexpr float kBodyFootHeight = 2.0f / 64.0f;
+        // Movement's actual sampled envelope. Crouching keeps it; vehicles use a column.
+        [[nodiscard]] float MovementHalfWidth() const noexcept { return IsInVehicle() ? 0.0f : kBodyHalfWidth; }
+        [[nodiscard]] static SolidBox MovementBodyBox(float x, float y, float z, float halfWidth) noexcept
+        {
+            return {x-halfWidth,x+halfWidth,y+(halfWidth>0 ? kBodyFootHeight : 0),y+kHeadHeight,z-halfWidth,z+halfWidth};
+        }
+        [[nodiscard]] SolidBox MovementBodyBox() const noexcept
+        { return MovementBodyBox(GetX(),GetY(),GetZ(),MovementHalfWidth()); }
         // Not a step-up: real Decor::TestPath() has none, so a one-tile step
         // stops Blupi until he jumps onto it (user report 2026-10-25: he
         // walked up steps by himself; this was 1.0, a whole block, until then).

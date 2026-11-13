@@ -1013,7 +1013,7 @@ namespace GalaxyEggbert::Game
             std::vector<const TypedCheatWord*> entries;
             for (int i = 0; i < count; ++i)
                 if (words[i].HelpPage() == page) entries.push_back(&words[i]);
-            // Page two retains space for the next three Galaxy words. No table-index split.
+            // Split by origin, keeping both columns clear of the navigation.
             const int perColumn = (static_cast<int>(entries.size()) + 1) / 2;
             const bool dense = perColumn > 10;
             for (int i = 0; i < static_cast<int>(entries.size()); ++i)
@@ -3059,6 +3059,9 @@ namespace GalaxyEggbert::Game
             {"recall", TypedCheat::Recall, "Return to the marked moment", CheatOrigin::GalaxyEggbert},
             {"photo", TypedCheat::Photo, "Toggle a world view without overlays", CheatOrigin::GalaxyEggbert},
             {"freeze", TypedCheat::Freeze, "Toggle frozen objects; Blupi still moves", CheatOrigin::GalaxyEggbert},
+            {"freecam", TypedCheat::Freecam, "Fly: arrows turn/move, Ctrl up, Shift down; +photo", CheatOrigin::GalaxyEggbert},
+            {"xray", TypedCheat::Xray, "Show pickups, exit and secret walls through walls", CheatOrigin::GalaxyEggbert},
+            {"hitbox", TypedCheat::Hitbox, "Show collision boxes through walls", CheatOrigin::GalaxyEggbert},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

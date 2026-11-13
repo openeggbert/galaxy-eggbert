@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/Game/FanGeometry.hpp>
+#include <GalaxyEggbert/Game/DisplayAids.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CratePush.hpp>
@@ -6164,6 +6165,40 @@ int main(int argc, char** argv)
               "reference exception: an existing dynamite blast still kills ghost (9167-9173)");
     }
 
+    {
+        using namespace GalaxyEggbert::Game;
+        using T = GalaxyEggbert::Def::ObjectType;
+        for (const auto type : {T::ObjectType2,T::ObjectType3,T::ObjectType17,T::ObjectType23,T::ObjectType5})
+        {
+            const auto box = InteractionSystem::ObjectContactBox(type,0,0,0);
+            const auto b = InteractionSystem::BlupiContactBox(0,0,0);
+            const float reach = box.maxX+b.maxX;
+            check(InteractionSystem::BlupiTouches(type,reach-.0001f,0,0) &&
+                  !InteractionSystem::BlupiTouches(type,reach,0,0),"exposed contact boxes meet the actual strict horizontal boundary");
+            check(InteractionSystem::BlupiTouches(type,0,b.maxY-box.minY-.0001f,0) &&
+                  !InteractionSystem::BlupiTouches(type,0,b.maxY-box.minY,0),"exposed contact boxes meet the actual vertical boundary");
+        }
+        const auto bullet = InteractionSystem::ObjectContactBox(T::ObjectType23,2,3,4);
+        check(bullet.minX==1.875f && bullet.maxY==3.78125f && bullet.minY==3.5f,
+              "bullet contact envelope has its actual 16px width and 10..28px sprite strip");
+        const auto ride = InteractionSystem::LiftRideBox(0,2,0);
+        check(ride.maxX==.65f && ride.minY==2.8f && ride.maxY==3.2f,"lift ride box exposes foot reach and stand-height tolerance");
+        const auto foot = BlupiController::MovementBodyBox(0,1,0,BlupiController::kBodyHalfWidth);
+        const auto vehicle = BlupiController::MovementBodyBox(0,1,0,0);
+        check(foot.maxX==18.f/64 && foot.minY==1+2.f/64 && foot.maxY==1+49.f/64 &&
+              vehicle.minX==vehicle.maxX && vehicle.minY==1,"movement envelopes preserve foot and vehicle column geometry");
+        const auto crate = CollisionCellBox(2,3,4);
+        check(crate.Contains(2,3,4) && !crate.Contains(2.5f,3,4) && !crate.Contains(2,4,4),"crate envelope uses collision's strict side and half-open Y bounds");
+        for (int i=0; i<=ObjectDefinitionRegistry::MaxObjectType; ++i)
+        {
+            MobileObjSpec obj{}; obj.type=static_cast<T>(i);
+            const auto& d=GetObjectDefinition(obj.type);
+            check(IsXrayTarget(obj)==(d.levelExit || d.semanticKind==ObjectSemanticKind::Collectible || d.semanticKind==ObjectSemanticKind::Pickup),
+                  "xray targets come from the registry's semantic capabilities");
+            obj.active=false;
+            check(!IsXrayTarget(obj),"collected/inactive objects never remain xray targets");
+        }
+    }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

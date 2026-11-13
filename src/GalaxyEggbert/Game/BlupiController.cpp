@@ -58,8 +58,7 @@ namespace GalaxyEggbert::Game
             return g_crateCells != nullptr &&
                    std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<float, 3>& c)
                    {
-                       return std::fabs(gxf - c[0]) < 0.5f && std::fabs(gzf - c[2]) < 0.5f && y >= c[1] &&
-                              y < c[1] + 1.0f;
+                       return CollisionCellBox(0,c[1],0).Contains(gxf-c[0],y,gzf-c[2]);
                    });
         }
 
@@ -408,7 +407,7 @@ namespace GalaxyEggbert::Game
         const FlightBarrierScope flight(m_vehicleMode == VehicleMode::Helicopter ||
                                        m_vehicleMode == VehicleMode::Overcraft);
         m_onGround = ResolveMove(world, m_x, m_y, m_z, 0.0f, 0.0f, 0.0f, tempPassable,
-                                 true, false, IsInVehicle() ? 0.0f : kBodyHalfWidth).onGround;
+                                 true, false, MovementHalfWidth()).onGround;
         m_marchTicks = 0.0f;
         if (m_onGround)
         {
@@ -678,7 +677,7 @@ namespace GalaxyEggbert::Game
         const float side = std::max(0.0f, halfWidth - 0.01f);
         // The box's bottom stands 2 px over his feet (Decor::BlupiRect: Bottom = pos.Y + 60 - 2), so
         // floor at his own level (a lift's top a hair under the deck's) is no wall to it.
-        const float foot = halfWidth > 0.0f ? 2.0f / 64.0f : 0.0f;
+        const float foot = MovementBodyBox(0,0,0,halfWidth).minY;
         const auto pointSolid = [&](float qx, float qy, float qz)
         {
             return IsPointSolid(world, qx, qy + foot, qz, tempPassable, checkSubcellHorizontal) ||
@@ -2582,7 +2581,7 @@ namespace GalaxyEggbert::Game
         const float dy = m_velocityY * dt + windDy;
         const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
         const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
-        const float bodyHalfWidth = m_vehicleMode == VehicleMode::None ? kBodyHalfWidth : 0.0f;
+        const float bodyHalfWidth = MovementHalfWidth();
         const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
                                                    /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false,
                                                    bodyHalfWidth);

@@ -21,6 +21,10 @@ namespace GalaxyEggbert::Game
         }
     };
 
+    // Unit cells used by crate point collision (Y from its floor, before the render shift).
+    [[nodiscard]] inline SolidBox CollisionCellBox(float x, float y, float z) noexcept
+    { return {x-.5f,x+.5f,y,y+1.0f,z-.5f,z+.5f}; }
+
     // A BigDecor model's shape as drawn, in boxes relative to its anchor cell: X and Z from the
     // cell's centre, Y from its floor, in blocks, before the cell's own quarter turns. The game
     // measures them from the models (one box per half-block slice of height: a palm's trunk is

@@ -10,6 +10,7 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
 #include <GalaxyEggbert/Game/BarRows.hpp>
+#include <GalaxyEggbert/Game/DisplayAids.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
@@ -145,6 +146,73 @@ namespace GalaxyEggbert::CNA
         AppendSceneBillboards(frame);
         AppendSceneEffects(frame);
         ApplySpriteGi(frame);
+        // These aids are drawn after the world's effects finish: no fog, depth or tone mapping
+        // can hide a target. Simulation boxes stay in collision space until this one conversion.
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Play && phase_ != GalaxyEggbert::Def::GamePhase::Pause) return;
+        using Microsoft::Xna::Framework::Color;
+        const auto addBox = [&](const SolidBox& b, Color color, bool raw = false) {
+            const float ox = raw ? float(WorldRuntime::kWorldCenterX) : 0;
+            const float oz = raw ? float(WorldRuntime::kWorldCenterZ) : 0;
+            frame.aidBoxes.push_back({Vector3((b.minX+b.maxX)*.5f-ox,(b.minY+b.maxY)*.5f-.5f,(b.minZ+b.maxZ)*.5f-oz),
+                Vector3(b.maxX-b.minX,b.maxY-b.minY,b.maxZ-b.minZ),color});
+        };
+        if (cheatHitbox_)
+        {
+            addBox(blupi_.MovementBodyBox(),Color(255,255,255));
+            addBox(InteractionSystem::BlupiContactBox(blupi_.GetX(),blupi_.GetY(),blupi_.GetZ()),Color(100,190,255));
+            for (const auto& box : worldRuntime_.SolidBigDecorBoxes()) addBox(box,Color(150,150,150),true);
+        }
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            if (!obj.active) continue;
+            const auto& def = GetObjectDefinition(obj.type);
+            if (cheatXray_ && IsXrayTarget(obj))
+            {
+                const auto visual = ResolveObjectVisual(obj.type,int(obj.phase),obj.visualIcon);
+                SceneXrayMarker marker;
+                marker.center = Vector3(obj.currentX,obj.currentY,obj.currentZ);
+                marker.color = def.levelExit ? Color(255,100,255) :
+                    def.semanticKind == ObjectSemanticKind::Collectible ? Color(255,220,60) : Color(100,255,160);
+                marker.sheet = visual.textureSource == ObjectTextureSource::ObjectM ? SceneSheet::ObjectM : SceneSheet::Element;
+                marker.uv = marker.sheet == SceneSheet::ObjectM ? tileAtlas_.GetTileUv(visual.icon) : Uv(GetElementIconUv(visual.icon));
+                frame.xrayMarkers.push_back(marker);
+            }
+            if (!cheatHitbox_) continue;
+            Color color(100,255,160);
+            if (def.semanticKind == ObjectSemanticKind::Lift)
+            {
+                addBox(InteractionSystem::LiftRideBox(obj.currentX,obj.currentY,obj.currentZ),Color(80,220,255));
+                auto deck = CollisionCellBox(obj.currentX,obj.currentY,obj.currentZ);
+                deck.minY = deck.maxY = LiftRiderCenterY(obj.currentY);
+                addBox(deck,Color(80,220,255));
+                continue;
+            }
+            if (def.semanticKind == ObjectSemanticKind::StaticObstacle)
+            {
+                addBox(CollisionCellBox(obj.currentX,obj.currentY,obj.currentZ),Color(255,170,70));
+                continue;
+            }
+            if (def.semanticKind == ObjectSemanticKind::Enemy) color = Color(255,90,90);
+            else if (def.semanticKind == ObjectSemanticKind::Projectile) color = Color(255,255,70);
+            else if (!def.standardPickupTouch && !def.lethalDecorContactHazard) continue;
+            addBox(InteractionSystem::ObjectContactBox(obj.type,obj.currentX,obj.currentY,obj.currentZ),color);
+        }
+        if (cheatXray_)
+        {
+            const auto& world = worldRuntime_.GetWorld();
+            if (!xraySecretRevision_ || *xraySecretRevision_ != world.blockRevision())
+            {
+                xraySecretBoxes_.clear();
+                for (int z = 0; z < world.blocksPerAxis(); ++z)
+                    for (int y = 0; y < world.blocksPerAxis(); ++y)
+                        for (int x = 0; x < world.blocksPerAxis(); ++x)
+                            if (GalaxyEggbert::GetBlockDefinition(world.getBlock(x,y,z).type()).secretPassage)
+                                xraySecretBoxes_.push_back(CollisionCellBox(float(x),float(y),float(z)));
+                xraySecretRevision_ = world.blockRevision();
+            }
+            for (const auto& box : xraySecretBoxes_) addBox(box,Color(190,130,255),true);
+        }
+
     }
 
     void GalaxyEggbertGame::AppendSceneEffects(SceneFrame& frame)

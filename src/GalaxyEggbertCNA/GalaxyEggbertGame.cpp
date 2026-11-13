@@ -1472,6 +1472,30 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertGame::StopFreecam()
+    {
+        if (!cheatFreecam_) return;
+        if (!freecamWorldCheck_.empty())
+        {
+            const auto now = ResumeSignature();
+            bool equal = freecamWorldPhase_ == worldRuntime_.GetAnimPhase();
+            for (const auto* key : {"Blupi","counters","objects","blocks","Hide trail"})
+                equal &= now.at(key) == freecamWorldCheck_.at(key);
+            std::cout << "FREECAM HOLD " << (equal ? "equal" : "different") << ": Blupi, counters, objects, blocks, trails, world clock." << std::endl;
+            freecamWorldCheck_.clear();
+            if (!equal) { autoplayExitCode_ = 1; Exit(); }
+        }
+        cheatFreecam_ = false;
+        camera_.SetLookAt(freecamReturnEye_, freecamReturnTarget_);
+        cameraTarget_ = freecamReturnTarget_;
+        previousEye_ = freecamReturnEye_;
+        previousTarget_ = freecamReturnTarget_;
+        mouseLookActive_ = false;
+        freecamYaw_ = freecamPitch_ = 0.0f;
+        freecamReturnEye_ = freecamReturnTarget_ = {};
+        std::erase(activeCheats_, "freecam");
+    }
+
     void GalaxyEggbertGame::ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat)
     {
         if (!GalaxyEggbert::Game::kCheatsEnabled) return;
@@ -1510,6 +1534,28 @@ namespace GalaxyEggbert::CNA
                 else ShowDemoNotice("recall: no mark");
                 break;
             }
+            case TC::Freecam:
+                if (NetMatchActive())
+                    std::cout << "GalaxyEggbertCNA: freecam refused: network match." << std::endl;
+                else if (cheatFreecam_) StopFreecam();
+                else
+                {
+                    cheatFreecam_ = true;
+                    if (std::getenv("GALAXY_FREECAM_CHECK"))
+                    {
+                        freecamWorldCheck_ = ResumeSignature();
+                        freecamWorldPhase_ = worldRuntime_.GetAnimPhase();
+                    }
+                    freecamReturnEye_ = camera_.Position();
+                    freecamReturnTarget_ = cameraTarget_;
+                    const auto direction = cameraTarget_ - camera_.Position();
+                    freecamYaw_ = std::atan2(direction.X, -direction.Z);
+                    freecamPitch_ = std::asin(std::clamp(direction.Y / direction.Length(), -1.0f, 1.0f));
+                    mouseLookActive_ = false;
+                }
+                break;
+            case TC::Xray: cheatXray_ = !cheatXray_; break;
+            case TC::Hitbox: cheatHitbox_ = !cheatHitbox_; break;
             case TC::Photo:
                 cheatPhoto_ = !cheatPhoto_;
                 if (cheatPhoto_) cheatMenuShown_ = false;
@@ -1614,6 +1660,8 @@ namespace GalaxyEggbert::CNA
         else inputPad_.SetCheatEntryLocked(true);
         cheatMenuShown_ = false;
         blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
+        StopFreecam();
+        cheatXray_ = cheatHitbox_ = false;
         cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = cheatPhoto_ = cheatFreeze_ = false;
         cheatZoomStep_ = 0;
         if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))

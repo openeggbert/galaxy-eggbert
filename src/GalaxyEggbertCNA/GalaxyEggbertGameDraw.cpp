@@ -522,6 +522,8 @@ namespace GalaxyEggbert::CNA
             {
                 postProcess_.End(device, effects.glow);
             }
+            sceneFrame_.camera.projection = camera_.Projection(); // aids use the unjittered view
+            worldRenderer_.DrawAids(device, sceneFrame_, assets);
         }
 
         // Restore opaque state after the AlphaBlend block above (billboards

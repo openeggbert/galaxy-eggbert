@@ -1,0 +1,12 @@
+# Brief B, mission 012. GALAXY_RESUME_SELFTEST=850 (while flying).
+wait 600
+type xray
+type hitbox
+type freecam
+hold 200 up jump
+hold 80 right
+type freecam
+hold 60 up
+wait 200
+expect lives = 3
+end

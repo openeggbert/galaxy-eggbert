@@ -255,6 +255,7 @@ namespace GalaxyEggbert::CNA
             pendingResume_.reset();
             recordingResume_ = false;
         }
+        StopFreecam();
         titleSceneActive_ = false;
         titleSceneRequested_ = false;
         winCheerActive_ = false;
@@ -687,6 +688,8 @@ namespace GalaxyEggbert::CNA
             StopVehicleMotorSound();
             pendingCheatLetters_.clear();
         }
+        if (next != GamePhase::Play && next != GamePhase::Pause && next != GamePhase::PlaySetup)
+            StopFreecam();
         const GamePhase previous = phase_;
         phase_ = next;
         NetPhaseChanged(previous, next); // the network game's pause and abandon
