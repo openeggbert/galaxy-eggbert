@@ -7,7 +7,7 @@
 namespace GalaxyEggbert::Game
 {
     // The folder of the player's own files (the owner 2026-11-10, before a release): savedata.txt,
-    // resume.txt, demos/ and customworlds/. The host chooses it at start (main.cpp,
+    // resume.txt, demos/, customworlds/ and screenshots/. The host chooses it at start (main.cpp,
     // ChooseUserFolder()): on the desktop the system's per-user folder (CNA's StorageDevice root:
     // %LOCALAPPDATA%\Galaxy Eggbert, $XDG_DATA_HOME or ~/.local/share/Galaxy Eggbert), or another
     // with --user DIR or GALAXY_USER_DIR (the test scripts: their run folder); on the web /save

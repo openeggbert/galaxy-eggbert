@@ -4,6 +4,7 @@
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <map>
+#include <GalaxyEggbert/Game/DiagnosticHistory.hpp>
 
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 #include <GalaxyEggbert/HubDoors.hpp>
@@ -863,7 +864,11 @@ namespace GalaxyEggbert::CNA
         bool recordingResume_ = false;
         bool replayingResume_ = false;
         bool backPending_ = false, backReplaying_ = false;
-        bool markPending_ = false, recallPending_ = false;
+        bool markPending_ = false, recallPending_ = false, restartPending_ = false;
+        bool snapPending_ = false;
+        bool cheatTrail_ = false, cheatIds_ = false, cheatSounds_ = false, cheatChunks_ = false;
+        GalaxyEggbert::Game::PositionTrail positionTrail_;
+        void DrawDiagnostics(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h);
         std::optional<std::uint64_t> markedTick_;
         std::string rewindNotice_;
         bool cheatPhoto_ = false, cheatFreeze_ = false;
@@ -884,6 +889,7 @@ namespace GalaxyEggbert::CNA
         {
             bool fps = false, superBlupi = false, photo = false, freeze = false;
             bool xray = false, hitbox = false, freecam = false; // a new mission always starts with freecam off
+            bool trail = false, ids = false, sounds = false, chunks = false;
             int zoomStep = 0;
             std::vector<std::string> active;
         } resumeLocalCheats_;
@@ -912,6 +918,7 @@ namespace GalaxyEggbert::CNA
             bool quickCheat = false, openDoors = false, showSecret = false, compass = false, debug = false;
             bool cheatsLocked = false, cheatsLockedForRun = false;
             bool photo = false, freeze = false, xray = false, hitbox = false;
+            bool trail = false, ids = false, sounds = false, chunks = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;

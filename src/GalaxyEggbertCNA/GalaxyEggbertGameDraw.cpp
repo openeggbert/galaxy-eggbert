@@ -7,6 +7,8 @@
 #include <GalaxyEggbert/Version.hpp>
 
 #include <exception>
+#include <ctime>
+#include <GalaxyEggbert/Game/UserFolder.hpp>
 
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
@@ -322,6 +324,50 @@ namespace GalaxyEggbert::CNA
             labels.push_back({x, y, peer.name, kTeamColours[peer.team % Net::kTeams]});
         }
         inputPad_.DrawLabels(device, viewportW, viewportH, labels);
+    }
+
+    void GalaxyEggbertGame::DrawDiagnostics(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h)
+    {
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Vector4;
+        if (cheatIds_)
+        {
+            std::vector<InputPad::ScreenLabel> labels;
+            const auto vp = camera_.ViewProjection();
+            const auto& objects = worldRuntime_.GetMobileObjects();
+            const float s = float(h)/480;
+            for (std::size_t i=0;i<objects.size();++i)
+            {
+                const auto& object=objects[i];
+                if (!object.active) continue;
+                const Vector3 at(object.currentX,object.currentY+.8f,object.currentZ);
+                if ((at-camera_.Position()).LengthSquared()>25*25) continue;
+                const auto clip=Vector4::Transform(Vector4(at.X,at.Y,at.Z,1),vp);
+                if (clip.W<=.01f || std::abs(clip.X)>clip.W || std::abs(clip.Y)>clip.W) continue;
+                const float x=(clip.X/clip.W*.5f+.5f)*w, y=(.5f-clip.Y/clip.W*.5f)*h;
+                const std::string text=std::to_string(i)+" / "+std::to_string(static_cast<int>(object.type));
+                labels.push_back({x+s,y+s,text,Vector3(0,0,0),.4f});
+                labels.push_back({x,y,text,Vector3(1,1,.5f),.4f});
+            }
+            inputPad_.DrawLabels(device,w,h,labels);
+        }
+        if (cheatSounds_)
+        {
+            std::vector<std::string> lines{"Sound requests (oldest first)"};
+            const auto& history=sound_.History();
+            for (std::size_t i=0;i<history.Size();++i)
+            {
+                const auto& request=history.At(i);
+                char text[128];
+                if (request.positional)
+                    std::snprintf(text,sizeof(text),"ch %d @ %.1f,%.1f,%.1f d=%.1f",request.channel,
+                        request.x,request.y,request.z,request.distance);
+                else std::snprintf(text,sizeof(text),"ch %d Blupi d=0",request.channel);
+                lines.emplace_back(text);
+                lines.emplace_back(SoundOutcomeName(request.outcome));
+            }
+            inputPad_.DrawDebug(device,w,h,lines,false);
+        }
     }
 
     std::vector<std::string> GalaxyEggbertGame::ActiveCheatNames() const
@@ -711,6 +757,8 @@ namespace GalaxyEggbert::CNA
                                              phase_ == GalaxyEggbert::Def::GamePhase::Init ||
                                              phase_ == GalaxyEggbert::Def::GamePhase::Editor;
             const bool photo = cheatPhoto_ && phase_ == GalaxyEggbert::Def::GamePhase::Play;
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !photo)
+                DrawDiagnostics(device,viewport.getWidthProperty(),viewport.getHeightProperty());
             if (!phaseHasRealScreen && !photo)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -1078,6 +1126,33 @@ namespace GalaxyEggbert::CNA
             {
                 std::cout << "GalaxyEggbertCNA: no screenshot_hud.png (" << failure.what() << ")." << std::endl;
             }
+        }
+
+        // At the end of a fully drawn frame, never a mid-frame read (Vulkan). The notice is
+        // deliberately scheduled after readback, so it first appears in the following frame.
+        if (snapPending_ && drawFrameIndex_ > terrainPixelPrintedFrame_ && !replayingResume_ && !demoActive_)
+        {
+            snapPending_ = false;
+            try
+            {
+                const auto folder = UserPath("screenshots");
+                std::filesystem::create_directories(folder);
+                const auto now = std::time(nullptr);
+                const auto local = *std::localtime(&now);
+                char timestamp[32];
+                std::strftime(timestamp,sizeof(timestamp),"%Y%m%d-%H%M%S",&local);
+                const auto path = SnapshotPath(folder,timestamp);
+                int w=0,h=0;
+                GetBackBufferSize(device,w,h);
+                std::vector<Microsoft::Xna::Framework::Color> pixels(static_cast<std::size_t>(w)*h);
+                device.GetBackBufferData(pixels.data(),0,static_cast<int>(pixels.size()));
+                Microsoft::Xna::Framework::Graphics::Texture2D shot(device,w,h);
+                shot.SetData(pixels.data(),static_cast<int>(pixels.size()));
+                shot.SaveAsPng(path.string());
+                ShowDemoNotice("snap: " + path.filename().string());
+                std::cout << "GalaxyEggbertCNA: snap wrote " << path.string() << std::endl;
+            }
+            catch (const std::exception& failure) { ShowDemoNotice(std::string("snap: ")+failure.what()); }
         }
 
         // A save's thumbnail (ED-0013), from the frame just drawn; the dice's play-test waits for it.

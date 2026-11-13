@@ -1193,7 +1193,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 41;
+        bool all = count == 48;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1202,11 +1202,11 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 41 words including freecam/xray/hitbox fire and have an explanation");
+        check(all, "Typed cheats: all 48 words including restart/snap/here/trail/ids/sounds/chunks fire and have an explanation");
         bool distinct = true, origins = true;
         int pages[2]{};
         const std::unordered_set<std::string> galaxy{
-            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox"};
+            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox", "restart", "snap", "here", "trail", "ids", "sounds", "chunks"};
         const std::unordered_set<std::string> mobile{"quick", "ghost", "zoom", "debug", "cheats"};
         for (int i = 0; i < count; ++i)
         {
@@ -1216,7 +1216,10 @@ int main()
             origins &= (words[i].origin == InputPad::CheatOrigin::MobileEggbert) == mobile.contains(word);
             if (words[i].cheat != TC::Back && words[i].cheat != TC::Mark && words[i].cheat != TC::Recall &&
                 words[i].cheat != TC::Photo && words[i].cheat != TC::Freeze && words[i].cheat != TC::Freecam &&
-                words[i].cheat != TC::Xray && words[i].cheat != TC::Hitbox) continue;
+                words[i].cheat != TC::Xray && words[i].cheat != TC::Hitbox &&
+                words[i].cheat != TC::Restart && words[i].cheat != TC::Snap && words[i].cheat != TC::Here &&
+                words[i].cheat != TC::Trail && words[i].cheat != TC::Ids && words[i].cheat != TC::Sounds &&
+                words[i].cheat != TC::Chunks) continue;
             for (int j = 0; j < count; ++j)
             {
                 if (i == j) continue;
@@ -1225,8 +1228,18 @@ int main()
                     !other.ends_with(word) && !word.ends_with(other);
             }
         }
+        bool helpFits = true;
+        for (int page = 0; page < 2; ++page)
+        {
+            const auto layout = InputPad::LayoutCheatHelp(pages[page]);
+            for (const int height : {480, 360})
+                for (int i = 0; i < pages[page]; ++i)
+                    helpFits &= (layout.RowTop(i) + layout.DescriptionOffset() + 32 * layout.DescriptionSize()) * height / 480
+                              < 416.0f * height / 480;
+        }
+        check(helpFits, "cheat help descriptions end above page arrows at both required heights");
         check(distinct, "new cheats neither prefix nor share matched suffixes with another word");
-        check(origins && pages[0] == 27 && pages[1] == 14,
+        check(origins && pages[0] == 27 && pages[1] == 21,
               "every word belongs to exactly one origin/page; original and Mobile words fill page one");
         {
             InputPad reset;

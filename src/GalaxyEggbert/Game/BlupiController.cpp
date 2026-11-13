@@ -415,6 +415,41 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    std::optional<float> BlupiController::FindStandingGroundBelow(const Worlds::World& world,
+        float x, float y, float z, bool tempPassable) const
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return std::nullopt;
+        const float size = static_cast<float>(world.blocksPerAxis());
+        if (x + kWorldCenterX - kBodyHalfWidth < -.5f || x + kWorldCenterX + kBodyHalfWidth >= size - .5f ||
+            z + kWorldCenterZ - kBodyHalfWidth < -.5f || z + kWorldCenterZ + kBodyHalfWidth >= size - .5f)
+            return std::nullopt;
+        const CrateCellsScope crates(m_crateCells, m_solidBoxes, m_terrainAnimationPhase);
+        const FlightBarrierScope flight(false); // room for a standing Blupi
+        for (int step = static_cast<int>(std::floor(std::min(y, size) * 64)); step >= 0; --step)
+        {
+            const float feetY = static_cast<float>(step) / 64;
+            // The same ground test and floor-from-above scope as SettleOnGround/ResolveMove.
+            const auto ground = ResolveMove(world, x, feetY, z, 0, -.05f, 0, tempPassable,
+                                            true, false, kBodyHalfWidth);
+            if (!ground.onGround || !ground.blockedY) continue;
+            const auto box = MovementBodyBox(x, ground.y, z, kBodyHalfWidth);
+            bool clear = true;
+            const auto intersects = [&](const SolidBox& raw) {
+                return box.maxX + kWorldCenterX > raw.minX && box.minX + kWorldCenterX < raw.maxX &&
+                       box.maxY > raw.minY && box.minY < raw.maxY &&
+                       box.maxZ + kWorldCenterZ > raw.minZ && box.minZ + kWorldCenterZ < raw.maxZ;
+            };
+            for (const auto& raw : m_solidBoxes) if (intersects(raw)) { clear = false; break; }
+            for (int ix = 0; ix <= 6 && clear; ++ix)
+                for (int iz = 0; iz <= 6 && clear; ++iz)
+                    for (int iy = 0; iy <= 8 && clear; ++iy)
+                        clear = !IsPointSolid(world, box.minX + (box.maxX-box.minX)*ix/6,
+                            box.minY + (box.maxY-box.minY)*iy/8, box.minZ + (box.maxZ-box.minZ)*iz/6, tempPassable);
+            if (clear) return ground.y;
+        }
+        return std::nullopt;
+    }
+
     void BlupiController::RideLift(float x, float y, float z) noexcept
     {
         // Rising, he has just jumped (or a flying vehicle climbs) off the lift: in the original

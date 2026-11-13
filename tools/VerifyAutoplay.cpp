@@ -445,13 +445,19 @@ int main()
             auto withCheats = log;
             withCheats.start.photo = withCheats.start.freeze = true;
             withCheats.start.xray = withCheats.start.hitbox = true;
+            withCheats.start.trail = withCheats.start.ids = withCheats.start.sounds = withCheats.start.chunks = true;
             ResumeLog restored;
             check(ResumeLog::Parse(withCheats.Serialize(), "test build", restored) &&
                   restored.start == withCheats.start && restored.runs == withCheats.runs,
                   "optional object/display start metadata round-trips for Continue and demos");
             check(text.find("OBJECT_CHEATS") == std::string::npos &&
-                  !parsed.start.photo && !parsed.start.freeze && !parsed.start.xray && !parsed.start.hitbox,
+                  !parsed.start.photo && !parsed.start.freeze && !parsed.start.xray && !parsed.start.hitbox && !parsed.start.trail && !parsed.start.ids && !parsed.start.sounds && !parsed.start.chunks,
                   "existing v7 logs without object-cheat metadata keep false defaults");
+            auto diagnosticsOnly = log;
+            diagnosticsOnly.start.trail = diagnosticsOnly.start.sounds = true;
+            check(ResumeLog::Parse(diagnosticsOnly.Serialize(), "test build", restored) &&
+                  restored.start == diagnosticsOnly.start && restored.runs == diagnosticsOnly.runs,
+                  "diagnostic metadata round-trips without an earlier DISPLAY_CHEATS record");
             auto bad = withCheats.Serialize();
             const auto body = ResumeLog::VerifiedBody(bad);
             bad = *body;

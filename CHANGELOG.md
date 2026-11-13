@@ -11,6 +11,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- Type `restart` to rewind the current world to its start, `snap` to save a completed PNG
+  frame in your player folder's `screenshots/`, and `here` to land below the free camera.
+  `trail`, `ids`, `sounds`, and `chunks` show the recent path, object IDs, sound decisions,
+  and terrain chunk boundaries with recent rebuilds highlighted.
+
 - Type `freecam` to hold the world and fly the camera (arrows/WASD turn and move, Ctrl up,
   Shift down, drag to look; combine with `photo`), `xray` to reveal remaining pickups,
   exits and secret walls, and `hitbox` to see the actual collision boxes through walls.

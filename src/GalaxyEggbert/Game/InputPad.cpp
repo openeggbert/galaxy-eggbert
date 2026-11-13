@@ -892,11 +892,11 @@ namespace GalaxyEggbert::Game
             whiteTextEffect_->setTextureEnabledProperty(true);
             whiteTextEffect_->setTextureProperty(whiteTextTexture_.get());
         }
-        constexpr float kScale = 0.55f;
         const float s = static_cast<float>(viewportH) / kRefH;
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         for (const auto& label : labels)
         {
+            const float kScale = label.scale;
             const float width = static_cast<float>(TextMetrics::Width(label.text)) * kScale * s;
             const float height = kGlyphCellPx * kScale * s;
             std::vector<Quad> glyphs;
@@ -1014,15 +1014,16 @@ namespace GalaxyEggbert::Game
             for (int i = 0; i < count; ++i)
                 if (words[i].HelpPage() == page) entries.push_back(&words[i]);
             // Split by origin, keeping both columns clear of the navigation.
-            const int perColumn = (static_cast<int>(entries.size()) + 1) / 2;
-            const bool dense = perColumn > 10;
+            const auto layout = LayoutCheatHelp(static_cast<int>(entries.size()));
+            const int perColumn = layout.perColumn;
+            const bool dense = layout.dense;
             for (int i = 0; i < static_cast<int>(entries.size()); ++i)
             {
                 const float x = i < perColumn ? 28.0f : 335.0f;
-                const float y = 78.0f + float(i % perColumn) * (dense ? 24.0f : 32.0f);
+                const float y = layout.RowTop(i);
                 const float room = i < perColumn ? kLeftRoom : kRightRoom;
                 line(entries[i]->word, x, y, dense ? 0.4f : 0.48f, room);
-                line(entries[i]->description, x, y + (dense ? 13.0f : 17.0f), dense ? 0.33f : 0.4f, room);
+                line(entries[i]->description, x, y + layout.DescriptionOffset(), layout.DescriptionSize(), room);
             }
             line("[<]", 210, 416, 0.65f);
             line(page == 0 ? "1/2" : "2/2", 295, 416, 0.65f);
@@ -3062,6 +3063,13 @@ namespace GalaxyEggbert::Game
             {"freecam", TypedCheat::Freecam, "Fly: arrows turn/move, Ctrl up, Shift down; +photo", CheatOrigin::GalaxyEggbert},
             {"xray", TypedCheat::Xray, "Show pickups, exit and secret walls through walls", CheatOrigin::GalaxyEggbert},
             {"hitbox", TypedCheat::Hitbox, "Show collision boxes through walls", CheatOrigin::GalaxyEggbert},
+            {"restart", TypedCheat::Restart, "Return to the start of this world", CheatOrigin::GalaxyEggbert},
+            {"snap", TypedCheat::Snap, "Save a PNG in your screenshots folder", CheatOrigin::GalaxyEggbert},
+            {"here", TypedCheat::Here, "Land below the free camera; end freecam", CheatOrigin::GalaxyEggbert},
+            {"trail", TypedCheat::Trail, "Show the last ten seconds of your path", CheatOrigin::GalaxyEggbert},
+            {"ids", TypedCheat::Ids, "Show nearby object indices and type IDs", CheatOrigin::GalaxyEggbert},
+            {"sounds", TypedCheat::Sounds, "Show recent sound requests and outcomes", CheatOrigin::GalaxyEggbert},
+            {"chunks", TypedCheat::Chunks, "Show terrain chunks; highlight recent rebuilds", CheatOrigin::GalaxyEggbert},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

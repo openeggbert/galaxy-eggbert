@@ -289,12 +289,13 @@ namespace GalaxyEggbert::CNA
                 ShowDemoNotice("mark");
                 std::cout << "GalaxyEggbertCNA: mark at tick " << *markedTick_ << "." << std::endl;
             }
-            if (backPending_)
+            if (restartPending_) RewindToTick(0, "restart");
+            else if (backPending_)
                 RewindToTick(resumeTicks_ > 300 ? resumeTicks_ - 300 : 0, "back -5 s");
             else if (recallPending_ && markedTick_) RewindToTick(*markedTick_, "recall");
             else CheckResumeSelftest();
         }
-        backPending_ = markPending_ = recallPending_ = false;
+        backPending_ = markPending_ = recallPending_ = restartPending_ = false;
         if (demoRecording_)
         {
             demoRecordLog_.Append(tickInput_);
@@ -453,6 +454,9 @@ namespace GalaxyEggbert::CNA
             if (NetRemotePaused()) return;
             NetBeforeStep();
         }
+
+        // Sample once per Play input tick, including held freecam ticks, also during replay.
+        positionTrail_.Sample(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
 
         // One hold gate: no Blupi, object, hazard, interaction, animation or world clock step.
         // Screens above still handle Pause, typed cheats and the on-screen keyboard.
@@ -3693,6 +3697,10 @@ namespace GalaxyEggbert::CNA
                         break;
                     case TC::Xray: toggle("xray"); break;
                     case TC::Hitbox: toggle("hitbox"); break;
+                    case TC::Trail: toggle("trail"); break;
+                    case TC::Ids: toggle("ids"); break;
+                    case TC::Sounds: toggle("sounds"); break;
+                    case TC::Chunks: toggle("chunks"); break;
                     case TC::Photo: toggle("photo"); break;
                     case TC::Freeze: if (!NetMatchActive()) toggle("freeze"); break;
                     case TC::Position: toggle("position"); break;

@@ -61,6 +61,15 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- MODERN cheats `restart`, `snap`, `here`, `trail`, `ids`, `sounds`, `chunks` (2026-11-13,
+  `plans/codex/cheats_restart_snap_here_trail_ids_sounds_chunks.md`): tick-zero rewind,
+  completed-frame PNGs in the player's `screenshots/` (never replayed), collision-owned landing
+  below freecam, a replay-exact 600-tick path, nearby object list/type IDs, the last ten sound
+  decisions, and terrain chunk boundaries with one-second upload highlights. Door sound reach is
+  unchanged. Native Linux verified; Android/web use private app storage and `/save`, with no
+  export/download UI added or platform verification. Evidence, verification and limits:
+  `build-probe/cheats-c/report.md`.
+
 - MODERN cheats `freecam`, `xray`, `hitbox` (2026-11-13,
   `plans/codex/cheats_freecam_xray_hitbox.md`): freecam holds the whole world at the tick's
   world-step gate and flies at 6 cells/s (arrows/WASD move/turn, Ctrl up, Shift down, drag look);

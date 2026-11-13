@@ -1,0 +1,15 @@
+# Brief C, mission 012. GALAXY_RESUME_SELFTEST=850.
+wait 600
+type trail
+type ids
+type sounds
+type chunks
+type freecam
+hold 60 jump
+hold 40 up
+type here
+expect ground = 1
+hold 60 up
+wait 300
+expect lives = 3
+end

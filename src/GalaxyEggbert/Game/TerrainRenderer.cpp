@@ -609,6 +609,28 @@ namespace GalaxyEggbert::Game
         return plates;
     }
 
+    std::vector<SceneAidBox> TerrainRenderer::DiagnosticChunks() const
+    {
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Color;
+        const auto now = std::chrono::steady_clock::now();
+        std::vector<SceneAidBox> boxes;
+        for (int cy=0;cy<m_chunksPerAxis;++cy)
+            for (int cz=0;cz<m_chunksPerAxis;++cz)
+                for (int cx=0;cx<m_chunksPerAxis;++cx)
+                {
+                    const Vector3 low(float(cx*kStaticChunkCells)-kWorldCenterX-.5f,
+                        float(cy*kStaticChunkCells)-.5f,float(cz*kStaticChunkCells)-kWorldCenterZ-.5f);
+                    const Vector3 size(float(std::min(kStaticChunkCells,m_blocksPerAxis-cx*kStaticChunkCells)),
+                        float(std::min(kStaticChunkCells,m_blocksPerAxis-cy*kStaticChunkCells)),
+                        float(std::min(kStaticChunkCells,m_blocksPerAxis-cz*kStaticChunkCells)));
+                    const auto& chunk = m_staticChunks[static_cast<std::size_t>(ChunkIndex(cx,cy,cz))];
+                    boxes.push_back({low+size*.5f,size,now-chunk.uploaded < std::chrono::seconds(1)
+                        ? Color(255,180,40) : Color(80,180,255,120)});
+                }
+        return boxes;
+    }
+
     int TerrainRenderer::ChunkIndex(int cx, int cy, int cz) const noexcept
     {
         return (cy * m_chunksPerAxis + cz) * m_chunksPerAxis + cx;
@@ -1149,6 +1171,7 @@ namespace GalaxyEggbert::Game
         };
         StaticChunk& chunk = m_staticChunks[static_cast<std::size_t>(chunkIndex)];
         chunk = StaticChunk{};
+        chunk.uploaded = std::chrono::steady_clock::now();
         chunk.blocks = build.blocks;
         chunk.ragged = build.ragged;
         chunk.sumX = build.sumX;

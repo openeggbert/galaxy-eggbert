@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 #include "SolidBox.hpp"
 
@@ -718,6 +719,8 @@ namespace GalaxyEggbert::Game
         // moving or advancing simulation: a start in open air must still fall. SetPosition
         // alone retains its airborne semantics for teleports and other callers.
         void SettleOnGround(const Worlds::World& world, bool tempPassable = false);
+        [[nodiscard]] std::optional<float> FindStandingGroundBelow(const Worlds::World& world,
+            float x, float y, float z, bool tempPassable = false) const;
 
         // Real "continuous ride" (plan.md E3D-MIG-152, `Decor::
         // MoveObjectStepLine`'s per-tick overlap re-test): called by the

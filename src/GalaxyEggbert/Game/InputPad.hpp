@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 
 #include "QuadBatch.hpp"
 #include "ScreenKeyboard.hpp"
@@ -192,6 +193,7 @@ namespace GalaxyEggbert::Game
             float y = 0.0f;
             std::string text;
             Microsoft::Xna::Framework::Vector3 colour;
+            float scale = .55f;
         };
         void DrawLabels(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
                         const std::vector<ScreenLabel>& labels);
@@ -662,6 +664,13 @@ namespace GalaxyEggbert::Game
             Freecam,      // MODERN: hold the world and fly the camera
             Xray,         // MODERN: objectives and secret passages through walls
             Hitbox,       // MODERN: the collision geometry
+            Restart,      // MODERN: rewind this world to tick zero
+            Snap,         // MODERN: save the completed game frame
+            Here,         // MODERN: land beneath the free camera
+            Trail,        // MODERN: ten seconds of Blupi's positions
+            Ids,          // MODERN: object list indices and type IDs
+            Sounds,       // MODERN: recent sound decisions
+            Chunks,       // MODERN: terrain chunk boundaries and rebuilds
         };
         struct TypedCheatResult
         {
@@ -682,6 +691,19 @@ namespace GalaxyEggbert::Game
             { return origin == CheatOrigin::GalaxyEggbert ? 1 : 0; }
         };
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
+        struct CheatHelpLayout
+        {
+            int perColumn;
+            bool dense;
+            float RowTop(int index) const { return 78.0f + float(index % perColumn) * (dense ? 24.0f : 32.0f); }
+            float DescriptionOffset() const { return dense ? 13.0f : 17.0f; }
+            float DescriptionSize() const { return dense ? .33f : .4f; }
+        };
+        static CheatHelpLayout LayoutCheatHelp(int entries)
+        {
+            const int rows = std::max(1, (entries + 1) / 2);
+            return {rows, rows > 10};
+        }
         void SetCheatEntryLocked(bool locked) noexcept;
         [[nodiscard]] bool IsCheatEntryLocked() const noexcept { return cheatEntryLocked_; }
         // "honest": locked for the rest of the run (the application's, every world after): no word is

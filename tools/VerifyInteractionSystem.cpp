@@ -1,4 +1,6 @@
 #include <GalaxyEggbert/Game/FanGeometry.hpp>
+#include <GalaxyEggbert/Game/DiagnosticHistory.hpp>
+#include <fstream>
 #include <GalaxyEggbert/Game/DisplayAids.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
@@ -130,6 +132,53 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    {
+        PositionTrail trail;
+        for (int i=0;i<800;++i) trail.Sample(float(i),2,3);
+        check(trail.Points().size()==600 && trail.Points().front()[0]==200 && trail.Points().back()[0]==799,
+              "trail keeps exactly the last ten seconds of input ticks");
+        trail.Clear(); check(trail.Points().empty(),"new world clears the position trail");
+        std::filesystem::create_directories("build-probe");
+        auto folder=std::filesystem::path("build-probe/cheats-c-name-test");
+        for (int n=1; !std::filesystem::create_directory(folder); ++n)
+            folder=std::filesystem::path("build-probe/cheats-c-name-test-"+std::to_string(n));
+        const auto first=SnapshotPath(folder,"test-stamp");
+        { std::ofstream f(first); f << "preserve"; }
+        const auto second=SnapshotPath(folder,"test-stamp");
+        { std::ofstream f(second); f << "preserve"; }
+        const auto third=SnapshotPath(folder,"test-stamp");
+        std::ifstream original(first);
+        std::string contents; original >> contents; original.close();
+        check(first!=second && second!=third && third.filename()=="galaxy-test-stamp-2.png" && contents=="preserve",
+              "snapshot suffixes never select an existing filename");
+        std::filesystem::remove(first); std::filesystem::remove(second); std::filesystem::remove(folder);
+        check(SoundDecision(false,true,true,false,false,true)==SoundOutcome::OutOfReach &&
+              SoundDecision(true,true,true,false,false,true)==SoundOutcome::Replay &&
+              SoundDecision(true,false,true,false,false,true)==SoundOutcome::Hidden &&
+              SoundDecision(true,false,false,false,false,true)==SoundOutcome::Disabled &&
+              SoundDecision(true,false,false,true,false,true)==SoundOutcome::Missing &&
+              SoundDecision(true,false,false,true,true,true)==SoundOutcome::Busy &&
+              SoundDecision(true,false,false,true,true,false)==SoundOutcome::Played,
+              "sound decisions retain reach/mute/load/busy/played precedence");
+        SoundHistory history;
+        for(int i=0;i<14;++i) history.Push({i});
+        check(history.Size()==10 && history.At(0).channel==4 && history.At(9).channel==13,
+              "sound ring retains the last ten requests in order");
+        Sound requests;
+        const auto ch=GalaxyEggbert::Def::SoundChannel::SoundChannel1;
+        requests.SetListener(0,1,0);
+        requests.PlayAt(ch,20,1,0);
+        requests.SetReplayMuted(true); requests.Play(ch);
+        requests.SetReplayMuted(false); requests.SetBlupiHidden(true); requests.Play(ch);
+        requests.SetBlupiHidden(false); requests.SetEnabled(false); requests.Play(ch);
+        requests.SetEnabled(true); requests.Play(ch);
+        const auto& h=requests.History();
+        check(h.Size()==5 && h.At(0).outcome==SoundOutcome::OutOfReach && h.At(0).distance==20 &&
+              h.At(0).positional && h.At(1).outcome==SoundOutcome::Replay &&
+              h.At(2).outcome==SoundOutcome::Hidden && h.At(3).outcome==SoundOutcome::Disabled &&
+              h.At(4).outcome==SoundOutcome::Missing && !h.At(4).positional,
+              "Sound records each real request once at its decision with source and listener distance");
+    }
     Sound sound; // never LoadContent()-ed -- every Play() call below is a silent no-op
     InteractionSystem interaction;
     constexpr float dt = 1.0f / 60.0f;

@@ -154,7 +154,7 @@ namespace GalaxyEggbert::Game
     void WorldRenderer::DrawAids(Graphics::GraphicsDevice& device, const SceneFrame& frame,
                                  const WorldRenderAssets& assets)
     {
-        if (frame.aidBoxes.empty() && frame.xrayMarkers.empty()) return;
+        if (frame.aidBoxes.empty() && frame.aidLines.empty() && frame.xrayMarkers.empty()) return;
         CnaEngine::Graphics::Camera camera;
         camera.SetMatrices(frame.camera.view, frame.camera.projection);
         const auto inv = Matrix::Invert(frame.camera.view);
@@ -164,6 +164,7 @@ namespace GalaxyEggbert::Game
                                 std::max(1,device.getViewportProperty().getHeightProperty());
         m_aidLines.Clear();
         for (const auto& box : frame.aidBoxes) m_aidLines.Box(box.center,box.size,box.color);
+        for (const auto& line : frame.aidLines) m_aidLines.Line(line.from,line.to,line.color);
         const auto oldDepth = device.getDepthStencilStateProperty();
         const auto oldBlend = device.getBlendStateProperty();
         const auto oldRaster = device.getRasterizerStateProperty();

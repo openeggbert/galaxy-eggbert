@@ -103,6 +103,8 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ResetMissionInput()
     {
+        positionTrail_.Clear();
+        snapPending_ = false;
         pendingCheatLetters_.clear();
         debugVelocity_ = {};
         inputPad_.ResetMissionInput();
@@ -151,9 +153,9 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
-        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatZoomStep_, activeCheats_};
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
-        backPending_ = backReplaying_ = markPending_ = recallPending_ = false;
+        backPending_ = backReplaying_ = markPending_ = recallPending_ = restartPending_ = false;
         markedTick_.reset();
         resumeLog_ = {};
         auto& start = resumeLog_.start;
@@ -174,6 +176,10 @@ namespace GalaxyEggbert::CNA
         start.freeze = cheatFreeze_;
         start.xray = cheatXray_;
         start.hitbox = cheatHitbox_;
+        start.trail = cheatTrail_;
+        start.ids = cheatIds_;
+        start.sounds = cheatSounds_;
+        start.chunks = cheatChunks_;
         start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -243,6 +249,10 @@ namespace GalaxyEggbert::CNA
         cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
         cheatXray_ = start.xray && GalaxyEggbert::Game::kCheatsEnabled;
         cheatHitbox_ = start.hitbox && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatTrail_ = start.trail && kCheatsEnabled;
+        cheatIds_ = start.ids && kCheatsEnabled;
+        cheatSounds_ = start.sounds && kCheatsEnabled;
+        cheatChunks_ = start.chunks && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -270,6 +280,10 @@ namespace GalaxyEggbert::CNA
             cheatXray_ = resumeLocalCheats_.xray;
             cheatHitbox_ = resumeLocalCheats_.hitbox;
             cheatFreecam_ = resumeLocalCheats_.freecam;
+            cheatTrail_ = resumeLocalCheats_.trail;
+            cheatIds_ = resumeLocalCheats_.ids;
+            cheatSounds_ = resumeLocalCheats_.sounds;
+            cheatChunks_ = resumeLocalCheats_.chunks;
             cheatZoomStep_ = resumeLocalCheats_.zoomStep;
             activeCheats_ = resumeLocalCheats_.active;
             blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
@@ -285,9 +299,14 @@ namespace GalaxyEggbert::CNA
             if (cheatFreeze_) activeCheats_.emplace_back("freeze");
             if (cheatXray_) activeCheats_.emplace_back("xray");
             if (cheatHitbox_) activeCheats_.emplace_back("hitbox");
+            for (const auto* name : {"trail", "ids", "sounds", "chunks"}) std::erase(activeCheats_, name);
+            if (cheatTrail_) activeCheats_.emplace_back("trail");
+            if (cheatIds_) activeCheats_.emplace_back("ids");
+            if (cheatSounds_) activeCheats_.emplace_back("sounds");
+            if (cheatChunks_) activeCheats_.emplace_back("chunks");
             // A Continue becomes the start of a new in-process rewind history, with exactly
             // today's fresh-process defaults for state absent from the file format.
-            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatZoomStep_, activeCheats_};
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatZoomStep_, activeCheats_};
             backCheckpoints_.clear();
         }
         replayRun_ = 0;
@@ -473,7 +492,7 @@ namespace GalaxyEggbert::CNA
     {
         auto result = ResumeSignature(); // keep shipped demo signatures unchanged
         std::ostringstream out;
-        out << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
+        out << cheatTrail_ << ' ' << cheatIds_ << ' ' << cheatSounds_ << ' ' << cheatChunks_ << ' ' << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
             << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
             << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << cheatFreecam_ << ' ' << cheatXray_ << ' ' << cheatHitbox_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
@@ -484,6 +503,9 @@ namespace GalaxyEggbert::CNA
             << freecamReturnEye_.X << ' ' << freecamReturnEye_.Y << ' ' << freecamReturnEye_.Z << ' '
             << freecamReturnTarget_.X << ' ' << freecamReturnTarget_.Y << ' ' << freecamReturnTarget_.Z;
         result["free camera"] = out.str();
+        out.str("");
+        for (const auto& p : positionTrail_.Points()) out << p[0] << ' ' << p[1] << ' ' << p[2] << '\n';
+        result["position trail"] = out.str();
         result["cheat keyboard"] = inputPad_.CheatKeys().StateSignature();
         result["controls help"] = std::to_string(controlsHelp_.shown) + " " +
             std::to_string(controlsHelp_.cheats) + " " + std::to_string(controlsHelp_.page);
@@ -686,6 +708,10 @@ namespace GalaxyEggbert::CNA
             demoSaved_.freeze = cheatFreeze_;
             demoSaved_.xray = cheatXray_;
             demoSaved_.hitbox = cheatHitbox_;
+            demoSaved_.trail = cheatTrail_;
+            demoSaved_.ids = cheatIds_;
+            demoSaved_.sounds = cheatSounds_;
+            demoSaved_.chunks = cheatChunks_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
             demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
@@ -731,6 +757,10 @@ namespace GalaxyEggbert::CNA
         cheatFreeze_ = start.freeze && GalaxyEggbert::Game::kCheatsEnabled;
         cheatXray_ = start.xray && GalaxyEggbert::Game::kCheatsEnabled;
         cheatHitbox_ = start.hitbox && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatTrail_ = start.trail && kCheatsEnabled;
+        cheatIds_ = start.ids && kCheatsEnabled;
+        cheatSounds_ = start.sounds && kCheatsEnabled;
+        cheatChunks_ = start.chunks && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -749,6 +779,10 @@ namespace GalaxyEggbert::CNA
         if (cheatFreeze_) activeCheats_.emplace_back("freeze");
         if (cheatXray_) activeCheats_.emplace_back("xray");
         if (cheatHitbox_) activeCheats_.emplace_back("hitbox");
+        if (cheatTrail_) activeCheats_.emplace_back("trail");
+        if (cheatIds_) activeCheats_.emplace_back("ids");
+        if (cheatSounds_) activeCheats_.emplace_back("sounds");
+        if (cheatChunks_) activeCheats_.emplace_back("chunks");
         if (cheatCompass_) activeCheats_.push_back("compass");
         if (cheatDebug_) activeCheats_.push_back("debug");
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
@@ -875,6 +909,10 @@ namespace GalaxyEggbert::CNA
         cheatFreeze_ = demoSaved_.freeze;
         cheatXray_ = demoSaved_.xray;
         cheatHitbox_ = demoSaved_.hitbox;
+        cheatTrail_ = demoSaved_.trail;
+        cheatIds_ = demoSaved_.ids;
+        cheatSounds_ = demoSaved_.sounds;
+        cheatChunks_ = demoSaved_.chunks;
         inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;

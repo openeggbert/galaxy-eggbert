@@ -91,16 +91,18 @@ namespace GalaxyEggbert::Game
         Note(channel, loop, x, y, z);
         if (!Audible(x - listenerX_, y - listenerY_, z - listenerZ_))
         {
+            Record(channel, SoundOutcome::OutOfReach, true, x,y,z);
             return;
         }
-        PlayChannel(channel, loop, true);
+        PlayChannel(channel, loop, true, true, x,y,z);
     }
 
     void Sound::PlayRemote(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z)
     {
         auto* const outbox = outbox_;
         outbox_ = nullptr;
-        if (Audible(x - listenerX_, y - listenerY_, z - listenerZ_)) PlayChannel(channel, false, false);
+        if (Audible(x - listenerX_, y - listenerY_, z - listenerZ_)) PlayChannel(channel, false, false, true, x,y,z);
+        else Record(channel, SoundOutcome::OutOfReach, true, x,y,z);
         outbox_ = outbox;
     }
 
@@ -128,31 +130,35 @@ namespace GalaxyEggbert::Game
         PlayChannel(channel, loop, false);
     }
 
-    void Sound::PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound)
+    void Sound::Record(GalaxyEggbert::Def::SoundChannel channel, SoundOutcome outcome, bool positional, float x, float y, float z)
+    {
+        if (!positional) { x = listenerX_; y = listenerY_; z = listenerZ_; }
+        const float dx=x-listenerX_, dy=y-listenerY_, dz=z-listenerZ_;
+        history_.Push({static_cast<int>(channel), positional, x,y,z, std::sqrt(dx*dx+dy*dy+dz*dz), outcome});
+    }
+
+    void Sound::PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound,
+                            bool positional, float x, float y, float z)
     {
         // Every request, played or not (a channel still sounding is not started again): what
         // tools/verify_death_sounds.sh counts, as fast-stepping runs outpace the sounds themselves.
         if (logPlays_) std::printf("GalaxyEggbertCNA: sound request %d\n", static_cast<int>(GalaxyEggbert::Def::ToRaw(channel)));
-        if (replayMuted_) return;
-        if (decorSound && blupiHidden_ && MutedWhileHidden(channel))
-        {
-            return;
-        }
+        const auto early = SoundDecision(true, replayMuted_, decorSound && blupiHidden_ && MutedWhileHidden(channel),
+                                         enabled_, true, false);
+        if (early != SoundOutcome::Played) { Record(channel,early,positional,x,y,z); return; }
         using Microsoft::Xna::Framework::Audio::SoundEffectInstance;
         using Microsoft::Xna::Framework::Audio::SoundState;
 
-        if (!enabled_)
-        {
-            return;
-        }
         const int idx = static_cast<int>(GalaxyEggbert::Def::ToRaw(channel));
         if (idx < 0 || idx >= kNumChannels)
         {
+            Record(channel,SoundOutcome::Missing,positional,x,y,z);
             return;
         }
         Channel& ch = channels_[static_cast<std::size_t>(idx)];
         if (!ch.effect)
         {
+            Record(channel,SoundOutcome::Missing,positional,x,y,z);
             return; // no WAV file for this channel -- silent no-op
         }
 
@@ -179,12 +185,12 @@ namespace GalaxyEggbert::Game
             plays.back()->setPitchProperty(std::max(0.0f, kVolumePitch[static_cast<std::size_t>(idx) * 2 + 1]));
             plays.back()->Play();
             LogPlay(idx);
+            Record(channel,SoundOutcome::Played,positional,x,y,z);
             return;
         }
-        if (!loop && ch.instance && ch.instance->getStateProperty() == SoundState::Playing)
-        {
-            return;
-        }
+        const auto decision = SoundDecision(true,false,false,true,true,
+            !loop && ch.instance && ch.instance->getStateProperty() == SoundState::Playing);
+        if (decision != SoundOutcome::Played) { Record(channel,decision,positional,x,y,z); return; }
 
         // Real bug fix (2026-07-11, reported live via a debugger backtrace:
         // crashes after a while with `System::InvalidOperationException`
@@ -220,6 +226,7 @@ namespace GalaxyEggbert::Game
         ch.instance->setPitchProperty(pitch);
         ch.instance->Play();
         LogPlay(idx);
+        Record(channel,SoundOutcome::Played,positional,x,y,z);
     }
 
     void Sound::LogPlay(int channel) const

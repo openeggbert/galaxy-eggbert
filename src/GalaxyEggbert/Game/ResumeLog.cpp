@@ -82,6 +82,8 @@ namespace GalaxyEggbert::Game
         // Only non-default values add a record, keeping ordinary recordings byte-compatible.
         if (start.photo || start.freeze) out << "OBJECT_CHEATS " << start.photo << ' ' << start.freeze << '\n';
         if (start.xray || start.hitbox) out << "DISPLAY_CHEATS " << start.xray << ' ' << start.hitbox << '\n';
+        if (start.trail || start.ids || start.sounds || start.chunks)
+            out << "DIAGNOSTIC_CHEATS " << start.trail << ' ' << start.ids << ' ' << start.sounds << ' ' << start.chunks << '\n';
         out << runs.size() << ' ' << TickCount() << '\n';
         for (const auto& run : runs)
         {
@@ -174,11 +176,24 @@ namespace GalaxyEggbert::Game
             if (!(in >> tag >> s.photo >> s.freeze) || tag != "OBJECT_CHEATS") return false;
         }
         s.xray = s.hitbox = false;
+        s.trail = s.ids = s.sounds = s.chunks = false;
         in >> std::ws;
         if (in.peek() == 'D')
         {
             std::string tag;
-            if (!(in >> tag >> s.xray >> s.hitbox) || tag != "DISPLAY_CHEATS") return false;
+            if (!(in >> tag)) return false;
+            if (tag == "DISPLAY_CHEATS")
+            {
+                if (!(in >> s.xray >> s.hitbox)) return false;
+                in >> std::ws;
+                if (in.peek() == 'D') { if (!(in >> tag)) return false; }
+                else tag.clear();
+            }
+            if (tag == "DIAGNOSTIC_CHEATS")
+            {
+                if (!(in >> s.trail >> s.ids >> s.sounds >> s.chunks)) return false;
+            }
+            else if (!tag.empty()) return false;
         }
         std::uint64_t runCount, ticks, actualTicks = 0;
         if (!(in >> runCount >> ticks) || ticks > kMaxTicks || runCount > ticks) return false;

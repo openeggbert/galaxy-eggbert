@@ -1521,13 +1521,15 @@ namespace GalaxyEggbert::CNA
         };
         switch (cheat)
         {
+            case TC::Restart:
             case TC::Back:
             case TC::Mark:
             case TC::Recall:
             {
-                const char* word = cheat == TC::Back ? "back" : cheat == TC::Mark ? "mark" : "recall";
+                const char* word = cheat == TC::Restart ? "restart" : cheat == TC::Back ? "back" : cheat == TC::Mark ? "mark" : "recall";
                 if (const auto* reason = TimelineCheatRefusal())
                     std::cout << "GalaxyEggbertCNA: " << word << " ignored: " << reason << "." << std::endl;
+                else if (cheat == TC::Restart) restartPending_ = true;
                 else if (cheat == TC::Back) backPending_ = true;
                 else if (cheat == TC::Mark) markPending_ = true;
                 else if (markedTick_) recallPending_ = true;
@@ -1554,6 +1556,32 @@ namespace GalaxyEggbert::CNA
                     mouseLookActive_ = false;
                 }
                 break;
+            case TC::Snap:
+                if (!replayingResume_ && !demoActive_ && !demoRecording_ && !demoRecordArmed_) snapPending_ = true;
+                break;
+            case TC::Here:
+                if (NetMatchActive()) ShowDemoNotice("here: network match");
+                else if (!cheatFreecam_) ShowDemoNotice("here: freecam is off");
+                else if (const auto ground = blupi_.FindStandingGroundBelow(worldRuntime_.GetWorld(),
+                    camera_.Position().X, camera_.Position().Y + .5f, camera_.Position().Z,
+                    WorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase())))
+                {
+                    // The diagnostic hold assertion ends before this intentional change of place.
+                    const auto eye = camera_.Position();
+                    StopFreecam();
+                    PlaceBlupi(eye.X, *ground, eye.Z);
+                    cameraMode_ = CameraMode::ThirdPersonModel;
+                    chaseCamera_.Reset(blupi_.GetYaw());
+                    cameraSmoothedInitialized_ = false;
+                    lookYawOffset_ = lookPitchOffset_ = 0.0f;
+                    ShowDemoNotice("here");
+                }
+                else ShowDemoNotice("here: no standing room below");
+                break;
+            case TC::Trail: cheatTrail_ = !cheatTrail_; break;
+            case TC::Ids: cheatIds_ = !cheatIds_; break;
+            case TC::Sounds: cheatSounds_ = !cheatSounds_; break;
+            case TC::Chunks: cheatChunks_ = !cheatChunks_; break;
             case TC::Xray: cheatXray_ = !cheatXray_; break;
             case TC::Hitbox: cheatHitbox_ = !cheatHitbox_; break;
             case TC::Photo:
@@ -1662,6 +1690,7 @@ namespace GalaxyEggbert::CNA
         blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
         StopFreecam();
         cheatXray_ = cheatHitbox_ = false;
+        cheatTrail_ = cheatIds_ = cheatSounds_ = cheatChunks_ = false;
         cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = cheatPhoto_ = cheatFreeze_ = false;
         cheatZoomStep_ = 0;
         if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))

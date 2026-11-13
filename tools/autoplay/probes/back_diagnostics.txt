@@ -1,0 +1,15 @@
+# Brief C, mission 012. GALAXY_BACK_CHECKPOINTS=747.
+wait 600
+type trail
+type ids
+type sounds
+type chunks
+wait 360
+type chunks
+type sounds
+type ids
+type trail
+type back
+wait 5
+expect lives = 3
+end

@@ -35,6 +35,29 @@ int main(int argc, char** argv)
         if (!cond) allOk = false;
     };
 
+    {
+        Worlds::World floor;
+        floor.setBlock(50,0,50,Worlds::Block::make(BlockTypes::Ground));
+        BlupiController b;
+        auto ground=b.FindStandingGroundBelow(floor,0,8,0);
+        check(ground && std::abs(*ground-1)<.01f,"here finds the first floor below the camera");
+        check(!b.FindStandingGroundBelow(floor,10,8,0) && !b.FindStandingGroundBelow(floor,0,.5f,0) &&
+              !b.FindStandingGroundBelow(floor,500,8,0),"here refuses void, floor above camera and outside world");
+        // A narrow solid decor shelf leaves less than the standing body's height beneath it.
+        b.SetSolidBoxes({{49.5f,50.5f,1.4f,1.5f,49.5f,50.5f}});
+        check(!b.FindStandingGroundBelow(floor,0,1.3f,0),"here refuses a floor without full standing room");
+        b.SetSolidBoxes({{49.99f,50.01f,1.401f,1.402f,49.99f,50.01f}});
+        check(!b.FindStandingGroundBelow(floor,0,1.3f,0),"here detects thin solid decor between body probes");
+        b.SetSolidBoxes({});
+        b.SetCrateCells({{50,2,50}});
+        ground=b.FindStandingGroundBelow(floor,0,8,0);
+        check(ground && std::abs(*ground-3)<.01f,"here uses existing crate collision as support");
+        b.SetCrateCells({});
+        floor.setBlock(50,0,50,Worlds::Block::make(BlockTypes::Temp));
+        check(b.FindStandingGroundBelow(floor,0,8,0,false).has_value() &&
+              !b.FindStandingGroundBelow(floor,0,8,0,true),"here respects temporary terrain's current phase");
+    }
+
     // INFRA-007 (plan.md §7): BlupiController's 3 one-shot sound cues
     // moved from parallel *ThisFrame() booleans to one typed event queue
     // (EventsThisFrame()) -- this helper mirrors what the old individual

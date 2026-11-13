@@ -1,0 +1,11 @@
+# Brief C, mission 012. GALAXY_BACK_CHECKPOINTS=699; exactly one PNG despite replay.
+wait 600
+type photo
+type freecam
+shots 30
+type snap
+wait 360
+type back
+wait 5
+expect lives = 3
+end

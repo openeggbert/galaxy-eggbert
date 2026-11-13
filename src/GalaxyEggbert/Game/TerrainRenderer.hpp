@@ -17,6 +17,8 @@
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <array>
+#include <chrono>
+#include "SceneFrame.hpp"
 #include <cstdint>
 #include <functional>
 #include <future>
@@ -209,6 +211,7 @@ namespace GalaxyEggbert::Game
                                   const std::vector<TileCoverage>& coverage);
         // The chunks with something drawn.
         [[nodiscard]] int StaticChunkCount() const noexcept;
+        [[nodiscard]] std::vector<SceneAidBox> DiagnosticChunks() const;
 
         // For VerifyTerrainChunks: what a chunk is built from; a fingerprint of all the CPU makes of it
         // (its meshes with the occlusion bake their upload gives them, its lists, its reliefs' cells); the
@@ -336,6 +339,7 @@ namespace GalaxyEggbert::Game
         // One static chunk's meshes and its share of the totals.
         struct StaticChunk
         {
+            std::chrono::steady_clock::time_point uploaded{};
             std::unique_ptr<GpuMeshParts> opaque;
             std::unique_ptr<GpuMeshParts> transparent;
             // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
@@ -397,8 +401,8 @@ namespace GalaxyEggbert::Game
                                [part](const StaticChunk& chunk) { return chunk.*part != nullptr; });
         }
         std::vector<StaticChunk> m_staticChunks;
-        int m_chunksPerAxis = 0;
         int m_blocksPerAxis = 0;
+        int m_chunksPerAxis = 0;
         std::unordered_map<std::uint32_t, std::size_t> m_reliefChunkIndex; // relief chunk key -> m_reliefChunks
         bool m_drawSecret = false;
         std::optional<TerrainGiSettings> m_giSettings; // Ultra's, kept for the chunks rebuilt

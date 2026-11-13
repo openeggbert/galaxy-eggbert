@@ -1,0 +1,12 @@
+# Brief C, mission 012. GALAXY_BACK_CHECKPOINTS=529; rewind across a camera landing.
+wait 600
+type freecam
+hold 60 jump
+hold 40 up
+type here
+expect ground = 1
+wait 100
+type back
+wait 5
+expect lives = 3
+end

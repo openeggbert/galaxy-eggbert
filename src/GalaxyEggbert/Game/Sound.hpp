@@ -6,6 +6,7 @@
 #include <Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp>
 
 #include <array>
+#include "SoundHistory.hpp"
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -26,6 +27,7 @@ namespace GalaxyEggbert::Game
     {
     public:
         static constexpr int kNumChannels = 93;
+        const SoundHistory& History() const { return history_; }
 
         // Loads every Content/sounds/soundNNN.wav that actually exists
         // (0..92) -- a missing index is skipped, not an error (mirrors
@@ -172,7 +174,10 @@ namespace GalaxyEggbert::Game
         void LogPlay(int channel) const;
         std::vector<MadeSound>* outbox_ = nullptr;
         std::array<std::chrono::steady_clock::time_point, kNumChannels> notedUntil_{};
-        void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);
+        SoundHistory history_;
+        void Record(GalaxyEggbert::Def::SoundChannel channel, SoundOutcome outcome, bool positional, float x, float y, float z);
+        void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound,
+                         bool positional = false, float x = 0, float y = 0, float z = 0);
         void Note(GalaxyEggbert::Def::SoundChannel channel, bool loop, float x, float y, float z);
     };
 }

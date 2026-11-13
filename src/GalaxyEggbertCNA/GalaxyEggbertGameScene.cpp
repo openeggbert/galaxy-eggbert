@@ -156,6 +156,18 @@ namespace GalaxyEggbert::CNA
             frame.aidBoxes.push_back({Vector3((b.minX+b.maxX)*.5f-ox,(b.minY+b.maxY)*.5f-.5f,(b.minZ+b.maxZ)*.5f-oz),
                 Vector3(b.maxX-b.minX,b.maxY-b.minY,b.maxZ-b.minZ),color});
         };
+        if (cheatChunks_ && terrainRenderer_)
+            for (const auto& box : terrainRenderer_->DiagnosticChunks()) frame.aidBoxes.push_back(box);
+        if (cheatTrail_)
+        {
+            const auto& points = positionTrail_.Points();
+            for (std::size_t i=1;i<points.size();++i)
+            {
+                const auto& a=points[i-1]; const auto& b=points[i];
+                const int alpha=static_cast<int>(220*(PositionTrail::kTicks-points.size()+i+1)/PositionTrail::kTicks);
+                frame.aidLines.push_back({Vector3(a[0],a[1]-.45f,a[2]), Vector3(b[0],b[1]-.45f,b[2]),Color(80,255,180,alpha)});
+            }
+        }
         if (cheatHitbox_)
         {
             addBox(blupi_.MovementBodyBox(),Color(255,255,255));
