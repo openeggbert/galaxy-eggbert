@@ -1071,7 +1071,7 @@ namespace GalaxyEggbert::Game
                 TrMark("LB + Down: pull crate"),
                 TrMark("Y: look up"),
                 TrMark("Start / Back: pause / continue"),
-                TrMark("LT (2 s): cheat keyboard")};
+                TrMark("LT (1 s): cheat keyboard")};
             y = 90;
             for (const char* label : gamepad)
             {
@@ -1345,6 +1345,7 @@ namespace GalaxyEggbert::Game
             using Microsoft::Xna::Framework::Input::Keys;
             const int code = int(key.code);
             const std::string face = key.code == Keys::None ? std::string(Tr("Cancel"))
+                : key.code == Keys::Tab ? std::string("Tab")
                 : code >= int(Keys::A) && code <= int(Keys::Z)
                 ? std::string(1,char('A' + code - int(Keys::A))) : "F" + std::to_string(code - int(Keys::F1) + 1);
             // Shrunk to the key's width when a translation of Cancel is long.

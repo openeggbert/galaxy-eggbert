@@ -86,7 +86,7 @@ namespace GalaxyEggbert::Game
         {"A: jump / helicopter up", "A: skok / vrtulník nahoru"},
         {"A: Play / Continue in menus", "A: Hrát / Pokračovat v menu"},
         {"B / X: action / enter / leave", "B / X: akce / nastoupit / vystoupit"},
-        {"LT (2 s): cheat keyboard", "LT (2 s): klávesnice pro cheaty"},
+        {"LT (1 s): cheat keyboard", "LT (1 s): klávesnice pro cheaty"},
         {"RT: vehicle glue shot / drop", "RT: výstřel lepidla / položit"},
         {"RB: back up", "RB: couvat"},
         {"LB: crouch / dive", "LB: přikrčit se / potopit se"},

@@ -39,10 +39,11 @@ A phone, a tablet or a gamepad had no way to type cheats. Implemented by Codex (
 Eggbert's MODERN keyboard: the top-left corner for 1 s there).
 
 - Opening: the mouse's left button or one finger held (not on a play control) inside a circle at
-  the centre (radius 11 % of the smaller side) for 120 ticks, or **LT** held 120 ticks (a new
-  `GamepadKey` mapped to the unused `Keys::OemPipe`, so the resume log records it). Rows: F5 F4 F6
-  F7 F8, F12, Cancel (two keys wide, translated: a lone "X" read as the letter X; changed in
-  review), then QWERTY. Keys fire once on press; arrows/d-pad/stick move an orange focus, A/Enter
+  the centre (radius 11 % of the smaller side) for 60 ticks (1 s; the owner shortened it from 2 s), or **LT** held 60 ticks (a new
+  `GamepadKey` mapped to the unused `Keys::OemPipe`, so the resume log records it). Rows: F1 F3 F4
+  F5 F6 F7 F8 Tab, F12 (the owner's order and keys), QWERTY, and Cancel (two keys wide, translated, at
+  the end of the bottom row: a lone "X" read as the letter X). The keyboard's F1 and F3 act in
+  `UpdateScreenPlay` (their physical keys are read elsewhere in the tick). Keys fire once on press; arrows/d-pad/stick move an orange focus, A/Enter
   presses, B/X/Escape closes. While open nothing reaches Blupi or the camera; the game runs on.
 - `src/GalaxyEggbert/Game/CheatKeyboard.hpp` (engine-independent), driven inside `UpdateTick` from
   the recorded `tickInput_`; screen letters join the ordered-letter path of

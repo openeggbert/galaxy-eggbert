@@ -85,7 +85,7 @@ namespace GalaxyEggbert::Game
         {"A: jump / helicopter up", "A: ugrás / helikopter fel"},
         {"A: Play / Continue in menus", "A: Játék / Folytatás a menükben"},
         {"B / X: action / enter / leave", "B / X: akció / beszállás / kiszállás"},
-        {"LT (2 s): cheat keyboard", "LT (2 mp): csalásbillentyűzet"},
+        {"LT (1 s): cheat keyboard", "LT (1 mp): csalásbillentyűzet"},
         {"RT: vehicle glue shot / drop", "RT: ragasztólövés / letevés"},
         {"RB: back up", "RB: tolatás"},
         {"LB: crouch / dive", "LB: guggolás / merülés"},

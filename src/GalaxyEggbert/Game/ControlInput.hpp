@@ -59,6 +59,14 @@ namespace GalaxyEggbert::Game
             page = 0;
             previousPageHeld = nextPageHeld = pagePointerHeld = false;
         }
+        // F1's controls help, opened by the cheats' keyboard's F1 key (a physical F1 toggles it in Update()).
+        void OpenControls() noexcept
+        {
+            shown = true;
+            cheats = false;
+            page = 0;
+            previousPageHeld = nextPageHeld = pagePointerHeld = false;
+        }
 
         [[nodiscard]] static int PageArrow(float x, float y, int width, int height) noexcept
         {

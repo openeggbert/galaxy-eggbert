@@ -73,7 +73,7 @@ content-authoring UX, but not new gameplay mechanics.
 
 - On-screen cheat keyboard (2026-11-13, `plans/codex/cheat_keyboard.md`): hold the mouse's left
   button or one unclaimed finger in the centre circle (11% of the smaller viewport side), or LT,
-  for 120 ticks. QWERTY, F4-F8/F12 and close; arrows/d-pad/stick and A/Enter navigate, B closes.
+  for 60 ticks (1 s; 2 s until the owner's change the same day). F1, F3, F4-F8, Tab, F12, QWERTY and Cancel; arrows/d-pad/stick and A/Enter navigate, B closes.
   The game runs beneath it; captured pointers and navigation do not reach play controls or camera.
   LT uses the recorded `OemPipe` key. Reset and in-process replay checks include its state.
   136/136 CTest, pointer and LT/d-pad/A resume checks equal, all nine goldens and the trace

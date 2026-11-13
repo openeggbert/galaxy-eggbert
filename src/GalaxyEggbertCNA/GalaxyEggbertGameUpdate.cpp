@@ -3555,6 +3555,22 @@ namespace GalaxyEggbert::CNA
                 mouseLookActive_ = false;
                 phaseKeys = inputPad_.CheatKeys().FilterGameplay(phaseKeys);
             }
+            // The keyboard's F1 and F3 act here: their physical keys are read elsewhere in the tick (F1
+            // at its start by ControlsHelp, F3 with the camera in UpdateTickCamera), after or before
+            // this key exists. F1 opens the controls' help and ends the tick as the typed `help` does.
+            if (virtualKey.key == Keys::F1)
+            {
+                inputPad_.CheatKeys().Close();
+                controlsHelp_.OpenControls();
+                inputPad_.ResetTouchState();
+                mouseLookActive_ = false;
+                return true;
+            }
+            if (virtualKey.key == Keys::F3 && blupiModelLoaded_)
+            {
+                cameraMode_ = cameraMode_ == CameraMode::FirstPerson ? CameraMode::ThirdPersonModel
+                                                                     : CameraMode::FirstPerson;
+            }
             auto cheatKeys = phaseKeys.GetPressedKeys();
             std::unordered_set<Keys> combined(cheatKeys.begin(),cheatKeys.end());
             if (virtualKey.key != Keys::None) combined.insert(virtualKey.key);

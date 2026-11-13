@@ -56,10 +56,10 @@ int main()
         };
         for (int i = 0; i < 150; ++i) tick();
         check(!k.Visible(), "cheat keyboard: resting cursor without a pressed button never opens");
-        for (int i = 0; i < 119; ++i) tick({},{{-2,400,180}});
-        check(!k.Visible(), "cheat keyboard: pointer hold 119 ticks stays closed");
+        for (int i = 0; i < CheatKeyboard::kHoldTicks - 1; ++i) tick({},{{-2,400,180}});
+        check(!k.Visible(), "cheat keyboard: pointer hold kHoldTicks-1 ticks stays closed");
         auto out = tick({},{{-2,400,180}});
-        check(k.Visible() && out.capture && out.key == Keys::None, "cheat keyboard: opens at 120 without typing opening press");
+        check(k.Visible() && out.capture && out.key == Keys::None, "cheat keyboard: opens at kHoldTicks without typing opening press");
         const auto index = [&](Keys code) {
             const auto& list = k.KeysOnScreen();
             for (std::size_t i = 0; i < list.size(); ++i) if (list[i].code == code) return int(i);
@@ -79,24 +79,24 @@ int main()
         tick();
         check(tick({}, {pointer(Keys::None)}).capture && !k.Visible(), "cheat keyboard: close key closes and consumes click");
         k.Reset();
-        for (int i = 0; i < 120; ++i) tick({},{{-2,400,180,true}});
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick({},{{-2,400,180,true}});
         check(!k.Visible(), "cheat keyboard: play-control-claimed press never opens");
         tick();
-        for (int i = 0; i < 119; ++i) tick({},{{4,400,180}});
+        for (int i = 0; i < CheatKeyboard::kHoldTicks - 1; ++i) tick({},{{4,400,180}});
         tick({},{{4,450,180}});
-        for (int i = 0; i < 120; ++i) tick({},{{4,400,180}});
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick({},{{4,400,180}});
         check(!k.Visible(), "cheat keyboard: leaving circle cancels hold until finger lifts");
         tick();
-        for (int i = 0; i < 120; ++i) tick({},{{5,400,180},{6,20,350,true}});
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick({},{{5,400,180},{6,20,350,true}});
         check(k.Visible(), "cheat keyboard: independent centre finger opens while another uses a control");
         k.Close();
         for (int i = 0; i < 150; ++i) tick({},{{5,400,180}});
         check(!k.Visible(), "cheat keyboard: same hold cannot reopen after closing");
         k.Reset();
-        for (int i = 0; i < 119; ++i) tick(keys({CheatKeyboard::kHoldKey}));
-        check(!k.Visible(), "cheat keyboard: LT key 119 ticks stays closed");
+        for (int i = 0; i < CheatKeyboard::kHoldTicks - 1; ++i) tick(keys({CheatKeyboard::kHoldKey}));
+        check(!k.Visible(), "cheat keyboard: LT key kHoldTicks-1 ticks stays closed");
         tick(keys({CheatKeyboard::kHoldKey}));
-        check(k.Visible(), "cheat keyboard: LT key opens at 120 ticks");
+        check(k.Visible(), "cheat keyboard: LT key opens at kHoldTicks");
         tick();
         tick(keys({Keys::Down})); // first arrow selects F5
         tick(); tick(keys({Keys::Down})); // Q
@@ -115,12 +115,12 @@ int main()
         tick(); tick(keys({Keys::Space}));
         check(!k.Visible(), "cheat keyboard: B closes");
         tick();
-        for (int i = 0; i < 120; ++i) tick(keys({CheatKeyboard::kHoldKey}));
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick(keys({CheatKeyboard::kHoldKey}));
         check(k.Visible(), "cheat keyboard: LT opens again after release");
         tick();
-        for (int i = 0; i < 120; ++i) tick(keys({CheatKeyboard::kHoldKey}));
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick(keys({CheatKeyboard::kHoldKey}));
         check(!k.Visible(), "cheat keyboard: second LT hold closes");
-        for (int i = 0; i < 120; ++i) tick(keys({CheatKeyboard::kHoldKey}));
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick(keys({CheatKeyboard::kHoldKey}));
         check(!k.Visible(), "cheat keyboard: consumed LT hold cannot reopen");
         tick();
         for (int i = 0; i < 150; ++i) tick(keys({CheatKeyboard::kHoldKey}),{},false);
@@ -130,7 +130,7 @@ int main()
         check((GamepadKeys(f) & kPadCheatKeyboard) != 0 && CheatKeyboard::kHoldKey == Keys::OemPipe,
               "gamepad: LT maps to the recorded unused OemPipe key");
         InputPad pad;
-        for (int i = 0; i < 120; ++i) pad.CheatKeys().Update(true,800,360,keys({CheatKeyboard::kHoldKey}),{});
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) pad.CheatKeys().Update(true,800,360,keys({CheatKeyboard::kHoldKey}),{});
         InputPad::PlayInput mouseInput, touchInput;
         const bool mouseTaken = pad.UpdatePlay(mouse(20,430,true),800,480,mouseInput);
         const bool touchTaken = pad.UpdatePlayTouches({{1,20,430,true,false},{2,750,430,true,false}},800,480,touchInput);
@@ -143,8 +143,8 @@ int main()
         check(!pad.CheatKeys().Visible() && pad.CheatKeys().StateSignature() == CheatKeyboard{}.StateSignature(),
               "cheat keyboard: mission reset clears every replay-relevant field");
         k.Reset(); k.Layout(800,360);
-        check(k.KeysOnScreen().size() == 33 && k.KeysOnScreen()[0].rect.y1-k.KeysOnScreen()[0].rect.y0 >= 43,
-              "cheat keyboard: all letters, F4-F8/F12 and close; phone keys at least 43 pixels tall");
+        check(k.KeysOnScreen().size() == 36 && k.KeysOnScreen()[0].rect.y1-k.KeysOnScreen()[0].rect.y0 >= 43,
+              "cheat keyboard: all letters, F1, F3, F4-F8, Tab, F12 and close; phone keys at least 43 pixels tall");
         check(k.OrderedLetter('a',Keys::Z,{}) == 'a' && k.OrderedLetter(0,Keys::None,{}) == 'z',
               "cheat keyboard: simultaneous physical and screen letters retain order");
         k.Reset();
