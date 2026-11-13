@@ -1,0 +1,11 @@
+# Mission 012: restored moment is before the cheats, so their values must disappear.
+wait 600
+type zoom
+type megablupi
+type ghost
+type fps
+type position
+type back
+expect ghost = 0
+wait 5
+end

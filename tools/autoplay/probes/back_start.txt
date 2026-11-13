@@ -1,0 +1,6 @@
+# Mission 012: fewer than 300 ticks, so the target is the exact world start (tick 0).
+wait 60
+type back
+wait 5
+expect lives = 3
+end

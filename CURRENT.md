@@ -61,6 +61,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- The MODERN typed cheat `back` (2026-11-13, `plans/codex/back_cheat.md`) drops the last 300
+  input ticks and reconstructs the earlier moment through the resume replay; repeat to go farther,
+  or back to the mission start when fewer ticks remain. Restricted to ordinary single-player Play.
+  In-process replay restores mission-start cheat toggles before reapplying recorded input. Back and
+  Continue show the Galaxy loading screen with actual progress after 0.25 s; batches stop at 600
+  ticks or about 12 ms, and the same world's music keeps playing. 136/136 CTest, exact-state rewind
+  probes (including toggles and a lost life), 012/025 resume self-tests and live Back/Continue captures
+  pass; evidence `build-probe/back-cheat/`.
 - High/Ultra sun-shadow contacts (2026-11-13, `plans/codex/shadows_high_check.md`): receiver-plane
   PCF allows smaller depth/model-normal biases, reducing detached contacts and lost small
   self-shadows. Campaign captures and temporary shadow-factor diagnostics confirm models receive

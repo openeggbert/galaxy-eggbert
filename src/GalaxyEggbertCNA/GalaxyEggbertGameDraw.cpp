@@ -84,7 +84,20 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
         (void)gameTime;
-        if (replayingResume_) return;
+        if (replayingResume_)
+        {
+            const float seconds = ResumeReplaySeconds();
+            if (seconds < 0.25f) return;
+            auto& device = getGraphicsDeviceProperty();
+            device.SetRenderTarget(nullptr);
+            device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98));
+            const auto viewport = device.getViewportProperty();
+            const float progress = resumeReplayTotal_ == 0 ? 1.0f
+                : static_cast<float>(static_cast<double>(resumeTicks_) / resumeReplayTotal_);
+            inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                        seconds, false, progress);
+            return;
+        }
         const auto perfStart = std::chrono::steady_clock::now();
         // Above 60 frames a second, between two steps: the camera and Blupi drawn part way between them.
         const bool between = frameRateInterpolating_ && drawAlpha_ < 0.999f && phase_ == GalaxyEggbert::Def::GamePhase::Play;

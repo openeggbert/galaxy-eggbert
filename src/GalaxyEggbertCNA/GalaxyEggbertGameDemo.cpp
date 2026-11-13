@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <thread>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/BrickEdges.hpp>
 #include <GalaxyEggbert/Editor/PlatformFiles.hpp>
@@ -109,7 +110,7 @@ namespace GalaxyEggbert::CNA
         controlsHelp_ = {};
         menuConfirmWasDown_ = false;
         jumpKeyWasDown_ = actionKeyWasDown_ = pauseKeyWasDown_ = phaseReturnKeyWasDown_ = false;
-        f5KeyWasDown_ = f6KeyWasDown_ = f7KeyWasDown_ = f8KeyWasDown_ = f12KeyWasDown_ = tabKeyWasDown_ = false;
+        f4KeyWasDown_ = f5KeyWasDown_ = f6KeyWasDown_ = f7KeyWasDown_ = f8KeyWasDown_ = f12KeyWasDown_ = tabKeyWasDown_ = false;
         cameraModeKeyWasDown_ = fullscreenKeyWasDown_ = false;
         turnAroundDownWasHeld_ = false;
         turnAroundRemaining_ = turnAroundStartYaw_ = 0.0f;
@@ -150,6 +151,9 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatZoomStep_, activeCheats_};
+        backCheckpoints_.clear();
+        backPending_ = backReplaying_ = false;
         resumeLog_ = {};
         auto& start = resumeLog_.start;
         start.build = ResumeBuild();
@@ -175,9 +179,10 @@ namespace GalaxyEggbert::CNA
         // into the galaxy.
         recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty();
         missionStartPending_ = false;
+        CaptureBackCheckpoint();
     }
 
-    bool GalaxyEggbertGame::BeginResume(ResumeLog log)
+    bool GalaxyEggbertGame::BeginResume(ResumeLog log, bool inProcess)
     {
         auto path = MissionWorldPath(log.start.mission);
         int galaxy = -1; // a mission of a player's galaxy (BD-0119) continues there, from its file
@@ -206,12 +211,15 @@ namespace GalaxyEggbert::CNA
             DeleteResumeFile();
             return false;
         }
+        resumeReplayBegan_ = std::chrono::steady_clock::now();
+        resumeReplayTotal_ = log.TickCount();
         resumeLog_ = std::move(log);
         const auto& start = resumeLog_.start;
         replayingResume_ = true;
         recordingResume_ = true;
         sound_.SetReplayMuted(true);
-        UpdateMusic();
+        // Leave the current music playing. Update() does not call UpdateMusic during replay;
+        // the same world's track therefore carries on without stopping/restarting at tick zero.
         saveData_ = SaveData{};
         std::istringstream settings(start.saveData);
         saveData_.Read(settings);
@@ -245,14 +253,35 @@ namespace GalaxyEggbert::CNA
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "honest"), activeCheats_.end());
         if (inputPad_.IsCheatEntryLocked())
             activeCheats_.push_back(inputPad_.IsCheatEntryLockedForRun() ? "honest" : "fairplay");
+        if (inProcess)
+        {
+            cheatFps_ = resumeLocalCheats_.fps;
+            cheatZoomStep_ = resumeLocalCheats_.zoomStep;
+            activeCheats_ = resumeLocalCheats_.active;
+            blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
+        }
+        else
+        {
+            // A Continue becomes the start of a new in-process rewind history, with exactly
+            // today's fresh-process defaults for state absent from the file format.
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatZoomStep_, activeCheats_};
+            backCheckpoints_.clear();
+        }
         replayRun_ = 0;
         replayRepeat_ = 0;
         resumeTicks_ = 0;
+        // This frame's Draw() draws nothing (the world is mid-replay): keep it from being presented,
+        // as Update() does for the replay's first 0.25 s.
+        SuppressDraw();
         return true;
     }
 
     void GalaxyEggbertGame::ReplayBatch()
     {
+        const auto batchStart = std::chrono::steady_clock::now();
+        const char* slow = std::getenv("GALAXY_REPLAY_DELAY_MS"); // capture-only QA knob, per batch
+        const int delay = slow ? std::clamp(std::atoi(slow), 0, 100) : 0;
+        if (delay) std::this_thread::sleep_for(std::chrono::milliseconds(delay));
         for (int i = 0; i < 600 && replayRun_ < resumeLog_.runs.size(); ++i)
         {
             const auto& run = resumeLog_.runs[replayRun_];
@@ -264,6 +293,9 @@ namespace GalaxyEggbert::CNA
                 replayRepeat_ = 0;
                 ++replayRun_;
             }
+            // At least one tick, at most 600 or about 12 ms. CNA's fixed-step catch-up loop
+            // consumes finite clock debt and draws if any Update does not suppress it.
+            if (std::chrono::steady_clock::now() - batchStart >= std::chrono::milliseconds(12)) break;
         }
         if (replayRun_ != resumeLog_.runs.size()) return;
         replayingResume_ = false;
@@ -273,10 +305,42 @@ namespace GalaxyEggbert::CNA
         resumeAccelWarmStart_ = true;
         activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
         wasPushingCrate_ = false;
+        // The first visible frame must not interpolate from the abandoned future (at >60 Hz).
+        tickClock_ = 0.0;
+        drawAlpha_ = 1.0f;
+        previousEye_ = camera_.Position();
+        previousTarget_ = cameraTarget_;
+        previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+        previousObjects_.clear();
         RefreshTerrainMeshIfChanged();
+        if (backReplaying_)
+        {
+            backReplaying_ = false;
+            ShowDemoNotice("back -5 s");
+            if (std::getenv("GALAXY_BACK_CHECKPOINTS"))
+            {
+                const auto expected = backCheckpoints_.find(resumeTicks_);
+                const bool equal = expected != backCheckpoints_.end() && expected->second == ResumeCheckSignature();
+                const std::string line = "BACK SELFTEST " + std::string(equal ? "equal" : "different") +
+                    " at tick " + std::to_string(resumeTicks_) + "\n";
+                std::cout << line << std::flush;
+                if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
+                if (!equal)
+                {
+                    if (expected != backCheckpoints_.end())
+                        for (const auto& [name, value] : ResumeCheckSignature())
+                            if (expected->second.at(name) != value)
+                                std::cout << "BACK difference " << name << ": " << expected->second.at(name)
+                                          << " -> " << value << std::endl;
+                    autoplayExitCode_ = 1;
+                    Exit();
+                }
+            }
+            backCheckpoints_.erase(backCheckpoints_.upper_bound(resumeTicks_), backCheckpoints_.end());
+        }
         if (!resumeSelftestSignature_.empty())
         {
-            const auto actual = ResumeSignature();
+            const auto actual = ResumeCheckSignature();
             std::string different;
             for (const auto& [name, value] : resumeSelftestSignature_)
             {
@@ -352,9 +416,9 @@ namespace GalaxyEggbert::CNA
         const char* at = std::getenv("GALAXY_RESUME_SELFTEST");
         if (resumeSelftestDone_ || !at || resumeTicks_ != std::strtoull(at, nullptr, 10)) return;
         resumeSelftestDone_ = true;
-        resumeSelftestSignature_ = ResumeSignature();
+        resumeSelftestSignature_ = ResumeCheckSignature();
         ResumeLog parsed;
-        if (!ResumeLog::Parse(resumeLog_.Serialize(), ResumeBuild(), parsed) || !BeginResume(std::move(parsed)))
+        if (!ResumeLog::Parse(resumeLog_.Serialize(), ResumeBuild(), parsed) || !BeginResume(std::move(parsed), true))
         {
             const char* line = "RESUME SELFTEST different: log could not be restored\n";
             std::cout << line << std::flush;
@@ -362,6 +426,50 @@ namespace GalaxyEggbert::CNA
             autoplayExitCode_ = 1;
             Exit();
         }
+    }
+
+    float GalaxyEggbertGame::ResumeReplaySeconds() const
+    {
+        return std::chrono::duration<float>(std::chrono::steady_clock::now() - resumeReplayBegan_).count();
+    }
+
+    void GalaxyEggbertGame::CaptureBackCheckpoint()
+    {
+        const char* checkpoints = std::getenv("GALAXY_BACK_CHECKPOINTS");
+        if (!checkpoints) return;
+        std::istringstream list(checkpoints);
+        std::uint64_t tick;
+        while (list >> tick)
+        {
+            if (tick == resumeTicks_) backCheckpoints_[tick] = ResumeCheckSignature();
+            if (list.peek() == ',') list.get();
+        }
+    }
+
+    std::map<std::string, std::string> GalaxyEggbertGame::ResumeCheckSignature() const
+    {
+        auto result = ResumeSignature(); // keep shipped demo signatures unchanged
+        std::ostringstream out;
+        out << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
+            << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
+            << cheatCompass_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
+        for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
+        result["cheat toggles"] = out.str();
+        return result;
+    }
+
+    void GalaxyEggbertGame::RewindBack()
+    {
+        backPending_ = false;
+        auto log = resumeLog_;
+        const auto removed = log.DropLastTicks(300);
+        const auto target = log.TickCount();
+        if (BeginResume(std::move(log), true))
+        {
+            backReplaying_ = true;
+            std::cout << "GalaxyEggbertCNA: back removed " << removed << " ticks, replay to " << target << "." << std::endl;
+        }
+        else ShowDemoNotice("back: world changed; cannot rewind");
     }
 
     // ---- Main-menu demos (DemoReplay.hpp) ----

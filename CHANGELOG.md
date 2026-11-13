@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Added
+
+- Type `back` during a single-player mission to rewind five seconds; repeat to go farther.
+  Long rewinds and Continue replays show a loading screen with their actual progress.
+
 ### Changed
 
 - Lightning cells flicker independently, as in the original.

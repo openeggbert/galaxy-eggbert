@@ -1,0 +1,11 @@
+# Mission 012: restored moment is after all these cheats. Their values must not flip twice.
+type zoom
+type megablupi
+type ghost
+type fps
+type position
+wait 900
+type back
+expect ghost = 1
+wait 5
+end

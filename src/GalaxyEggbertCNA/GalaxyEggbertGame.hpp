@@ -841,10 +841,14 @@ namespace GalaxyEggbert::CNA
         void StartResumeLog();
         void ReadResumeLog();
         void DeleteResumeFile() const noexcept;
-        bool BeginResume(GalaxyEggbert::Game::ResumeLog log);
+        bool BeginResume(GalaxyEggbert::Game::ResumeLog log, bool inProcess = false);
         void ReplayBatch();
+        [[nodiscard]] float ResumeReplaySeconds() const;
+        void RewindBack();
+        void CaptureBackCheckpoint();
         void CheckResumeSelftest();
         [[nodiscard]] std::map<std::string, std::string> ResumeSignature() const;
+        [[nodiscard]] std::map<std::string, std::string> ResumeCheckSignature() const;
         GalaxyEggbert::Game::ResumeLog resumeLog_;
         std::string loadedMissionPath_;
         std::uint64_t loadedMissionHash_ = 0;
@@ -856,6 +860,20 @@ namespace GalaxyEggbert::CNA
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;
+        bool backPending_ = false, backReplaying_ = false;
+        std::chrono::steady_clock::time_point resumeReplayBegan_{};
+        std::uint64_t resumeReplayTotal_ = 0;
+        // Mission-start cheat values missing from ResumeStart: FPS and labels survive loading;
+        // zoom and SuperBlupi's reset defaults are explicit too. Kept only in memory, leaving
+        // the on-disk Continue format and fresh-process behaviour alone.
+        struct ResumeLocalCheats
+        {
+            bool fps = false, superBlupi = false;
+            int zoomStep = 0;
+            std::vector<std::string> active;
+        } resumeLocalCheats_;
+        // Opt-in QA checkpoints, never simulation snapshots used to reconstruct the game.
+        std::map<std::uint64_t, std::map<std::string, std::string>> backCheckpoints_;
         // "honest" typed (not by a demo): every cheat stays off until the application quits.
         bool noCheatsForRun_ = false;
         std::uint32_t missionSeed_ = 0;

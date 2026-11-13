@@ -441,6 +441,31 @@ int main()
         check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
               "resume v7 round trip retains world identity, compass, debug, cheat lock and all raw inputs");
         check(text.starts_with("GALAXY_RESUME 7\n"), "resume writes format version 7");
+        {
+            ResumeLog original = log;
+            original.runs = {{5, log.runs[0].input}, {3, log.runs[1].input}, {7, log.runs[0].input}};
+            auto trimmed = original;
+            check(trimmed.DropLastTicks(0) == 0 && trimmed.runs == original.runs && trimmed.TickCount() == 15,
+                  "trimming zero ticks leaves all runs unchanged");
+            check(trimmed.DropLastTicks(2) == 2 && trimmed.runs.back().count == 5 && trimmed.TickCount() == 13,
+                  "trim inside the last run shortens it");
+            check(ResumeLog::Parse(trimmed.Serialize(), "test build", parsed) &&
+                  parsed.start == trimmed.start && parsed.runs == trimmed.runs && parsed.TickCount() == 13,
+                  "a trimmed non-empty log round trips exactly");
+            trimmed = original;
+            check(trimmed.DropLastTicks(7) == 7 && trimmed.runs.size() == 2 && trimmed.TickCount() == 8,
+                  "trim exactly at a boundary removes the empty run");
+            trimmed = original;
+            check(trimmed.DropLastTicks(12) == 12 && trimmed.runs.size() == 1 &&
+                  trimmed.runs[0].count == 3 && trimmed.TickCount() == 3,
+                  "trim across several runs reaches the first run");
+            check(trimmed.DropLastTicks(3) == 3 && trimmed.runs.empty() && trimmed.TickCount() == 0,
+                  "trim the exact tick count leaves no runs");
+            trimmed = original;
+            check(trimmed.DropLastTicks(UINT64_MAX) == 15 && trimmed.runs.empty() && trimmed.TickCount() == 0 &&
+                  trimmed.DropLastTicks(1) == 0, "trim beyond the log (or an empty log) returns only ticks removed");
+            ResumeLog::Parse(text, "test build", parsed);
+        }
         check(parsed.runs[0].input.cheatLetter=='e' && parsed.runs[1].input.cheatLetter==0,
               "resume retains ordered cheat letters independently of held gameplay keys");
         check(parsed.runs[0].input.touchControlsEnabled && !parsed.runs[1].input.touchControlsEnabled,

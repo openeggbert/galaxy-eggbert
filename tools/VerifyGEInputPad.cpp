@@ -1044,7 +1044,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 33;
+        bool all = count == 34;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1053,7 +1053,23 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 33 words including debug/fairplay/compass/help/cheats/xnjttjpo/fps/position/honest fire and have an explanation");
+        check(all, "Typed cheats: all 34 words including back fire and have an explanation");
+        bool backDistinct = true;
+        for (int i = 0; i < count; ++i)
+        {
+            if (words[i].cheat == TC::Back) continue;
+            const std::string word = words[i].word;
+            backDistinct &= !word.starts_with("back") && !word.ends_with("back") &&
+                            !std::string("back").ends_with(word);
+        }
+        check(backDistinct, "back neither prefixes nor shares a matched suffix with another cheat");
+        {
+            InputPad reset;
+            type(reset, "ba");
+            reset.ResetMissionInput();
+            check(type(reset, "ck").second == 0 && type(reset, "back").first == TC::Back,
+                  "mission input reset clears a partial back word and its held-letter companions");
+        }
         {
             InputPad xpad;
             check(type(xpad, "xnjttjpo").first == TC::XMission && type(xpad, "xmission").first == TC::None,

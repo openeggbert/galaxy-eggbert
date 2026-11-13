@@ -6,7 +6,37 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-12 (twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-13 (the typed cheat `back`: five seconds back through the resume replay, a progress screen for back and Continue; twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## The typed cheat `back` (2026-11-13, the owner) — committed
+
+The owner asked whether the game can go 5 s back, then chose: the word `back`, 5 s per typing
+(typing it again goes farther), a progress indication for back and also for Continue. Implemented
+by Codex (sol) to `plans/codex/back_cheat.md`, reviewed here.
+
+- Mechanism: no state snapshots. `ResumeLog::DropLastTicks(300)` on a copy of the mission's input
+  log, then `BeginResume(copy, /*inProcess=*/true)` replays it (`RewindBack()`, run in `Update()`
+  after the completing tick was appended). Fewer than 300 ticks: back to the world's start.
+  Refused (one stdout line) in a replay, demo, demo recording, editor play-test, network match,
+  outside Play / fading / exit reached, or without a mission log; the fairplay/honest lock applies.
+- In-process replay restores what `ResumeStart` does not record (`resumeLocalCheats_`: fps, zoom
+  step, SuperBlupi, the active-cheat labels), captured in `StartResumeLog()`; the in-process
+  `GALAXY_RESUME_SELFTEST` uses the same path. A fresh-process Continue and the file format are
+  unchanged. Music keeps playing across a rewind (BeginResume no longer calls UpdateMusic).
+- Progress: replay batches stop at 600 ticks or ~12 ms; after 0.25 s of replay `Draw()` shows the
+  Galaxy loading screen with the gauge at the real fraction replayed (`DrawGalaxyLoading(...,
+  replayProgress)`); before that the frame is suppressed (also on the frame BeginResume runs).
+  After a back: the notice `back -5 s`.
+- QA knobs: `GALAXY_BACK_CHECKPOINTS=t1,t2` stores `ResumeCheckSignature()` at those ticks and
+  compares after each back (`BACK SELFTEST equal|different`); `GALAXY_REPLAY_DELAY_MS` slows the
+  replay for screenshots only. Probes `tools/autoplay/probes/back_{route,twice,start,toggles,
+  before_toggles,death}.txt` (ticks in `build-probe/back-cheat/report.md`), e.g.
+  `GALAXY_BACK_CHECKPOINTS=667 tools/autoplay.sh build-cna-opengl3 tools/autoplay/probes/back_route.txt 12`.
+- Verified: 136/136 CTest (VerifyAutoplay covers the trim, VerifyGEInputPad the word), all six
+  probes equal, resume self-tests 012/025 equal, live screenshots at 60 and 144 fps in
+  `build-probe/back-cheat/`. Measured: 13 000 ticks (3.6 min of play) replay in 0.23 s here.
+- Open: not checked on Android/web (slower replay there); a rewind may land in Pause if the player
+  paused within the last 5 s (the log records Pause ticks too).
 
 ## High model shadows (2026-11-13, owner's brief) — implemented, no commit or push
 

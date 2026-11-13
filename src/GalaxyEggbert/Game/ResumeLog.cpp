@@ -56,6 +56,20 @@ namespace GalaxyEggbert::Game
         return count;
     }
 
+    std::uint64_t ResumeLog::DropLastTicks(std::uint64_t n)
+    {
+        std::uint64_t removed = 0;
+        while (n != 0 && !runs.empty())
+        {
+            const auto take = std::min<std::uint64_t>(n, runs.back().count);
+            runs.back().count -= static_cast<std::uint32_t>(take);
+            removed += take;
+            n -= take;
+            if (runs.back().count == 0) runs.pop_back();
+        }
+        return removed;
+    }
+
     void ResumeLog::WriteBody(std::ostream& out) const
     {
         out << std::quoted(start.worldPath) << ' ' << start.worldHash << '\n';

@@ -2981,6 +2981,7 @@ namespace GalaxyEggbert::Game
             {"fps", TypedCheat::Fps, "Show or hide the frames per second"},
             {"position", TypedCheat::Position, "Show or hide Blupi's position (x y z)"},
             {"honest", TypedCheat::Honest, "Lock every cheat until the game quits"},
+            {"back", TypedCheat::Back, "Go back 5 seconds (again: further)"},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
@@ -3200,7 +3201,7 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                                      int viewportH, float phaseTimeSeconds, bool overTitleScene)
+                                      int viewportH, float phaseTimeSeconds, bool overTitleScene, float replayProgress)
     {
         if (!loaded_)
         {
@@ -3228,6 +3229,8 @@ namespace GalaxyEggbert::Game
                 break;
             }
         }
+        if (replayProgress >= 0.0f)
+            level = static_cast<int>(std::clamp(replayProgress, 0.0f, 1.0f) * 100.0f);
         const int filledWidth = level * 114 / 100;
         const float jaugeSheetW = LogicalWidth(jaugeTexture_);
         const float jaugeSheetH = LogicalHeight(jaugeTexture_);

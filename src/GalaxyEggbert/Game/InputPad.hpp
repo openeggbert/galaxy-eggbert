@@ -647,6 +647,7 @@ namespace GalaxyEggbert::Game
             Fps,          // "fps" (MODERN): show or hide the frames drawn a second, in the cheats' list
             Position,     // "position" (MODERN): show or hide Blupi's place in the world (x= y= z=), in the list
             Honest,       // "honest" (MODERN): every cheat off and locked until the game quits (fairplay too)
+            Back,         // "back" (MODERN): rewind five seconds, again to go farther
         };
         struct TypedCheatResult
         {
@@ -700,8 +701,10 @@ namespace GalaxyEggbert::Game
         // and Blupi. @p overTitleScene false (2026-11-10, the owner: Mobile Eggbert's loading screen
         // showed for a second at every start): before the scene is up, or without it, the Galaxy
         // Eggbert logo stands where its letters would. DrawWait() is no longer drawn at start.
+        // Non-negative replayProgress fills the gauge directly (0..1); the default keeps Wait's curve.
         void DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                               int viewportH, float phaseTimeSeconds, bool overTitleScene = true);
+                               int viewportH, float phaseTimeSeconds, bool overTitleScene = true,
+                               float replayProgress = -1.0f);
         // The goodbye on quitting (2026-11-10, the owner: as Speedy Blupi's edition says goodbye,
         // WM_PHASE_BYE): two lines at the top, two at the bottom over the title scene (without it
         // over the logo), until a key, a click, a button or a touch closes the game.

@@ -1,0 +1,8 @@
+# Mission 012: walk/push along the first crate's known lane, then rewind during that walk.
+# GALAXY_BACK_CHECKPOINTS selects the earlier exact ResumeCheckSignature for comparison.
+wait 600
+hold 360 up
+type back
+wait 5
+expect lives = 3
+end

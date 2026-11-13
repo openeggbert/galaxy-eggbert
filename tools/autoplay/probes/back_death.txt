@@ -1,0 +1,9 @@
+# Mission 999, --spawn 41,3,5,0 (lava), as death_once.txt. Rewind after the life loss,
+# while Play still accepts typed words. Target tick 0 predates the death and restores the life.
+mortal
+until dead = 1 max 600
+until dead = 0 max 900
+expect lives = 2
+type back
+expect lives = 3
+end

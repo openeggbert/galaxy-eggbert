@@ -67,6 +67,7 @@ namespace GalaxyEggbert::Game
         std::vector<ResumeRun> runs;
         void Append(const ResumeInput& input);
         [[nodiscard]] std::uint64_t TickCount() const;
+        std::uint64_t DropLastTicks(std::uint64_t n);
         [[nodiscard]] std::string Serialize() const;
         // Transactional: on failure the destination is unchanged. Requires a complete checksum footer.
         static bool Parse(const std::string& text, const std::string& build, ResumeLog& result);

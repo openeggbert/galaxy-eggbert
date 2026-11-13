@@ -1,0 +1,7 @@
+# Mission 012: two successive 300-tick trims of the same mission log.
+wait 1200
+type back
+type back
+wait 5
+expect lives = 3
+end

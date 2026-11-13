@@ -1491,6 +1491,21 @@ namespace GalaxyEggbert::CNA
         };
         switch (cheat)
         {
+            case TC::Back:
+            {
+                const char* reason = nullptr;
+                if (replayingResume_) reason = "replay";
+                else if (demoActive_ || demoRecording_ || demoRecordArmed_) reason = "demo";
+                else if (editorPlayTestActive_) reason = "editor play-test";
+                else if (NetMatchActive()) reason = "network match";
+                else if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
+                         fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
+                         interaction_.ExitReached() || winCheerActive_) reason = "mission ending or not in Play";
+                else if (!recordingResume_ || missionStartPending_) reason = "no mission log";
+                if (reason) std::cout << "GalaxyEggbertCNA: back ignored: " << reason << "." << std::endl;
+                else backPending_ = true;
+                break;
+            }
             case TC::OpenDoors:
                 ApplyCheat(1);
                 interaction_.CheatAllKeys(); // InputPad.cpp:838-841
@@ -1575,6 +1590,7 @@ namespace GalaxyEggbert::CNA
                 break;
             case TC::Ghost:
             case TC::Quick:
+            case TC::Position: // the active-cheat list itself is the position toggle
             case TC::None:
                 break; // ghost and quick: handled by the caller
         }
