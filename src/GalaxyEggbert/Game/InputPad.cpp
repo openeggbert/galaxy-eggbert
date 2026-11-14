@@ -3331,6 +3331,28 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawRewindLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                     int viewportH)
+    {
+        if (!loaded_ || viewportW <= 0 || viewportH <= 0) return;
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f, cy = static_cast<float>(viewportH) * 0.5f;
+        const std::string label = std::string(Tr("Loading")) + "..";
+        const float textW = TextMetrics::Width(label) * kPauseLabelScale * scale;
+        const float textH = kGlyphCellPx * kPauseLabelScale * scale;
+        // The training hint's panel (pad.png's panel cell at full opacity): white, see-through.
+        Quad panel{cx - textW * 0.5f - 24.0f * scale, cy - textH * 0.5f - 8.0f * scale,
+                   cx + textW * 0.5f + 24.0f * scale, cy + textH * 0.5f + 8.0f * scale, 0.0f, 0.0f, 0.0f, 0.0f};
+        PadIconUv(kInitPanelIcon, LogicalWidth(padTexture_), LogicalHeight(padTexture_), panel.u0, panel.v0,
+                  panel.u1, panel.v1, TextureScaleOf(&padTexture_));
+        std::vector<Quad> labelQuads;
+        AppendCenteredLabel(labelQuads, label, cx, cy - textH * 0.5f, scale);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, std::vector<Quad>{panel}, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                                       int viewportH, float phaseTimeSeconds, bool overTitleScene, float replayProgress)
     {

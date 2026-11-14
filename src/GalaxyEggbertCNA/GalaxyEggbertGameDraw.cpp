@@ -89,7 +89,7 @@ namespace GalaxyEggbert::CNA
         if (replayingResume_)
         {
             const float seconds = ResumeReplaySeconds();
-            if (seconds < ResumeLoadingDelay()) return;
+            if (!ResumeLoadingShown()) return;
             auto& device = getGraphicsDeviceProperty();
             device.SetRenderTarget(nullptr);
             device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98));
@@ -1084,6 +1084,13 @@ namespace GalaxyEggbert::CNA
                 inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                           controlsHelp_.cheats, controlsHelp_.page);
             }
+        }
+        // A rewind about to replay (ArmRewind): this picture stays up while it runs, "Loading.." over it.
+        if (rewindPending_)
+        {
+            const auto& viewport = device.getViewportProperty();
+            inputPad_.DrawRewindLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            rewindLabelDrawn_ = true;
         }
     }
 

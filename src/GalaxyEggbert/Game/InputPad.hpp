@@ -752,6 +752,10 @@ namespace GalaxyEggbert::Game
         // showed for a second at every start): before the scene is up, or without it, the Galaxy
         // Eggbert logo stands where its letters would. DrawWait() is no longer drawn at start.
         // Non-negative replayProgress fills the gauge directly (0..1); the default keeps Wait's curve.
+        // A rewind in play (back, recall, restart; the owner, 2026-11-14): "Loading.." on a white
+        // see-through panel in the middle, over the picture that stays up while it replays.
+        void DrawRewindLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                               int viewportH);
         void DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                                int viewportH, float phaseTimeSeconds, bool overTitleScene = true,
                                float replayProgress = -1.0f);

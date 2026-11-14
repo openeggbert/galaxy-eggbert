@@ -156,6 +156,8 @@ namespace GalaxyEggbert::CNA
         resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
         backPending_ = backReplaying_ = markPending_ = recallPending_ = restartPending_ = false;
+        rewindPending_.reset();
+        rewindLabelDrawn_ = false;
         markedTick_.reset();
         resumeLog_ = {};
         auto& start = resumeLog_.start;
@@ -526,6 +528,18 @@ namespace GalaxyEggbert::CNA
             interaction_.ExitReached() || winCheerActive_) return "mission ending or not in Play";
         if (!recordingResume_ || missionStartPending_) return "no mission log";
         return nullptr;
+    }
+
+    void GalaxyEggbertGame::ArmRewind(std::uint64_t target, const char* notice)
+    {
+        if (autoplay_)
+        {
+            RewindToTick(target, notice);
+            return;
+        }
+        rewindPending_ = PendingRewind{target, notice};
+        rewindLabelDrawn_ = false;
+        rewindWaitUpdates_ = 0;
     }
 
     void GalaxyEggbertGame::RewindToTick(std::uint64_t target, const char* notice)

@@ -123,7 +123,19 @@ namespace GalaxyEggbert::CNA
         if (replayingResume_)
         {
             ReplayBatch();
-            if (replayingResume_ && ResumeReplaySeconds() < ResumeLoadingDelay()) SuppressDraw();
+            if (replayingResume_ && !ResumeLoadingShown()) SuppressDraw();
+            return;
+        }
+        // A rewind waits for the frame that shows "Loading.." over the picture (ArmRewind), a few
+        // updates at most (a minimised window draws nothing); no tick runs meanwhile.
+        if (rewindPending_)
+        {
+            if (rewindLabelDrawn_ || ++rewindWaitUpdates_ > 3)
+            {
+                const auto rewind = *rewindPending_;
+                rewindPending_.reset();
+                RewindToTick(rewind.target, rewind.notice);
+            }
             return;
         }
         // The Setup's frame rate above 60 (ApplyFrameRate): the loop runs that often, the game steps
@@ -289,10 +301,10 @@ namespace GalaxyEggbert::CNA
                 ShowDemoNotice("mark");
                 std::cout << "GalaxyEggbertCNA: mark at tick " << *markedTick_ << "." << std::endl;
             }
-            if (restartPending_) RewindToTick(0, "restart");
+            if (restartPending_) ArmRewind(0, "restart");
             else if (backPending_)
-                RewindToTick(resumeTicks_ > 300 ? resumeTicks_ - 300 : 0, "back -5 s");
-            else if (recallPending_ && markedTick_) RewindToTick(*markedTick_, "recall");
+                ArmRewind(resumeTicks_ > 300 ? resumeTicks_ - 300 : 0, "back -5 s");
+            else if (recallPending_ && markedTick_) ArmRewind(*markedTick_, "recall");
             else CheckResumeSelftest();
         }
         backPending_ = markPending_ = recallPending_ = restartPending_ = false;

@@ -846,10 +846,14 @@ namespace GalaxyEggbert::CNA
         bool BeginResume(GalaxyEggbert::Game::ResumeLog log, bool inProcess = false);
         void ReplayBatch();
         [[nodiscard]] float ResumeReplaySeconds() const;
-        // How long a replay runs before its loading screen shows, the last frame staying up till then:
-        // a rewind in play (back, recall, restart) 2 s, most being over sooner (the owner, 2026-11-14:
-        // the screen flashed up for a moment); a Continue from the menu 0.25 s.
-        [[nodiscard]] float ResumeLoadingDelay() const noexcept { return backReplaying_ ? 2.0f : 0.25f; }
+        // A Continue from the menu shows the loading screen after 0.25 s of replay. A rewind in play
+        // (back, recall, restart) never does: the picture drawn just before it, "Loading.." on a white
+        // panel over it (ArmRewind), stays up until it ends (the owner, 2026-11-14: the loading screen
+        // flashed up).
+        [[nodiscard]] bool ResumeLoadingShown() const { return !backReplaying_ && ResumeReplaySeconds() >= 0.25f; }
+        // back/recall/restart: RewindToTick() once the next frame has drawn "Loading.." over the
+        // picture (rewindPending_); at once in an autoplay, which draws one frame in 30.
+        void ArmRewind(std::uint64_t target, const char* notice);
         void RewindToTick(std::uint64_t target, const char* notice);
         [[nodiscard]] const char* TimelineCheatRefusal() const;
         void CaptureBackCheckpoint();
@@ -868,6 +872,10 @@ namespace GalaxyEggbert::CNA
         bool recordingResume_ = false;
         bool replayingResume_ = false;
         bool backPending_ = false, backReplaying_ = false;
+        struct PendingRewind { std::uint64_t target = 0; const char* notice = ""; };
+        std::optional<PendingRewind> rewindPending_; // ArmRewind()
+        bool rewindLabelDrawn_ = false;
+        int rewindWaitUpdates_ = 0;
         bool markPending_ = false, recallPending_ = false, restartPending_ = false;
         bool snapPending_ = false;
         bool cheatTrail_ = false, cheatIds_ = false, cheatSounds_ = false, cheatChunks_ = false;
