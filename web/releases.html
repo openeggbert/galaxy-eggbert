@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Releases — Galaxy Eggbert Docs</title>
-<meta name="description" data-release-content="Galaxy Eggbert {version}: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations." content="Galaxy Eggbert 0.4.1: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations.">
+<meta name="description" data-release-content="Galaxy Eggbert {version}: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations." content="Galaxy Eggbert 0.5.0: the Windows, Linux, Android and web packages, what they need, how to install and run them, and their known limitations.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -66,18 +66,36 @@
 
 <main id="content">
   <h1>Releases</h1>
-  <p class="subtitle">Galaxy Eggbert <span data-release="version">0.4.1</span>: the packages for Windows, Linux, Android and the web, what they need, and how to install and run them.</p>
+  <p class="subtitle">Galaxy Eggbert <span data-release="version">0.5.0</span>: the packages for Windows, Linux, Android and the web, what they need, and how to install and run them.</p>
 
   <div class="note">
     <strong>Download</strong>
-    Release <strong><span data-release="version">0.4.1</span></strong> (<span data-release="date">2026-11-12</span>) is published as a
-    <a data-release-href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v{version}" href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.4.1">GitHub release</a> of the
+    Release <strong><span data-release="version">0.5.0</span></strong> (<span data-release="date">2026-11-14</span>) is published as a
+    <a data-release-href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v{version}" href="https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.5.0">GitHub release</a> of the
     repository, with its four packages, their checksums and the release notes. Earlier releases (0.2.0, 0.3.0
     and 0.4.0 the same day, 0.1.0 to 0.1.3 on 2026-11-11) are on the <a href="https://github.com/openeggbert/galaxy-eggbert/releases">releases
     page</a>; <code>CHANGELOG.md</code> lists what changed in each.
   </div>
 
 <!-- release-sections -->
+  <h2 data-release-entry="0.5.0">New in 0.5.0</h2>
+  <p>Twenty-one new cheats, among them <code>back</code>, <code>replay</code>, <code>freecam</code> and <code>warp</code>; a keyboard on the screen to type them on phones, tablets and gamepads; the player&#x27;s own collection of demo recordings; and a camera that looks up and down with Blupi. Packages for Windows, Linux, Android and the web on GitHub (tag <code>v0.5.0</code>); Android&#x27;s versionCode is 9. Network protocol 5: plays with 0.4.1, 0.4.0 and 0.3.0.</p>
+  <ul>
+    <li><strong>Added:</strong> Rewinding cheats for single-player play: <code>back</code> goes five seconds back (type it again to go farther), <code>mark</code> and <code>recall</code> remember a moment and return to it, <code>restart</code> goes back to the world&#x27;s start without losing a life, <code>practice</code> turns a death into a five-second rewind, and <code>replay</code> shows the last ten seconds again (a key, click or tap skips it). While the earlier moment is rebuilt, &quot;Loading..&quot; shows over the picture.</li>
+    <li><strong>Added:</strong> Cheats to look around: <code>freecam</code> holds the world and flies the camera (arrows or WASD, Ctrl up, Shift down, drag to look), <code>here</code> puts Blupi on the ground below it, <code>photo</code> hides everything drawn over the world, <code>snap</code> saves a PNG picture into the player folder&#x27;s <code>screenshots/</code>, and <code>step</code> holds the world and advances it one tick a press of F2.</li>
+    <li><strong>Added:</strong> Cheats that show what is hidden: <code>xray</code> (remaining pickups, the exits and secret walls through walls), <code>hitbox</code> (the collision boxes the game really uses), <code>trail</code> (Blupi&#x27;s last ten seconds), <code>ids</code> (each object&#x27;s number and type), <code>sounds</code> (the last sounds and why one was not heard), <code>chunks</code> (the terrain&#x27;s chunks), <code>perf</code> (a graph of the frames&#x27; times) and <code>cascades</code> (the sun&#x27;s shadow cascades at High and Ultra).</li>
+    <li><strong>Added:</strong> <code>freeze</code> stops every object while Blupi moves on, and <code>warp</code> opens a panel of the worlds to go to directly, the player&#x27;s progress left as it is.</li>
+    <li><strong>Added:</strong> A keyboard on the screen for the cheats: hold the middle of the play view, or the gamepad&#x27;s LT, for one second; tap its keys or use the arrows / d-pad and A. It has F1, F3, F4-F8, Tab, F2 and F12 too. The game keeps running beneath it.</li>
+    <li><strong>Added:</strong> The cheats&#x27; help has two pages (Speedy Blupi and Mobile Eggbert&#x27;s words, then Galaxy Eggbert&#x27;s), switched with the arrows, LB/RB or its on-screen arrows; a word clicked or tapped there turns its cheat on.</li>
+    <li><strong>Added:</strong> My recordings: the main menu&#x27;s Demos screen opens your collection of recordings -- play, rename, delete, export (a download on the web) or make one a menu demo. Pause &gt; Record records the mission again and then saves the recording or discards it. A recording keeps the world it was made in, so it still plays after that world has changed.</li>
+    <li><strong>Changed:</strong> The camera turns up or down when Blupi keeps looking up or down, as the original scrolls; first person tilts the same way.</li>
+    <li><strong>Changed:</strong> The <code>opendoors</code> cheat opens the hubs&#x27; doors only and gives no key, as in Speedy Blupi 1 and 2; the keys cheat is spelled <code>wellkeys</code>, as in Speedy Blupi 2 (was <code>weelkeys</code>).</li>
+    <li><strong>Changed:</strong> Lightning cells flicker independently, as in the original.</li>
+    <li><strong>Changed:</strong> Releases are built and published by GitHub Actions from a version tag, and both websites and the online game update automatically after a final release.</li>
+    <li><strong>Fixed:</strong> The start no longer flashes a magnified loading screen for a fraction of a second.</li>
+    <li><strong>Fixed:</strong> High&#x27;s sun shadows: contacts and small self-shadows were cut short; models now receive, cast and shadow themselves as they should.</li>
+  </ul>
+
   <h2 data-release-entry="0.4.1">New in 0.4.1</h2>
   <ul>
     <li>The goodbye screen gives the game's home as <a href="https://galaxyeggbert.com">galaxyeggbert.com</a>.</li>
@@ -138,10 +156,10 @@
   <h2>Files</h2>
   <table>
     <tr><th>File</th><th>For</th></tr>
-    <tr><td><code>GalaxyEggbert-<span data-release="version">0.4.1</span>-windows-x86_64.zip</code></td><td>64-bit Windows: extract and run <code>GalaxyEggbert.exe</code></td></tr>
-    <tr><td><code>GalaxyEggbert-<span data-release="version">0.4.1</span>-linux-x86_64.tar.gz</code></td><td>64-bit Linux (x86-64)</td></tr>
-    <tr><td><code>GalaxyEggbert-<span data-release="version">0.4.1</span>-android-arm64.apk</code></td><td>Android 7.0 (API 24) or newer, arm64 phones and tablets</td></tr>
-    <tr><td><code>GalaxyEggbert-<span data-release="version">0.4.1</span>-web.zip</code></td><td>a web server: extract, serve the folder and open <code>GalaxyEggbert.html</code></td></tr>
+    <tr><td><code>GalaxyEggbert-<span data-release="version">0.5.0</span>-windows-x86_64.zip</code></td><td>64-bit Windows: extract and run <code>GalaxyEggbert.exe</code></td></tr>
+    <tr><td><code>GalaxyEggbert-<span data-release="version">0.5.0</span>-linux-x86_64.tar.gz</code></td><td>64-bit Linux (x86-64)</td></tr>
+    <tr><td><code>GalaxyEggbert-<span data-release="version">0.5.0</span>-android-arm64.apk</code></td><td>Android 7.0 (API 24) or newer, arm64 phones and tablets</td></tr>
+    <tr><td><code>GalaxyEggbert-<span data-release="version">0.5.0</span>-web.zip</code></td><td>a web server: extract, serve the folder and open <code>GalaxyEggbert.html</code></td></tr>
     <tr><td><code>SHA256SUMS.txt</code></td><td>SHA-256 checksums of the packages</td></tr>
     <tr><td><code>RELEASE_NOTES.md</code></td><td>What the release holds and its known limitations</td></tr>
   </table>
@@ -168,8 +186,8 @@
       SDL3_mixer are bundled.</li>
   </ul>
   <h3>Install and run</h3>
-<pre><code>tar -xzf GalaxyEggbert-<span data-release="version">0.4.1</span>-linux-x86_64.tar.gz
-./GalaxyEggbert-<span data-release="version">0.4.1</span>-linux-x86_64/run-galaxy-eggbert</code></pre>
+<pre><code>tar -xzf GalaxyEggbert-<span data-release="version">0.5.0</span>-linux-x86_64.tar.gz
+./GalaxyEggbert-<span data-release="version">0.5.0</span>-linux-x86_64/run-galaxy-eggbert</code></pre>
   <p>
     The launcher enters its own directory and starts <code>GalaxyEggbert</code> with any arguments you give
     it, so the command-line flags in <a href="running.html">Running the Game</a> work through it. Keep the
@@ -205,7 +223,7 @@
       page.</li>
   </ul>
 
-  <h2>Known limitations of <span data-release="version">0.4.1</span></h2>
+  <h2>Known limitations of <span data-release="version">0.5.0</span></h2>
   <table>
     <tr><th>Area</th><th>Limitation</th></tr>
     <tr><td>Linux, older systems</td><td>No archive for glibc 2.35 (for example Ubuntu 22.04). It has to be built on such a system.</td></tr>

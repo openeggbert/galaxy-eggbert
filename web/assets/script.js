@@ -42,9 +42,9 @@
    {
     "t": "Releases",
     "u": "releases.html",
-    "releaseCurrent": "0.4.1",
-    "releaseVersions": ["0.4.1"],
-    "k": "releases galaxy eggbert 0.4.1: the packages for windows, linux, android and the web, what they need, and how to install and run them. new in 0.4.1 goodbye galaxyeggbert.com accelerometer new in 0.4.0 finnish danish norwegian turkish greek twenty languages new in 0.3.0 fifteen languages slovak spanish italian polish portuguese dutch hungarian romanian swedish russian ukrainian flags new in 0.2.0 french german czech languages what a release contains files windows linux requirements install and run saved games android web known limitations of 0.2.0 licences making the packages"
+    "releaseCurrent": "0.5.0",
+    "releaseVersions": ["0.4.1", "0.5.0"],
+    "k": "releases galaxy eggbert 0.5.0: the packages for windows, linux, android and the web, what they need, and how to install and run them. new in 0.4.1 goodbye galaxyeggbert.com accelerometer new in 0.4.0 finnish danish norwegian turkish greek twenty languages new in 0.3.0 fifteen languages slovak spanish italian polish portuguese dutch hungarian romanian swedish russian ukrainian flags new in 0.2.0 french german czech languages what a release contains files windows linux requirements install and run saved games android web known limitations of 0.2.0 licences making the packages new in 0.5.0 twenty-one new cheats, among them `back`, `replay`, `freecam` and `warp`; a keyboard on the screen to type them on phones, tablets and gamepads; the player's own collection of demo recordings; and a camera that looks up and down with blupi. packages for windows, linux, android and the web on github (tag `v0.5.0`); android's versioncode is 9. network protocol 5: plays with 0.4.1, 0.4.0 and 0.3.0."
    },
    {
     "t": "Getting Started",
