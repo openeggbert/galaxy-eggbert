@@ -1,4 +1,7 @@
-# AGENTS.md — Galaxy Eggbert contributor instructions
+# AI.md — Galaxy Eggbert project instructions for AI
+
+These instructions supplement the AI Contribution Policy in `AGENTS.md`. They do not authorize
+edits, commits or pushes by themselves; where they seem to differ from the policy, the policy wins.
 
 ## Current direction lock
 
@@ -37,6 +40,12 @@ guidance.
   must not introduce new gameplay behavior. Its palette/order and interaction should follow the
   Eggbert 2 editor where specified, with documented Galaxy-only additions such as background
   selection.
+- Multiplayer is approved (the owner, 2026-11-10) although `mobile-eggbert` has none: its source of
+  truth is Speedy Blupi 2 / Speedy Eggbert 2's network game as `../blupi_recon` reconstructs it (SB1
+  where SB2 is silent), the original's evident defects not reproduced. It was developed on the
+  `multiplayer` branch and merged into `develop` on the owner's acceptance (2026-11-11); the AI
+  policy is introduced after it. Decisions: `plans/audit/owner_questions.md` Q-019, design
+  `plans/plan_gemultiplayer.md`.
 - Real 3D worlds are hand-authored as original tile-based 3D designs. Mobile Eggbert's maps
   give identity, theme and mechanics only: no 2D-to-3D conversion or extrusion, no 2.5D.
 - Models and animations come from the original Ray Dream sources (`../speedyblupi-data`)
@@ -81,8 +90,10 @@ guidance.
 
 ## Build and verification
 
-Use at most six parallel compile jobs on this machine (the owner, 2026-11-01; four is the habit),
-in the existing build tree `build-cna-opengl3/` (reconfigure only when it is broken):
+The owner normally builds and runs the tests; build only when the owner asks for it. Then use at
+most four parallel compile jobs (the owner, 2026-11-12), the shared ccache and the build tree
+`build-cna-opengl3/`. Configure that tree only when it does not exist yet or is broken, as
+`docs/handbook/03-build-and-run.md` (*Linux desktop*) describes:
 
 ```bash
 export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
@@ -105,13 +116,15 @@ a proportional live/screenshot check. Do not claim visual parity from compilatio
 ## Working practices
 
 - Preserve unrelated user changes in a dirty worktree.
-- Keep changes scoped and update `CURRENT.md`, `handoff.md`, or `plan.md` only where their documented
-  ownership requires it; update `handoff.md` after every committed task.
-- Use at most six jobs (`--parallel 6`) for every build, including packaging and cross-builds.
+- Keep changes within the authorized scope. Update `CURRENT.md`, `handoff.md` or `plan.md` only
+  when the task includes it or their documented ownership requires it.
+- The four-job limit applies to every build, including packaging and cross-builds.
 - Avoid redundant fresh build trees and compiler caches; SSD write volume matters on this
   workstation.
-- Commit discrete completed tasks. Push only when the user explicitly requests it.
-- Never add AI attribution to commit messages or PR bodies: no `Co-Authored-By: Claude ...`
-  trailer, no "Generated with Claude Code" line. Attribution is deliberately disabled in the
-  Claude Code settings, so nothing in your context asks for one; do not add it from habit, also
-  not after a context compaction (13 commits of 2026-10-24 got it that way and were rewritten).
+- Never create, amend or rewrite commits (`AGENTS.md`, *Git commits*); propose a commit message
+  instead. Push, publish or merge only when the owner explicitly asks.
+- A proposed commit message carries no AI trailer: no `Co-Authored-By: Claude ...`, no "Generated
+  with Claude Code" line. Attribution is deliberately disabled in the Claude Code settings; do not
+  add it from habit, also not after a context compaction. AI use is disclosed in the pull
+  request's *AI assistance* section instead (`.github/PULL_REQUEST_TEMPLATE.md`), as `AGENTS.md`
+  requires.
