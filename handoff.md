@@ -29,9 +29,12 @@ Publish passed -- https://github.com/openeggbert/galaxy-eggbert/releases/tag/v0.
 packages and SHA256SUMS.txt. The sites job updated `web/` (`dd851561`, github-actions[bot]) and then
 failed at "Commit and push galaxyeggbert.com" (403: `GALAXYEGGBERT_COM_DEPLOY_KEY` is still not set,
 the owner's step), so Pages was dispatched by hand (43587534672): galaxyeggbert.openeggbert.com shows
-0.5.0. **Open:** galaxyeggbert.com still shows 0.4.1 -- once the owner adds the deploy key, re-run
-the failed job (`gh run rerun 43586953931 --failed --repo openeggbert/galaxy-eggbert`; a second run
-of the project-site part is a no-op). Next Android versionCode: 10.
+0.5.0. galaxyeggbert.com by the documented manual fallback at the owner's request: the four release
+packages downloaded and checked, `update_sites.py --site ../galaxyeggbert.com` (web/ no change), plus
+editorial lines (news link -> the release's notes with a `data-release-href`, so it follows each
+release; the cheats' and demos' cards; LT and the middle hold in the controls), its commit `e91b384`
+pushed to main, Pages built it: live 0.5.0. The deploy key is still missing for the next release's
+sites job. Next Android versionCode: 10.
 
 ## `opendoors` without keys, `wellkeys` (2026-11-14, the owner) — committed
 
