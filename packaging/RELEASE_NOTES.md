@@ -1,6 +1,27 @@
-# Galaxy Eggbert 0.4.1
+# Galaxy Eggbert 0.5.0
 
 A 3D remake of *Speedy Blupi* (Epsitec), built on CNA, for Windows, Linux, Android and the web browser.
+
+## New in 0.5.0
+
+- **Twenty-one new cheats** (type them during play; `help` lists them on two pages):
+  - **Going back in time:** `back` (five seconds; again to go farther), `mark` / `recall`,
+    `restart`, `practice` (a death rewinds instead of costing a life), `replay` (the last ten
+    seconds again).
+  - **Looking around:** `freecam` (fly the camera, the world held), `here` (land below it),
+    `photo` (no overlays), `snap` (a PNG picture in your player folder), `step` (one tick a press
+    of F2).
+  - **Showing what is hidden:** `xray`, `hitbox`, `trail`, `ids`, `sounds`, `chunks`, `perf`,
+    `cascades`; and `freeze` (objects stop, Blupi moves) and `warp` (go to any world).
+- **A keyboard on the screen for the cheats:** hold the middle of the screen or the gamepad's LT for
+  one second, so phones, tablets and gamepads can type cheats too.
+- **My recordings:** your own demo recordings in one place -- play, rename, delete, export, or make
+  one a menu demo; Pause > Record saves or discards a new one. A recording keeps its world.
+- **The camera** turns up or down when Blupi keeps looking up or down.
+- **Fixed:** no magnified loading screen flashes at the start; High's shadows touch the ground again.
+- The cheat `opendoors` opens the hubs' doors without giving keys, and the keys cheat is
+  `wellkeys`, as in the original Speedy Blupi games.
+- 0.5.0 plays the network game with 0.4.1, 0.4.0 and 0.3.0.
 
 ## New in 0.4.1
 

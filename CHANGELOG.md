@@ -9,51 +9,59 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-14
+
+<!-- site-headline: twenty-one new cheats, a cheat keyboard and your own demo recordings -->
+
+Twenty-one new cheats, among them `back`, `replay`, `freecam` and `warp`; a keyboard on the screen to
+type them on phones, tablets and gamepads; the player's own collection of demo recordings; and a
+camera that looks up and down with Blupi. Packages for Windows, Linux, Android and the web on GitHub
+(tag `v0.5.0`); Android's versionCode is 9. Network protocol 5: plays with 0.4.1, 0.4.0 and 0.3.0.
+
 ### Added
 
-- Type `perf` for a graph of the last four seconds of frames over the play: each frame's real
-  time, the time of its updates and of its drawing, and the game steps it ran, with lines at 1/60 s
-  and at the frame rate's target, and the average, worst and slowest 1 % below. Type `cascades`
-  (3D effects High or Ultra) to tint what the sun's shadow map shadows by its cascade, the near one
-  red and the far one green, so their ranges and seams show; at a lower level it only says
-  `cascades: shadows off`.
-
-- Type `step` to hold the world and advance it one tick at a time with F2 (held: ten ticks a
-  second after half a second; the cheats' keyboard has an F2 key too), `practice` to have a death
-  rewind five seconds instead of costing a life, `replay` to watch the last ten seconds again
-  (a key, click or tap skips it), and `warp` to go to any world of the campaign or your galaxy
-  from a panel, your progress left as it is.
-
-- Type `restart` to rewind the current world to its start, `snap` to save a completed PNG
-  frame in your player folder's `screenshots/`, and `here` to land below the free camera.
-  `trail`, `ids`, `sounds`, and `chunks` show the recent path, object IDs, sound decisions,
-  and terrain chunk boundaries with recent rebuilds highlighted.
-
-- Type `freecam` to hold the world and fly the camera (arrows/WASD turn and move, Ctrl up,
-  Shift down, drag to look; combine with `photo`), `xray` to reveal remaining pickups,
-  exits and secret walls, and `hitbox` to see the actual collision boxes through walls.
-
-- Type `mark` / `recall` to remember and return to a moment in a single-player world, `photo`
-  to hide Play overlays, and `freeze` to stop objects while Blupi moves. Cheat help has two
-  pages, switched with keyboard/gamepad navigation or its on-screen arrows.
-- An on-screen cheat keyboard: hold the centre of the play view or gamepad LT for one second;
-  tap its keys or use the arrows/d-pad and A/Enter. The game keeps running beneath it.
-- Type `back` during a single-player mission to rewind five seconds; repeat to go farther.
-  Long rewinds and Continue replays show a loading screen with their actual progress.
+- Rewinding cheats for single-player play: `back` goes five seconds back (type it again to go
+  farther), `mark` and `recall` remember a moment and return to it, `restart` goes back to the
+  world's start without losing a life, `practice` turns a death into a five-second rewind, and
+  `replay` shows the last ten seconds again (a key, click or tap skips it). While the earlier
+  moment is rebuilt, "Loading.." shows over the picture.
+- Cheats to look around: `freecam` holds the world and flies the camera (arrows or WASD, Ctrl up,
+  Shift down, drag to look), `here` puts Blupi on the ground below it, `photo` hides everything
+  drawn over the world, `snap` saves a PNG picture into the player folder's `screenshots/`, and
+  `step` holds the world and advances it one tick a press of F2.
+- Cheats that show what is hidden: `xray` (remaining pickups, the exits and secret walls through
+  walls), `hitbox` (the collision boxes the game really uses), `trail` (Blupi's last ten
+  seconds), `ids` (each object's number and type), `sounds` (the last sounds and why one was not
+  heard), `chunks` (the terrain's chunks), `perf` (a graph of the frames' times) and `cascades`
+  (the sun's shadow cascades at High and Ultra).
+- `freeze` stops every object while Blupi moves on, and `warp` opens a panel of the worlds to go
+  to directly, the player's progress left as it is.
+- A keyboard on the screen for the cheats: hold the middle of the play view, or the gamepad's LT,
+  for one second; tap its keys or use the arrows / d-pad and A. It has F1, F3, F4-F8, Tab, F2 and
+  F12 too. The game keeps running beneath it.
+- The cheats' help has two pages (Speedy Blupi and Mobile Eggbert's words, then Galaxy Eggbert's),
+  switched with the arrows, LB/RB or its on-screen arrows; a word clicked or tapped there turns
+  its cheat on.
+- My recordings: the main menu's Demos screen opens your collection of recordings -- play, rename,
+  delete, export (a download on the web) or make one a menu demo. Pause > Record records the
+  mission again and then saves the recording or discards it. A recording keeps the world it was
+  made in, so it still plays after that world has changed.
 
 ### Changed
 
+- The camera turns up or down when Blupi keeps looking up or down, as the original scrolls; first
+  person tilts the same way.
 - The `opendoors` cheat opens the hubs' doors only and gives no key, as in Speedy Blupi 1 and 2;
   the keys cheat is spelled `wellkeys`, as in Speedy Blupi 2 (was `weelkeys`).
 - Lightning cells flicker independently, as in the original.
-- Releases are built and published by GitHub Actions from a version tag.
-- Both websites and the online game update automatically after a final release.
+- Releases are built and published by GitHub Actions from a version tag, and both websites and the
+  online game update automatically after a final release.
 
 ### Fixed
 
-- The start no longer flashes a magnified loading screen for a fraction of a second: the window stays
-  black until the title scene is up, and above 60 fps the first update no longer resets the graphics
-  device (in full screen a second switch of the display's mode).
+- The start no longer flashes a magnified loading screen for a fraction of a second.
+- High's sun shadows: contacts and small self-shadows were cut short; models now receive, cast and
+  shadow themselves as they should.
 
 ## [0.4.1] — 2026-11-12
 
@@ -208,7 +216,8 @@ the numbering was decided and were never published; 0.1.0 replaces that number.
   users, `/opt`, Program Files): the two diagnostic screenshots it saves there are skipped.
 - The web build has no Multiplayer entry and no network code (the page's program 35 MB -> 8 MB).
 
-[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.1...develop
+[Unreleased]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.5.0...develop
+[0.5.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openeggbert/galaxy-eggbert/compare/v0.2.0...v0.3.0

@@ -1,8 +1,8 @@
 # Versioning and releasing Galaxy Eggbert
 
-*Current release: 0.4.1 (2026-11-12), tag `v0.4.1`, published as a GitHub release of
-openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages (0.2.0, 0.3.0 and 0.4.0
-the same day, 0.1.0-0.1.3 on 2026-11-11).*
+*Current release: 0.5.0 (2026-11-14), tag `v0.5.0`, published as a GitHub release of
+openeggbert/galaxy-eggbert with its Windows, Linux, Android and web packages (0.4.1 on 2026-11-12,
+0.2.0-0.4.0 the same day, 0.1.0-0.1.3 on 2026-11-11).*
 
 Galaxy Eggbert follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), set up
 after CNA's own scheme (`../cna/docs/releasing.md`): the version is decided in one place,
