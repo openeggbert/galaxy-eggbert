@@ -500,7 +500,14 @@ namespace GalaxyEggbert::CNA
         // states the intent instead of re-deriving flags. RGB(0,35,98) is the
         // same colour as the float triple it replaces (0.1373*255 = 35,
         // 0.3843*255 = 98), still init.png's sampled corner pixel.
-        device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98));
+        //
+        // At the start, until the title scene is up (it is built in the first update, LoadTitleScene()),
+        // the window stays black: the logo's loading screen drawn meanwhile flashed for a fraction of a
+        // second before the scene's own, looking like a magnified loading screen (the owner,
+        // 2026-11-14). The night sky of the title scene follows black smoothly. Without the scene
+        // (worlds3d/title.vwr unavailable) the logo's loading screen is drawn as before.
+        device.Clear(TitleScenePending() ? Microsoft::Xna::Framework::Color(0, 0, 0)
+                                       : Microsoft::Xna::Framework::Color(0, 35, 98));
         device.SetDepthTestEnabled(true);
 
         // Reported live (2026-07-13): the 3D world was visible bleeding
@@ -943,10 +950,12 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Wait)
             {
-                // Galaxy's own loading screen from the first frame: over the title scene once it is
-                // up, before that (and without it) over the logo; never Mobile Eggbert's wait.png.
-                inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                            phaseTimeSeconds_, titleSceneActive_);
+                // Galaxy's own loading screen: over the title scene once it is up, over the logo only
+                // when there is no title scene; black while it is still coming (TitleScenePending(),
+                // DrawFrame()); never Mobile Eggbert's wait.png.
+                if (!TitleScenePending())
+                    inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                                phaseTimeSeconds_, titleSceneActive_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {

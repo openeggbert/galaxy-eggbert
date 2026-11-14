@@ -167,6 +167,8 @@ namespace GalaxyEggbert::CNA
         // end, the autoplay's end, `--demo-ticks N` or the window closing, writes it and exits.
         // F-keys and Tab (game speed) are left out of the recording. tools/record_demo.sh.
         void EnableDemoRecording(const std::string& path, int maxTicks, const std::string& title);
+        // The frame-rate setting's vertical sync before Run() creates the device (ApplyFrameRate()'s choice).
+        void PrepareVerticalSync();
         // `--verify-demo <file>`: replays that demo at once, undrawn and silent, compares its end
         // state with the recorded one and exits (code 0 when equal). tools/verify_demos.sh.
         void EnableDemoVerify(const std::string& path);
@@ -1384,6 +1386,11 @@ namespace GalaxyEggbert::CNA
         // world list (OR-0012) stop asking for the title scene and draw their plain screens.
         bool titleSceneUnavailable_ = false;
         bool titleSceneActive_ = false;
+        // The start's loading screen waits for the title scene: black until it is up (DrawFrame()).
+        [[nodiscard]] bool TitleScenePending() const noexcept
+        {
+            return phase_ == GalaxyEggbert::Def::GamePhase::Wait && !titleSceneActive_ && !titleSceneUnavailable_;
+        }
         float titleSceneTime_ = 0.0f;
         std::filesystem::path editorPlayTestWorldPath_;
 

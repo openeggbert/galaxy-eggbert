@@ -40,6 +40,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 - Releases are built and published by GitHub Actions from a version tag.
 - Both websites and the online game update automatically after a final release.
 
+### Fixed
+
+- The start no longer flashes a magnified loading screen for a fraction of a second: the window stays
+  black until the title scene is up, and above 60 fps the first update no longer resets the graphics
+  device (in full screen a second switch of the display's mode).
+
 ## [0.4.1] — 2026-11-12
 
 The goodbye screen's new address and the Setup's accelerometer only where there is one. Packages for

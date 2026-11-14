@@ -197,6 +197,7 @@ int RunGame(int argc, char** argv)
     {
         game->EnableDemoRecording(recordDemo, demoTicks, demoTitle);
     }
+    game->PrepareVerticalSync(); // every mode above is known: no device reset in the first update
     game->Run();
     const int exitCode = game->AutoplayExitCode();
     delete game;

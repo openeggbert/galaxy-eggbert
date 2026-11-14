@@ -518,6 +518,16 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertGame::PrepareVerticalSync()
+    {
+        // Before Run() creates the device, with the capture and replay modes known (main.cpp): the
+        // vertical sync ApplyFrameRate() chooses in the first update, so that it has nothing to change
+        // there. Above 60 fps it used to reset the device in that update -- in full screen a second
+        // switch of the display's mode at every start (the owner's flash at the start, 2026-11-14).
+        const int rate = FrameRateInterpolates() ? saveData_.GetFrameRate() : 60;
+        if (graphics_) graphics_->setSynchronizeWithVerticalRetraceProperty(rate <= 60);
+    }
+
     void GalaxyEggbertGame::ApplyFrameRate()
     {
         const bool interpolate = FrameRateInterpolates();
