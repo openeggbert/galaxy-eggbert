@@ -941,8 +941,7 @@ namespace GalaxyEggbert::CNA
                 const bool escape = phaseKeys.IsKeyDown(Keys::Escape);
                 if (escape && !pauseKeyWasDown_)
                 {
-                    if (demoNaming_) FinishDemoNaming(false); // the name as it was
-                    else demoSlotsShown_ = false;
+                    CancelDemoSlotsStep();
                 }
                 pauseKeyWasDown_ = escape;
                 return true;
@@ -967,7 +966,7 @@ namespace GalaxyEggbert::CNA
                 demoSlotsShown_ = true;
                 demoSlotsMode_ = 0;
                 demoSlotInfos_ = DemoSlotInfos();
-                demoSlotsMessage_ = Tr("Export, Import or Original here; record in a mission: Pause > Record.");
+                demoSlotsMessage_ = Tr("My recordings, Export, Name or Original; record in a mission: Pause > Record.");
                 return true;
             }
             if (initInput.fullscreenPressed) ToggleFullscreen();
@@ -1199,10 +1198,8 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
-                if (demoSlotsShown_ && demoNaming_)
-                    FinishDemoNaming(false); // Escape leaves the name as it was
-                else if (demoSlotsShown_)
-                    demoSlotsShown_ = false; // Escape closes the demo positions first
+                if (demoSlotsShown_)
+                    CancelDemoSlotsStep();
                 else
                     SetPhase(GalaxyEggbert::Def::GamePhase::Play);
             }

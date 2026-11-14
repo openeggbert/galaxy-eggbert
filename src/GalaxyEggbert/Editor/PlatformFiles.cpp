@@ -99,3 +99,15 @@ namespace GalaxyEggbert::Editor
     }
 #endif
 }
+
+namespace GalaxyEggbert::Editor
+{
+    bool FileUploadAvailable() noexcept
+    {
+#if defined(__EMSCRIPTEN__)
+        return true;
+#else
+        return false;
+#endif
+    }
+}

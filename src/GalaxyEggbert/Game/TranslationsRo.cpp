@@ -10,6 +10,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kRomanianTranslations[] = {
+        {"Import a demo: choose the file", "Importă un demo: alege fișierul"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "O înregistrare dintr-o versiune mai veche nu poate fi o demonstrație în meniu."},
+        {"Add file", "Adaugă fișier"},
+        {"Choose a recording first.", "Alege mai întâi o înregistrare."},
+        {"Delete", "Șterge"},
+        {"Delete {0}? Press Delete again.", "Ștergi {0}? Apasă din nou Șterge."},
+        {"It is the file {0}.", "Este fișierul {0}."},
+        {"It played differently than it was recorded.", "Redarea a fost diferită de înregistrare."},
+        {"Menu demo", "Demo în meniu"},
+        {"Menu demo: choose the position for {0}", "Demo în meniu: alege poziția pentru {0}"},
+        {"My recordings", "Înregistrările mele"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Înregistrările mele, Exportă, Nume sau Original; înregistrează într-o misiune: Pauză > Înregistrează."},
+        {"Recorded with an older version: it may play differently.", "Înregistrat cu o versiune mai veche: redarea poate fi diferită."},
+        {"Rename", "Redenumește"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Înregistrarea nu a putut fi redenumită. Folosește un nume cu o literă sau o cifră."},
+        {"older version: may play differently", "versiune mai veche: redarea poate fi diferită"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Joacă"},
         {"Home", "Meniu"},
@@ -129,7 +147,6 @@ namespace GalaxyEggbert::Game
         {"The others play on: time left {0} (the host waits for the end).", "Ceilalți joacă mai departe: mai sunt {0} (gazda așteaptă sfârșitul)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.", "Exportă, Importă sau Original aici; înregistrare într-o misiune: Pauză > Înregistrează."},
         {"Not created: {0}", "Necreat: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -143,7 +160,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galaxia {0}"},
         {"Mission {0}", "Misiunea {0}"},
         {"(unplayable)", "(nejucabil)"},
-        {"The file is listed: click it to import it.", "Fișierul e în listă: apasă pe el ca să-l imporți."},
         {"Click a position to export its demo.", "Apasă pe o poziție ca să-i exporți demo-ul."},
         {"Click a recorded position to name its demo.", "Apasă pe o poziție înregistrată ca să-i denumești demo-ul."},
         {"Position {0} plays its shipped demo again.", "Poziția {0} redă din nou demo-ul ei original."},
@@ -154,13 +170,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Denumește demo-ul de pe poziția {0}"},
         {"Name a demo: choose its position", "Denumește un demo: alege-i poziția"},
         {"Export a demo: choose its position", "Exportă un demo: alege-i poziția"},
-        {"Import a demo: choose its position", "Importă un demo: alege-i poziția"},
-        {"Import a demo: choose the file", "Importă un demo: alege fișierul"},
         {"The demo positions", "Pozițiile demo-urilor"},
         {"Record a demo: choose its position", "Înregistrează un demo: alege-i poziția"},
         {"Put .gdemo files in {0}/ to import them.", "Pune fișiere .gdemo în {0}/ ca să le imporți."},
-        {"Click the file to import.", "Apasă pe fișierul de importat."},
-        {"Import {0}: click a position (Import: the list again).", "Importă {0}: apasă pe o poziție (Importă: din nou lista)."},
         {"galaxy {0}, {1} s", "galaxia {0}, {1} s"},
         {"mission {0}, {1} s", "misiunea {0}, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Alege un fișier .gdemo: apare aici."},
@@ -172,7 +184,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo-ul {0} exportat în {1}."},
         {"{0} cannot be imported: {1}.", "{0} nu poate fi importat: {1}."},
         {"Position {0} plays {1} now.", "Poziția {0} redă acum {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.", "Poziția {0} redă acum {1}. Lumea lui nu e aici: e sărit până când va fi."},
         {"The demo could not be recorded.", "Demo-ul nu a putut fi înregistrat."},
         {"Demo recorded in position {0}.", "Demo înregistrat pe poziția {0}."},
 

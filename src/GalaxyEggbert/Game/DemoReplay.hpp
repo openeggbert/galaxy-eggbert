@@ -19,8 +19,10 @@
 // Engine-independent: GalaxyEggbertGame feeds this with its live input and plays the recording.
 
 #include "ResumeLog.hpp"
+#include "Localization.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -72,7 +74,10 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] std::string DemoTitle(const std::string& path);
     // Writes @p name (SanitizeDemoName(), not empty) as the title of the demo in @p path, the rest
     // of the file as it was; false when it is not a demo this game reads or the write failed.
-    bool RenameDemo(const std::string& path, const std::string& name);
+    bool RenameDemo(const std::string& path, const std::string& name, bool acceptOtherRevision = false);
+    // Collection rename: title and filename, without replacing another recording. Empty on failure.
+    [[nodiscard]] std::string RenameDemoFile(const std::string& path, const std::string& name);
+    bool DeleteDemoFile(const std::string& path);
     // The .gdemo files in SharedDemoDir(), the newest first.
     [[nodiscard]] std::vector<std::string> ListSharedDemos();
 
@@ -102,7 +107,21 @@ namespace GalaxyEggbert::Game
         WorldChanged,
         OwnWorld,           // playable from its embedded world instead of the named file
     };
-    [[nodiscard]] const char* DemoLoadStatusText(DemoLoadStatus status) noexcept;
+    inline const char* DemoLoadStatusText(DemoLoadStatus status) noexcept
+    {
+        switch (status)
+        {
+            case DemoLoadStatus::Ok: return "ok";
+            case DemoLoadStatus::Missing: return TrMark("missing");
+            case DemoLoadStatus::Corrupt: return TrMark("damaged or not a demo");
+            case DemoLoadStatus::IncompatibleFormat: return TrMark("another demo format");
+            case DemoLoadStatus::IncompatibleRevision: return TrMark("recorded with another simulation revision");
+            case DemoLoadStatus::WorldMissing: return TrMark("its world is missing");
+            case DemoLoadStatus::OwnWorld: return TrMark("plays from its own world copy");
+            case DemoLoadStatus::WorldChanged: return TrMark("its world has changed");
+        }
+        return TrMark("unknown");
+    }
 
     // Parses and validates a demo's text: header, checksum, every start/input field (ResumeLog's own
     // checks), normal game speed and kDemoMaxTicks. Transactional: `out` is unchanged on failure.
@@ -117,6 +136,22 @@ namespace GalaxyEggbert::Game
     // Whether the recording's world is the file whose bytes these are (nullopt: unreadable).
     [[nodiscard]] DemoLoadStatus DemoWorldStatus(const DemoRecording& demo, const std::string& path,
                                                  const std::optional<std::string>& worldBytes);
+
+    struct DemoCollectionEntry
+    {
+        std::string path, name, metadata;
+        int mission = 0;
+        std::uint64_t seconds = 0;
+        bool galaxy = false;
+        DemoLoadStatus status = DemoLoadStatus::Missing;
+        bool olderRevision = false;
+        [[nodiscard]] bool Playable() const noexcept
+        { return status == DemoLoadStatus::Ok || status == DemoLoadStatus::OwnWorld; }
+    };
+    // Files and row data, newest modification first (path order breaks ties). World resolution is
+    // supplied by the host so campaign and shared galaxy recordings use the same rules as playback.
+    [[nodiscard]] std::vector<DemoCollectionEntry> ListDemoCollection(
+        const std::function<std::string(DemoRecording&)>& resolveWorld);
 
     // Materializes only a validated embedded snapshot, atomically, at demos/worlds/<hash>.vwr.
     // Reuses a matching cached file; repairs a damaged one. No campaign/galaxy writes.

@@ -367,6 +367,37 @@ int main()
             std::vector<InputPad::DemoSlotInfo> slots(10);
             slots[4].recorded = true;
             const auto at = [](const QuadBatch::Rect& r) { return std::make_pair(int((r.x0 + r.x1) / 2), int((r.y0 + r.y1) / 2)); };
+            // Collection geometry and the exact hit path used by mouse, touch and FocusNavigator.
+            for (const auto [w, h] : {std::pair{640, 480}, std::pair{800, 480}, std::pair{800, 360}})
+            {
+                const auto buttons = InputPad::RecordingButtons(w, h, InputPad::kDemoListRows, 2, true, true);
+                bool bounds = true, separate = true, hits = true;
+                const auto slotRect = InputPad::DemoSlotRect(0, w, h);
+                for (std::size_t i = 0; i < buttons.size(); ++i)
+                {
+                    const auto r = buttons[i].rect;
+                    bounds &= r.x0 >= 0 && r.y0 >= 0 && r.x1 <= w && r.y1 <= h &&
+                              r.y1 - r.y0 >= slotRect.y1 - slotRect.y0 - 0.01f;
+                    for (std::size_t j = i + 1; j < buttons.size(); ++j)
+                    {
+                        const auto b = buttons[j].rect;
+                        separate &= r.x1 <= b.x0 || b.x1 <= r.x0 || r.y1 <= b.y0 || b.y1 <= r.y0;
+                    }
+                    const auto [x, y] = at(r);
+                    (void)pause.UpdatePanel(mouse(x, y, true), buttons);
+                    hits &= pause.UpdatePanel(mouse(x, y, false), buttons).button == static_cast<int>(i);
+                }
+                check(bounds && separate && hits && buttons[2].held,
+                      "My recordings: seven rows, actions, arrows and upload fit without overlap; position-sized hits");
+                const auto sparse = InputPad::RecordingButtons(w, h, 1, -1, false, false);
+                for (const int control : std::initializer_list<int>{1, InputPad::RecordingPrev, InputPad::RecordingNext, InputPad::RecordingAdd})
+                {
+                    const auto [x, y] = at(sparse[static_cast<std::size_t>(control)].rect);
+                    (void)pause.UpdatePanel(mouse(x, y, true), sparse);
+                    check(pause.UpdatePanel(mouse(x, y, false), sparse).button == -1,
+                          "My recordings: absent rows, paging and upload do not answer");
+                }
+            }
             const auto [sx, sy] = at(InputPad::DemoSlotRect(2, 800, 480));
             (void)pause.UpdateDemoSlots(mouse(sx, sy, true), 800, 480, slots);
             const auto third = pause.UpdateDemoSlots(mouse(sx, sy, false), 800, 480, slots);

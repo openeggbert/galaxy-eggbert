@@ -334,6 +334,46 @@ int main(int argc, char** argv)
         check(refused == DemoLoadStatus::Corrupt && missing == DemoLoadStatus::Missing && untouched &&
                   imported == DemoLoadStatus::Ok && sixth == text,
               "an import checks the file first: a damaged or missing one writes nothing, a good one becomes position 6");
+        // Keep the serialized body byte-for-byte except the title, even for an older revision.
+        auto olderDemo = recorded;
+        olderDemo.simulationRevision = kDemoSimulationRevision + 7;
+        const auto olderText = olderDemo.Serialize();
+        const std::string olderPath = SharedDemoDir() + "/old.gdemo";
+        { std::ofstream out(olderPath, std::ios::binary); out << olderText; }
+        { std::ofstream out(SharedDemoDir() + "/My-run.gdemo", std::ios::binary); out << text; }
+        { std::ofstream out(SharedDemoDir() + "/My-run-2.gdemo", std::ios::binary); out << text; }
+        const auto renamedPath = RenameDemoFile(olderPath, "My run");
+        const auto renamedBytes = ReadFile(renamedPath);
+        auto expectedBody = *ResumeLog::VerifiedBody(olderText);
+        const auto titleStart = expectedBody.find('"');
+        expectedBody.replace(titleStart, recorded.title.size() + 2, "\"My run\"");
+        check(renamedPath == SharedDemoDir() + "/My-run-3.gdemo" && !std::filesystem::exists(olderPath) &&
+                  renamedBytes && *renamedBytes == ResumeLog::AppendChecksum(expectedBody) &&
+                  ParseDemo(*renamedBytes, kDemoSimulationRevision, reread, true) == DemoLoadStatus::Ok &&
+                  reread.title == "My run" && reread.simulationRevision == olderDemo.simulationRevision,
+              "collection rename numbers collisions, changes only title/footer, validates checksum and keeps revision");
+        check(RenameDemoFile(renamedPath, "My run").ends_with("My-run-4.gdemo"),
+              "renaming again does not replace an existing same-title file");
+        const auto samePath = SharedDemoDir() + "/Same.gdemo";
+        { std::ofstream out(samePath, std::ios::binary); out << text; }
+        check(RenameDemoFile(samePath, "Same") == samePath && RenameDemoFile(samePath, "!!!").empty(),
+              "unchanged filename is allowed; empty sanitized name leaves the recording alone");
+        const auto now = std::filesystem::file_time_type::clock::now();
+        std::filesystem::last_write_time(exported, now + std::chrono::seconds(20));
+        std::filesystem::last_write_time(samePath, now + std::chrono::seconds(10));
+        const auto collection = ListDemoCollection([](DemoRecording& demo) { return demo.log.start.worldPath; });
+        check(collection.size() >= 2 && collection[0].path == exported && collection[1].path == samePath &&
+                  collection[0].name == "A-demo-4.gdemo" && collection[1].name == "Same" &&
+                  collection[0].status == DemoLoadStatus::OwnWorld && !collection[0].metadata.empty(),
+              "collection sorts newest first, uses filename for automatic titles, keeps version/date and own-world state");
+        const auto oldEntry = std::find_if(collection.begin(), collection.end(), [](const auto& entry) { return entry.olderRevision; });
+        check(oldEntry != collection.end() && oldEntry->Playable() && oldEntry->status == DemoLoadStatus::OwnWorld,
+              "collection lists older revisions as playable with a warning");
+        check(DeleteDemoFile(samePath) && !DeleteDemoFile(samePath) && !std::filesystem::exists(samePath),
+              "collection delete removes the file and reports an absent file");
+        const auto afterDelete = ListSharedDemos();
+        check(std::find(afterDelete.begin(), afterDelete.end(), samePath) == afterDelete.end(),
+              "deleted recording disappears on refresh");
         std::filesystem::current_path(home, error);
         std::filesystem::remove_all(here, error);
     }

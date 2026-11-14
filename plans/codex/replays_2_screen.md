@@ -64,6 +64,11 @@ positions are. In the UI it is called "My recordings".
 - Every new or changed Tr/TrMark/TrFormat string in all 19 `Translations*.cpp` (VerifyLocalization),
   translated properly per language.
 
+Part 1 gave you: `ParseDemo(text, kDemoSimulationRevision, out, /*acceptOtherRevision=*/true)`,
+`DemoLoadStatus::OwnWorld` from `DemoWorldStatus`, `CacheDemoWorld()`, and `StartDemoFile()`
+playing from the cached world; `DemoRecording::gameVersion`/`recordedAt`. When the warned playback
+works, update Q-024's "Meanwhile" in `plans/audit/owner_questions.md` to say (b) is built.
+
 Keep the code where its kind already lives: geometry/hit tests/drawing in InputPad (pure,
 testable), file operations in DemoReplay (rename-with-file, list rows' data), the flow in
 GalaxyEggbertGameDemo.cpp. The Demos screen's other modes (record from Pause, Export / Name /

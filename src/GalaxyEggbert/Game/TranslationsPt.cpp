@@ -9,6 +9,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kPortugueseTranslations[] = {
+        {"Import a demo: choose the file", "Importar uma demo: escolha o arquivo"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Uma gravação de uma versão anterior não pode ser uma demo do menu."},
+        {"Add file", "Adicionar ficheiro"},
+        {"Choose a recording first.", "Escolhe primeiro uma gravação."},
+        {"Delete", "Eliminar"},
+        {"Delete {0}? Press Delete again.", "Eliminar {0}? Prime Eliminar outra vez."},
+        {"It is the file {0}.", "É o ficheiro {0}."},
+        {"It played differently than it was recorded.", "A reprodução foi diferente da gravação."},
+        {"Menu demo", "Demo do menu"},
+        {"Menu demo: choose the position for {0}", "Demo do menu: escolhe a posição para {0}"},
+        {"My recordings", "As minhas gravações"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "As minhas gravações, Exportar, Nome ou Original; grava numa missão: Pausa > Gravar."},
+        {"Recorded with an older version: it may play differently.", "Gravado com uma versão anterior: a reprodução pode ser diferente."},
+        {"Rename", "Mudar nome"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Não foi possível mudar o nome da gravação. Usa um nome com uma letra ou um algarismo."},
+        {"older version: may play differently", "versão anterior: a reprodução pode ser diferente"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Jogar"},
         {"Home", "Menu"},
@@ -128,7 +146,6 @@ namespace GalaxyEggbert::Game
         {"The others play on: time left {0} (the host waits for the end).", "Os outros continuam jogando: faltam {0} (o anfitrião espera o fim)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.", "Exportar, Importar ou Original aqui; gravar numa missão: Pausa > Gravar."},
         {"Not created: {0}", "Não criado: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -142,7 +159,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galáxia {0}"},
         {"Mission {0}", "Missão {0}"},
         {"(unplayable)", "(não jogável)"},
-        {"The file is listed: click it to import it.", "O arquivo está na lista: clique nele para importá-lo."},
         {"Click a position to export its demo.", "Clique numa posição para exportar a demo dela."},
         {"Click a recorded position to name its demo.", "Clique numa posição gravada para dar nome à demo dela."},
         {"Position {0} plays its shipped demo again.", "A posição {0} volta a reproduzir a demo original."},
@@ -153,13 +169,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Dê um nome à demo da posição {0}"},
         {"Name a demo: choose its position", "Nomear uma demo: escolha a posição"},
         {"Export a demo: choose its position", "Exportar uma demo: escolha a posição"},
-        {"Import a demo: choose its position", "Importar uma demo: escolha a posição"},
-        {"Import a demo: choose the file", "Importar uma demo: escolha o arquivo"},
         {"The demo positions", "As posições das demos"},
         {"Record a demo: choose its position", "Gravar uma demo: escolha a posição"},
         {"Put .gdemo files in {0}/ to import them.", "Coloque arquivos .gdemo em {0}/ para importá-los."},
-        {"Click the file to import.", "Clique no arquivo que quer importar."},
-        {"Import {0}: click a position (Import: the list again).", "Importar {0}: clique numa posição (Importar: a lista de novo)."},
         {"galaxy {0}, {1} s", "galáxia {0}, {1} s"},
         {"mission {0}, {1} s", "missão {0}, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Escolha um arquivo .gdemo: ele aparecerá aqui."},
@@ -171,7 +183,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo {0} exportada para {1}."},
         {"{0} cannot be imported: {1}.", "Não é possível importar {0}: {1}."},
         {"Position {0} plays {1} now.", "A posição {0} reproduz agora {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.", "A posição {0} reproduz agora {1}. O mundo dela não está aqui: ela é pulada até que esteja."},
         {"The demo could not be recorded.", "Não foi possível gravar a demo."},
         {"Demo recorded in position {0}.", "Demo gravada na posição {0}."},
 

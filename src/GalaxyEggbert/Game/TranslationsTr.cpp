@@ -9,6 +9,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kTurkishTranslations[] = {
+        {"Import a demo: choose the file", "Bir demoyu içe aktar: dosyayı seç"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Eski bir sürümün kaydı menü demosu olamaz."},
+        {"Add file", "Dosya ekle"},
+        {"Choose a recording first.", "Önce bir kayıt seç."},
+        {"Delete", "Sil"},
+        {"Delete {0}? Press Delete again.", "{0} silinsin mi? Tekrar Sil'e bas."},
+        {"It is the file {0}.", "Dosya: {0}."},
+        {"It played differently than it was recorded.", "Oynatma kayıttan farklı oldu."},
+        {"Menu demo", "Menü demosu"},
+        {"Menu demo: choose the position for {0}", "Menü demosu: {0} için konum seç"},
+        {"My recordings", "Kayıtlarım"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Kayıtlarım, Dışa aktar, Ad veya Orijinal; görevde kaydet: Duraklat > Kaydet."},
+        {"Recorded with an older version: it may play differently.", "Eski bir sürümle kaydedildi: farklı oynatılabilir."},
+        {"Rename", "Yeniden adlandır"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Kaydın adı değiştirilemedi. Harf veya rakam içeren bir ad kullan."},
+        {"older version: may play differently", "eski sürüm: farklı oynatılabilir"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Oyna"},
         {"Home", "Menü"},
@@ -132,8 +150,6 @@ namespace GalaxyEggbert::Game
          "Diğerleri oynamaya devam ediyor: kalan süre {0} (ev sahibi sonu bekler)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.",
-         "Dışa aktar, İçe aktar veya Orijinal burada; bir görevde kaydet: Duraklat > Kayıt."},
         {"Not created: {0}", "Oluşturulmadı: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -148,7 +164,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galaksi {0}"},
         {"Mission {0}", "Görev {0}"},
         {"(unplayable)", "(oynanamaz)"},
-        {"The file is listed: click it to import it.", "Dosya listede: içe aktarmak için tıkla."},
         {"Click a position to export its demo.", "Demosunu dışa aktarmak için bir yere tıkla."},
         {"Click a recorded position to name its demo.", "Demosuna ad vermek için kayıtlı bir yere tıkla."},
         {"Position {0} plays its shipped demo again.", "{0}. yer yine orijinal demosunu oynatıyor."},
@@ -161,14 +176,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "{0}. yerdeki demoyu adlandır"},
         {"Name a demo: choose its position", "Bir demoyu adlandır: yerini seç"},
         {"Export a demo: choose its position", "Bir demoyu dışa aktar: yerini seç"},
-        {"Import a demo: choose its position", "Bir demoyu içe aktar: yerini seç"},
-        {"Import a demo: choose the file", "Bir demoyu içe aktar: dosyayı seç"},
         {"The demo positions", "Demo yerleri"},
         {"Record a demo: choose its position", "Bir demo kaydet: yerini seç"},
         {"Put .gdemo files in {0}/ to import them.", "İçe aktarmak için .gdemo dosyalarını {0}/ klasörüne koy."},
-        {"Click the file to import.", "İçe aktarılacak dosyaya tıkla."},
-        {"Import {0}: click a position (Import: the list again).",
-         "{0} içe aktar: bir yere tıkla (İçe aktar: liste yeniden)."},
         {"galaxy {0}, {1} s", "galaksi {0}, {1} sn"},
         {"mission {0}, {1} s", "görev {0}, {1} sn"},
         {"Choose a .gdemo file: it is listed here.", "Bir .gdemo dosyası seç: burada listelenir."},
@@ -180,8 +190,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo {0} dışa aktarıldı: {1}."},
         {"{0} cannot be imported: {1}.", "{0} içe aktarılamıyor: {1}."},
         {"Position {0} plays {1} now.", "{0}. yer artık {1} oynatıyor."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
-         "{0}. yer artık {1} oynatıyor. Dünyası burada yok: olana kadar atlanır."},
         {"The demo could not be recorded.", "Demo kaydedilemedi."},
         {"Demo recorded in position {0}.", "Demo {0}. yere kaydedildi."},
 

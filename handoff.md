@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-14 (the camera turns with his look up/down, merged; back/recall: "Loading.." on a white panel over the picture at once; the cheats' help: a word clicked turns its cheat on; cheats restart, snap, here, trail, ids, sounds, chunks; cheats freecam, xray, hitbox; cheats mark, recall, photo, freeze and the cheats' help in two pages; the cheats' keyboard on the screen: centre hold or LT; the typed cheat `back`: five seconds back through the resume replay, a progress screen for back and Continue; twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-14 (My recordings: play, rename, delete, export, menu demo; replay format 2 with the world; the camera turns with his look up/down, merged; back/recall: "Loading.." on a white panel over the picture at once; the cheats' help: a word clicked turns its cheat on; cheats restart, snap, here, trail, ids, sounds, chunks; cheats freecam, xray, hitbox; cheats mark, recall, photo, freeze and the cheats' help in two pages; the cheats' keyboard on the screen: centre hold or LT; the typed cheat `back`: five seconds back through the resume replay, a progress screen for back and Continue; twenty languages: Finnish, Danish, Norwegian, Turkish, Greek on branch `localization`; a Linux archive for glibc 2.35 built in a rootless Ubuntu 22.04 root; release 0.3.0 published: fifteen languages, the picker of flags, a faster editor, protocol 5; the languages checked on Android in an emulator; fifteen languages: Dutch, Hungarian, Romanian, Swedish, Russian, Ukrainian merged; nine languages and the picker of flags merged; release 0.2.0 published, the site brought up to date; the language's flag in the menu; German and Czech, Q-023; the terrain rebuilt by chunks, OR-0074; English and French merged into develop, Q-023, BD-0126; release 0.1.3: the 1.5x speed on F4, F9 being CNA's debug context loss, UB-013; release 0.1.2 with the 1.5x speed; release 0.1.1 tagged and published; the repeated death sounds and the stuttering explosions fixed, BD-0121/0122; release 0.1.0 tagged and published on GitHub: Windows, Linux, Android, web; the branch `multiplayer` merged into develop by the owner; versioning: 0.1.0, not released, shown on the main menu with the build time; the outside review of 2026-11-07 checked: .vwr loading bounded, atomic world saves, every metadata type in the round-trip test; multiplayer Q-022 on branch `multiplayer`; Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
 ## The camera turns with his look up/down (2026-11-14, the owner for a player) — merged into develop 2026-11-14 (the owner asked, to try it)
 
@@ -32,6 +32,18 @@ Up/Down has lasted `ScaleTime(4)` (`m_scrollAdd.Y`, Decor.cpp:3278-3287, back to
   acceleration of the look (0.019-0.039) as the existing walk start/idle swing (0.018/0.035).
   Under Xvfb, `xdotool keydown Shift_R` also presses Shift_L (crouch wins): add `keyup Shift_L`.
 - Next: the owner tries it; the angle (0.5 rad) and the ease (5/s) are the knobs.
+
+## My recordings (2026-11-14, the owner: replays 2/3) — committed
+
+Brief `plans/codex/replays_2_screen.md`, Codex (astra) until its ChatGPT quota ran out (until
+2026-11-18 22:05) at the end; reviewed, finished and verified here. Main menu > Demos > **My
+recordings** (was Import): the `demos/shared/` collection, seven a page; a selected recording:
+Play (once, back to the list), Rename (title + file), Delete (twice), Export (web download, else
+the path), Menu demo (a position gets a copy); web Add file. Older revisions (Q-024 (b), built):
+warning, best-effort play, never a menu demo. Rows: version, `YYYY-MM-DD HH:MM UTC`.
+`DemoReplay`: `ListDemoCollection`, `RenameDemoFile`, `DeleteDemoFile`; `InputPad::DrawRecordings`
+and its hit tests. Verified: 136/136 CTest, ten demos equal, web target links, live shots
+`build-probe/replays-2/` (report.md). Next: `plans/codex/replays_3_record.md` (Claude, Codex is out).
 
 ## Replay format 2 (2026-11-14, the owner: replays 1/3) — committed
 
@@ -1836,8 +1848,8 @@ ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md
 
 ### Codex queue (in this order; each brief is self-contained)
 
-Replay collection (the owner, 2026-11-14): `replays_1_format.md` committed; next
-`replays_2_screen.md`, then `replays_3_record.md`.
+Replay collection (the owner, 2026-11-14): `replays_1_format.md` and `replays_2_screen.md` committed;
+next `replays_3_record.md` (Claude: Codex's quota is out until 2026-11-18 22:05).
 
 | # | Task | Brief | Owner's report / decision |
 |---|---|---|---|

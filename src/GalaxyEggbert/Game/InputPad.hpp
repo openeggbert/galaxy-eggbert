@@ -1,4 +1,6 @@
 #pragma once
+
+#include "DemoReplay.hpp"
 #include <algorithm>
 
 #include "QuadBatch.hpp"
@@ -66,6 +68,8 @@ namespace GalaxyEggbert::Game
     {
         const ScreenKeyboard* keyboard = nullptr;
         std::string draft;
+        bool positionChoice = false;
+        bool collectionLink = false;
         std::optional<QuadBatch::Rect> focus;
     };
 
@@ -354,6 +358,18 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] static QuadBatch::Rect DemoListDeleteRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListPrevRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListNextRect(int viewportW, int viewportH) noexcept;
+
+        // My recordings: seven large entries in two columns. The spare eighth cell holds
+        // paging and web upload; the six actions below are also position-button height.
+        enum RecordingControl { RecordingPlay = 7, RecordingRename, RecordingDelete, RecordingExport,
+                                RecordingMenu, RecordingCancel, RecordingPrev, RecordingNext, RecordingAdd };
+        [[nodiscard]] static QuadBatch::Rect RecordingRect(int control, int w, int h) noexcept;
+        [[nodiscard]] static std::vector<PanelButton> RecordingButtons(int w, int h, int rows, int selected,
+                                                                       bool paged, bool upload);
+        [[nodiscard]] static std::string RecordingState(const DemoCollectionEntry& entry);
+        void DrawRecordings(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h,
+                            const std::vector<DemoCollectionEntry>& entries, int page, int selected,
+                            const std::string& message, bool upload, std::optional<QuadBatch::Rect> focus);
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real

@@ -61,15 +61,21 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
-- Replay format 2 (2026-11-14, `plans/codex/replays_1_format.md`, uncommitted review): new
+- Replay format 2 (2026-11-14, `plans/codex/replays_1_format.md`, `e2ef28f1`): new
   recordings carry the game version and UTC finish time; player recordings also carry the exact
   loaded world bytes. Missing/changed worlds fall back to a hash-checked, atomically written copy
   in `demos/worlds/<hash>.vwr`, retaining the recorded mission and galaxy context. Format 1 remains
-  readable; developer recordings omit the world. All current playback/import/verification callers
-  still reject another simulation revision; the parser's explicit opt-in prepares Q-024 and the
-  later collection screen. Import rows show version/date and own-copy status in all 19 translations.
-  Evidence and verification: `build-probe/replays-1/report.md`. Collection screens and direct
-  collection recording are separate briefs, not implemented here.
+  readable; developer recordings omit the world. Menu playback/import and verification reject
+  another simulation revision; the collection explicitly opts into warned best-effort playback
+  (Q-024). Evidence and verification: `build-probe/replays-1/report.md`.
+- My recordings (2026-11-14, `plans/codex/replays_2_screen.md`, committed): main-menu
+  Demos opens the shared `demos/shared/` collection, seven entries per page in two columns with
+  position-sized touch targets. Play once and return to the selected recording; Rename changes
+  its title and filename without overwriting another file; Delete asks twice; Export gives the
+  full path or a browser download; Menu demo copies into a chosen position. Older revisions get
+  a warning and cannot become menu demos. Web Add file uses the browser picker. All 19 tables
+  translated. Pause retains its existing record-to-position and import flow; direct recording
+  into the collection remains part 3, not implemented. Evidence: `build-probe/replays-2/report.md`.
 
 - MODERN cheats `restart`, `snap`, `here`, `trail`, `ids`, `sounds`, `chunks` (2026-11-13,
   `plans/codex/cheats_restart_snap_here_trail_ids_sounds_chunks.md`): tick-zero rewind,

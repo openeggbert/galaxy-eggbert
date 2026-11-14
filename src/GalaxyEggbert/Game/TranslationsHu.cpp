@@ -9,6 +9,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kHungarianTranslations[] = {
+        {"Import a demo: choose the file", "Demó importálása: válaszd ki a fájlt"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Régebbi verzióval készült felvétel nem lehet menübemutató."},
+        {"Add file", "Fájl hozzáadása"},
+        {"Choose a recording first.", "Előbb válassz egy felvételt."},
+        {"Delete", "Törlés"},
+        {"Delete {0}? Press Delete again.", "Törlöd ezt: {0}? Nyomd meg újra a Törlés gombot."},
+        {"It is the file {0}.", "Ez a fájl: {0}."},
+        {"It played differently than it was recorded.", "A lejátszás eltért a felvételtől."},
+        {"Menu demo", "Menübemutató"},
+        {"Menu demo: choose the position for {0}", "Menübemutató: válassz helyet ehhez: {0}"},
+        {"My recordings", "Felvételeim"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Felvételeim, Exportálás, Név vagy Eredeti; felvétel küldetés közben: Szünet > Felvétel."},
+        {"Recorded with an older version: it may play differently.", "Régebbi verzióval készült: a lejátszás eltérhet."},
+        {"Rename", "Átnevezés"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "A felvételt nem sikerült átnevezni. A névben legyen betű vagy számjegy."},
+        {"older version: may play differently", "régebbi verzió: a lejátszás eltérhet"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Játék"},
         {"Home", "Menü"},
@@ -128,7 +146,6 @@ namespace GalaxyEggbert::Game
         {"The others play on: time left {0} (the host waits for the end).", "A többiek játszanak tovább: még {0} (a házigazda a végét várja)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.", "Exportálás, Importálás vagy Eredeti itt; felvétel küldetésben: Szünet > Felvétel."},
         {"Not created: {0}", "Nem jött létre: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -142,7 +159,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "{0}. galaxis"},
         {"Mission {0}", "{0}. küldetés"},
         {"(unplayable)", "(nem játszható)"},
-        {"The file is listed: click it to import it.", "A fájl a listán van: kattints rá az importáláshoz."},
         {"Click a position to export its demo.", "Kattints egy helyre a demója exportálásához."},
         {"Click a recorded position to name its demo.", "Kattints egy felvett helyre a demója elnevezéséhez."},
         {"Position {0} plays its shipped demo again.", "A(z) {0}. hely ismét az eredeti demóját játssza."},
@@ -153,13 +169,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Nevezd el a(z) {0}. hely demóját"},
         {"Name a demo: choose its position", "Demó elnevezése: válaszd ki a helyét"},
         {"Export a demo: choose its position", "Demó exportálása: válaszd ki a helyét"},
-        {"Import a demo: choose its position", "Demó importálása: válaszd ki a helyét"},
-        {"Import a demo: choose the file", "Demó importálása: válaszd ki a fájlt"},
         {"The demo positions", "A demók helyei"},
         {"Record a demo: choose its position", "Demó felvétele: válaszd ki a helyét"},
         {"Put .gdemo files in {0}/ to import them.", "Tedd a .gdemo fájlokat ide: {0}/, az importáláshoz."},
-        {"Click the file to import.", "Kattints az importálandó fájlra."},
-        {"Import {0}: click a position (Import: the list again).", "{0} importálása: kattints egy helyre (Importálás: újra a lista)."},
         {"galaxy {0}, {1} s", "{0}. galaxis, {1} s"},
         {"mission {0}, {1} s", "{0}. küldetés, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Válassz egy .gdemo fájlt: itt jelenik meg."},
@@ -171,7 +183,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "{0} demó exportálva ide: {1}."},
         {"{0} cannot be imported: {1}.", "{0} nem importálható: {1}."},
         {"Position {0} plays {1} now.", "A(z) {0}. hely most ezt játssza: {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.", "A(z) {0}. hely most ezt játssza: {1}. A világa nincs itt: kimarad, amíg nem lesz."},
         {"The demo could not be recorded.", "A demót nem sikerült felvenni."},
         {"Demo recorded in position {0}.", "Demó felvéve a(z) {0}. helyre."},
 

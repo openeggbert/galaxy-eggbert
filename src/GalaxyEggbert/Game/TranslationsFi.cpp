@@ -9,6 +9,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kFinnishTranslations[] = {
+        {"Import a demo: choose the file", "Tuo demo: valitse tiedosto"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Vanhemman version tallennetta ei voi käyttää valikon demona."},
+        {"Add file", "Lisää tiedosto"},
+        {"Choose a recording first.", "Valitse ensin tallenne."},
+        {"Delete", "Poista"},
+        {"Delete {0}? Press Delete again.", "Poistetaanko {0}? Paina Poista uudelleen."},
+        {"It is the file {0}.", "Se on tiedosto {0}."},
+        {"It played differently than it was recorded.", "Toisto erosi tallenteesta."},
+        {"Menu demo", "Valikon demo"},
+        {"Menu demo: choose the position for {0}", "Valikon demo: valitse paikka tallenteelle {0}"},
+        {"My recordings", "Omat tallenteet"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Omat tallenteet, Vie, Nimi tai Alkuperäinen; tallenna tehtävässä: Tauko > Tallenna."},
+        {"Recorded with an older version: it may play differently.", "Tallennettu vanhemmalla versiolla: toisto voi poiketa alkuperäisestä."},
+        {"Rename", "Nimeä uudelleen"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Tallennetta ei voitu nimetä uudelleen. Käytä nimeä, jossa on kirjain tai numero."},
+        {"older version: may play differently", "vanhempi versio: toisto voi poiketa alkuperäisestä"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Pelaa"},
         {"Home", "Valikko"},
@@ -132,8 +150,6 @@ namespace GalaxyEggbert::Game
          "Muut pelaavat vielä: aikaa jäljellä {0} (isäntä odottaa loppuun)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.",
-         "Vie, Tuo tai Alkuperäinen täällä; nauhoita tehtävässä: Tauko > Nauhoita."},
         {"Not created: {0}", "Ei luotu: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -148,7 +164,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galaksi {0}"},
         {"Mission {0}", "Tehtävä {0}"},
         {"(unplayable)", "(ei pelattavissa)"},
-        {"The file is listed: click it to import it.", "Tiedosto on listassa: napsauta sitä tuodaksesi sen."},
         {"Click a position to export its demo.", "Napsauta paikkaa viedäksesi sen demon."},
         {"Click a recorded position to name its demo.", "Napsauta nauhoitettua paikkaa nimetäksesi sen demon."},
         {"Position {0} plays its shipped demo again.", "Paikka {0} toistaa taas alkuperäisen demonsa."},
@@ -161,13 +176,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Nimeä paikan {0} demo"},
         {"Name a demo: choose its position", "Nimeä demo: valitse sen paikka"},
         {"Export a demo: choose its position", "Vie demo: valitse sen paikka"},
-        {"Import a demo: choose its position", "Tuo demo: valitse sen paikka"},
-        {"Import a demo: choose the file", "Tuo demo: valitse tiedosto"},
         {"The demo positions", "Demopaikat"},
         {"Record a demo: choose its position", "Nauhoita demo: valitse sen paikka"},
         {"Put .gdemo files in {0}/ to import them.", "Laita .gdemo-tiedostot kansioon {0}/ tuodaksesi ne."},
-        {"Click the file to import.", "Napsauta tuotavaa tiedostoa."},
-        {"Import {0}: click a position (Import: the list again).", "Tuo {0}: napsauta paikkaa (Tuo: lista uudelleen)."},
         {"galaxy {0}, {1} s", "galaksi {0}, {1} s"},
         {"mission {0}, {1} s", "tehtävä {0}, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Valitse .gdemo-tiedosto: se on listattu tähän."},
@@ -179,8 +190,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo {0} viety: {1}."},
         {"{0} cannot be imported: {1}.", "Tiedostoa {0} ei voi tuoda: {1}."},
         {"Position {0} plays {1} now.", "Paikka {0} toistaa nyt: {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
-         "Paikka {0} toistaa nyt: {1}. Sen maailmaa ei ole täällä: se ohitetaan, kunnes on."},
         {"The demo could not be recorded.", "Demoa ei voitu nauhoittaa."},
         {"Demo recorded in position {0}.", "Demo nauhoitettu paikkaan {0}."},
 

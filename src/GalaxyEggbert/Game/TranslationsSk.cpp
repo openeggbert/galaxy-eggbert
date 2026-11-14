@@ -10,6 +10,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kSlovakTranslations[] = {
+        {"Import a demo: choose the file", "Importovať demo: vyber súbor"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Nahrávka zo staršej verzie nemôže byť ukážkou v menu."},
+        {"Add file", "Pridať súbor"},
+        {"Choose a recording first.", "Najprv vyber nahrávku."},
+        {"Delete", "Vymazať"},
+        {"Delete {0}? Press Delete again.", "Vymazať {0}? Stlač znova Vymazať."},
+        {"It is the file {0}.", "Je to súbor {0}."},
+        {"It played differently than it was recorded.", "Prehralo sa to inak než pri nahrávaní."},
+        {"Menu demo", "Ukážka v menu"},
+        {"Menu demo: choose the position for {0}", "Ukážka v menu: vyber pozíciu pre {0}"},
+        {"My recordings", "Moje nahrávky"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Moje nahrávky, Export, Názov alebo Pôvodné; nahrávaj v misii: Pauza > Nahrať."},
+        {"Recorded with an older version: it may play differently.", "Nahrané v staršej verzii: môže sa prehrať inak."},
+        {"Rename", "Premenovať"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Nahrávku nemožno premenovať. Použi názov s písmenom alebo číslicou."},
+        {"older version: may play differently", "staršia verzia: môže sa prehrať inak"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Hrať"},
         {"Home", "Menu"},
@@ -129,7 +147,6 @@ namespace GalaxyEggbert::Game
         {"The others play on: time left {0} (the host waits for the end).", "Ostatní hrajú ďalej: zostáva {0} (hostiteľ čaká na koniec)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.", "Tu Exportovať, Importovať alebo Pôvodný; nahráva sa v misii: Pauza > Nahrať."},
         {"Not created: {0}", "Nevytvorené: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -143,7 +160,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galaxia {0}"},
         {"Mission {0}", "Misia {0}"},
         {"(unplayable)", "(nehrateľné)"},
-        {"The file is listed: click it to import it.", "Súbor je v zozname: klikni naň a importuj ho."},
         {"Click a position to export its demo.", "Klikni na pozíciu a exportuj jej demo."},
         {"Click a recorded position to name its demo.", "Klikni na nahratú pozíciu a pomenuj jej demo."},
         {"Position {0} plays its shipped demo again.", "Pozícia {0} znova hrá svoje pôvodné demo."},
@@ -154,13 +170,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Pomenuj demo na pozícii {0}"},
         {"Name a demo: choose its position", "Pomenovať demo: vyber jeho pozíciu"},
         {"Export a demo: choose its position", "Exportovať demo: vyber jeho pozíciu"},
-        {"Import a demo: choose its position", "Importovať demo: vyber jeho pozíciu"},
-        {"Import a demo: choose the file", "Importovať demo: vyber súbor"},
         {"The demo positions", "Pozície dem"},
         {"Record a demo: choose its position", "Nahrať demo: vyber jeho pozíciu"},
         {"Put .gdemo files in {0}/ to import them.", "Vlož súbory .gdemo do {0}/ a importuj ich."},
-        {"Click the file to import.", "Klikni na súbor, ktorý chceš importovať."},
-        {"Import {0}: click a position (Import: the list again).", "Import {0}: klikni na pozíciu (Importovať: znova zoznam)."},
         {"galaxy {0}, {1} s", "galaxia {0}, {1} s"},
         {"mission {0}, {1} s", "misia {0}, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Vyber súbor .gdemo: objaví sa tu."},
@@ -172,7 +184,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo {0} exportované do {1}."},
         {"{0} cannot be imported: {1}.", "{0} nemožno importovať: {1}."},
         {"Position {0} plays {1} now.", "Pozícia {0} teraz hrá {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.", "Pozícia {0} teraz hrá {1}. Jeho svet tu nie je: preskakuje sa, kým nebude."},
         {"The demo could not be recorded.", "Demo sa nepodarilo nahrať."},
         {"Demo recorded in position {0}.", "Demo nahraté na pozíciu {0}."},
 

@@ -12,9 +12,10 @@ A recording made before a change of the game's rules (simulation revision) may p
 Options: (a) refuse it (today); (b) list it and let it play best effort with a warning, never as a
 menu demo; (c) keep old simulation code to replay it exactly (expensive, not recommended).
 Recommendation: **(b)**. Meanwhile: format 2 stores version, UTC date and the player's exact world;
-`ParseDemo` has an explicit revision opt-in while all current callers, menu demos and verifiers
-still refuse other revisions. This builds the foundation for (b); listing and warned best-effort
-playback belong to the following collection-screen brief, not this change.
+`ParseDemo` has an explicit revision opt-in. **(b) is built** in My recordings: older revisions
+are listed and play once after a warning, with a notice when the end differs. Menu-demo assignment,
+automatic menu playback and verifiers still refuse other revisions. Verified live in
+`build-probe/replays-2/`; the collection returns with the same recording selected.
 
 ### Waiting on the owner (updated 2026-11-05, MR-0007 and MR-0008)
 

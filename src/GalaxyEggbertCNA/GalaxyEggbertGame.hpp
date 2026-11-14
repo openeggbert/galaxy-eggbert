@@ -937,7 +937,7 @@ namespace GalaxyEggbert::CNA
             int galaxyGamer = -1;
         };
         bool StartDemo(int number);
-        bool StartDemoFile(const std::string& path, int number);
+        bool StartDemoFile(const std::string& path, int number, bool collection = false);
         // The world file a demo plays in: the campaign's, or a galaxy's (BD-0119) -- the recording
         // player's, else (a demo shared with its galaxy, maybe from another platform) any player's
         // galaxy whose world has the recording's hash; @p galaxy is that player, -1 the campaign.
@@ -1013,16 +1013,20 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] std::string DemoSlotPath(int slot) const;
         [[nodiscard]] std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> DemoSlotInfos() const;
         void ShowDemoNotice(std::string text);
-        // Sharing recordings (2026-11-09): the positions' Export and Import change what a click on
-        // a position does: 0 records, 1 exports its demo, 2 imports demoImports_[demoImportIndex_];
-        // 3 shows Import's list of the shared .gdemo files (newest first, demoImportRows_ its lines)
-        // in place of the positions, a row chosen goes on to 2.
+        // Position modes: 0 records, 1 exports, 2 chooses a menu-demo position,
+        // 3 shows My recordings (Pause retains its import picker), 4 names a position.
         int demoSlotsMode_ = 0;
         std::vector<std::string> demoImports_;
-        std::vector<std::string> demoImportRows_;
+        std::vector<GalaxyEggbert::Game::DemoCollectionEntry> demoCollection_;
+        bool demoCollectionPlayback_ = false;
+        int demoCollectionStartDelay_ = 0;
+        void UpdateRecordings(const Microsoft::Xna::Framework::Input::MouseState& mouse, int w, int h);
+        void PlaySelectedRecording();
+        [[nodiscard]] const GalaxyEggbert::Game::DemoCollectionEntry* SelectedRecording() const;
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::PanelButton> RecordingButtons(int w, int h) const;
         std::size_t demoImportIndex_ = 0;
         int demoImportPage_ = 0;     // InputPad::kDemoListRows files a page
-        int demoDeleteArmed_ = -1;   // the file (index in demoImports_) whose bin was clicked once
+        int demoDeleteArmed_ = -1;   // the collection index awaiting a second Delete
         void ListDemoImports();
         // The demo positions' screen (over Pause, or from the menu's Demos button: no recording there).
         void UpdateDemoSlotsScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW,

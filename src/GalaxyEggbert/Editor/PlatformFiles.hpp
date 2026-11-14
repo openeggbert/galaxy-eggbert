@@ -11,6 +11,8 @@ namespace GalaxyEggbert::Editor
     // CustomWorldsDir()'s path, not an engine one; elsewhere these do nothing and return false (the
     // files are in customworlds/, beside the game).
 
+    [[nodiscard]] bool FileUploadAvailable() noexcept;
+
     // Offers @p file to the player as a download named @p name.
     bool OfferDownload(const std::filesystem::path& file, const std::string& name);
 

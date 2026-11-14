@@ -1779,7 +1779,7 @@ namespace GalaxyEggbert::Game
             AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
-        centred(labels, title, w * 0.5f, 34.0f * s, 0.7f);
+        centred(labels, title, w * 0.5f, 34.0f * s, std::min(0.7f, 600.0f / std::max(1.0f, TextMetrics::Width(title))));
         // A text the width of @p room at most (cut, "..." at its end).
         const auto fit = [&](std::string text, float size, float room) {
             if (TextMetrics::Width(text) * size * s <= room) return text;
@@ -1835,7 +1835,7 @@ namespace GalaxyEggbert::Game
             const float room = r.x1 - r.x0 + 12.0f * s;
             centred(slot.recorded ? labels : faint, fit(slot.line1, 0.42f, room), cx, r.y1 + 4.0f * s, 0.42f);
             centred(slot.recorded ? labels : faint, fit(slot.line2, 0.42f, room), cx, r.y1 + 22.0f * s, 0.42f);
-            if (slot.recorded)
+            if (slot.recorded && !extras.positionChoice)
             {
                 const Rect o = DemoRestoreRect(i, viewportW, viewportH);
                 icon(demoSlotsControl_ == 10 + i ? pressed : normal, o, 21);
@@ -1850,11 +1850,13 @@ namespace GalaxyEggbert::Game
             // activeMode: 1 Export, 2 Import, 3 Name drawn held.
             for (const auto& [control, rect, caption] :
                  {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), TrMark("Export")},
-                  std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), TrMark("Import")},
+                  std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), extras.collectionLink ? TrMark("My recordings") : TrMark("Import")},
                   std::tuple<int, Rect, const char*>{23, DemoNameRect(viewportW, viewportH), TrMark("Name")}})
             {
+                if (extras.positionChoice) continue;
                 icon(demoSlotsControl_ == control || activeMode == control - 20 ? pressed : normal, rect, 21);
-                centred(labels, Tr(caption), (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
+                const float size = std::min(0.6f, (rect.x1 - rect.x0 - 8.0f * s) / (TextMetrics::Width(Tr(caption)) * s));
+                centred(labels, Tr(caption), (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, size);
             }
         }
         if (extras.focus)
@@ -1877,6 +1879,110 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, faint, viewportW, viewportH, 0.6f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    QuadBatch::Rect InputPad::RecordingRect(int control, int w, int h) noexcept
+    {
+        if (control < kDemoListRows)
+        {
+            const float x = 14.0f + static_cast<float>(control % 2) * 310.0f;
+            const float y = 66.0f + static_cast<float>(control / 2) * 70.0f;
+            return PanelRect(x, y, x + 302.0f, y + 64.0f, w, h);
+        }
+        if (control <= RecordingCancel)
+        {
+            const float x = 14.0f + static_cast<float>(control - RecordingPlay) * 103.0f;
+            return PanelRect(x, 402.0f, x + 96.0f, 466.0f, w, h);
+        }
+        const float x = 324.0f + static_cast<float>(control - RecordingPrev) * 103.0f;
+        return PanelRect(x, 276.0f, x + 96.0f, 340.0f, w, h);
+    }
+
+    std::vector<PanelButton> InputPad::RecordingButtons(int w, int h, int rows, int selected, bool paged, bool upload)
+    {
+        // Stable control IDs, including absent rows/arrows (disabled, omitted by drawing/focus).
+        std::vector<PanelButton> buttons;
+        for (int i = 0; i <= RecordingAdd; ++i)
+        {
+            PanelButton button;
+            button.rect = RecordingRect(i, w, h);
+            button.size = 0.46f;
+            button.row = i < kDemoListRows;
+            button.held = i == selected;
+            button.enabled = i < kDemoListRows ? i < rows : i == RecordingAdd ? upload :
+                             (i == RecordingPrev || i == RecordingNext) ? paged : true;
+            switch (i)
+            {
+            case RecordingPlay: button.label = Tr("Play"); break;
+            case RecordingRename: button.label = Tr("Rename"); break;
+            case RecordingDelete: button.label = Tr("Delete"); break;
+            case RecordingExport: button.label = Tr("Export"); break;
+            case RecordingMenu: button.label = Tr("Menu demo"); break;
+            case RecordingCancel: button.label = Tr("Cancel"); break;
+            case RecordingPrev: button.label = "<"; break;
+            case RecordingNext: button.label = ">"; break;
+            case RecordingAdd: button.label = Tr("Add file"); break;
+            default: break;
+            }
+            buttons.push_back(std::move(button));
+        }
+        return buttons;
+    }
+
+    std::string InputPad::RecordingState(const DemoCollectionEntry& entry)
+    {
+        std::string state = entry.status == DemoLoadStatus::Ok ? "" : std::string(Tr(DemoLoadStatusText(entry.status)));
+        if (entry.Playable() && entry.olderRevision)
+            state = std::string(Tr("older version: may play differently")) + (state.empty() ? "" : "; " + state);
+        return state;
+    }
+
+    void InputPad::DrawRecordings(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h,
+                                  const std::vector<DemoCollectionEntry>& entries, int page, int selected,
+                                  const std::string& message, bool upload, std::optional<Rect> focus)
+    {
+        const int first = page * kDemoListRows;
+        const int count = std::clamp(static_cast<int>(entries.size()) - first, 0, kDemoListRows);
+        const int pages = std::max(1, (static_cast<int>(entries.size()) + kDemoListRows - 1) / kDemoListRows);
+        auto buttons = RecordingButtons(w, h, count, selected - first, pages > 1, upload);
+        std::vector<PanelLine> lines;
+        const float s = static_cast<float>(h) / kRefH;
+        for (int i = 0; i < count; ++i)
+        {
+            const auto& entry = entries[static_cast<std::size_t>(first + i)];
+            const auto r = buttons[static_cast<std::size_t>(i)].rect;
+            const auto contents = entry.mission > 0 ? TrFormat(entry.galaxy ? "galaxy {0}, {1} s" : "mission {0}, {1} s",
+                {std::to_string(entry.mission), std::to_string(entry.seconds)}) : "";
+            const std::string texts[] = {entry.name, contents, entry.metadata, RecordingState(entry)};
+            for (int line = 0; line < 4; ++line)
+            {
+                std::string text = texts[line];
+                const float size = line == 0 ? 0.46f : 0.32f;
+                const float room = r.x1 - r.x0 - 16.0f * s;
+                if (TextMetrics::Width(text) * size * s > room)
+                {
+                    while (!text.empty() && TextMetrics::Width(text + "...") * size * s > room)
+                        TextMetrics::PopBack(text);
+                    text += "...";
+                }
+                lines.push_back({text, r.x0 + 8.0f * s, r.y0 + (3.0f + line * 14.0f) * s, size});
+            }
+        }
+        // Keep IDs stable for UpdatePanel, but do not draw nonexistent controls.
+        for (auto& button : buttons)
+            if (!button.enabled) button.rect = {0, 0, 0, 0};
+        // Long notices (including full export paths) get two lines, fitted to the panel.
+        std::string rest = message;
+        for (int line = 0; line < 2 && !rest.empty(); ++line)
+        {
+            std::size_t split = rest.size();
+            while (split > 0 && TextMetrics::Width(rest.substr(0, split)) * 0.38f > 600.0f) --split;
+            if (split == 0) break;
+            lines.push_back({rest.substr(0, split), w * 0.5f, (350.0f + line * 20.0f) * s, 0.38f, true});
+            rest.erase(0, split);
+        }
+        DrawPanel(device, w, h, std::string(Tr("My recordings")) + "  " + std::to_string(page + 1) + " / " +
+                  std::to_string(pages), buttons, lines, nullptr, focus);
     }
 
     QuadBatch::Rect InputPad::PanelRect(float x0, float y0, float x1, float y1, int viewportW, int viewportH) noexcept
@@ -1961,6 +2067,7 @@ namespace GalaxyEggbert::Game
         for (std::size_t i = 0; i < buttons.size(); ++i)
         {
             const auto& b = buttons[i];
+            if (b.rect.x1 <= b.rect.x0 || b.rect.y1 <= b.rect.y0) continue;
             const bool held = b.held || (keyboard == nullptr && panelControl_ == static_cast<int>(i));
             auto& text = b.enabled ? labels : faint;
             if (b.row)

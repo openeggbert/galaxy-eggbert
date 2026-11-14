@@ -10,6 +10,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kGreekTranslations[] = {
+        {"Import a demo: choose the file", "Εισαγωγή demo: διάλεξε το αρχείο"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "Μια εγγραφή παλιότερης έκδοσης δεν μπορεί να είναι επίδειξη μενού."},
+        {"Add file", "Προσθήκη αρχείου"},
+        {"Choose a recording first.", "Διάλεξε πρώτα μια εγγραφή."},
+        {"Delete", "Διαγραφή"},
+        {"Delete {0}? Press Delete again.", "Να διαγραφεί το {0}; Πάτησε ξανά Διαγραφή."},
+        {"It is the file {0}.", "Είναι το αρχείο {0}."},
+        {"It played differently than it was recorded.", "Η αναπαραγωγή διέφερε από την εγγραφή."},
+        {"Menu demo", "Επίδειξη μενού"},
+        {"Menu demo: choose the position for {0}", "Επίδειξη μενού: διάλεξε θέση για το {0}"},
+        {"My recordings", "Οι εγγραφές μου"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Οι εγγραφές μου, Εξαγωγή, Όνομα ή Αρχικό. Εγγραφή σε αποστολή: Παύση > Εγγραφή."},
+        {"Recorded with an older version: it may play differently.", "Εγγράφηκε με παλιότερη έκδοση: μπορεί να αναπαραχθεί διαφορετικά."},
+        {"Rename", "Μετονομασία"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Η εγγραφή δεν μετονομάστηκε. Χρησιμοποίησε όνομα με γράμμα ή ψηφίο."},
+        {"older version: may play differently", "παλιότερη έκδοση: η αναπαραγωγή μπορεί να διαφέρει"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Παίξε"},
         {"Home", "Μενού"},
@@ -135,8 +153,6 @@ namespace GalaxyEggbert::Game
          "Οι άλλοι συνεχίζουν: απομένουν {0} (ο οικοδεσπότης περιμένει το τέλος)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.",
-         "Εξαγωγή, Εισαγωγή ή Πρωτότυπο εδώ. Εγγραφή σε αποστολή: Παύση > Εγγραφή."},
         {"Not created: {0}", "Δεν δημιουργήθηκε: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -151,7 +167,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Γαλαξίας {0}"},
         {"Mission {0}", "Αποστολή {0}"},
         {"(unplayable)", "(δεν παίζεται)"},
-        {"The file is listed: click it to import it.", "Το αρχείο είναι στη λίστα: κάνε κλικ για εισαγωγή."},
         {"Click a position to export its demo.", "Κάνε κλικ σε μια θέση για εξαγωγή του demo της."},
         {"Click a recorded position to name its demo.",
          "Κάνε κλικ σε μια θέση με εγγραφή για να ονομάσεις το demo της."},
@@ -165,14 +180,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Ονόμασε το demo στη θέση {0}"},
         {"Name a demo: choose its position", "Ονόμασε ένα demo: διάλεξε τη θέση του"},
         {"Export a demo: choose its position", "Εξαγωγή demo: διάλεξε τη θέση του"},
-        {"Import a demo: choose its position", "Εισαγωγή demo: διάλεξε τη θέση του"},
-        {"Import a demo: choose the file", "Εισαγωγή demo: διάλεξε το αρχείο"},
         {"The demo positions", "Οι θέσεις των demo"},
         {"Record a demo: choose its position", "Εγγραφή demo: διάλεξε τη θέση του"},
         {"Put .gdemo files in {0}/ to import them.", "Βάλε αρχεία .gdemo στο {0}/ για εισαγωγή."},
-        {"Click the file to import.", "Κάνε κλικ στο αρχείο για εισαγωγή."},
-        {"Import {0}: click a position (Import: the list again).",
-         "Εισαγωγή {0}: κάνε κλικ σε μια θέση (Εισαγωγή: ξανά η λίστα)."},
         {"galaxy {0}, {1} s", "γαλαξίας {0}, {1} δ"},
         {"mission {0}, {1} s", "αποστολή {0}, {1} δ"},
         {"Choose a .gdemo file: it is listed here.", "Διάλεξε ένα αρχείο .gdemo: εμφανίζεται εδώ."},
@@ -184,8 +194,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Το demo {0} εξήχθη στο {1}."},
         {"{0} cannot be imported: {1}.", "Το {0} δεν μπορεί να εισαχθεί: {1}."},
         {"Position {0} plays {1} now.", "Η θέση {0} παίζει τώρα {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
-         "Η θέση {0} παίζει τώρα {1}. Ο κόσμος του δεν είναι εδώ: παραλείπεται μέχρι να υπάρξει."},
         {"The demo could not be recorded.", "Το demo δεν εγγράφηκε."},
         {"Demo recorded in position {0}.", "Demo εγγράφηκε στη θέση {0}."},
 

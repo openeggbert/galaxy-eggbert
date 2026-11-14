@@ -9,6 +9,24 @@
 namespace GalaxyEggbert::Game
 {
     extern const Translation kDanishTranslations[] = {
+        {"Import a demo: choose the file", "Importér en demo: vælg filen"},
+        // My recordings (replays 2/3).
+        {"A recording of an older version cannot be a menu demo.", "En optagelse fra en ældre version kan ikke være en menudemo."},
+        {"Add file", "Tilføj fil"},
+        {"Choose a recording first.", "Vælg først en optagelse."},
+        {"Delete", "Slet"},
+        {"Delete {0}? Press Delete again.", "Slet {0}? Tryk på Slet igen."},
+        {"It is the file {0}.", "Det er filen {0}."},
+        {"It played differently than it was recorded.", "Afspilningen var anderledes end optagelsen."},
+        {"Menu demo", "Menudemo"},
+        {"Menu demo: choose the position for {0}", "Menudemo: vælg positionen for {0}"},
+        {"My recordings", "Mine optagelser"},
+        {"My recordings, Export, Name or Original; record in a mission: Pause > Record.", "Mine optagelser, Eksportér, Navn eller Original; optag i en mission: Pause > Optag."},
+        {"Recorded with an older version: it may play differently.", "Optaget med en ældre version: afspilningen kan være anderledes."},
+        {"Rename", "Omdøb"},
+        {"The recording could not be renamed. Use a name with a letter or digit.", "Optagelsen kunne ikke omdøbes. Brug et navn med et bogstav eller et tal."},
+        {"older version: may play differently", "ældre version: afspilningen kan være anderledes"},
+
         // GalaxyEggbert/Game/InputPad.cpp
         {"Play", "Spil"},
         {"Home", "Menu"},
@@ -133,8 +151,6 @@ namespace GalaxyEggbert::Game
          "De andre spiller videre: tid tilbage {0} (værten venter på slutningen)."},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
-        {"Export, Import or Original here; record in a mission: Pause > Record.",
-         "Eksportér, Importér eller Original her; optag i en mission: Pause > Optag."},
         {"Not created: {0}", "Ikke oprettet: {0}"},
 
         // GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
@@ -149,7 +165,6 @@ namespace GalaxyEggbert::Game
         {"Galaxy {0}", "Galakse {0}"},
         {"Mission {0}", "Mission {0}"},
         {"(unplayable)", "(kan ikke spilles)"},
-        {"The file is listed: click it to import it.", "Filen står på listen: klik på den for at importere den."},
         {"Click a position to export its demo.", "Klik på en plads for at eksportere dens demo."},
         {"Click a recorded position to name its demo.", "Klik på en optaget plads for at navngive dens demo."},
         {"Position {0} plays its shipped demo again.", "Plads {0} afspiller igen sin originale demo."},
@@ -162,14 +177,9 @@ namespace GalaxyEggbert::Game
         {"Name the demo in position {0}", "Navngiv demoen på plads {0}"},
         {"Name a demo: choose its position", "Navngiv en demo: vælg dens plads"},
         {"Export a demo: choose its position", "Eksportér en demo: vælg dens plads"},
-        {"Import a demo: choose its position", "Importér en demo: vælg dens plads"},
-        {"Import a demo: choose the file", "Importér en demo: vælg filen"},
         {"The demo positions", "Demopladserne"},
         {"Record a demo: choose its position", "Optag en demo: vælg dens plads"},
         {"Put .gdemo files in {0}/ to import them.", "Læg .gdemo-filer i {0}/ for at importere dem."},
-        {"Click the file to import.", "Klik på filen, der skal importeres."},
-        {"Import {0}: click a position (Import: the list again).",
-         "Importér {0}: klik på en plads (Importér: listen igen)."},
         {"galaxy {0}, {1} s", "galakse {0}, {1} s"},
         {"mission {0}, {1} s", "mission {0}, {1} s"},
         {"Choose a .gdemo file: it is listed here.", "Vælg en .gdemo-fil: den står her."},
@@ -181,8 +191,6 @@ namespace GalaxyEggbert::Game
         {"Demo {0} exported to {1}.", "Demo {0} eksporteret til {1}."},
         {"{0} cannot be imported: {1}.", "{0} kan ikke importeres: {1}."},
         {"Position {0} plays {1} now.", "Plads {0} afspiller nu {1}."},
-        {"Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
-         "Plads {0} afspiller nu {1}. Dens verden er her ikke: den springes over, indtil den er."},
         {"The demo could not be recorded.", "Demoen kunne ikke optages."},
         {"Demo recorded in position {0}.", "Demo optaget på plads {0}."},
 

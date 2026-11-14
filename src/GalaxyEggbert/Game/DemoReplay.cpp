@@ -149,7 +149,7 @@ namespace GalaxyEggbert::Game
         return ParseDemo(text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok ? demo.title : std::string();
     }
 
-    bool RenameDemo(const std::string& path, const std::string& name)
+    bool RenameDemo(const std::string& path, const std::string& name, bool acceptOtherRevision)
     {
         const std::string clean = SanitizeDemoName(name);
         if (clean.empty()) return false;
@@ -160,12 +160,24 @@ namespace GalaxyEggbert::Game
             text.assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         }
         DemoRecording demo;
-        if (ParseDemo(text, kDemoSimulationRevision, demo) != DemoLoadStatus::Ok) return false;
-        demo.title = clean;
+        if (ParseDemo(text, kDemoSimulationRevision, demo, acceptOtherRevision) != DemoLoadStatus::Ok) return false;
+        // Replace only the quoted title and checksum: keep even format-1 files byte-identical
+        // everywhere else (including their original spacing and embedded world bytes).
+        std::string body = *ResumeLog::VerifiedBody(text);
+        std::istringstream header(body);
+        std::string magic, oldTitle;
+        int format, revision;
+        header >> magic >> format >> revision >> std::ws;
+        const auto begin = static_cast<std::size_t>(header.tellg());
+        header >> std::quoted(oldTitle);
+        const auto end = static_cast<std::size_t>(header.tellg());
+        std::ostringstream title;
+        title << std::quoted(clean);
+        body.replace(begin, end - begin, title.str());
         const std::string temporary = path + ".tmp";
         {
             std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
-            out << demo.Serialize();
+            out << ResumeLog::AppendChecksum(body);
             if (!out) return false;
         }
         std::error_code error;
@@ -173,6 +185,84 @@ namespace GalaxyEggbert::Game
         if (!error) return true;
         std::filesystem::remove(temporary, error);
         return false;
+    }
+
+    std::string RenameDemoFile(const std::string& path, const std::string& name)
+    {
+        const auto clean = SanitizeDemoName(name);
+        if (clean.empty()) return {};
+        namespace fs = std::filesystem;
+        const fs::path source(path);
+        std::string stem = clean;
+        std::replace(stem.begin(), stem.end(), ' ', '-');
+        const auto wanted = source.parent_path() / (stem + ".gdemo");
+        std::error_code error;
+        const auto time = fs::last_write_time(source, error);
+        if (error) return {};
+        if (wanted == source)
+        {
+            if (!RenameDemo(path, clean, true)) return {};
+            fs::last_write_time(source, time, error);
+            return path;
+        }
+        const auto target = FreeFileName(source.parent_path(), stem, ".gdemo");
+        if (!fs::copy_file(source, target, fs::copy_options::none, error)) return {};
+        if (!RenameDemo(target.generic_string(), clean, true))
+        {
+            fs::remove(target, error);
+            return {};
+        }
+        if (!fs::remove(source, error))
+        {
+            fs::remove(target, error);
+            return {};
+        }
+        fs::last_write_time(target, time, error); // naming does not reorder the collection
+        return target.generic_string();
+    }
+
+    bool DeleteDemoFile(const std::string& path)
+    {
+        std::error_code error;
+        return std::filesystem::remove(path, error);
+    }
+
+    std::vector<DemoCollectionEntry> ListDemoCollection(
+        const std::function<std::string(DemoRecording&)>& resolveWorld)
+    {
+        std::vector<DemoCollectionEntry> entries;
+        for (const auto& path : ListSharedDemos())
+        {
+            DemoCollectionEntry entry;
+            entry.path = path;
+            entry.name = std::filesystem::path(path).filename().string();
+            std::ifstream in(path, std::ios::binary);
+            DemoRecording demo;
+            entry.status = in ? ParseDemo(std::string((std::istreambuf_iterator<char>(in)), {}),
+                                         kDemoSimulationRevision, demo, true) : DemoLoadStatus::Missing;
+            if (entry.status == DemoLoadStatus::Ok)
+            {
+                if (!IsAutomaticDemoTitle(demo.title)) entry.name = demo.title;
+                entry.olderRevision = demo.simulationRevision != kDemoSimulationRevision;
+                entry.galaxy = demo.log.start.worldPath.find("/galaxy/world") != std::string::npos;
+                entry.mission = demo.log.start.mission;
+                entry.seconds = demo.log.TickCount() / 60;
+                entry.metadata = demo.gameVersion;
+                // "2026-11-14T07:29:14Z" shown as "2026-11-14 07:29 UTC".
+                if (!demo.recordedAt.empty())
+                    entry.metadata += (entry.metadata.empty() ? "" : "  ") +
+                                      (demo.recordedAt.size() >= 16 && demo.recordedAt[10] == 'T'
+                                           ? demo.recordedAt.substr(0, 10) + ' ' + demo.recordedAt.substr(11, 5) + " UTC"
+                                           : demo.recordedAt);
+                const auto worldPath = resolveWorld(demo);
+                std::ifstream world(worldPath, std::ios::binary);
+                std::optional<std::string> bytes;
+                if (world) bytes = std::string((std::istreambuf_iterator<char>(world)), {});
+                entry.status = DemoWorldStatus(demo, worldPath, bytes);
+            }
+            entries.push_back(std::move(entry));
+        }
+        return entries;
     }
 
     std::vector<std::string> ListSharedDemos()
@@ -232,22 +322,6 @@ namespace GalaxyEggbert::Game
         for (const auto& [name, hash] : endSignature) out << std::quoted(name) << ' ' << hash << '\n';
         log.WriteBody(out);
         return ResumeLog::AppendChecksum(out.str());
-    }
-
-    const char* DemoLoadStatusText(DemoLoadStatus status) noexcept
-    {
-        switch (status)
-        {
-            case DemoLoadStatus::Ok: return "ok";
-            case DemoLoadStatus::Missing: return TrMark("missing");
-            case DemoLoadStatus::Corrupt: return TrMark("damaged or not a demo");
-            case DemoLoadStatus::IncompatibleFormat: return TrMark("another demo format");
-            case DemoLoadStatus::IncompatibleRevision: return TrMark("recorded with another simulation revision");
-            case DemoLoadStatus::WorldMissing: return TrMark("its world is missing");
-            case DemoLoadStatus::OwnWorld: return TrMark("plays from its own world copy");
-            case DemoLoadStatus::WorldChanged: return TrMark("its world has changed");
-        }
-        return TrMark("unknown");
     }
 
     DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out, bool acceptOtherRevision)
