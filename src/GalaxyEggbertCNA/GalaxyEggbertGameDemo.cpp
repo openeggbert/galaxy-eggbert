@@ -120,7 +120,7 @@ namespace GalaxyEggbert::CNA
         touchQuietFrames_ = 0;
         mouseLookActive_ = false;
         lastMouseX_ = lastMouseY_ = 0;
-        lookYawOffset_ = lookPitchOffset_ = 0.0f;
+        lookYawOffset_ = lookPitchOffset_ = lookVertical_ = 0.0f;
         cheatMenuShown_ = false;
         holdingCrate_ = graceWasInVehicle_ = false;
         wasPushingCrate_ = helicopterDeposited_ = false;

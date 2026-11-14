@@ -1257,6 +1257,14 @@ namespace GalaxyEggbert::Game
         // instead, since the same numeric icon range means something
         // different on each sheet.
         [[nodiscard]] AnimState GetAnimState() const noexcept { return m_animState; }
+        // +1 while he looks up, -1 while he looks down (crouches), 0 otherwise: once Up/Down has
+        // lasted its Config::ScaleTime(4), the moment the original scrolls its view 150 px that way
+        // (m_scrollAdd.Y = -150/+150, Decor.cpp:3278-3287; back to 0 when he stops, :3634).
+        [[nodiscard]] int GetLookVertical() const noexcept
+        {
+            if (m_animStateTimer < kDownUpSoundDelay) return 0;
+            return m_animState == AnimState::Up ? 1 : m_animState == AnimState::Down ? -1 : 0;
+        }
         [[nodiscard]] int GetAnimIcon() const noexcept;
         // The icon as the real frame tables have it: -1 on the frames real
         // mobile-eggbert draws nothing (Teleporting's, Clear2, Clear3's tail),
