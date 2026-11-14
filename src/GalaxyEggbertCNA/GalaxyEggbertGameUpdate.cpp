@@ -352,9 +352,17 @@ namespace GalaxyEggbert::CNA
                 helpPointerDown=true;helpX=touch.x;helpY=touch.y;break;
             }
         }
-        if (controlsHelp_.Update(helpKeys,helpPointerDown,
+        const int helpEntry = controlsHelp_.shown && controlsHelp_.cheats
+            ? GalaxyEggbert::Game::InputPad::CheatHelpEntryAt(controlsHelp_.page, helpX, helpY,
+                                                              tickInput_.viewportWidth, tickInput_.viewportHeight)
+            : -1;
+        const bool helpConsumed = controlsHelp_.Update(helpKeys,helpPointerDown,
             GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight),
-            GalaxyEggbert::Game::ControlsHelp::PageArrow(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight)))
+            GalaxyEggbert::Game::ControlsHelp::PageArrow(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight),
+            helpEntry);
+        // A cheat clicked in the help: the next Play tick completes it as typed (InputPad::ChooseTypedCheat).
+        if (const int chosen = controlsHelp_.TakeChosen(); chosen >= 0) inputPad_.ChooseTypedCheat(chosen);
+        if (helpConsumed)
         {
             suspendCheatKeyboard();
             inputPad_.ResetTouchState();

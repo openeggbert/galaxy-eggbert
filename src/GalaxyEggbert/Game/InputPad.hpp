@@ -695,7 +695,8 @@ namespace GalaxyEggbert::Game
         {
             int perColumn;
             bool dense;
-            float RowTop(int index) const { return 78.0f + float(index % perColumn) * (dense ? 24.0f : 32.0f); }
+            float RowHeight() const { return dense ? 24.0f : 32.0f; }
+            float RowTop(int index) const { return 78.0f + float(index % perColumn) * RowHeight(); }
             float DescriptionOffset() const { return dense ? 13.0f : 17.0f; }
             float DescriptionSize() const { return dense ? .33f : .4f; }
         };
@@ -704,6 +705,15 @@ namespace GalaxyEggbert::Game
             const int rows = std::max(1, (entries + 1) / 2);
             return {rows, rows > 10};
         }
+        // The cheats' help (`help`) lists its words to click as well (the owner, 2026-11-14): the
+        // index in TypedCheatWords() of the entry (its word and description) under (x, y) on help
+        // page @p page as DrawControlsHelp() draws it, -1 off every entry. `help` and `cheats`
+        // themselves are not offered, the list being already shown.
+        [[nodiscard]] static int CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH) noexcept;
+        // A word clicked in the cheats' help: the next UpdateTypedGhostCheat() in Play completes it as
+        // if it had been typed, under the same locks (fairplay, honest). -1 clears it.
+        void ChooseTypedCheat(int wordIndex) noexcept { chosenTypedCheat_ = wordIndex; }
+        [[nodiscard]] int ChosenTypedCheat() const noexcept { return chosenTypedCheat_; }
         void SetCheatEntryLocked(bool locked) noexcept;
         [[nodiscard]] bool IsCheatEntryLocked() const noexcept { return cheatEntryLocked_; }
         // "honest": locked for the rest of the run (the application's, every world after): no word is
@@ -1060,6 +1070,7 @@ namespace GalaxyEggbert::Game
         // UpdateTypedGhostCheat()'s own comment) -- real rolling
         // lowercase-letter buffer plus per-key down-edge tracking.
         std::string typedCheatBuffer_;
+        int chosenTypedCheat_ = -1; // ChooseTypedCheat()
         bool cheatEntryLocked_ = false;
         bool cheatEntryLockedForRun_ = false;
         bool letterKeyWasDown_[26] = {};

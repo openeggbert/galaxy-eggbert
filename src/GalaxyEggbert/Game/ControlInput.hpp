@@ -52,12 +52,25 @@ namespace GalaxyEggbert::Game
         bool pointerCloseHeld = false;
         int page = 0;
         bool previousPageHeld = false, nextPageHeld = false, pagePointerHeld = false;
+        // A cheat clicked in the list (InputPad::CheatHelpEntryAt's index), until TakeChosen(). A
+        // press already down when the list opened (the `p` of `help` tapped on the cheats' keyboard)
+        // chooses nothing until it is let go.
+        int chosen = -1;
+        bool entryPointerHeld = false;
 
         void OpenCheats() noexcept
         {
             shown = cheats = true;
             page = 0;
             previousPageHeld = nextPageHeld = pagePointerHeld = false;
+            entryPointerHeld = true;
+            chosen = -1;
+        }
+        [[nodiscard]] int TakeChosen() noexcept
+        {
+            const int taken = chosen;
+            chosen = -1;
+            return taken;
         }
         // F1's controls help, opened by the cheats' keyboard's F1 key (a physical F1 toggles it in Update()).
         void OpenControls() noexcept
@@ -88,14 +101,18 @@ namespace GalaxyEggbert::Game
                    y>=oy+18*scale && y<=oy+54*scale;
         }
 
+        // @p entry: the cheat under the pointer (InputPad::CheatHelpEntryAt), -1 for none. Pressed
+        // there, it is chosen and the help closes, the press consumed through its release as Close's.
         [[nodiscard]] bool Update(const Microsoft::Xna::Framework::Input::KeyboardState& keys,
-            bool pointerDown=false, bool overClose=false, int pageArrow=0) noexcept
+            bool pointerDown=false, bool overClose=false, int pageArrow=0, int entry=-1) noexcept
         {
             using Microsoft::Xna::Framework::Input::Keys;
             const bool wasPointerHeld=pointerCloseHeld;
             if (!pointerDown) pointerCloseHeld=false;
             const bool wasPagePointerHeld = pagePointerHeld;
             if (!pointerDown) pagePointerHeld = false;
+            const bool wasEntryPointerHeld = entryPointerHeld;
+            entryPointerHeld = pointerDown;
             const bool previous = keys.IsKeyDown(Keys::Left) || keys.IsKeyDown(Keys::A) ||
                 keys.IsKeyDown(Keys::PageUp) || keys.IsKeyDown(Keys::LeftShift); // gamepad LB
             const bool next = keys.IsKeyDown(Keys::Right) || keys.IsKeyDown(Keys::D) ||
@@ -124,6 +141,13 @@ namespace GalaxyEggbert::Game
                 shown=false;
                 cheats=false;
                 pointerCloseHeld=true;
+            }
+            else if (wasShown && shown && cheats && pointerDown && !wasEntryPointerHeld && pageArrow == 0 &&
+                     entry >= 0)
+            {
+                chosen = entry;
+                shown = cheats = false;
+                pointerCloseHeld = true;
             }
             return wasShown || shown || wasPointerHeld || pointerCloseHeld;
         }

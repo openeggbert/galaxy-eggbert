@@ -404,7 +404,10 @@ namespace GalaxyEggbert::CNA
     std::map<std::string, std::string> GalaxyEggbertGame::ResumeSignature() const
     {
         std::map<std::string, std::string> result;
-        result["cheat input"] = inputPad_.IsCheatEntryLocked() ? "locked" : "allowed";
+        result["cheat input"] = std::string(inputPad_.IsCheatEntryLocked() ? "locked" : "allowed") +
+                                (inputPad_.ChosenTypedCheat() >= 0
+                                     ? " chosen " + std::to_string(inputPad_.ChosenTypedCheat())
+                                     : "");
         std::ostringstream out;
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
         out << cheatDebug_;

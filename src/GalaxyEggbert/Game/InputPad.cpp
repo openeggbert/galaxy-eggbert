@@ -13,6 +13,7 @@
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 
 #include <algorithm>
+#include <utility>
 #include <array>
 #include <cmath>
 #include <cstdio>
@@ -724,6 +725,7 @@ namespace GalaxyEggbert::Game
         cheatMouseWasDown_ = false;
         cheatGestureIndex_ = 0;
         typedCheatBuffer_.clear();
+        chosenTypedCheat_ = -1;
         suppressedGameplayLetters_ = 0;
         typedIdleSeconds_ = 0;
         typingCheat_ = false;
@@ -1007,7 +1009,7 @@ namespace GalaxyEggbert::Game
             // The cheat list stays English (the owner's Q-023: a tester's tool, as the debug panel).
             page = std::clamp(page, 0, 1);
             line(page == 0 ? "Speedy Blupi / Mobile Eggbert" : "Galaxy Eggbert", 28, 22, 0.75f, 500);
-            line("Type a word during play (no Enter needed).", 28, 54, 0.45f);
+            line("Type a word during play (no Enter needed), or click / tap it here.", 28, 54, 0.45f, 600.0f);
             int count = 0;
             const auto* words = TypedCheatWords(count);
             std::vector<const TypedCheatWord*> entries;
@@ -3096,6 +3098,31 @@ namespace GalaxyEggbert::Game
         cheatMouseWasDown_ = false;
     }
 
+    int InputPad::CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH) noexcept
+    {
+        if (viewportW <= 0 || viewportH <= 0) return -1;
+        // DrawControlsHelp()'s placement: the 640x480 reference scaled to fit, centred.
+        const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
+        x = (x - (float(viewportW) - kRefW * s) * 0.5f) / s;
+        y = (y - (float(viewportH) - kRefH * s) * 0.5f) / s;
+        int count = 0;
+        const TypedCheatWord* words = TypedCheatWords(count);
+        std::vector<int> entries;
+        for (int i = 0; i < count; ++i)
+            if (words[i].HelpPage() == std::clamp(page, 0, 1)) entries.push_back(i);
+        const auto layout = LayoutCheatHelp(static_cast<int>(entries.size()));
+        for (int i = 0; i < static_cast<int>(entries.size()); ++i)
+        {
+            const bool left = i < layout.perColumn;
+            // The word a little above its row's top, the description under it, to the next row.
+            const float top = layout.RowTop(i) - 3.0f;
+            if (x >= (left ? 22.0f : 331.0f) && x < (left ? 331.0f : 624.0f) && y >= top &&
+                y < top + layout.RowHeight())
+                return words[entries[i]].cheat == TypedCheat::Help ? -1 : entries[i];
+        }
+        return -1;
+    }
+
     InputPad::TypedCheatResult InputPad::UpdateTypedGhostCheat(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase,
         int orderedLetter) noexcept
@@ -3107,6 +3134,23 @@ namespace GalaxyEggbert::Game
         {
             return result;
         }
+        bool completed = false;
+        // A word clicked in the cheats' help (ChooseTypedCheat()), completed as a typed one would be.
+        if (const int chosen = std::exchange(chosenTypedCheat_, -1); chosen >= 0)
+        {
+            int count = 0;
+            const TypedCheatWord* words = TypedCheatWords(count);
+            if (chosen < count &&
+                !(cheatEntryLocked_ && (cheatEntryLockedForRun_ || words[chosen].cheat != TypedCheat::FairPlay)))
+            {
+                result.cheat = words[chosen].cheat;
+                result.ghostTyped = result.cheat == TypedCheat::Ghost;
+                result.quickTyped = result.cheat == TypedCheat::Quick;
+                typedCheatBuffer_.clear();
+                typingCheat_ = false;
+                completed = true;
+            }
+        }
 
         static constexpr Keys kLetterKeys[26] = {
             Keys::A, Keys::B, Keys::C, Keys::D, Keys::E, Keys::F, Keys::G, Keys::H,
@@ -3117,7 +3161,6 @@ namespace GalaxyEggbert::Game
         typedIdleSeconds_ += 1.0f / 60.0f;
         // Preserve the reference's rolling cheat buffer even when the player types slowly.
         if (typedIdleSeconds_ > 1.2f) typingCheat_ = false;
-        bool completed = false;
 
         for (int li = 0; li < 26; ++li)
         {

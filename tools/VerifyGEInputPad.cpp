@@ -233,6 +233,76 @@ int main()
         check(help.page == 0, "F1 controls help has no page navigation");
     }
 
+    // The cheats' help lists its words to click (the owner, 2026-11-14).
+    if (kCheatsEnabled)
+    {
+        int count = 0;
+        const auto* words = InputPad::TypedCheatWords(count);
+        bool everyRow = true;
+        for (const auto size : {std::pair{640,480},std::pair{800,480},std::pair{800,360}})
+        {
+            const float scale = std::min(size.first/640.f,size.second/480.f);
+            const float ox = (size.first-640*scale)/2, oy = (size.second-480*scale)/2;
+            for (int page = 0; page < 2; ++page)
+            {
+                std::vector<int> entries;
+                for (int i = 0; i < count; ++i) if (words[i].HelpPage() == page) entries.push_back(i);
+                const auto layout = InputPad::LayoutCheatHelp(static_cast<int>(entries.size()));
+                for (int i = 0; i < static_cast<int>(entries.size()); ++i)
+                {
+                    const float x = (i < layout.perColumn ? 120.f : 450.f), y = layout.RowTop(i) + 9.f;
+                    const int want = words[entries[i]].cheat == InputPad::TypedCheat::Help ? -1 : entries[i];
+                    everyRow &= InputPad::CheatHelpEntryAt(page, ox+x*scale, oy+y*scale, size.first, size.second) == want;
+                }
+                everyRow &= InputPad::CheatHelpEntryAt(page, ox+100*scale, oy+30*scale, size.first, size.second) == -1;
+                everyRow &= InputPad::CheatHelpEntryAt(page, ox+300*scale, oy+455*scale, size.first, size.second) == -1;
+            }
+        }
+        check(everyRow, "cheat help: each word's row (scaled) is its entry; title, navigation and help itself none");
+
+        ControlsHelp help;
+        help.OpenCheats();
+        (void)help.Update({}, false);
+        check(help.Update({}, true, false, 0, 7) && !help.shown && help.TakeChosen() == 7 && help.TakeChosen() == -1,
+              "cheat help: a press on a word chooses it and closes the help");
+        check(help.Update({}, true) && help.Update({}, false) && !help.Update({}),
+              "cheat help: the choosing press is consumed through its release");
+        help.OpenCheats();
+        check(help.Update({}, true, false, 0, 7) && help.shown && help.chosen == -1,
+              "cheat help: a press held since it opened (help tapped on the cheats' keyboard) chooses nothing");
+        (void)help.Update({}, false);
+        (void)help.Update({}, true, false, 1, 7);
+        check(help.shown && help.page == 1 && help.chosen == -1, "cheat help: a page arrow wins over a row under it");
+        help.OpenControls();
+        (void)help.Update({}, false);
+        (void)help.Update({}, true, false, 0, 7);
+        check(help.shown && help.chosen == -1, "controls help (F1): nothing to choose");
+
+        const auto index = [&](InputPad::TypedCheat cheat) {
+            for (int i = 0; i < count; ++i) if (words[i].cheat == cheat) return i;
+            return -1;
+        };
+        InputPad pad;
+        pad.ChooseTypedCheat(index(InputPad::TypedCheat::MegaBlupi));
+        const auto first = pad.UpdateTypedGhostCheat({}, true);
+        check(first.cheat == InputPad::TypedCheat::MegaBlupi && pad.ChosenTypedCheat() == -1 &&
+                  pad.UpdateTypedGhostCheat({}, true).cheat == InputPad::TypedCheat::None,
+              "chosen cheat: completed once in Play, as typed");
+        pad.ChooseTypedCheat(index(InputPad::TypedCheat::Ghost));
+        check(pad.UpdateTypedGhostCheat({}, false).cheat == InputPad::TypedCheat::None &&
+                  pad.UpdateTypedGhostCheat({}, true).ghostTyped,
+              "chosen cheat: waits for Play; ghost sets ghostTyped as typed");
+        pad.SetCheatEntryLocked(true);
+        pad.ChooseTypedCheat(index(InputPad::TypedCheat::MegaBlupi));
+        const bool lockedRefused = pad.UpdateTypedGhostCheat({}, true).cheat == InputPad::TypedCheat::None;
+        pad.ChooseTypedCheat(index(InputPad::TypedCheat::FairPlay));
+        check(lockedRefused && pad.UpdateTypedGhostCheat({}, true).cheat == InputPad::TypedCheat::FairPlay,
+              "chosen cheat: fairplay's lock refuses other words and takes fairplay, as typed");
+        pad.ChooseTypedCheat(index(InputPad::TypedCheat::Zoom));
+        pad.ResetMissionInput();
+        check(pad.ChosenTypedCheat() == -1, "chosen cheat: mission reset clears it");
+    }
+
     {
         InputPad pad;
         const auto press = pad.UpdateInit(mouse(585, 50, true), kViewportW, kViewportH);
