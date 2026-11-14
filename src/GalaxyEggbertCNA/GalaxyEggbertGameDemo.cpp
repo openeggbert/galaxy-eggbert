@@ -159,7 +159,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
-        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatZoomStep_, activeCheats_};
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatPerf_, cheatCascades_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
         backPending_ = backReplaying_ = markPending_ = recallPending_ = restartPending_ = replayPending_ = false;
         rewindPending_.reset();
@@ -192,6 +192,8 @@ namespace GalaxyEggbert::CNA
         start.chunks = cheatChunks_;
         start.step = cheatStep_;
         start.practice = cheatPractice_;
+        start.perf = cheatPerf_;
+        start.cascades = cheatCascades_;
         start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -268,6 +270,8 @@ namespace GalaxyEggbert::CNA
         cheatChunks_ = start.chunks && kCheatsEnabled;
         cheatStep_ = start.step && kCheatsEnabled;
         cheatPractice_ = start.practice && kCheatsEnabled;
+        cheatPerf_ = start.perf && kCheatsEnabled;
+        cheatCascades_ = start.cascades && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -304,6 +308,8 @@ namespace GalaxyEggbert::CNA
             cheatChunks_ = resumeLocalCheats_.chunks;
             cheatStep_ = resumeLocalCheats_.step;
             cheatPractice_ = resumeLocalCheats_.practice;
+            cheatPerf_ = resumeLocalCheats_.perf;
+            cheatCascades_ = resumeLocalCheats_.cascades;
             cheatZoomStep_ = resumeLocalCheats_.zoomStep;
             activeCheats_ = resumeLocalCheats_.active;
             blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
@@ -329,9 +335,12 @@ namespace GalaxyEggbert::CNA
             for (const auto* name : {"step", "practice"}) std::erase(activeCheats_, name);
             if (cheatStep_) activeCheats_.emplace_back("step");
             if (cheatPractice_) activeCheats_.emplace_back("practice");
+            for (const auto* name : {"perf", "cascades"}) std::erase(activeCheats_, name);
+            if (cheatPerf_) activeCheats_.emplace_back("perf");
+            if (cheatCascades_) activeCheats_.emplace_back("cascades");
             // A Continue becomes the start of a new in-process rewind history, with exactly
             // today's fresh-process defaults for state absent from the file format.
-            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatZoomStep_, activeCheats_};
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatPerf_, cheatCascades_, cheatZoomStep_, activeCheats_};
             backCheckpoints_.clear();
         }
         replayRun_ = 0;
@@ -537,7 +546,7 @@ namespace GalaxyEggbert::CNA
         out << cheatTrail_ << ' ' << cheatIds_ << ' ' << cheatSounds_ << ' ' << cheatChunks_ << ' ' << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
             << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
             << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << cheatFreecam_ << ' ' << cheatXray_ << ' ' << cheatHitbox_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_)
-            << ' ' << cheatStep_ << ' ' << cheatPractice_;
+            << ' ' << cheatStep_ << ' ' << cheatPractice_ << ' ' << cheatPerf_ << ' ' << cheatCascades_;
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
         result["cheat toggles"] = out.str();
         out.str("");
@@ -967,6 +976,8 @@ namespace GalaxyEggbert::CNA
             demoSaved_.chunks = cheatChunks_;
             demoSaved_.step = cheatStep_;
             demoSaved_.practice = cheatPractice_;
+            demoSaved_.perf = cheatPerf_;
+            demoSaved_.cascades = cheatCascades_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
             demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
@@ -1019,6 +1030,8 @@ namespace GalaxyEggbert::CNA
         cheatChunks_ = start.chunks && kCheatsEnabled;
         cheatStep_ = start.step && kCheatsEnabled;
         cheatPractice_ = start.practice && kCheatsEnabled;
+        cheatPerf_ = start.perf && kCheatsEnabled;
+        cheatCascades_ = start.cascades && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -1043,6 +1056,8 @@ namespace GalaxyEggbert::CNA
         if (cheatChunks_) activeCheats_.emplace_back("chunks");
         if (cheatStep_) activeCheats_.emplace_back("step");
         if (cheatPractice_) activeCheats_.emplace_back("practice");
+        if (cheatPerf_) activeCheats_.emplace_back("perf");
+        if (cheatCascades_) activeCheats_.emplace_back("cascades");
         if (cheatCompass_) activeCheats_.push_back("compass");
         if (cheatDebug_) activeCheats_.push_back("debug");
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
@@ -1183,6 +1198,8 @@ namespace GalaxyEggbert::CNA
         cheatChunks_ = demoSaved_.chunks;
         cheatStep_ = demoSaved_.step;
         cheatPractice_ = demoSaved_.practice;
+        cheatPerf_ = demoSaved_.perf;
+        cheatCascades_ = demoSaved_.cascades;
         inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;

@@ -1730,6 +1730,19 @@ namespace GalaxyEggbert::CNA
             case TC::Fps:
                 cheatFps_ = !cheatFps_;
                 break;
+            case TC::Perf:
+                // Display only (brief E): the graph starts afresh, its first frame from the next draw.
+                cheatPerf_ = !cheatPerf_;
+                perfHistory_.Clear();
+                perfFrameEnd_ = {};
+                perfUpdateMs_ = 0.0;
+                perfTicks_ = 0;
+                break;
+            case TC::Cascades:
+                // Display only (brief E): off always goes; on only where the sun's shadow map is drawn.
+                if (!cheatCascades_ && !CascadesShadowsOn()) ShowDemoNotice("cascades: shadows off");
+                else cheatCascades_ = !cheatCascades_;
+                break;
             case TC::XMission:
                 // Speedy Blupi's XMISSION (BD-0118): the editor on this world, after this tick. Not in
                 // a replay (a demo, a resume reconstruction), a recording or a play-test.
@@ -1773,6 +1786,7 @@ namespace GalaxyEggbert::CNA
         cheatStep_ = cheatPractice_ = false;
         stepGate_.Reset();
         warpPanel_.Close();
+        cheatPerf_ = cheatCascades_ = false;
         cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = cheatPhoto_ = cheatFreeze_ = false;
         cheatZoomStep_ = 0;
         if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))

@@ -81,6 +81,17 @@ content-authoring UX, but not new gameplay mechanics.
   `demos/shared/` with its world. Exit saves it; deactivation saves it at once (renamed or deleted
   by the choice). Positions get recordings only through Menu demo. `build-probe/replays-3/report.md`.
 
+- MODERN cheats `perf`, `cascades` (2026-11-14, `plans/codex/cheats_perf_cascades.md`), display
+  only. Perf keeps a ring of drawn frames (`PerfGraph.hpp`): steady_clock time from the end of one
+  Draw() to the next, the Update() passes' time (GALAXY_PERF's timer) and Draw()'s own, and the 1/60 s
+  steps counted past the frame-rate gate; it graphs the last 4 s bottom left (lines at 1/60 s and the
+  target; steps 0/1/2/3+ in a strip) with average, worst and the mean of the slowest 1 %; nothing is
+  timed while off; hidden by `photo`. Cascades sets `SceneEffects::cascades`, a uniform in every
+  main-pass program's `Fogged()`: the near cascade red, the far green, weighted as `SunLight()`
+  weights them (the seams are the gradients); refused below High by the level alone (deterministic in
+  replays). Both in `resumeLocalCheats_`, the check signature, demos and a `RENDER_CHEATS` start
+  record. Golden frames byte-identical. Evidence: `build-probe/cheats-e/`.
+
 - MODERN cheats `step`, `practice`, `replay`, `warp` (2026-11-14,
   `plans/codex/cheats_step_practice_replay_warp.md`): step holds the world at a gate beside
   freecam's except on ticks whose recorded input newly presses F2 (held: 10 ticks/s after 0.5 s;

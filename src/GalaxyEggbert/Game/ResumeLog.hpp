@@ -48,6 +48,7 @@ namespace GalaxyEggbert::Game
         bool photo = false, freeze = false, xray = false, hitbox = false;
         bool trail = false, ids = false, sounds = false, chunks = false;
         bool step = false, practice = false; // they stay on from world to world (brief D)
+        bool perf = false, cascades = false; // the frame graph and the shadow cascades' tint (brief E)
         int cheatsLocked = 0; // 1 fairplay's lock, 2 honest's (the rest of the run; InputPad.hpp)
         int cameraMode = 1;
         // Settings and campaign doors as they were at the start, before any pause/setup edits.

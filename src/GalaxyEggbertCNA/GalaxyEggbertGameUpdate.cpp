@@ -84,17 +84,20 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
-        // GALAXY_PERF: an update over 20 ms reported with its phase (the stutter that is left).
+        // GALAXY_PERF: an update over 20 ms reported with its phase (the stutter that is left). The `perf`
+        // cheat's graph adds the updates' time up to the next drawn frame (perfUpdateMs_).
         struct PerfUpdateTimer
         {
             GalaxyEggbertGame& game;
             std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
             ~PerfUpdateTimer()
             {
+                if (!game.perfEnabled_ && !game.cheatPerf_) return;
+                const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+                if (game.cheatPerf_) game.perfUpdateMs_ += ms;
                 if (!game.perfEnabled_) return;
                 ++game.perfUpdates_;
                 ++game.perfUpdatesSinceDraw_;
-                const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
                 if (ms > 20.0)
                 {
                     std::cout << "GalaxyEggbertCNA perf: long update " << ms << " ms (update " << game.perfUpdates_
@@ -164,6 +167,8 @@ namespace GalaxyEggbert::CNA
             }
             drawAlpha_ = static_cast<float>(tickClock_ / kTick);
         }
+        // A step of the game's 1/60 s clock from here on (the `perf` cheat's steps a frame).
+        if (cheatPerf_) ++perfTicks_;
         if (demoVerifyPending_)
         {
             demoVerifyPending_ = false;
@@ -3840,6 +3845,11 @@ namespace GalaxyEggbert::CNA
                         if (cheatStep_) activeCheats_.emplace_back("step");
                         break;
                     case TC::Practice: toggle("practice"); break;
+                    case TC::Perf: toggle("perf"); break;
+                    case TC::Cascades:
+                        std::erase(activeCheats_, "cascades"); // refused: stays off and unlisted
+                        if (cheatCascades_) activeCheats_.emplace_back("cascades");
+                        break;
                     case TC::Photo: toggle("photo"); break;
                     case TC::Freeze: if (!NetMatchActive()) toggle("freeze"); break;
                     case TC::Position: toggle("position"); break;

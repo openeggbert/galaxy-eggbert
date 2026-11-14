@@ -482,6 +482,23 @@ int main()
             badTimeline.replace(badTimeline.find("TIMELINE_CHEATS"), 15, "TIMELINE_CHEATZ");
             check(!ResumeLog::Parse(ResumeLog::AppendChecksum(badTimeline), "test build", restored),
                   "an unknown T record is refused");
+            // Brief E: perf and cascades, display only, in their own record after the others.
+            auto render = timeline;
+            render.start.perf = render.start.cascades = true;
+            check(ResumeLog::Parse(render.Serialize(), "test build", restored) && restored.start == render.start &&
+                      restored.start.perf && restored.start.cascades && restored.start.step && restored.runs == render.runs,
+                  "RENDER_CHEATS (perf, cascades) round-trips after every other start record");
+            auto cascadesOnly = log;
+            cascadesOnly.start.cascades = true;
+            check(ResumeLog::Parse(cascadesOnly.Serialize(), "test build", restored) &&
+                      restored.start == cascadesOnly.start && restored.start.cascades && !restored.start.perf,
+                  "RENDER_CHEATS (cascades) round-trips alone");
+            check(text.find("RENDER_CHEATS") == std::string::npos && !parsed.start.perf && !parsed.start.cascades,
+                  "a log without perf or cascades writes no RENDER_CHEATS record and reads them off");
+            auto badRender = *ResumeLog::VerifiedBody(cascadesOnly.Serialize());
+            badRender.replace(badRender.find("RENDER_CHEATS"), 13, "RENDER_CHEATZ");
+            check(!ResumeLog::Parse(ResumeLog::AppendChecksum(badRender), "test build", restored),
+                  "an unknown R record is refused");
         }
 
         {

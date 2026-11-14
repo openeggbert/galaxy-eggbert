@@ -1,0 +1,18 @@
+# Brief E, mission 012: perf and cascades on, six seconds later both off again, then back: the rewind
+# lands where both were on (BACK SELFTEST equal, GALAXY_BACK_CHECKPOINTS=715: their flags and the
+# active list put back by the replayed letters). With GALAXY_EFFECTS=high cascades goes on; at Off
+# (GALAXY_EFFECTS=0) it is refused both times ("cascades: shadows off") and stays off and unlisted.
+# GALAXY_RESUME_SELFTEST=1000 checks the same letters from the world's start. The shot after the
+# rewind shows both listed (and at High the cascades' tint).
+wait 600
+type perf
+type cascades
+wait 360
+type cascades
+type perf
+type back
+wait 5
+shots 1
+wait 1
+expect lives = 3
+end

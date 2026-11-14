@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
 #include <GalaxyEggbert/Game/TimelineCheats.hpp>
+#include <GalaxyEggbert/Game/PerfGraph.hpp>
 #include <GalaxyEggbert/Game/WarpPanel.hpp>
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/ReusablePickup.hpp>
@@ -909,6 +910,22 @@ namespace GalaxyEggbert::CNA
         void DrawWarpPanel(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h);
         std::optional<std::pair<std::string, std::string>> warpSaveCheck_; // opt-in QA: file, memory
         void CheckWarpSave(const char* when);
+        // ---- `perf` and `cascades` (brief E, the owner 2026-11-14): display only, nothing of the world ----
+        // `perf`: the last four seconds of drawn frames as a graph over the play (PerfGraph.hpp): each
+        // frame's real time (from the end of one Draw() to the end of the next), the Update() passes' time
+        // since the last frame (GALAXY_PERF's timer in Update()) and its own Draw()'s, and the 1/60 s steps
+        // those passes ran (perfTicks_). Nothing is timed while it is off. Hidden by `photo`.
+        bool cheatPerf_ = false;
+        GalaxyEggbert::Game::PerfHistory perfHistory_;
+        std::chrono::steady_clock::time_point perfFrameEnd_{}; // the last drawn frame's end; {}: none yet
+        double perfUpdateMs_ = 0.0; // the Update() passes since it
+        int perfTicks_ = 0;         // the steps they ran
+        void DrawPerf(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h);
+        // `cascades`: the shaders' tint of the shadow map's cascades (SceneEffects::cascades). Refused
+        // ("cascades: shadows off") at an effects level without the shadow map (Off, Low, Medium), decided
+        // by the level alone (a replayed setting) so that a replay of its letters decides as play did.
+        bool cheatCascades_ = false;
+        [[nodiscard]] bool CascadesShadowsOn() const;
         // The autoplay's `hash` outside a network match: a hash of each part of the world's state.
         void LogWorldHash();
         void CaptureBackCheckpoint();
@@ -958,6 +975,7 @@ namespace GalaxyEggbert::CNA
             bool xray = false, hitbox = false, freecam = false; // a new mission always starts with freecam off
             bool trail = false, ids = false, sounds = false, chunks = false;
             bool step = false, practice = false;
+            bool perf = false, cascades = false;
             int zoomStep = 0;
             std::vector<std::string> active;
         } resumeLocalCheats_;
@@ -988,6 +1006,7 @@ namespace GalaxyEggbert::CNA
             bool photo = false, freeze = false, xray = false, hitbox = false;
             bool trail = false, ids = false, sounds = false, chunks = false;
             bool step = false, practice = false;
+            bool perf = false, cascades = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;

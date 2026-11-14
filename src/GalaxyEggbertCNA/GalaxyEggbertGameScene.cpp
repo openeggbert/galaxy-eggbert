@@ -227,6 +227,12 @@ namespace GalaxyEggbert::CNA
 
     }
 
+    bool GalaxyEggbertGame::CascadesShadowsOn() const
+    {
+        // The sun's shadow map is drawn from High up (effects.shadowMap below).
+        return EffectsLevel() >= 3;
+    }
+
     void GalaxyEggbertGame::AppendSceneEffects(SceneFrame& frame)
     {
         // The 3D effects (the Setup's "3D effects"): presentation only, nothing of the game changes.
@@ -238,6 +244,7 @@ namespace GalaxyEggbert::CNA
         effects.ultra = effects.level >= 4;
         effects.steadyShadows = goldenCaptureMode_ || goldenTraceMode_ || autoplay_ != nullptr;
         effects.capture = effects.steadyShadows;
+        effects.cascades = cheatCascades_; // the shaders tint only where the shadow map is drawn
         effects.water = waterBodies_;
         if (!effects.enabled)
         {

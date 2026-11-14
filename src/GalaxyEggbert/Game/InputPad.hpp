@@ -201,6 +201,10 @@ namespace GalaxyEggbert::Game
         };
         void DrawLabels(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
                         const std::vector<ScreenLabel>& labels);
+        // Plain rectangles in one colour (screen pixels, blended at @p alpha): the "perf" cheat's graph.
+        void DrawRects(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                       const std::vector<QuadBatch::Rect>& rects, const Microsoft::Xna::Framework::Vector3& colour,
+                       float alpha);
         // MODERN debug diagnostics, top-right; touch layouts leave Pause accessible above it.
         void DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                        int viewportH, const std::vector<std::string>& lines, bool touchControls);
@@ -691,6 +695,8 @@ namespace GalaxyEggbert::Game
             Practice,     // MODERN: a death goes back five seconds instead of costing a life
             Replay,       // MODERN: the last ten seconds played again, then play on from there
             Warp,         // MODERN: a panel of the campaign's (or galaxy's) worlds to go to directly
+            Perf,         // MODERN: the last four seconds of frames as a graph (time, update, draw, steps)
+            Cascades,     // MODERN: the sun's shadow map's cascades tinted on what they shadow
         };
         struct TypedCheatResult
         {

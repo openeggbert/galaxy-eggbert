@@ -118,6 +118,7 @@ uniform sampler2D uShadowMap;    // the near cascade (44 blocks round the target
 uniform sampler2D uShadowMapFar; // the far one (160 blocks, ahead of the camera)
 uniform vec4 uShadow;          // on, the near map's texel, bias, how dark (0..1) a shadow makes the sun's part
 uniform vec2 uShadowFar;       // the far map's texel, bias
+uniform float uCascades;       // the `cascades` cheat: 1 tints by the cascade that shadows (CascadeTint)
 uniform vec3 uFogColor;
 uniform vec3 uFog;             // start, end, on
 uniform vec3 uPointPos[8];
@@ -203,6 +204,20 @@ vec3 PointLights(vec3 n, bool hasNormal)
     }
     return min(sum, vec3(0.9));
 }
+// The `cascades` cheat (brief E): the near cascade red, the far one green, each as much as SunLight()
+// takes from it (the near's outer tenth fading into the far, the far's into none: the seams are the
+// gradients), beyond both unchanged; over the finished colour (premultiplied by its alpha).
+vec3 CascadeTint(vec3 color, float alpha)
+{
+    float inNear = Inside(vLightPos.xyz / vLightPos.w);
+    float inFar = (1.0 - inNear) * Inside(vLightPosFar.xyz / vLightPosFar.w);
+    float shown = inNear + inFar;
+    if (shown <= 0.0) return color;
+    vec3 tint = (vec3(1.0, 0.12, 0.08) * inNear + vec3(0.12, 1.0, 0.15) * inFar) / shown;
+    return mix(color, tint * alpha, 0.55 * shown);
+}
+// Every main-pass program's last step: the fog, then the `cascades` cheat's tint. Off (uCascades 0,
+// the same for every pixel of a draw) the tint's branch is never taken.
 vec4 Fogged(vec4 color)
 {
     if (uFog.z > 0.5)
@@ -210,6 +225,7 @@ vec4 Fogged(vec4 color)
         float f = clamp((vDepth - uFog.x) / max(0.001, uFog.y - uFog.x), 0.0, 1.0);
         color.rgb = mix(color.rgb, uFogColor * color.a, f);
     }
+    if (uCascades > 0.5 && uShadow.x > 0.5) color.rgb = CascadeTint(color.rgb, color.a);
     return color;
 }
 )";
@@ -1185,6 +1201,7 @@ void main()
         // remains (orthographic depth range 259 blocks: 0.021 near, 0.078 far).
         effect.SetUniformVec4("uShadow", m_shadowValid ? 1.0f : 0.0f, texel, 0.00008f, 0.55f);
         effect.SetUniformVec2("uShadowFar", texel, 0.0003f);
+        effect.SetUniformFloat("uCascades", effects.cascades && m_shadowValid ? 1.0f : 0.0f);
         if (m_shadowValid)
         {
             effect.SetTexture(1, *m_shadowMaps[0]);

@@ -909,6 +909,22 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawRects(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                             const std::vector<QuadBatch::Rect>& rects, const Microsoft::Xna::Framework::Vector3& colour,
+                             float alpha)
+    {
+        if (!loaded_ || rects.empty() || viewportW <= 0 || viewportH <= 0) return;
+        std::vector<Quad> quads;
+        quads.reserve(rects.size());
+        for (const auto& r : rects) quads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
+        const auto diffuse = helpPanelEffect_->getDiffuseColorProperty();
+        helpPanelEffect_->setDiffuseColorProperty(colour);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, quads, viewportW, viewportH, alpha);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+        helpPanelEffect_->setDiffuseColorProperty(diffuse);
+    }
+
     void InputPad::DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, const std::vector<std::string>& lines, bool touchControls)
     {
@@ -3183,6 +3199,8 @@ namespace GalaxyEggbert::Game
             {"practice", TypedCheat::Practice, "A death rewinds 5 s; no life is lost", CheatOrigin::GalaxyEggbert},
             {"replay", TypedCheat::Replay, "Watch the last 10 seconds again (a key skips)", CheatOrigin::GalaxyEggbert},
             {"warp", TypedCheat::Warp, "Go to any world (progress unchanged)", CheatOrigin::GalaxyEggbert},
+            {"perf", TypedCheat::Perf, "Graph 4 s of frame times, updates and draws", CheatOrigin::GalaxyEggbert},
+            {"cascades", TypedCheat::Cascades, "Tint the sun's shadow cascades (High, Ultra)", CheatOrigin::GalaxyEggbert},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

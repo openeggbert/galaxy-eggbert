@@ -6,6 +6,7 @@
 #include <GalaxyEggbert/Game/FocusNavigator.hpp>
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
 #include <GalaxyEggbert/Game/WarpPanel.hpp>
+#include <GalaxyEggbert/Game/PerfGraph.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
@@ -1311,7 +1312,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 52;
+        bool all = count == 54;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1320,12 +1321,12 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 52 words including step/practice/replay/warp fire and have an explanation");
+        check(all, "Typed cheats: all 54 words including perf/cascades fire and have an explanation");
         bool distinct = true, origins = true;
         int pages[2]{};
         const std::unordered_set<std::string> galaxy{
             "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox", "restart", "snap", "here", "trail", "ids", "sounds", "chunks",
-            "step", "practice", "replay", "warp"};
+            "step", "practice", "replay", "warp", "perf", "cascades"};
         const std::unordered_set<std::string> mobile{"quick", "ghost", "zoom", "debug", "cheats"};
         for (int i = 0; i < count; ++i)
         {
@@ -1339,7 +1340,8 @@ int main()
                 words[i].cheat != TC::Restart && words[i].cheat != TC::Snap && words[i].cheat != TC::Here &&
                 words[i].cheat != TC::Trail && words[i].cheat != TC::Ids && words[i].cheat != TC::Sounds &&
                 words[i].cheat != TC::Chunks && words[i].cheat != TC::Step && words[i].cheat != TC::Practice &&
-                words[i].cheat != TC::Replay && words[i].cheat != TC::Warp) continue;
+                words[i].cheat != TC::Replay && words[i].cheat != TC::Warp && words[i].cheat != TC::Perf &&
+                words[i].cheat != TC::Cascades) continue;
             for (int j = 0; j < count; ++j)
             {
                 if (i == j) continue;
@@ -1359,17 +1361,26 @@ int main()
         }
         check(helpFits, "cheat help descriptions end above page arrows at both required heights");
         {
-            // Brief E adds perf and cascades to page two: two more rows must still fit.
-            const auto layout = InputPad::LayoutCheatHelp(pages[1] + 2);
-            bool roomForTwo = true;
+            // Brief E: perf and cascades are page two's last two rows (its right column's foot), above
+            // the arrows at 800x480 and 800x360.
+            const auto layout = InputPad::LayoutCheatHelp(pages[1]);
+            int perf = -1, cascades = -1, row = 0;
+            for (int i = 0; i < count; ++i)
+            {
+                if (words[i].HelpPage() != 1) continue;
+                if (words[i].cheat == TC::Perf) perf = row;
+                if (words[i].cheat == TC::Cascades) cascades = row;
+                ++row;
+            }
+            bool fits = perf == pages[1] - 2 && cascades == pages[1] - 1;
             for (const int height : {480, 360})
-                for (int i = 0; i < pages[1] + 2; ++i)
-                    roomForTwo &= (layout.RowTop(i) + layout.DescriptionOffset() + 32 * layout.DescriptionSize()) * height / 480
-                                  < 416.0f * height / 480;
-            check(roomForTwo, "cheat help page two keeps room for two more words above its arrows");
+                for (const int at : {perf, cascades})
+                    fits &= at >= 0 && (layout.RowTop(at) + layout.DescriptionOffset() + 32 * layout.DescriptionSize()) *
+                                               height / 480 < 416.0f * height / 480;
+            check(fits, "perf and cascades end help page two, above its arrows at 800x480 and 800x360");
         }
         check(distinct, "new cheats neither prefix nor share matched suffixes with another word");
-        check(origins && pages[0] == 27 && pages[1] == 25,
+        check(origins && pages[0] == 27 && pages[1] == 27,
               "every word belongs to exactly one origin/page; original and Mobile words fill page one");
         {
             InputPad reset;
@@ -1601,6 +1612,74 @@ int main()
         in.pointer = true;
         out = navigator.Update(targets, in);
         check(!out.active && !navigator.Active(), "the mouse moved: the choice is gone, the real mouse again");
+    }
+    {
+        // Brief E, perf: the statistics over a ring of frames (average, worst, the slowest 1 %).
+        check(PerfSlowestCount(0) == 0 && PerfSlowestCount(1) == 1 && PerfSlowestCount(100) == 1 &&
+                  PerfSlowestCount(101) == 2 && PerfSlowestCount(240) == 3 && PerfSlowestCount(576) == 6,
+              "perf: the slowest 1 % is a hundredth of the frames rounded up, at least one");
+        std::vector<PerfSample> samples(200);
+        for (std::size_t i = 0; i < samples.size(); ++i)
+        {
+            samples[i].frameMs = 10.0f;
+            samples[i].updateMs = 1.0f;
+            samples[i].drawMs = 4.0f;
+            samples[i].ticks = i % 2 == 0 ? 0 : 1;
+        }
+        samples[37].frameMs = 50.0f; // two stutters, out of order
+        samples[11].frameMs = 30.0f;
+        samples[90].frameMs = 20.0f;  // the third slowest: outside the 1 % (two frames of 200)
+        samples[90].updateMs = 7.0f;
+        samples[91].drawMs = 12.0f;
+        samples[5].ticks = 2;
+        samples[6].ticks = 3;
+        const auto stats = ComputePerfStats(samples.data(), samples.size());
+        const auto near = [](float a, float b) { return std::fabs(a - b) < 1e-3f; };
+        check(stats.frames == 200 && near(stats.averageMs, (197.0f * 10.0f + 50.0f + 30.0f + 20.0f) / 200.0f) &&
+                  near(stats.worstMs, 50.0f) && near(stats.slowestPercentMs, 40.0f),
+              "perf: average, worst and the mean of the slowest 1 % (here the two slowest of 200)");
+        check(near(stats.updateAverageMs, (199.0f * 1.0f + 7.0f) / 200.0f) && near(stats.updateWorstMs, 7.0f) &&
+                  near(stats.drawAverageMs, (199.0f * 4.0f + 12.0f) / 200.0f) && near(stats.drawWorstMs, 12.0f),
+              "perf: the updates' and the draws' average and worst");
+        check(stats.ticks[0] == 99 && stats.ticks[1] == 99 && stats.ticks[2] == 2,
+              "perf: the frames that ran no step, one, and two or more");
+        PerfSample one;
+        one.frameMs = 7.0f;
+        const auto single = ComputePerfStats(&one, 1);
+        check(single.frames == 1 && near(single.averageMs, 7.0f) && near(single.worstMs, 7.0f) &&
+                  near(single.slowestPercentMs, 7.0f) && ComputePerfStats(nullptr, 0).frames == 0,
+              "perf: one frame is its own average, worst and slowest 1 %; none gives nothing");
+
+        PerfHistory history;
+        for (int i = 0; i <= 1100; ++i)
+        {
+            PerfSample sample;
+            sample.frameMs = static_cast<float>(i);
+            history.Push(sample);
+        }
+        check(history.Size() == PerfHistory::kCapacity && near(history.At(0).frameMs, 1100.0f - 1023.0f) &&
+                  near(history.At(history.Size() - 1).frameMs, 1100.0f),
+              "perf: the ring keeps the newest 1024 frames, oldest first");
+        history.Clear();
+        for (int i = 0; i < 300; ++i)
+        {
+            PerfSample sample;
+            sample.frameMs = 20.0f; // 50 frames a second: four seconds are 200 frames
+            sample.ticks = 1;
+            history.Push(sample);
+        }
+        check(history.Size() == 300 && history.WindowCount() == 200 && history.Stats().frames == 200,
+              "perf: the graph and the numbers cover the last four seconds of frames");
+        PerfSample hitch;
+        hitch.frameMs = 250.0f;
+        history.Push(hitch);
+        const auto withHitch = history.Stats();
+        check(history.WindowCount() == 189 && near(withHitch.worstMs, 250.0f) && near(withHitch.slowestPercentMs, 135.0f) &&
+                  withHitch.ticks[0] == 1 && withHitch.ticks[1] == 188,
+              "perf: a 250 ms hitch takes its time out of the window and shows as worst and in the slowest 1 %");
+        check(near(PerfGraphScaleMs(10.0f), 1000.0f / 30.0f) && near(PerfGraphScaleMs(40.0f), 50.0f) &&
+                  near(PerfGraphScaleMs(60.0f), 100.0f) && near(PerfGraphScaleMs(2000.0f), 500.0f),
+              "perf: the graph's height is two steps or the first of 50/100/250/500 ms over the worst");
     }
     {
         // Brief D, warp: the list from a set of world files, and the panel driven by recorded input.

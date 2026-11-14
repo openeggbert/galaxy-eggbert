@@ -1,0 +1,23 @@
+# Brief E, mission 012: perf and cascades on, then warp to world 4's mission 45 (a click at 800x480,
+# as cheats_d_warp.txt): the new world's log starts with both on (its RENDER_CHEATS start record).
+# perf goes off there, then back: BACK SELFTEST equal at the new world's tick 127
+# (GALAXY_BACK_CHECKPOINTS=127); GALAXY_RESUME_SELFTEST=300 rebuilds the new world's log from its start.
+# Run with GALAXY_EFFECTS=high.
+wait 60
+type perf
+type cascades
+wait 5
+type warp
+wait 5
+pointer 2 278 301 down
+pointer 1 278 301
+wait 2
+expect mission = 45
+wait 400
+type perf
+wait 10
+type back
+wait 5
+expect mission = 45
+expect lives = 3
+end

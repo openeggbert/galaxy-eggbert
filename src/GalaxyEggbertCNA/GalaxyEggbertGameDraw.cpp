@@ -15,6 +15,7 @@
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
+#include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -187,6 +188,30 @@ namespace GalaxyEggbert::CNA
                 objects[i].currentY = place.y;
                 objects[i].currentZ = place.z;
             }
+        }
+        if (cheatPerf_)
+        {
+            // The `perf` cheat's frame: from the last drawn frame's end to this one's (PerfGraph.hpp); the
+            // first after turning it on only starts the clock.
+            const auto end = std::chrono::steady_clock::now();
+            if (perfFrameEnd_ != std::chrono::steady_clock::time_point{})
+            {
+                GalaxyEggbert::Game::PerfSample sample;
+                sample.frameMs = std::chrono::duration<float, std::milli>(end - perfFrameEnd_).count();
+                sample.updateMs = static_cast<float>(perfUpdateMs_);
+                sample.drawMs = std::chrono::duration<float, std::milli>(end - perfStart).count();
+                sample.ticks = perfTicks_;
+                perfHistory_.Push(sample);
+            }
+            perfFrameEnd_ = end;
+            perfUpdateMs_ = 0.0;
+            perfTicks_ = 0;
+        }
+        else if (perfFrameEnd_ != std::chrono::steady_clock::time_point{})
+        {
+            // Off (typed, or put back by a rewind or a demo's end): on again, it starts afresh.
+            perfFrameEnd_ = {};
+            perfHistory_.Clear();
         }
         if (perfEnabled_)
         {
@@ -370,6 +395,102 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertGame::DrawPerf(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h)
+    {
+        // The `perf` cheat's graph (brief E): the last four seconds of drawn frames, the newest at the
+        // right, each a column as wide as it lasted and as tall as its time (grey; red when it took half
+        // as long again as the frame rate's target or more), the time of its updates (blue) and of its
+        // draw (orange) stacked at its foot; a line at 1/60 s (white) and one at the target (cyan); under
+        // it each frame's steps of the game (none grey, one green, two yellow, more red); the numbers
+        // below. Bottom left over the HUD's row (the lives, the chests' counter), or under the hints'
+        // banner when the touch controls take the corners.
+        using Microsoft::Xna::Framework::Vector3;
+        using GalaxyEggbert::Game::PerfHistory;
+        using Rect = GalaxyEggbert::Game::QuadBatch::Rect;
+        if (w <= 0 || h <= 0) return;
+        const float s = static_cast<float>(h) / 480.0f;
+        const auto stats = perfHistory_.Stats();
+        const std::size_t count = perfHistory_.WindowCount();
+        const int rate = frameRateInterpolating_ ? saveData_.GetFrameRate() : 60;
+        const float targetMs = 1000.0f / static_cast<float>(rate);
+        const float scaleMs = GalaxyEggbert::Game::PerfGraphScaleMs(stats.worstMs);
+        constexpr float kWidth = 300.0f, kHeight = 126.0f;
+        const float panelW = std::min(kWidth * s, static_cast<float>(w) - 12.0f * s);
+        const float left = tickInput_.touchControlsEnabled ? (static_cast<float>(w) - panelW) * 0.5f : 6.0f * s;
+        const float top = tickInput_.touchControlsEnabled ? 44.0f * s : static_cast<float>(h) - (44.0f + kHeight) * s;
+        const float gx0 = left + 6.0f * s, gx1 = left + panelW - 40.0f * s;
+        const float gy0 = top + 18.0f * s, gy1 = gy0 + 56.0f * s;
+        const float pixel = std::max(1.0f, std::floor(s));
+        const auto yOf = [&](float ms) { return gy1 - std::min(std::max(ms, 0.0f), scaleMs) / scaleMs * (gy1 - gy0); };
+        std::vector<Rect> frames, slow, updates, draws, steps[4];
+        float since = 0.0f; // milliseconds back from the newest frame's end
+        for (std::size_t k = 0; k < count; ++k)
+        {
+            const auto& sample = perfHistory_.At(perfHistory_.Size() - 1 - k);
+            const float xb = gx1 - since / PerfHistory::kWindowMs * (gx1 - gx0);
+            since += sample.frameMs;
+            if (xb <= gx0) break;
+            const float xa = std::max(gx0, std::min(gx1 - since / PerfHistory::kWindowMs * (gx1 - gx0), xb - pixel));
+            (sample.frameMs >= targetMs * 1.5f ? slow : frames).push_back({xa, yOf(sample.frameMs), xb, gy1});
+            const float yUpdate = yOf(sample.updateMs);
+            if (yUpdate < gy1) updates.push_back({xa, yUpdate, xb, gy1});
+            const float yDraw = yOf(sample.updateMs + sample.drawMs);
+            if (yDraw < yUpdate) draws.push_back({xa, yDraw, xb, yUpdate});
+            steps[std::clamp(sample.ticks, 0, 3)].push_back({xa, gy1 + 2.0f * s, xb, gy1 + 7.0f * s});
+        }
+        const float y60 = yOf(1000.0f / 60.0f), yTarget = yOf(targetMs);
+        inputPad_.DrawRects(device, w, h, {{left, top, left + panelW, top + kHeight * s}}, Vector3(0.0f, 0.0f, 0.0f), 0.62f);
+        inputPad_.DrawRects(device, w, h, {{gx0, gy0, gx1, gy1}}, Vector3(0.12f, 0.12f, 0.16f), 0.7f);
+        inputPad_.DrawRects(device, w, h, frames, Vector3(0.72f, 0.72f, 0.76f), 0.9f);
+        inputPad_.DrawRects(device, w, h, slow, Vector3(1.0f, 0.3f, 0.25f), 0.95f);
+        inputPad_.DrawRects(device, w, h, updates, Vector3(0.3f, 0.55f, 1.0f), 1.0f);
+        inputPad_.DrawRects(device, w, h, draws, Vector3(1.0f, 0.6f, 0.15f), 1.0f);
+        inputPad_.DrawRects(device, w, h, {{gx0, y60 - pixel * 0.5f, gx1, y60 + pixel * 0.5f}}, Vector3(1.0f, 1.0f, 1.0f), 0.85f);
+        if (rate != 60)
+            inputPad_.DrawRects(device, w, h, {{gx0, yTarget - pixel * 0.5f, gx1, yTarget + pixel * 0.5f}},
+                                Vector3(0.3f, 0.95f, 1.0f), 0.9f);
+        static const Vector3 kStepColours[4] = {Vector3(0.4f, 0.4f, 0.42f), Vector3(0.3f, 0.85f, 0.35f),
+                                                Vector3(1.0f, 0.85f, 0.2f), Vector3(1.0f, 0.3f, 0.25f)};
+        for (int i = 0; i < 4; ++i) inputPad_.DrawRects(device, w, h, steps[i], kStepColours[i], 1.0f);
+
+        // The words: left-aligned runs of coloured text (DrawLabels centres each).
+        std::vector<InputPad::ScreenLabel> labels;
+        const Vector3 white(1.0f, 1.0f, 1.0f);
+        const auto text = [&](const std::string& value, float x, float yTop, const Vector3& colour, float scale = 0.36f) {
+            const float width = static_cast<float>(TextMetrics::Width(value)) * scale * s;
+            labels.push_back({x + width * 0.5f, yTop + 16.0f * scale * s, value, colour, scale});
+            return x + width;
+        };
+        const auto number = [](const char* format, double value) {
+            char buffer[48];
+            std::snprintf(buffer, sizeof(buffer), format, value);
+            return std::string(buffer);
+        };
+        float x = text("perf", left + 6.0f * s, top + 3.0f * s, white, 0.4f);
+        x = text(fpsShown_ > 0.0f ? number("  %.0f fps", fpsShown_) : std::string("  -- fps"), x, top + 3.0f * s, white);
+        text(" (target " + std::to_string(rate) + ")", x, top + 3.0f * s, Vector3(0.3f, 0.95f, 1.0f));
+        text(number("%.0f ms", scaleMs), gx1 + 3.0f * s, gy0 - 5.0f * s, white, 0.3f);
+        text("1/60", gx1 + 3.0f * s, y60 - 5.0f * s, white, 0.3f);
+        if (rate != 60 && std::abs(yTarget - y60) >= 9.0f * s)
+            text("1/" + std::to_string(rate), gx1 + 3.0f * s, yTarget - 5.0f * s, Vector3(0.3f, 0.95f, 1.0f), 0.3f);
+        const float line = 13.0f * s;
+        float y = gy1 + 9.0f * s;
+        text("frame " + number("avg %.1f ms", stats.averageMs) + number(", worst %.1f", stats.worstMs) +
+                 number(", 1%% slowest %.1f", stats.slowestPercentMs),
+             left + 6.0f * s, y, white);
+        y += line;
+        x = text("update", left + 6.0f * s, y, Vector3(0.45f, 0.65f, 1.0f));
+        x = text(number(" avg %.1f", stats.updateAverageMs) + number(" worst %.1f   ", stats.updateWorstMs), x, y, white);
+        x = text("draw", x, y, Vector3(1.0f, 0.65f, 0.2f));
+        text(number(" avg %.1f", stats.drawAverageMs) + number(" worst %.1f", stats.drawWorstMs), x, y, white);
+        y += line;
+        x = text("steps a frame:", left + 6.0f * s, y, white);
+        x = text("  0: " + std::to_string(stats.ticks[0]), x, y, Vector3(0.62f, 0.62f, 0.66f));
+        x = text("  1: " + std::to_string(stats.ticks[1]), x, y, kStepColours[1]);
+        text("  2+: " + std::to_string(stats.ticks[2]), x, y, kStepColours[2]);
+        inputPad_.DrawLabels(device, w, h, labels);
+    }
+
     std::vector<std::string> GalaxyEggbertGame::ActiveCheatNames() const
     {
         // The cheats' names as listed; the "fps" cheat's with its reading, the "position" cheat's with
@@ -389,6 +510,10 @@ namespace GalaxyEggbert::CNA
             else if (name == "step")
             {
                 name = "step " + std::to_string(resumeTicks_); // the world log's tick
+            }
+            else if (name == "cascades" && !worldRenderer_.Scene().ShadowMapped())
+            {
+                name = "cascades: shadows off"; // turned on at High, the level lowered since
             }
             else if (name == "position")
             {
@@ -797,7 +922,10 @@ namespace GalaxyEggbert::CNA
                                              phase_ == GalaxyEggbert::Def::GamePhase::Editor;
             const bool photo = cheatPhoto_ && phase_ == GalaxyEggbert::Def::GamePhase::Play;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !photo)
+            {
                 DrawDiagnostics(device,viewport.getWidthProperty(),viewport.getHeightProperty());
+                if (cheatPerf_) DrawPerf(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
             if (!phaseHasRealScreen && !photo)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position

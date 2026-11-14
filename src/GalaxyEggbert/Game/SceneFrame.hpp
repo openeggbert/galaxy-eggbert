@@ -183,6 +183,9 @@ namespace GalaxyEggbert::Game
         // A capture (the same cases): Ultra's frame-to-frame effects off (the TAA's history, the motion
         // blur), the frames captured being far apart.
         bool capture = false;
+        // The `cascades` cheat (brief E): what the sun's shadow map shadows tinted by its cascade
+        // (SceneShaders.cpp, CascadeTint()); nothing where there is no shadow map.
+        bool cascades = false;
         Microsoft::Xna::Framework::Vector3 fogColor;
         float fogStart = 0.0f;   // blocks from the camera where the fog begins
         float fogEnd = 1.0f;     // where it is whole

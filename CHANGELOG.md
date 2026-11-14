@@ -11,6 +11,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- Type `perf` for a graph of the last four seconds of frames over the play: each frame's real
+  time, the time of its updates and of its drawing, and the game steps it ran, with lines at 1/60 s
+  and at the frame rate's target, and the average, worst and slowest 1 % below. Type `cascades`
+  (3D effects High or Ultra) to tint what the sun's shadow map shadows by its cascade, the near one
+  red and the far one green, so their ranges and seams show; at a lower level it only says
+  `cascades: shadows off`.
+
 - Type `step` to hold the world and advance it one tick at a time with F2 (held: ten ticks a
   second after half a second; the cheats' keyboard has an F2 key too), `practice` to have a death
   rewind five seconds instead of costing a life, `replay` to watch the last ten seconds again
