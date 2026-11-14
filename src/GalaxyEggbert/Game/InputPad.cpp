@@ -1002,7 +1002,7 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                    int viewportW, int viewportH, bool cheats, int page)
+                                    int viewportW, int viewportH, bool cheats, int page, bool large)
     {
         if (!loaded_ || viewportW <= 0 || viewportH <= 0) return;
         const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
@@ -1023,28 +1023,30 @@ namespace GalaxyEggbert::Game
         if (cheats)
         {
             // The cheat list stays English (the owner's Q-023: a tester's tool, as the debug panel).
-            page = std::clamp(page, 0, 1);
-            line(page == 0 ? "Speedy Blupi / Mobile Eggbert" : "Galaxy Eggbert", 28, 22, 0.75f, 500);
+            const int pages = CheatHelpPageCount(large);
+            page = std::clamp(page, 0, pages - 1);
+            int group = 0;
+            const auto indices = CheatHelpEntries(page, large, &group);
+            line(group == 0 ? "Speedy Blupi / Mobile Eggbert" : "Galaxy Eggbert", 28, 22, 0.75f, 500);
             line("Type a word during play (no Enter needed), or click / tap it here.", 28, 54, 0.45f, 600.0f);
             int count = 0;
             const auto* words = TypedCheatWords(count);
-            std::vector<const TypedCheatWord*> entries;
-            for (int i = 0; i < count; ++i)
-                if (words[i].HelpPage() == page) entries.push_back(&words[i]);
-            // Split by origin, keeping both columns clear of the navigation.
-            const auto layout = LayoutCheatHelp(static_cast<int>(entries.size()));
+            // Split by origin (and, with large text, into pages of one column), clear of the navigation.
+            const auto layout = LayoutCheatHelp(static_cast<int>(indices.size()), large);
             const int perColumn = layout.perColumn;
-            const bool dense = layout.dense;
-            for (int i = 0; i < static_cast<int>(entries.size()); ++i)
+            constexpr float kWideRoom = 590.0f; // one column: 28 .. 618
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
             {
+                const auto& entry = words[indices[i]];
                 const float x = i < perColumn ? 28.0f : 335.0f;
                 const float y = layout.RowTop(i);
-                const float room = i < perColumn ? kLeftRoom : kRightRoom;
-                line(entries[i]->word, x, y, dense ? 0.4f : 0.48f, room);
-                line(entries[i]->description, x, y + layout.DescriptionOffset(), layout.DescriptionSize(), room);
+                const float room = large ? kWideRoom : i < perColumn ? kLeftRoom : kRightRoom;
+                line(entry.word, x, y, layout.WordSize(), room);
+                line(entry.description, x, y + layout.DescriptionOffset(), layout.DescriptionSize(), room);
             }
+            const std::string counter = std::to_string(page + 1) + "/" + std::to_string(pages);
             line("[<]", 210, 416, 0.65f);
-            line(page == 0 ? "1/2" : "2/2", 295, 416, 0.65f);
+            line(counter, 320.0f - TextMetrics::Width(counter) * 0.65f * 0.5f, 416, 0.65f);
             line("[>]", 380, 416, 0.65f);
         }
         else
@@ -3227,7 +3229,46 @@ namespace GalaxyEggbert::Game
         cheatMouseWasDown_ = false;
     }
 
-    int InputPad::CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH) noexcept
+    int InputPad::CheatHelpPageCount(bool large) noexcept
+    {
+        if (!large) return 2;
+        int count = 0, groups[2] = {0, 0};
+        const TypedCheatWord* words = TypedCheatWords(count);
+        for (int i = 0; i < count; ++i) ++groups[words[i].HelpPage()];
+        const auto pagesOf = [](int n) { return std::max(1, (n + kLargeHelpRows - 1) / kLargeHelpRows); };
+        return pagesOf(groups[0]) + pagesOf(groups[1]);
+    }
+
+    std::vector<int> InputPad::CheatHelpEntries(int page, bool large, int* group)
+    {
+        int count = 0;
+        const TypedCheatWord* words = TypedCheatWords(count);
+        std::vector<int> byGroup[2];
+        for (int i = 0; i < count; ++i) byGroup[words[i].HelpPage()].push_back(i);
+        page = std::clamp(page, 0, CheatHelpPageCount(large) - 1);
+        if (!large)
+        {
+            if (group) *group = page;
+            return byGroup[page];
+        }
+        for (int g = 0; g < 2; ++g)
+        {
+            const int pages = std::max(1, (static_cast<int>(byGroup[g].size()) + kLargeHelpRows - 1) / kLargeHelpRows);
+            if (page < pages)
+            {
+                if (group) *group = g;
+                const auto first = byGroup[g].begin() + std::min<std::ptrdiff_t>(page * kLargeHelpRows,
+                                                                                    std::ssize(byGroup[g]));
+                const auto last = byGroup[g].begin() + std::min<std::ptrdiff_t>((page + 1) * kLargeHelpRows,
+                                                                                   std::ssize(byGroup[g]));
+                return {first, last};
+            }
+            page -= pages;
+        }
+        return {};
+    }
+
+    int InputPad::CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH, bool large) noexcept
     {
         if (viewportW <= 0 || viewportH <= 0) return -1;
         // DrawControlsHelp()'s placement: the 640x480 reference scaled to fit, centred.
@@ -3236,16 +3277,16 @@ namespace GalaxyEggbert::Game
         y = (y - (float(viewportH) - kRefH * s) * 0.5f) / s;
         int count = 0;
         const TypedCheatWord* words = TypedCheatWords(count);
-        std::vector<int> entries;
-        for (int i = 0; i < count; ++i)
-            if (words[i].HelpPage() == std::clamp(page, 0, 1)) entries.push_back(i);
-        const auto layout = LayoutCheatHelp(static_cast<int>(entries.size()));
+        const std::vector<int> entries = CheatHelpEntries(page, large);
+        const auto layout = LayoutCheatHelp(static_cast<int>(entries.size()), large);
         for (int i = 0; i < static_cast<int>(entries.size()); ++i)
         {
-            const bool left = i < layout.perColumn;
+            const bool left = large || i < layout.perColumn;
             // The word a little above its row's top, the description under it, to the next row.
             const float top = layout.RowTop(i) - 3.0f;
-            if (x >= (left ? 22.0f : 331.0f) && x < (left ? 331.0f : 624.0f) && y >= top &&
+            // One column with large text: the whole panel's width.
+            const float right = large ? 624.0f : left ? 331.0f : 624.0f;
+            if (x >= (left ? 22.0f : 331.0f) && x < right && y >= top &&
                 y < top + layout.RowHeight())
                 return words[entries[i]].cheat == TypedCheat::Help ? -1 : entries[i];
         }

@@ -7,6 +7,7 @@
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
 #include <GalaxyEggbert/Game/WarpPanel.hpp>
 #include <GalaxyEggbert/Game/PerfGraph.hpp>
+#include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
@@ -277,6 +278,70 @@ int main()
             }
         }
         check(everyRow, "cheat help: each word's row (scaled) is its entry; title, navigation and help itself none");
+
+        // Large text on a touch screen (the owner, 2026-11-14: a phone's two pages had very small
+        // letters): every word on exactly one page, at most kLargeHelpRows a page, the original's and
+        // Mobile Eggbert's pages first, each row clickable across the panel, every line fitting
+        // without being shrunk below its size.
+        {
+            const int pages = InputPad::CheatHelpPageCount(true);
+            std::vector<int> seen(count, 0);
+            bool pagesOk = pages > InputPad::CheatHelpPageCount(false) && InputPad::CheatHelpPageCount(false) == 2;
+            int lastGroup = 0;
+            bool rowsOk = true, fits = true;
+            for (int page = 0; page < pages; ++page)
+            {
+                int group = -1;
+                const auto entries = InputPad::CheatHelpEntries(page, true, &group);
+                pagesOk &= !entries.empty() && static_cast<int>(entries.size()) <= InputPad::kLargeHelpRows &&
+                           group >= lastGroup;
+                lastGroup = group;
+                const auto layout = InputPad::LayoutCheatHelp(static_cast<int>(entries.size()), true);
+                for (int i = 0; i < static_cast<int>(entries.size()); ++i)
+                {
+                    ++seen[entries[i]];
+                    pagesOk &= words[entries[i]].HelpPage() == group;
+                    const int want = words[entries[i]].cheat == InputPad::TypedCheat::Help ? -1 : entries[i];
+                    for (const auto size : {std::pair{800,480},std::pair{800,360},std::pair{1066,480}})
+                    {
+                        const float scale = std::min(size.first/640.f,size.second/480.f);
+                        const float ox = (size.first-640*scale)/2, oy = (size.second-480*scale)/2;
+                        const float y = layout.RowTop(i) + 9.f;
+                        for (float x : {60.f, 330.f, 580.f})
+                            rowsOk &= InputPad::CheatHelpEntryAt(page, ox+x*scale, oy+y*scale,
+                                                                 size.first, size.second, true) == want;
+                    }
+                    fits &= TextMetrics::Width(words[entries[i]].description) * layout.DescriptionSize() <= 590.f &&
+                            TextMetrics::Width(words[entries[i]].word) * layout.WordSize() <= 590.f;
+                }
+                // The last row ends above the page arrows (y 410).
+                pagesOk &= layout.RowTop(static_cast<int>(entries.size()) - 1) + layout.RowHeight() <= 410.f;
+            }
+            pagesOk &= std::all_of(seen.begin(), seen.end(), [](int n) { return n == 1; });
+            check(pagesOk, "cheat help, large text: every word on one page, at most kLargeHelpRows each, groups in order, above the arrows");
+            check(rowsOk, "cheat help, large text: each row is its entry across the panel's width");
+            check(fits, "cheat help, large text: every word and description fits its line unshrunk");
+            check(InputPad::LayoutCheatHelp(7, true).WordSize() >= 1.5f * InputPad::LayoutCheatHelp(27).WordSize() &&
+                  InputPad::LayoutCheatHelp(7, true).DescriptionSize() >= 1.5f * InputPad::LayoutCheatHelp(27).DescriptionSize(),
+                  "cheat help, large text: words and descriptions at least 1.5 times the dense page's");
+
+            using namespace Microsoft::Xna::Framework::Input;
+            ControlsHelp paged;
+            paged.OpenCheats();
+            (void)paged.Update(KeyboardState{Keys::Left}, false, false, 0, -1, pages);
+            const bool wrapsBack = paged.page == pages - 1;
+            (void)paged.Update({}, false, false, 0, -1, pages);
+            (void)paged.Update(KeyboardState{Keys::Right}, false, false, 0, -1, pages);
+            const bool wrapsOn = paged.page == 0;
+            (void)paged.Update({}, false, false, 0, -1, pages);
+            (void)paged.Update(KeyboardState{Keys::Right}, false, false, 0, -1, pages);
+            (void)paged.Update({}, false, false, 0, -1, pages);
+            (void)paged.Update({}, true, false, 1, -1, pages); // [>] tapped
+            check(wrapsBack && wrapsOn && paged.page == 2, "cheat help, large text: back and on through every page, round");
+            paged.page = pages - 1;
+            (void)paged.Update({}, false, false, 0, -1, 2); // the capability changed: two pages
+            check(paged.page == 1, "cheat help: a page beyond a smaller count is brought within it");
+        }
 
         ControlsHelp help;
         help.OpenCheats();

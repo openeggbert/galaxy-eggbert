@@ -103,8 +103,10 @@ namespace GalaxyEggbert::Game
 
         // @p entry: the cheat under the pointer (InputPad::CheatHelpEntryAt), -1 for none. Pressed
         // there, it is chosen and the help closes, the press consumed through its release as Close's.
+        // @p pages: how many pages the cheats' help has (InputPad::CheatHelpPageCount(): two, more with
+        // large text on a touch screen); Left / LB / [<] go back, Right / RB / [>] on, round.
         [[nodiscard]] bool Update(const Microsoft::Xna::Framework::Input::KeyboardState& keys,
-            bool pointerDown=false, bool overClose=false, int pageArrow=0, int entry=-1) noexcept
+            bool pointerDown=false, bool overClose=false, int pageArrow=0, int entry=-1, int pages=2) noexcept
         {
             using Microsoft::Xna::Framework::Input::Keys;
             const bool wasPointerHeld=pointerCloseHeld;
@@ -119,8 +121,13 @@ namespace GalaxyEggbert::Game
                 keys.IsKeyDown(Keys::PageDown) || keys.IsKeyDown(Keys::RightControl); // gamepad RB
             if (shown && cheats)
             {
-                if ((previous && !previousPageHeld) || (next && !nextPageHeld) ||
-                    (pointerDown && !wasPagePointerHeld && pageArrow != 0)) page = 1 - page;
+                pages = std::max(1, pages);
+                page = ((page % pages) + pages) % pages; // the page count can change (touch capability)
+                int step = 0;
+                if (previous && !previousPageHeld) --step;
+                if (next && !nextPageHeld) ++step;
+                if (pointerDown && !wasPagePointerHeld && pageArrow != 0) step += pageArrow < 0 ? -1 : 1;
+                page = ((page + step) % pages + pages) % pages;
                 if (pointerDown) pagePointerHeld = true;
             }
             previousPageHeld = previous;

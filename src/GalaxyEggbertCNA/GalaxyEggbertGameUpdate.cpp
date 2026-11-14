@@ -412,14 +412,18 @@ namespace GalaxyEggbert::CNA
                 helpPointerDown=true;helpX=touch.x;helpY=touch.y;break;
             }
         }
+        // The cheats' help with large text in more pages on a touch screen (a phone's two pages had
+        // very small letters, the owner 2026-11-14): the recorded capability, so replays page alike.
+        const bool helpLarge = tickInput_.touchControlsEnabled;
         const int helpEntry = controlsHelp_.shown && controlsHelp_.cheats
             ? GalaxyEggbert::Game::InputPad::CheatHelpEntryAt(controlsHelp_.page, helpX, helpY,
-                                                              tickInput_.viewportWidth, tickInput_.viewportHeight)
+                                                              tickInput_.viewportWidth, tickInput_.viewportHeight,
+                                                              helpLarge)
             : -1;
         const bool helpConsumed = controlsHelp_.Update(helpKeys,helpPointerDown,
             GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight),
             GalaxyEggbert::Game::ControlsHelp::PageArrow(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight),
-            helpEntry);
+            helpEntry, GalaxyEggbert::Game::InputPad::CheatHelpPageCount(helpLarge));
         // A cheat clicked in the help: the next Play tick completes it as typed (InputPad::ChooseTypedCheat).
         if (const int chosen = controlsHelp_.TakeChosen(); chosen >= 0) inputPad_.ChooseTypedCheat(chosen);
         if (helpConsumed)

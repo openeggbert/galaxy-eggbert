@@ -221,7 +221,8 @@ namespace GalaxyEggbert::Game
 
         // Galaxy's F1 overlay: black text over a translucent white panel.
         void DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool cheats = false, int page = 0);
+                              int viewportW, int viewportH, bool cheats = false, int page = 0,
+                              bool large = false);
 
         // Pause-row buttons. showBack/showRestart mirror the real
         // conditional visibility (`mission!=1`, `mission!=1 &&
@@ -717,25 +718,39 @@ namespace GalaxyEggbert::Game
             { return origin == CheatOrigin::GalaxyEggbert ? 1 : 0; }
         };
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
+        // The cheats' help in pages (the owner, 2026-11-14: on a phone its two pages had very small
+        // letters). On a large screen each group (HelpPage(): the original's and Mobile Eggbert's
+        // words, then Galaxy Eggbert's) is one page of two columns; with large text (a touch screen,
+        // tickInput_.touchControlsEnabled: phones and tablets) a group spreads over as many pages of
+        // kLargeHelpRows rows in one column as it needs.
+        static constexpr int kLargeHelpRows = 7;
         struct CheatHelpLayout
         {
             int perColumn;
             bool dense;
-            float RowHeight() const { return dense ? 24.0f : 32.0f; }
+            bool large = false;
+            float RowHeight() const { return large ? 46.0f : dense ? 24.0f : 32.0f; }
             float RowTop(int index) const { return 78.0f + float(index % perColumn) * RowHeight(); }
-            float DescriptionOffset() const { return dense ? 13.0f : 17.0f; }
-            float DescriptionSize() const { return dense ? .33f : .4f; }
+            float WordSize() const { return large ? .72f : dense ? .4f : .48f; }
+            float DescriptionOffset() const { return large ? 22.0f : dense ? 13.0f : 17.0f; }
+            float DescriptionSize() const { return large ? .52f : dense ? .33f : .4f; }
         };
-        static CheatHelpLayout LayoutCheatHelp(int entries)
+        static CheatHelpLayout LayoutCheatHelp(int entries, bool large = false)
         {
+            if (large) return {std::max(1, entries), false, true};
             const int rows = std::max(1, (entries + 1) / 2);
             return {rows, rows > 10};
         }
+        // How many pages the cheats' help has, and the TypedCheatWords() indices on page @p page (in
+        // the table's order), with that page's group (0 or 1, its title) in @p group.
+        [[nodiscard]] static int CheatHelpPageCount(bool large) noexcept;
+        [[nodiscard]] static std::vector<int> CheatHelpEntries(int page, bool large, int* group = nullptr);
         // The cheats' help (`help`) lists its words to click as well (the owner, 2026-11-14): the
         // index in TypedCheatWords() of the entry (its word and description) under (x, y) on help
         // page @p page as DrawControlsHelp() draws it, -1 off every entry. `help` and `cheats`
         // themselves are not offered, the list being already shown.
-        [[nodiscard]] static int CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static int CheatHelpEntryAt(int page, float x, float y, int viewportW, int viewportH,
+                                                  bool large = false) noexcept;
         // A word clicked in the cheats' help: the next UpdateTypedGhostCheat() in Play completes it as
         // if it had been typed, under the same locks (fairplay, honest). -1 clears it.
         void ChooseTypedCheat(int wordIndex) noexcept { chosenTypedCheat_ = wordIndex; }

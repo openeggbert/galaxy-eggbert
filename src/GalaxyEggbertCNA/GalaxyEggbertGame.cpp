@@ -645,6 +645,13 @@ namespace GalaxyEggbert::CNA
                 tickInput_.touches.push_back({touch.getIdProperty(), touch.getPositionProperty().X,
                     touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
         }
+        // QA: GALAXY_TOUCH_CONTROLS=1 plays as on a touch screen (its controls, the cheats' help in large
+        // text on more pages), autoplay too; recorded as the real capability would be.
+        static const bool forceTouch = [] {
+            const char* touch = std::getenv("GALAXY_TOUCH_CONTROLS");
+            return touch != nullptr && *touch == '1';
+        }();
+        if (forceTouch) tickInput_.touchControlsEnabled = true;
 
         // Physical presses arrive in event order, even if released between updates.
         // They work with a touch screen too, without starting an on-screen keyboard/IME.

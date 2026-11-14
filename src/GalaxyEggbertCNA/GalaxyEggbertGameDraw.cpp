@@ -1255,7 +1255,8 @@ namespace GalaxyEggbert::CNA
             if (controlsHelp_.shown)
             {
                 inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                          controlsHelp_.cheats, controlsHelp_.page);
+                                          controlsHelp_.cheats, controlsHelp_.page,
+                                          tickInput_.touchControlsEnabled); // large text in more pages
             }
             else if (warpPanel_.IsOpen() && phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {

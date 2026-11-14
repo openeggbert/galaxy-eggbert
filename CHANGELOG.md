@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ## [Unreleased]
 
+### Changed
+
+- On a touch screen (phones, tablets) the cheats' help shows its words in large letters on more
+  pages (eight instead of two); a computer keeps the two pages.
+
 ## [0.5.0] — 2026-11-14
 
 <!-- site-headline: twenty-one new cheats, a cheat keyboard and your own demo recordings -->
