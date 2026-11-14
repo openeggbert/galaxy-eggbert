@@ -89,7 +89,7 @@ namespace GalaxyEggbert::CNA
         if (replayingResume_)
         {
             const float seconds = ResumeReplaySeconds();
-            if (seconds < 0.25f) return;
+            if (seconds < ResumeLoadingDelay()) return;
             auto& device = getGraphicsDeviceProperty();
             device.SetRenderTarget(nullptr);
             device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98));

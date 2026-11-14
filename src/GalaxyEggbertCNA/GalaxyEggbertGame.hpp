@@ -846,6 +846,10 @@ namespace GalaxyEggbert::CNA
         bool BeginResume(GalaxyEggbert::Game::ResumeLog log, bool inProcess = false);
         void ReplayBatch();
         [[nodiscard]] float ResumeReplaySeconds() const;
+        // How long a replay runs before its loading screen shows, the last frame staying up till then:
+        // a rewind in play (back, recall, restart) 2 s, most being over sooner (the owner, 2026-11-14:
+        // the screen flashed up for a moment); a Continue from the menu 0.25 s.
+        [[nodiscard]] float ResumeLoadingDelay() const noexcept { return backReplaying_ ? 2.0f : 0.25f; }
         void RewindToTick(std::uint64_t target, const char* notice);
         [[nodiscard]] const char* TimelineCheatRefusal() const;
         void CaptureBackCheckpoint();

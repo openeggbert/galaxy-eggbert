@@ -123,7 +123,7 @@ namespace GalaxyEggbert::CNA
         if (replayingResume_)
         {
             ReplayBatch();
-            if (replayingResume_ && ResumeReplaySeconds() < 0.25f) SuppressDraw();
+            if (replayingResume_ && ResumeReplaySeconds() < ResumeLoadingDelay()) SuppressDraw();
             return;
         }
         // The Setup's frame rate above 60 (ApplyFrameRate): the loop runs that often, the game steps
