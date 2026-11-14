@@ -182,6 +182,7 @@ namespace GalaxyEggbert::Game
         {"another demo format", "ein anderes Demo-Format"},
         {"recorded with another simulation revision", "mit einer anderen Simulationsversion aufgenommen"},
         {"its world is missing", "seine Welt fehlt"},
+        {"plays from its own world copy", "wird mit eigener Weltkopie abgespielt"},
         {"its world has changed", "seine Welt hat sich geändert"},
         {"unknown", "unbekannt"},
 

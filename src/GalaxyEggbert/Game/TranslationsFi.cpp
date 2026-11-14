@@ -190,6 +190,7 @@ namespace GalaxyEggbert::Game
         {"another demo format", "eri demomuoto"},
         {"recorded with another simulation revision", "nauhoitettu toisella simulaatioversiolla"},
         {"its world is missing", "sen maailma puuttuu"},
+        {"plays from its own world copy", "toistetaan omalla maailman kopiolla"},
         {"its world has changed", "sen maailma on muuttunut"},
         {"unknown", "tuntematon"},
 

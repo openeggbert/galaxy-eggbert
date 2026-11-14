@@ -13,7 +13,8 @@
 // with (kDemoSimulationRevision) and the hash of its world. When a simulation change makes a demo
 // replay differently, tools/verify_demos.sh reports it through the end-state signature stored in the
 // file; bump the revision and record the demos again (tools/record_demo.sh). A demo whose revision or
-// world differs is skipped, never replayed into a different game.
+// world differs is skipped unless the recording carries its original world bytes. Revision
+// opt-in is reserved for the future private collection; menu demos remain strict.
 //
 // Engine-independent: GalaxyEggbertGame feeds this with its live input and plays the recording.
 
@@ -28,7 +29,7 @@
 
 namespace GalaxyEggbert::Game
 {
-    inline constexpr int kDemoFormatVersion = 1;
+    inline constexpr int kDemoFormatVersion = 2;
     // Bump whenever a simulation change makes tools/verify_demos.sh report a shipped demo as
     // different, then record the demos again; the old files are then skipped as incompatible.
     inline constexpr int kDemoSimulationRevision = 1;
@@ -79,6 +80,9 @@ namespace GalaxyEggbert::Game
     {
         int simulationRevision = kDemoSimulationRevision;
         std::string title;
+        std::string gameVersion;
+        std::string recordedAt; // UTC ISO 8601, supplied by the host when recording ends
+        std::optional<std::string> worldBytes; // exact loaded snapshot; absent in developer demos
         // The start state and the input runs. log.start.build names the recording build, for
         // information only; it is not compared.
         ResumeLog log;
@@ -96,19 +100,27 @@ namespace GalaxyEggbert::Game
         IncompatibleRevision,
         WorldMissing,
         WorldChanged,
+        OwnWorld,           // playable from its embedded world instead of the named file
     };
     [[nodiscard]] const char* DemoLoadStatusText(DemoLoadStatus status) noexcept;
 
     // Parses and validates a demo's text: header, checksum, every start/input field (ResumeLog's own
     // checks), normal game speed and kDemoMaxTicks. Transactional: `out` is unchanged on failure.
-    // The world is checked by the host against the file it would load (DemoWorldStatus()).
-    [[nodiscard]] DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out);
+    // Embedded bytes must match worldHash; the host checks the named file (DemoWorldStatus()).
+    // acceptOtherRevision bypasses only the revision check, retaining the recorded revision.
+    // Menu demos, imports and verification keep the default refusal.
+    [[nodiscard]] DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out,
+                                            bool acceptOtherRevision = false);
     // Copies @p source into position @p slot (UserDemoPath()) once ParseDemo() accepts it (its world
     // is the host's to find when it plays); the status, Ok when copied, and nothing written otherwise.
     [[nodiscard]] DemoLoadStatus ImportDemo(const std::string& source, int slot);
     // Whether the recording's world is the file whose bytes these are (nullopt: unreadable).
     [[nodiscard]] DemoLoadStatus DemoWorldStatus(const DemoRecording& demo, const std::string& path,
                                                  const std::optional<std::string>& worldBytes);
+
+    // Materializes only a validated embedded snapshot, atomically, at demos/worlds/<hash>.vwr.
+    // Reuses a matching cached file; repairs a damaged one. No campaign/galaxy writes.
+    [[nodiscard]] std::optional<std::string> CacheDemoWorld(const DemoRecording& demo);
 
     [[nodiscard]] std::vector<std::pair<std::string, std::uint64_t>> HashDemoSignature(
         const std::map<std::string, std::string>& signature);

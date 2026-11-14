@@ -21,6 +21,49 @@ namespace GalaxyEggbert::Game
         constexpr std::size_t kMaxTitle = 200;
         constexpr std::size_t kMaxSignatureEntries = 64;
 
+        constexpr std::size_t kMaxWorldBytes = 64 * 1024 * 1024;
+        constexpr std::string_view kBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+        std::string EncodeBase64(std::string_view bytes)
+        {
+            std::string encoded;
+            encoded.reserve((bytes.size() + 2) / 3 * 4);
+            for (std::size_t i = 0; i < bytes.size(); i += 3)
+            {
+                const unsigned a = static_cast<unsigned char>(bytes[i]);
+                const unsigned b = i + 1 < bytes.size() ? static_cast<unsigned char>(bytes[i + 1]) : 0;
+                const unsigned c = i + 2 < bytes.size() ? static_cast<unsigned char>(bytes[i + 2]) : 0;
+                encoded += kBase64[a >> 2];
+                encoded += kBase64[((a & 3) << 4) | (b >> 4)];
+                encoded += i + 1 < bytes.size() ? kBase64[((b & 15) << 2) | (c >> 6)] : '=';
+                encoded += i + 2 < bytes.size() ? kBase64[c & 63] : '=';
+            }
+            return encoded;
+        }
+
+        std::optional<std::string> DecodeBase64(std::string_view text, std::size_t length)
+        {
+            if (length > kMaxWorldBytes || text.size() != (length + 2) / 3 * 4) return std::nullopt;
+            std::string bytes;
+            bytes.reserve(length);
+            for (std::size_t i = 0; i < text.size(); i += 4)
+            {
+                unsigned value = 0;
+                for (std::size_t j = 0; j < 4; ++j)
+                {
+                    const auto digit = kBase64.find(text[i + j]);
+                    if (digit == std::string_view::npos && text[i + j] != '=') return std::nullopt;
+                    value = (value << 6) | (digit == std::string_view::npos ? 0 : static_cast<unsigned>(digit));
+                }
+                bytes += static_cast<char>((value >> 16) & 255);
+                if (bytes.size() < length) bytes += static_cast<char>((value >> 8) & 255);
+                if (bytes.size() < length) bytes += static_cast<char>(value & 255);
+            }
+            // Also rejects misplaced padding, nonzero unused bits and noncanonical encodings.
+            if (bytes.size() != length || EncodeBase64(bytes) != text) return std::nullopt;
+            return bytes;
+        }
+
         bool Contains(const std::vector<int>& sorted, int value)
         {
             return std::binary_search(sorted.begin(), sorted.end(), value);
@@ -180,7 +223,12 @@ namespace GalaxyEggbert::Game
         std::ostringstream out;
         ResumeLog::ImbueStream(out);
         out << kMagic << ' ' << kDemoFormatVersion << '\n' << simulationRevision << '\n'
-            << std::quoted(title) << '\n' << std::quoted(log.start.build) << '\n' << endSignature.size() << '\n';
+            << std::quoted(title) << '\n' << std::quoted(log.start.build) << '\n'
+            << "VERSION " << std::quoted(gameVersion) << '\n'
+            << "RECORDED_AT " << std::quoted(recordedAt) << '\n'
+            << "WORLD " << worldBytes.has_value();
+        if (worldBytes) out << ' ' << worldBytes->size() << ' ' << std::quoted(EncodeBase64(*worldBytes));
+        out << '\n' << endSignature.size() << '\n';
         for (const auto& [name, hash] : endSignature) out << std::quoted(name) << ' ' << hash << '\n';
         log.WriteBody(out);
         return ResumeLog::AppendChecksum(out.str());
@@ -196,12 +244,13 @@ namespace GalaxyEggbert::Game
             case DemoLoadStatus::IncompatibleFormat: return TrMark("another demo format");
             case DemoLoadStatus::IncompatibleRevision: return TrMark("recorded with another simulation revision");
             case DemoLoadStatus::WorldMissing: return TrMark("its world is missing");
+            case DemoLoadStatus::OwnWorld: return TrMark("plays from its own world copy");
             case DemoLoadStatus::WorldChanged: return TrMark("its world has changed");
         }
         return TrMark("unknown");
     }
 
-    DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out)
+    DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out, bool acceptOtherRevision)
     {
         const auto body = ResumeLog::VerifiedBody(text);
         if (!body) return DemoLoadStatus::Corrupt;
@@ -211,12 +260,33 @@ namespace GalaxyEggbert::Game
         std::string magic;
         int format = 0;
         if (!(in >> magic >> format) || magic != kMagic) return DemoLoadStatus::Corrupt;
-        if (format != kDemoFormatVersion) return DemoLoadStatus::IncompatibleFormat;
+        if (format != 1 && format != kDemoFormatVersion) return DemoLoadStatus::IncompatibleFormat;
         std::size_t entries = 0;
-        if (!(in >> parsed.simulationRevision >> std::quoted(parsed.title) >> std::quoted(parsed.log.start.build)
-                 >> entries) ||
-            parsed.title.size() > kMaxTitle || parsed.log.start.build.size() > 4096 || entries > kMaxSignatureEntries)
+        if (!(in >> parsed.simulationRevision >> std::quoted(parsed.title) >> std::quoted(parsed.log.start.build)) ||
+            parsed.title.size() > kMaxTitle || parsed.log.start.build.size() > 4096)
             return DemoLoadStatus::Corrupt;
+        if (format == 2)
+        {
+            std::string tag;
+            bool hasWorld = false;
+            if (!(in >> tag >> std::quoted(parsed.gameVersion)) || tag != "VERSION" ||
+                parsed.gameVersion.size() > 128 || parsed.gameVersion.find_first_of("\r\n\0", 0, 3) != std::string::npos)
+                return DemoLoadStatus::Corrupt;
+            if (!(in >> tag >> std::quoted(parsed.recordedAt)) || tag != "RECORDED_AT" ||
+                parsed.recordedAt.size() > 20 || parsed.recordedAt.find_first_of("\r\n\0", 0, 3) != std::string::npos)
+                return DemoLoadStatus::Corrupt;
+            if (!(in >> tag >> hasWorld) || tag != "WORLD") return DemoLoadStatus::Corrupt;
+            if (hasWorld)
+            {
+                std::size_t length = 0;
+                std::string encoded;
+                if (!(in >> length) || length > kMaxWorldBytes || !(in >> std::quoted(encoded)))
+                    return DemoLoadStatus::Corrupt;
+                parsed.worldBytes = DecodeBase64(encoded, length);
+                if (!parsed.worldBytes) return DemoLoadStatus::Corrupt;
+            }
+        }
+        if (!(in >> entries) || entries > kMaxSignatureEntries) return DemoLoadStatus::Corrupt;
         std::set<std::string> names;
         for (std::size_t i = 0; i < entries; ++i)
         {
@@ -232,8 +302,10 @@ namespace GalaxyEggbert::Game
         // A demo plays at the normal speed (GameSpeed::Normal) and is short; an empty one shows nothing.
         if (parsed.log.start.speed != 1 || parsed.log.runs.empty() || parsed.log.TickCount() > kDemoMaxTicks)
             return DemoLoadStatus::Corrupt;
+        if (parsed.worldBytes && ResumeLog::HashBytes(*parsed.worldBytes) != parsed.log.start.worldHash)
+            return DemoLoadStatus::Corrupt;
         // Checked last: a damaged file is reported as damaged whatever revision it claims.
-        if (parsed.simulationRevision != expectedRevision) return DemoLoadStatus::IncompatibleRevision;
+        if (!acceptOtherRevision && parsed.simulationRevision != expectedRevision) return DemoLoadStatus::IncompatibleRevision;
         out = std::move(parsed);
         return DemoLoadStatus::Ok;
     }
@@ -241,9 +313,41 @@ namespace GalaxyEggbert::Game
     DemoLoadStatus DemoWorldStatus(const DemoRecording& demo, const std::string& path,
                                    const std::optional<std::string>& worldBytes)
     {
-        if (!worldBytes) return DemoLoadStatus::WorldMissing;
-        return demo.log.MatchesWorld(path, ResumeLog::HashBytes(*worldBytes)) ? DemoLoadStatus::Ok
-                                                                             : DemoLoadStatus::WorldChanged;
+        if (worldBytes && demo.log.MatchesWorld(path, ResumeLog::HashBytes(*worldBytes))) return DemoLoadStatus::Ok;
+        if (demo.worldBytes)
+            return ResumeLog::HashBytes(*demo.worldBytes) == demo.log.start.worldHash
+                       ? DemoLoadStatus::OwnWorld : DemoLoadStatus::Corrupt;
+        return worldBytes ? DemoLoadStatus::WorldChanged : DemoLoadStatus::WorldMissing;
+    }
+
+    std::optional<std::string> CacheDemoWorld(const DemoRecording& demo)
+    {
+        if (!demo.worldBytes || demo.worldBytes->size() > kMaxWorldBytes ||
+            ResumeLog::HashBytes(*demo.worldBytes) != demo.log.start.worldHash) return std::nullopt;
+        const auto target = std::filesystem::path(UserDemoDir()) / "worlds" /
+                            (std::to_string(demo.log.start.worldHash) + ".vwr");
+        if (ResumeLog::HashFile(target) == demo.log.start.worldHash) return target.generic_string();
+        std::error_code error;
+        std::filesystem::create_directories(target.parent_path(), error);
+        if (error) return std::nullopt;
+        const auto temporary = target.string() + ".tmp";
+        {
+            std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
+            file.write(demo.worldBytes->data(), static_cast<std::streamsize>(demo.worldBytes->size()));
+            file.close();
+            if (!file)
+            {
+                std::filesystem::remove(temporary, error);
+                return std::nullopt;
+            }
+        }
+        std::filesystem::rename(temporary, target, error);
+        if (error)
+        {
+            std::filesystem::remove(temporary, error);
+            return std::nullopt;
+        }
+        return target.generic_string();
     }
 
     std::vector<std::pair<std::string, std::uint64_t>> HashDemoSignature(

@@ -237,7 +237,8 @@ namespace GalaxyEggbert::CNA
                              WorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase()));
     }
 
-    void GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes)
+    void GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes,
+                                       const std::string* validatedPath)
     {
         // A demo shows one mission: where play would go on to another, the demo (or its recording)
         // ends instead, with nothing loaded or saved (DemoReplay.hpp).
@@ -262,7 +263,7 @@ namespace GalaxyEggbert::CNA
         pendingSkate_ = {};
         teleportArrivalGuard_ = false;
         accelWaitZero_ = true; // StartMission(): the first tilt waits for a level device
-        const auto path = MissionPath(missionNumber);
+        const auto path = validatedPath ? *validatedPath : MissionPath(missionNumber);
         // Hash and decode one snapshot. During resume this is the already validated snapshot,
         // so an editor save/file replacement between validation and load cannot change it.
         const auto fileBytes = validatedBytes ? std::optional<std::string>{} : ReadWorldBytes(path);
@@ -276,7 +277,9 @@ namespace GalaxyEggbert::CNA
         }
         loadedMissionPath_ = path;
         loadedMissionHash_ = ResumeLog::HashBytes(*bytes);
-        if (galaxyGamer_ >= 0) worldRuntime_.OverrideMissionNumber(missionNumber); // its place in the galaxy
+        if (demoRecordArmed_ && demoRecordSlot_ > 0) demoRecordWorldBytes_ = *bytes;
+        // A replay keeps the recorded identity, including hub rules, even from a cached file.
+        if (galaxyGamer_ >= 0 || demoActive_) worldRuntime_.OverrideMissionNumber(missionNumber);
 
         RebuildWorldPresentation();
 

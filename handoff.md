@@ -33,6 +33,26 @@ Up/Down has lasted `ScaleTime(4)` (`m_scrollAdd.Y`, Decor.cpp:3278-3287, back to
   Under Xvfb, `xdotool keydown Shift_R` also presses Shift_L (crouch wins): add `keyup Shift_L`.
 - Next: the owner tries it; the angle (0.5 rad) and the ease (5/s) are the knobs.
 
+## Replay format 2 (2026-11-14, the owner: replays 1/3) — committed
+
+Brief: `plans/codex/replays_1_format.md`. `DemoRecording` has `gameVersion`, `recordedAt` and
+optional `worldBytes`; serialization emits format 2, parsing remains transactional for formats
+1 and 2. The host takes the player's world from the same snapshot loaded at recording start and
+sets version/UTC date at finish. Developer recordings stay world-free. `CacheDemoWorld()` checks
+the embedded hash, reuses a matching file or writes temp + rename under `UserDemoDir()/worlds/`.
+`StartDemoFile()` validates before touching player state, passes the cached path and bytes through
+`LoadMission()`, and keeps the recorded mission/galaxy context. Import rows and notices distinguish
+an own world copy; the single new text is translated in all 19 tables.
+
+`ParseDemo(..., true)` accepts another simulation revision only when explicitly requested; no
+current caller uses it. Q-024 is open in `plans/audit/owner_questions.md`. The private collection
+screen and direct collection recording remain the next two briefs; do not infer them as done.
+Verified: native build, 136/136 CTest, all ten shipped demos equal, nine unchanged golden frames
+and the unchanged trace; live cached-world playback finished. Tests, screenshots, scripts and
+limitations: `build-probe/replays-1/report.md` (Codex, astra; reviewed and rerun here: 136/136),
+verified against the camera merge `89b1dc5e`. Next: `plans/codex/replays_2_screen.md` (the "My
+recordings" screen), then `replays_3_record.md` (Pause > Record into the collection, Save / Discard).
+
 ## The cheats' help: a word clicked or tapped turns its cheat on (2026-11-14, the owner) — committed
 
 - `InputPad::CheatHelpEntryAt(page, x, y, w, h)`: the word table index of the row (word and
@@ -1815,6 +1835,9 @@ a world, ledger bookkeeping). How to run a brief, and the rules every task keeps
 ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md`**.
 
 ### Codex queue (in this order; each brief is self-contained)
+
+Replay collection (the owner, 2026-11-14): `replays_1_format.md` committed; next
+`replays_2_screen.md`, then `replays_3_record.md`.
 
 | # | Task | Brief | Owner's report / decision |
 |---|---|---|---|

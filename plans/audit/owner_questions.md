@@ -6,6 +6,16 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ## Open
 
+### Q-024 — Recordings from another simulation revision (2026-11-14)
+
+A recording made before a change of the game's rules (simulation revision) may play differently.
+Options: (a) refuse it (today); (b) list it and let it play best effort with a warning, never as a
+menu demo; (c) keep old simulation code to replay it exactly (expensive, not recommended).
+Recommendation: **(b)**. Meanwhile: format 2 stores version, UTC date and the player's exact world;
+`ParseDemo` has an explicit revision opt-in while all current callers, menu demos and verifiers
+still refuse other revisions. This builds the foundation for (b); listing and warned best-effort
+playback belong to the following collection-screen brief, not this change.
+
 ### Waiting on the owner (updated 2026-11-05, MR-0007 and MR-0008)
 
 Answered and built 2026-11-05: Q-012 (B; the ball cubes' plain tops), Q-013, Q-014 ((b), M3D-0006),

@@ -61,6 +61,16 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Replay format 2 (2026-11-14, `plans/codex/replays_1_format.md`, uncommitted review): new
+  recordings carry the game version and UTC finish time; player recordings also carry the exact
+  loaded world bytes. Missing/changed worlds fall back to a hash-checked, atomically written copy
+  in `demos/worlds/<hash>.vwr`, retaining the recorded mission and galaxy context. Format 1 remains
+  readable; developer recordings omit the world. All current playback/import/verification callers
+  still reject another simulation revision; the parser's explicit opt-in prepares Q-024 and the
+  later collection screen. Import rows show version/date and own-copy status in all 19 translations.
+  Evidence and verification: `build-probe/replays-1/report.md`. Collection screens and direct
+  collection recording are separate briefs, not implemented here.
+
 - MODERN cheats `restart`, `snap`, `here`, `trail`, `ids`, `sounds`, `chunks` (2026-11-13,
   `plans/codex/cheats_restart_snap_here_trail_ids_sounds_chunks.md`): tick-zero rewind,
   completed-frame PNGs in the player's `screenshots/` (never replayed), collision-owned landing

@@ -181,6 +181,7 @@ namespace GalaxyEggbert::Game
         {"another demo format", "інший формат демо"},
         {"recorded with another simulation revision", "записано з іншою версією симуляції"},
         {"its world is missing", "немає його світу"},
+        {"plays from its own world copy", "відтворюється з власною копією світу"},
         {"its world has changed", "його світ змінився"},
         {"unknown", "невідомо"},
 

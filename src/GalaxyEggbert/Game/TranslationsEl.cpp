@@ -195,6 +195,7 @@ namespace GalaxyEggbert::Game
         {"another demo format", "άλλη μορφή demo"},
         {"recorded with another simulation revision", "εγγράφηκε με άλλη έκδοση προσομοίωσης"},
         {"its world is missing", "λείπει ο κόσμος του"},
+        {"plays from its own world copy", "αναπαράγεται με το δικό της αντίγραφο κόσμου"},
         {"its world has changed", "ο κόσμος του άλλαξε"},
         {"unknown", "άγνωστο"},
 

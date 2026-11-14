@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
 
 #include <cstdio>
+#include <chrono>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
@@ -38,6 +39,8 @@ namespace
     {
         DemoRecording demo;
         demo.title = "World 1, \"mission\" 1";
+        demo.gameVersion = "0.4.1";
+        demo.recordedAt = "2026-11-14T09:30:00Z";
         demo.log.start.build = "recording build";
         demo.log.start.worldPath = "worlds3d/world011.vwr";
         demo.log.start.worldHash = ResumeLog::HashBytes("world bytes");
@@ -106,11 +109,12 @@ int main(int argc, char** argv)
     {
         const DemoRecording demo = SampleDemo();
         const std::string text = demo.Serialize();
-        check(text.starts_with("GALAXY_DEMO 1\n"), "a demo writes its own header, format 1");
+        check(text.starts_with("GALAXY_DEMO 2\n"), "a demo writes its own header, format 2");
         DemoRecording parsed;
         check(ParseDemo(text, kDemoSimulationRevision, parsed) == DemoLoadStatus::Ok && parsed.title == demo.title &&
                   parsed.simulationRevision == kDemoSimulationRevision && parsed.endSignature == demo.endSignature &&
-                  parsed.log.start == demo.log.start && parsed.log.runs == demo.log.runs,
+                  parsed.log.start == demo.log.start && parsed.log.runs == demo.log.runs &&
+                  parsed.gameVersion == demo.gameVersion && parsed.recordedAt == demo.recordedAt && !parsed.worldBytes,
               "a demo round-trips its title, revision, end signature, start state and inputs");
         check(parsed.log.start.build == "recording build",
               "the recording build is kept for information, and no build has to match it");
@@ -120,17 +124,21 @@ int main(int argc, char** argv)
         check(ParseDemo(text, kDemoSimulationRevision + 1, untouched) == DemoLoadStatus::IncompatibleRevision &&
                   untouched.title == "unchanged",
               "another simulation revision is refused, transactionally");
-        check(ParseDemo(Reseal(text, "GALAXY_DEMO 1", "GALAXY_DEMO 2"), kDemoSimulationRevision, untouched) ==
+        check(ParseDemo(Reseal(text, "GALAXY_DEMO 2", "GALAXY_DEMO 3"), kDemoSimulationRevision, untouched) ==
                   DemoLoadStatus::IncompatibleFormat, "another demo format is refused");
         bool truncated = true;
         for (std::size_t length = 0; length < text.size(); ++length)
             truncated = truncated && ParseDemo(text.substr(0, length), kDemoSimulationRevision, untouched) ==
                                          DemoLoadStatus::Corrupt;
         check(truncated && untouched.title == "unchanged", "every truncated demo is refused as damaged");
-        auto damaged = text;
-        damaged[damaged.find("1280")] = '9';
-        check(ParseDemo(damaged, kDemoSimulationRevision, untouched) == DemoLoadStatus::Corrupt,
-              "the checksum detects a damaged demo");
+        bool flipped = true;
+        for (std::size_t i = 0; i < text.size(); ++i)
+        {
+            auto damaged = text;
+            damaged[i] ^= 1;
+            flipped = flipped && ParseDemo(damaged, kDemoSimulationRevision, untouched) == DemoLoadStatus::Corrupt;
+        }
+        check(flipped && untouched.title == "unchanged", "a flipped byte anywhere is rejected transactionally");
         check(ParseDemo(text + "x", kDemoSimulationRevision, untouched) == DemoLoadStatus::Corrupt,
               "trailing bytes are refused");
         check(ParseDemo("", kDemoSimulationRevision, untouched) == DemoLoadStatus::Corrupt, "an empty file is refused");
@@ -180,6 +188,98 @@ int main(int argc, char** argv)
               "the player's recording of position 3 is demos/demo003.gdemo beside savedata.txt (BD-0116)");
     }
 
+    // ---- format 2 snapshots and the explicit revision opt-in ----
+    {
+        auto demo = SampleDemo();
+        DemoRecording parsed;
+        check(ParseDemo(demo.Serialize(), kDemoSimulationRevision + 1, parsed, true) == DemoLoadStatus::Ok &&
+                  parsed.simulationRevision == demo.simulationRevision,
+              "another revision can be explicitly accepted, with its original revision retained");
+        auto legacyBody = *ResumeLog::VerifiedBody(demo.Serialize());
+        legacyBody.replace(0, std::string("GALAXY_DEMO 2").size(), "GALAXY_DEMO 1");
+        const auto metadata = legacyBody.find("VERSION ");
+        legacyBody.erase(metadata, legacyBody.find("WORLD 0\n", metadata) + 8 - metadata);
+        check(ParseDemo(ResumeLog::AppendChecksum(legacyBody), kDemoSimulationRevision, parsed) == DemoLoadStatus::Ok &&
+                  parsed.gameVersion.empty() && parsed.recordedAt.empty() && !parsed.worldBytes &&
+                  parsed.log.start == demo.log.start && parsed.log.runs == demo.log.runs,
+              "format 1 still parses with absent metadata and snapshot");
+        std::string binary;
+        for (int i = 0; i < 256; ++i) binary += static_cast<char>(i);
+        bool roundTrips = true;
+        for (const auto& [bytes, encoded] : std::vector<std::pair<std::string, std::string>>{
+                 {"", ""}, {"f", "Zg=="}, {"fo", "Zm8="}, {"foo", "Zm9v"},
+                 {"foob", "Zm9vYg=="}, {"fooba", "Zm9vYmE="}, {"foobar", "Zm9vYmFy"}, {binary, ""}})
+        {
+            demo.worldBytes = bytes;
+            demo.log.start.worldHash = ResumeLog::HashBytes(bytes);
+            const auto text = demo.Serialize();
+            roundTrips = roundTrips && ParseDemo(text, kDemoSimulationRevision, parsed) == DemoLoadStatus::Ok &&
+                parsed.worldBytes == demo.worldBytes && parsed.gameVersion == demo.gameVersion &&
+                parsed.recordedAt == demo.recordedAt && parsed.log.start == demo.log.start &&
+                parsed.log.runs == demo.log.runs && parsed.endSignature == demo.endSignature &&
+                (bytes == binary || text.find("WORLD 1 " + std::to_string(bytes.size()) + " \"" + encoded + "\"\n") != std::string::npos);
+        }
+        check(roundTrips, "base64 round trips empty, 1-3 byte tails and every binary byte; known encodings match");
+        demo.worldBytes = "f";
+        demo.log.start.worldHash = ResumeLog::HashBytes("f");
+        const auto text = demo.Serialize();
+        parsed.title = "unchanged";
+        bool flipped = true;
+        for (std::size_t i = 0; i < text.size(); ++i)
+        {
+            auto damaged = text;
+            damaged[i] ^= 1;
+            flipped = flipped && ParseDemo(damaged, kDemoSimulationRevision, parsed) == DemoLoadStatus::Corrupt;
+        }
+        check(flipped && parsed.title == "unchanged", "the footer covers every byte of a demo with an embedded world");
+        for (const auto& invalid : {"=g==", "Zh==", "Zg=A", "Zg?=", "Zg", "Zg======"})
+            check(ParseDemo(Reseal(text, "Zg==", invalid), kDemoSimulationRevision, parsed) == DemoLoadStatus::Corrupt &&
+                      parsed.title == "unchanged", "malformed base64 is refused, even with a valid footer");
+        check(ParseDemo(Reseal(text, "WORLD 1 1", "WORLD 1 2"), kDemoSimulationRevision, parsed) == DemoLoadStatus::Corrupt,
+              "a wrong decoded length is refused");
+        demo.worldBytes = "different";
+        check(ParseDemo(demo.Serialize(), kDemoSimulationRevision, parsed) == DemoLoadStatus::Corrupt &&
+                  ParseDemo(demo.Serialize(), kDemoSimulationRevision + 1, parsed, true) == DemoLoadStatus::Corrupt &&
+                  parsed.title == "unchanged",
+              "embedded bytes must match the world's hash, including with revision opt-in");
+        demo.worldBytes = "f";
+        check(DemoWorldStatus(demo, demo.log.start.worldPath, std::nullopt) == DemoLoadStatus::OwnWorld &&
+                  DemoWorldStatus(demo, demo.log.start.worldPath, std::string("changed")) == DemoLoadStatus::OwnWorld &&
+                  DemoWorldStatus(demo, demo.log.start.worldPath, std::string("f")) == DemoLoadStatus::Ok,
+              "a missing or changed world uses its own copy; a matching original stays preferred");
+
+        const auto home = std::filesystem::current_path();
+        const auto here = home / "build-probe" / "verify-demo-cache";
+        std::filesystem::remove_all(here);
+        std::filesystem::create_directories(here);
+        std::filesystem::current_path(here);
+        const auto cached = CacheDemoWorld(demo);
+        const auto expected = UserDemoDir() + "/worlds/" + std::to_string(demo.log.start.worldHash) + ".vwr";
+        check(cached == expected && ReadFile(expected) == demo.worldBytes,
+              "the embedded world is cached under demos/worlds/<hash>.vwr");
+        if (cached)
+        {
+            const auto stamp = std::filesystem::file_time_type::clock::now() - std::chrono::hours(24);
+            std::filesystem::last_write_time(*cached, stamp);
+            check(CacheDemoWorld(demo) == cached && std::filesystem::last_write_time(*cached) == stamp,
+                  "a matching cache file is reused without rewriting");
+            { std::ofstream file(*cached, std::ios::binary); file << "damaged"; }
+            check(CacheDemoWorld(demo) == cached && ReadFile(*cached) == demo.worldBytes &&
+                      !std::filesystem::exists(*cached + ".tmp"), "a damaged cache is atomically replaced");
+        }
+        demo.worldBytes = "wrong hash";
+        check(!CacheDemoWorld(demo) && ReadFile(expected) == std::optional<std::string>("f"),
+              "invalid embedded bytes cannot overwrite the cache");
+        demo.worldBytes.reset();
+        check(!CacheDemoWorld(demo), "a recording without a world creates no cache file");
+        std::filesystem::remove_all(UserDemoDir());
+        { std::ofstream file(UserDemoDir()); file << "not a directory"; }
+        demo.worldBytes = "f";
+        check(!CacheDemoWorld(demo), "a cache write failure is reported without claiming a playable path");
+        std::filesystem::current_path(home);
+        std::filesystem::remove_all(here);
+    }
+
     // ---- sharing recordings: export into demos/shared/, import into a position ----
     {
         // In a folder of its own: the build folder's demos/ may hold someone's recordings.
@@ -191,6 +291,7 @@ int main(int argc, char** argv)
         std::filesystem::current_path(here, error);
         auto recorded = SampleDemo();
         recorded.title = "Recorded by player A: mission 1"; // the automatic title: exported by player and position
+        recorded.worldBytes = "world bytes";
         const std::string text = recorded.Serialize();
         std::filesystem::create_directories(UserDemoDir(), error);
         { std::ofstream out(UserDemoPath(4), std::ios::binary); out << text; }
@@ -217,7 +318,8 @@ int main(int argc, char** argv)
         check(renamed && !RenameDemo(UserDemoPath(4), "  ") && !RenameDemo(UserDemoPath(9), "Gone") &&
                   ParseDemo(renamedText, kDemoSimulationRevision, reread) == DemoLoadStatus::Ok &&
                   reread.title == "Fast Run" && reread.log.TickCount() == recorded.log.TickCount() &&
-                  reread.endSignature == recorded.endSignature,
+                  reread.endSignature == recorded.endSignature && reread.gameVersion == recorded.gameVersion &&
+                  reread.recordedAt == recorded.recordedAt && reread.worldBytes == recorded.worldBytes,
               "RenameDemo writes the name as the title, the rest as it was (an empty name or no file: nothing)");
         const auto named = ExportDemo(UserDemoPath(4), 0, 4);
         check(named == "demos/shared/Fast-Run.gdemo", "a named demo exports as its name: Fast-Run.gdemo");

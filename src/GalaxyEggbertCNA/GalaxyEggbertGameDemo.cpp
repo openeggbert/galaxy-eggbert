@@ -1,6 +1,8 @@
 // GalaxyEggbertGame: the resume log, the main-menu demos and the player's recordings. Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
+#include <GalaxyEggbert/Version.hpp>
+#include <ctime>
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
@@ -658,7 +660,18 @@ namespace GalaxyEggbert::CNA
         galaxy = -1;
         const auto campaign = MissionWorldPath(start.mission);
         if (start.worldPath == campaign || !GalaxyEggbert::Editor::IsGalaxyMission(start.mission)) return campaign;
-        const auto named = GalaxyEggbert::Editor::ParseGalaxyWorldPath(start.worldPath);
+        auto named = GalaxyEggbert::Editor::ParseGalaxyWorldPath(start.worldPath);
+        // An embedded galaxy can outlive its original user folder (or come from another PC).
+        // Recover its galaxy context from the portable suffix, without loading that old path.
+        if (!named && demo.worldBytes)
+        {
+            for (int g = 0; g < 3; ++g)
+            {
+                const auto local = GalaxyEggbert::Editor::GalaxyWorldPath(g, start.mission).generic_string();
+                const auto suffix = local.substr(local.rfind("/gamer"));
+                if (start.worldPath.ends_with(suffix)) named = std::make_pair(g, start.mission);
+            }
+        }
         std::vector<int> players;
         if (named && named->second == start.mission) players.push_back(named->first);
         for (int g = 0; g < 3; ++g)
@@ -690,12 +703,26 @@ namespace GalaxyEggbert::CNA
         const auto text = ReadWorldBytes(path);
         auto status = text ? ParseDemo(*text, kDemoSimulationRevision, demo) : DemoLoadStatus::Missing;
         std::optional<std::string> world;
+        std::string worldPath;
+        bool ownWorld = false;
         int demoGalaxy = -1; // a recording made in a player's galaxy (BD-0119) plays from its file
         if (status == DemoLoadStatus::Ok)
         {
-            const auto worldPath = ResolveDemoWorld(demo, demoGalaxy);
+            worldPath = ResolveDemoWorld(demo, demoGalaxy);
             world = ReadWorldBytes(worldPath);
             status = DemoWorldStatus(demo, worldPath, world);
+            if (status == DemoLoadStatus::OwnWorld)
+            {
+                const auto cached = CacheDemoWorld(demo);
+                if (cached)
+                {
+                    worldPath = *cached;
+                    world = demo.worldBytes;
+                    ownWorld = true;
+                    status = DemoLoadStatus::Ok;
+                }
+                else status = DemoLoadStatus::WorldMissing;
+            }
             if (status == DemoLoadStatus::Ok)
             {
                 WorldRuntime probe;
@@ -785,7 +812,7 @@ namespace GalaxyEggbert::CNA
         editorPlayTestActive_ = false;
         controlsHelp_ = {};
         cheatMenuShown_ = false;
-        LoadMission(start.mission, &*world); // the demo's seed, nothing saved, no resume log
+        LoadMission(start.mission, &*world, &worldPath); // the demo's seed, nothing saved, no resume log
         interaction_.SetLives(start.lives);
         PlaceBlupi(start.x, start.y, start.z);
         blupi_.SetYaw(start.yaw);
@@ -806,6 +833,7 @@ namespace GalaxyEggbert::CNA
         // What is held as it starts (the click on Demo, say) cannot stop it.
         if (!demoVerifying_) demoLastLive_ = ReadDemoLiveInput(false);
         demoSessionLive_ = true;
+        if (ownWorld) ShowDemoNotice(std::string(Tr(DemoLoadStatusText(DemoLoadStatus::OwnWorld))));
         std::cout << "GalaxyEggbertCNA: demo " << path << " \"" << demo_.title << "\": mission " << start.mission
                   << ", " << demo_.log.TickCount() << " ticks." << std::endl;
         return true;
@@ -1012,6 +1040,22 @@ namespace GalaxyEggbert::CNA
         using namespace GalaxyEggbert::Game;
         DemoRecording demo;
         demo.title = demoRecordTitle_;
+        demo.gameVersion = GalaxyEggbert::VersionString();
+        const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::tm utc{};
+#if defined(_WIN32)
+        gmtime_s(&utc, &now);
+#else
+        gmtime_r(&now, &utc);
+#endif
+        char date[32]{};
+        std::strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", &utc);
+        demo.recordedAt = date;
+        if (demoRecordSlot_ > 0)
+        {
+            demo.worldBytes = std::move(demoRecordWorldBytes_);
+            if (!demo.worldBytes) return false;
+        }
         demo.log = std::move(demoRecordLog_);
         demo.endSignature = HashDemoSignature(ResumeSignature());
         const std::string text = demo.Serialize();
@@ -1366,6 +1410,7 @@ namespace GalaxyEggbert::CNA
                                    : std::filesystem::path(path).filename().string()) +
                               "  -  ";
             if (status == DemoLoadStatus::Ok)
+            {
                 row += TrFormat(demo.log.start.worldPath.find("/galaxy/world") != std::string::npos ? "galaxy {0}, {1} s"
                                                                                                     : "mission {0}, {1} s",
                                 {std::to_string(demo.log.start.mission), std::to_string([&demo] {
@@ -1373,6 +1418,13 @@ namespace GalaxyEggbert::CNA
                                      for (const auto& run : demo.log.runs) ticks += run.count;
                                      return ticks / 60;
                                  }())});
+                if (!demo.gameVersion.empty()) row += ", " + demo.gameVersion;
+                if (!demo.recordedAt.empty()) row += ", " + demo.recordedAt.substr(0, 10);
+                int galaxy = -1;
+                const auto world = ResolveDemoWorld(demo, galaxy);
+                const auto worldStatus = DemoWorldStatus(demo, world, ReadWorldBytes(world));
+                if (worldStatus != DemoLoadStatus::Ok) row += " - " + std::string(Tr(DemoLoadStatusText(worldStatus)));
+            }
             else
                 row += Tr(DemoLoadStatusText(status));
             demoImportRows_.push_back(std::move(row));
@@ -1457,15 +1509,18 @@ namespace GalaxyEggbert::CNA
         DemoRecording demo;
         const auto text = ReadWorldBytes(UserDemoPath(slot));
         int galaxy = -1;
-        bool playable = false;
+        auto worldStatus = DemoLoadStatus::WorldMissing;
         if (text && ParseDemo(*text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok)
         {
             const auto world = ResolveDemoWorld(demo, galaxy);
-            playable = DemoWorldStatus(demo, world, ReadWorldBytes(world)) == DemoLoadStatus::Ok;
+            worldStatus = DemoWorldStatus(demo, world, ReadWorldBytes(world));
         }
+        const bool playable = worldStatus == DemoLoadStatus::Ok || worldStatus == DemoLoadStatus::OwnWorld;
         demoSlotsMessage_ = TrFormat(playable ? "Position {0} plays {1} now."
                                               : "Position {0} plays {1} now. Its world is not here: it is skipped until it is.",
                                      {position, name});
+        if (worldStatus == DemoLoadStatus::OwnWorld)
+            demoSlotsMessage_ += " " + std::string(Tr(DemoLoadStatusText(worldStatus))) + ".";
         std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
     }
 
@@ -1476,6 +1531,7 @@ namespace GalaxyEggbert::CNA
         const int mission = worldRuntime_.GetMissionNumber();
         // Speedy Blupi's DemoRecStart(): the mission from its start, at the normal speed.
         demoRecordSlot_ = slot;
+        demoRecordWorldBytes_.reset();
         demoRecordPath_ = UserDemoPath(slot);
         demoRecordMaxTicks_ = 0; // kDemoMaxTicks, ten minutes
         demoRecordTitle_ = std::string("Recorded by player ") + static_cast<char>('A' + saveData_.GetSelectedGamer()) +
@@ -1503,6 +1559,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::EndPlayerRecording(bool written)
     {
         const int slot = demoRecordSlot_;
+        demoRecordWorldBytes_.reset();
         demoRecordSlot_ = 0;
         demoRecordPath_.clear();
         demoRecordTitle_.clear();

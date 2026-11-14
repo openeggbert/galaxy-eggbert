@@ -591,7 +591,8 @@ namespace GalaxyEggbert::CNA
         // A no-op (logs and returns) if the target `.vwr` file doesn't
         // exist -- same graceful-failure shape as the initial `LoadContent()`
         // load.
-        void LoadMission(int missionNumber, const std::string* validatedBytes = nullptr);
+        void LoadMission(int missionNumber, const std::string* validatedBytes = nullptr,
+                         const std::string* validatedPath = nullptr);
         // Spawn/respawn with the current terrain and object support checked before input.
         void PlaceBlupi(float x, float y, float z);
 
@@ -980,6 +981,7 @@ namespace GalaxyEggbert::CNA
         int demoRecordMaxTicks_ = 0;
         bool demoRecordArmed_ = false, demoRecording_ = false;
         GalaxyEggbert::Game::ResumeLog demoRecordLog_;
+        std::optional<std::string> demoRecordWorldBytes_;
         std::string demoVerifyPath_;
         bool demoVerifyPending_ = false, demoVerifying_ = false;
 

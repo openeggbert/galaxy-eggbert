@@ -181,6 +181,7 @@ namespace GalaxyEggbert::Game
         {"another demo format", "más demóformátum"},
         {"recorded with another simulation revision", "más szimulációs változattal felvett"},
         {"its world is missing", "hiányzik a világa"},
+        {"plays from its own world copy", "a világ saját másolatával játszható le"},
         {"its world has changed", "megváltozott a világa"},
         {"unknown", "ismeretlen"},
 

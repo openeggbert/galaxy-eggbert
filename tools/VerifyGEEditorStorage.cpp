@@ -1015,9 +1015,11 @@ int main()
               "galaxy pack: the player's recordings made in this galaxy go with it, not the campaign's or another galaxy's");
         // A demo of another simulation revision is left out; the galaxy is kept.
         std::string body = pack.substr(0, pack.size() - 21);
-        std::string stale = ours;
-        stale.replace(stale.find("GALAXY_DEMO 1\n1\n"), 16, "GALAXY_DEMO 1\n9\n");
-        stale = ResumeLog::AppendChecksum(stale.substr(0, stale.rfind("\nEND ") + 1));
+        DemoRecording staleDemo;
+        check(ParseDemo(ours, kDemoSimulationRevision, staleDemo) == DemoLoadStatus::Ok,
+              "the galaxy recording parses before changing its simulation revision");
+        staleDemo.simulationRevision = kDemoSimulationRevision + 1;
+        const std::string stale = staleDemo.Serialize();
         body += "demo 7 " + std::to_string(stale.size()) + "\n" + stale;
         std::uint64_t hash = 1469598103934665603ULL;
         for (const unsigned char c : body) hash = (hash ^ c) * 1099511628211ULL;
