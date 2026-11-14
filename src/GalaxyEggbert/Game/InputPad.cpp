@@ -3179,6 +3179,10 @@ namespace GalaxyEggbert::Game
             {"ids", TypedCheat::Ids, "Show nearby object indices and type IDs", CheatOrigin::GalaxyEggbert},
             {"sounds", TypedCheat::Sounds, "Show recent sound requests and outcomes", CheatOrigin::GalaxyEggbert},
             {"chunks", TypedCheat::Chunks, "Show terrain chunks; highlight recent rebuilds", CheatOrigin::GalaxyEggbert},
+            {"step", TypedCheat::Step, "Hold the world; F2 runs one tick (held: 10/s)", CheatOrigin::GalaxyEggbert},
+            {"practice", TypedCheat::Practice, "A death rewinds 5 s; no life is lost", CheatOrigin::GalaxyEggbert},
+            {"replay", TypedCheat::Replay, "Watch the last 10 seconds again (a key skips)", CheatOrigin::GalaxyEggbert},
+            {"warp", TypedCheat::Warp, "Go to any world (progress unchanged)", CheatOrigin::GalaxyEggbert},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

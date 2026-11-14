@@ -11,6 +11,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Added
 
+- Type `step` to hold the world and advance it one tick at a time with F2 (held: ten ticks a
+  second after half a second; the cheats' keyboard has an F2 key too), `practice` to have a death
+  rewind five seconds instead of costing a life, `replay` to watch the last ten seconds again
+  (a key, click or tap skips it), and `warp` to go to any world of the campaign or your galaxy
+  from a panel, your progress left as it is.
+
 - Type `restart` to rewind the current world to its start, `snap` to save a completed PNG
   frame in your player folder's `screenshots/`, and `here` to land below the free camera.
   `trail`, `ids`, `sounds`, and `chunks` show the recent path, object IDs, sound decisions,

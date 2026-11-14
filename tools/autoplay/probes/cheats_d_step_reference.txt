@@ -1,0 +1,11 @@
+# Brief D, mission 012: cheats_d_step.txt's world ticks without step. The same letters while the
+# world runs (s, t, e and their releases; step's p holds there), 18 ticks of Up+Right (12 presses and
+# the held second's 6), the two ticks of typing step off (p and its release run), then as there.
+wait 600
+type ste
+hold 18 up right
+wait 2
+wait 30
+hash
+expect lives = 3
+end

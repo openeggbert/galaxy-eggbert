@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Game/Autoplay.hpp>
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
+#include <GalaxyEggbert/Game/TimelineCheats.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -464,6 +465,23 @@ int main()
             bad.replace(bad.find("OBJECT_CHEATS"),13,"UNKNOWN_FLAGS");
             check(!ResumeLog::Parse(ResumeLog::AppendChecksum(bad), "test build", restored),
                   "unknown start metadata is refused transactionally");
+            // Brief D: step and practice stay on from world to world, so a world's start records them.
+            auto timeline = withCheats;
+            timeline.start.step = true;
+            check(ResumeLog::Parse(timeline.Serialize(), "test build", restored) && restored.start == timeline.start &&
+                      restored.start.step && !restored.start.practice && restored.runs == timeline.runs,
+                  "TIMELINE_CHEATS (step) round-trips after the other start records");
+            auto practiceOnly = log;
+            practiceOnly.start.practice = true;
+            check(ResumeLog::Parse(practiceOnly.Serialize(), "test build", restored) &&
+                      restored.start == practiceOnly.start && restored.start.practice && !restored.start.step,
+                  "TIMELINE_CHEATS (practice) round-trips alone");
+            check(text.find("TIMELINE_CHEATS") == std::string::npos && !parsed.start.step && !parsed.start.practice,
+                  "a log without step or practice writes no TIMELINE_CHEATS record and reads them off");
+            auto badTimeline = *ResumeLog::VerifiedBody(practiceOnly.Serialize());
+            badTimeline.replace(badTimeline.find("TIMELINE_CHEATS"), 15, "TIMELINE_CHEATZ");
+            check(!ResumeLog::Parse(ResumeLog::AppendChecksum(badTimeline), "test build", restored),
+                  "an unknown T record is refused");
         }
 
         {
@@ -537,6 +555,96 @@ int main()
         empty.start.worldPath = "worlds3d/world001.vwr";
         check(ResumeLog::Parse(empty.Serialize(), "test build", parsed) && parsed.TickCount() == 0,
               "a mission saved before its first tick can resume");
+    }
+
+    {
+        // Brief D: the step gate, practice's target, replay's tail bookkeeping and its skip latch.
+        using namespace GalaxyEggbert::Game;
+        StepGate gate;
+        std::string runs;
+        for (int tick = 0; tick < 50; ++tick) runs += gate.Update(true) ? '1' : '0';
+        check(runs == "10000000000000000000000000000010000010000010000010",
+              "step: a press runs one tick; held, again after half a second, then every sixth tick (" + runs + ")");
+        check(!gate.Update(false) && gate.HeldTicks() == 0 && gate.Update(true) && !gate.Update(true),
+              "step: let go and pressed again runs at once, the next held tick does not");
+        StepGate taps;
+        int ran = 0;
+        for (int press = 0; press < 7; ++press) ran += taps.Update(true) + taps.Update(false) + taps.Update(false);
+        check(ran == 7, "step: N separate presses run exactly N ticks");
+        StepGate bounded;
+        bool bound = true;
+        for (int tick = 0; tick < 100000; ++tick) { bounded.Update(true); bound &= bounded.HeldTicks() <= 36; }
+        check(bound, "step: a key held for ever keeps the gate's count bounded");
+
+        check(PracticeTarget(1000, std::nullopt) == 700u && PracticeTarget(250, std::nullopt) == 0u,
+              "practice: 300 ticks before the death, the world's start at the earliest");
+        check(PracticeTarget(1500, 700) == 1200u, "practice: a death more than 5 s after the last landing goes 5 s back");
+        check(PracticeTarget(1000, 700) == 400u && PracticeTarget(999, 700) == 400u,
+              "practice: a death within 5 s of the last landing goes 5 s before that landing");
+        check(PracticeTarget(450, 200) == 0u && !PracticeTarget(20, 0).has_value() && !PracticeTarget(300, 0).has_value(),
+              "practice: from a landing at the start there is nothing earlier: an ordinary death");
+        check(PracticeTarget(301, 0) == 1u, "practice: progress past 5 s after the start lands again");
+
+        ResumeLog original;
+        original.start.build = "test build";
+        original.start.worldPath = "worlds3d/world012.vwr";
+        for (int i = 0; i < 9; ++i)
+        {
+            ResumeInput input;
+            input.keys = {38 + (i % 3)};
+            input.mouseX = i;
+            for (int repeat = 0; repeat < 100 + 37 * i; ++repeat) original.Append(input);
+        }
+        const auto total = original.TickCount();
+        InstantReplay replay;
+        auto rebuilt = replay.Begin(original);
+        check(replay.Active() && !replay.Visible() && replay.End() == total && replay.Start() == total - 600 &&
+                  rebuilt.TickCount() == total - 600, "replay: the rebuild drops the last 600 ticks");
+        replay.BeginVisible();
+        int played = 0;
+        while (const auto* input = replay.Next())
+        {
+            rebuilt.Append(*input);
+            ++played;
+        }
+        check(played == 600 && replay.Done() && rebuilt.runs == original.runs && rebuilt.start == original.start &&
+                  rebuilt.Serialize() == original.Serialize(),
+              "replay: the tail appended as it plays ends identical to the original log");
+        InstantReplay skipped;
+        auto partial = skipped.Begin(original);
+        skipped.BeginVisible();
+        for (int i = 0; i < 250; ++i) partial.Append(*skipped.Next());
+        const auto [run, repeat] = InstantReplay::Cursor(original, partial.TickCount());
+        std::uint64_t before = repeat;
+        for (std::size_t i = 0; i < run; ++i) before += original.runs[i].count;
+        auto prefix = original;
+        prefix.DropLastTicks(total - partial.TickCount());
+        check(before == partial.TickCount() && prefix.runs == partial.runs,
+              "replay: skipped halfway, the played part is the original's prefix and the cursor stands at its end");
+        ResumeLog shortLog = original;
+        shortLog.DropLastTicks(total - 250);
+        InstantReplay early;
+        const auto none = early.Begin(shortLog);
+        check(early.Start() == 0 && none.TickCount() == 0 && early.End() == 250,
+              "replay: less than 10 s into the world it plays from the world's start");
+        check(InstantReplay::Cursor(original, total) == std::make_pair(original.runs.size(), std::uint32_t{0}) &&
+                  InstantReplay::Cursor(original, 0) == std::make_pair(std::size_t{0}, std::uint32_t{0}) &&
+                  InstantReplay::Cursor(original, 100) == std::make_pair(std::size_t{1}, std::uint32_t{0}),
+              "replay: the cursor of the first tick, a run's first tick and the end");
+        PressLatch latch;
+        check(!latch.Update(true) && !latch.Update(true) && !latch.Update(false) && latch.Update(true) && !latch.Update(true),
+              "replay: a key held as it starts skips only once let go and pressed again");
+    }
+
+    {
+        Autoplay autoplay;
+        std::string error;
+        check(autoplay.Parse("hold 2 right step\nhold 1 step\nend\n", error), "hold ... step parses (F2)");
+        AutoplayState state;
+        const auto a = autoplay.Step(state); ++state.tick;
+        const auto b = autoplay.Step(state); ++state.tick;
+        const auto c = autoplay.Step(state);
+        check(a.step && a.right && b.step && b.right && c.step && !c.right, "hold ... step holds F2 with the other keys");
     }
 
     {

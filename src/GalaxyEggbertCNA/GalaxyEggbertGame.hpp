@@ -1,6 +1,8 @@
 #pragma once
 
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
+#include <GalaxyEggbert/Game/TimelineCheats.hpp>
+#include <GalaxyEggbert/Game/WarpPanel.hpp>
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <map>
@@ -852,11 +854,61 @@ namespace GalaxyEggbert::CNA
         // panel over it (ArmRewind), stays up until it ends (the owner, 2026-11-14: the loading screen
         // flashed up).
         [[nodiscard]] bool ResumeLoadingShown() const { return !backReplaying_ && ResumeReplaySeconds() >= 0.25f; }
-        // back/recall/restart: RewindToTick() once the next frame has drawn "Loading.." over the
-        // picture (rewindPending_); at once in an autoplay, which draws one frame in 30.
-        void ArmRewind(std::uint64_t target, const char* notice);
+        // back/recall/restart/practice (and replay, @p replay): RewindToTick() (StartInstantReplay())
+        // once the next frame has drawn "Loading.." over the picture (rewindPending_); at once in an
+        // autoplay, which draws one frame in 30.
+        void ArmRewind(std::uint64_t target, const char* notice, bool replay = false);
         void RewindToTick(std::uint64_t target, const char* notice);
+        // The rewind's end: its notice and, with GALAXY_BACK_CHECKPOINTS, the QA comparison with the
+        // signature play had at this tick ("BACK SELFTEST equal at tick N").
+        void ReportRewind();
         [[nodiscard]] const char* TimelineCheatRefusal() const;
+        // A replay of the world's log is running: the resume's fast one (Continue, back, recall, restart,
+        // practice, the self-test, replay's rebuild) or `replay`'s visible one. The one guard of
+        // everything a replayed tick must not do again: the timeline cheats (TimelineCheatRefusal()),
+        // snap, xnjttjpo, warp's load, saving, the device's live input (the gamepad in menus, the
+        // accelerometer, typed letters, F11).
+        [[nodiscard]] bool ReplayRunning() const noexcept { return replayingResume_ || instantReplay_.Active(); }
+
+        // ---- The timeline cheats (brief D, the owner 2026-11-14; TimelineCheats.hpp) ----
+        // `step`: while on, the world holds as under freecam (one gate in UpdateTick()) except on a tick
+        // whose recorded input newly presses F2 (stepRunsTick_, from stepGate_ in UpdateScreenPlay());
+        // the camera's drag-look, Pause, help, typed cheats and the cheats' keyboard go on. Kept from
+        // world to world (ResumeStart::step); never in a network match; freecam's hold wins.
+        bool cheatStep_ = false;
+        GalaxyEggbert::Game::StepGate stepGate_;
+        bool stepRunsTick_ = false;
+        // `practice`: a death (the death lock starting, BlupiController::TriggerDeathLock(), whatever
+        // killed him) rewinds instead: PracticeTarget() from practiceLanding_, the last such landing in
+        // this world's timeline (the host's memory, as the mark). Only live, under TimelineCheatRefusal().
+        bool cheatPractice_ = false;
+        bool practiceDeath_ = false;
+        std::optional<std::uint64_t> practiceLanding_;
+        std::string practiceNotice_;
+        // `replay`: the last 600 ticks rebuilt fast (BeginResume of the log without them), then played
+        // again visibly from the original's tail, appended as they play; a key, a click or a touch
+        // (replaySkip_) runs the rest fast. Ends where `replay` was typed.
+        GalaxyEggbert::Game::InstantReplay instantReplay_;
+        GalaxyEggbert::Game::PressLatch replaySkip_;
+        void StartInstantReplay();
+        void InstantReplayTick();
+        void SkipInstantReplay();
+        void FinishInstantReplay();
+        [[nodiscard]] bool ReplaySkipPressed();
+        // `warp`: the panel (WarpPanel.hpp), driven in UpdateTick() from the recorded input as the help
+        // is; a choice loads that world as its door would, the player's progress left as it is
+        // (loadKeepsProgress_: LoadMission() then sets and saves nothing; BeginResume() loads that way
+        // too, its log's start holding the save as the world's own load left it). GALAXY_WARP_CHECK=1
+        // compares the save (file and memory) before the warp with it at the new world's start and at exit.
+        GalaxyEggbert::Game::WarpPanel warpPanel_;
+        bool loadKeepsProgress_ = false;
+        void OpenWarpPanel();
+        void WarpTo(int mission);
+        void DrawWarpPanel(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h);
+        std::optional<std::pair<std::string, std::string>> warpSaveCheck_; // opt-in QA: file, memory
+        void CheckWarpSave(const char* when);
+        // The autoplay's `hash` outside a network match: a hash of each part of the world's state.
+        void LogWorldHash();
         void CaptureBackCheckpoint();
         void CheckResumeSelftest();
         [[nodiscard]] std::map<std::string, std::string> ResumeSignature() const;
@@ -873,11 +925,11 @@ namespace GalaxyEggbert::CNA
         bool recordingResume_ = false;
         bool replayingResume_ = false;
         bool backPending_ = false, backReplaying_ = false;
-        struct PendingRewind { std::uint64_t target = 0; const char* notice = ""; };
+        struct PendingRewind { std::uint64_t target = 0; const char* notice = ""; bool replay = false; };
         std::optional<PendingRewind> rewindPending_; // ArmRewind()
         bool rewindLabelDrawn_ = false;
         int rewindWaitUpdates_ = 0;
-        bool markPending_ = false, recallPending_ = false, restartPending_ = false;
+        bool markPending_ = false, recallPending_ = false, restartPending_ = false, replayPending_ = false;
         bool snapPending_ = false;
         bool cheatTrail_ = false, cheatIds_ = false, cheatSounds_ = false, cheatChunks_ = false;
         GalaxyEggbert::Game::PositionTrail positionTrail_;
@@ -903,6 +955,7 @@ namespace GalaxyEggbert::CNA
             bool fps = false, superBlupi = false, photo = false, freeze = false;
             bool xray = false, hitbox = false, freecam = false; // a new mission always starts with freecam off
             bool trail = false, ids = false, sounds = false, chunks = false;
+            bool step = false, practice = false;
             int zoomStep = 0;
             std::vector<std::string> active;
         } resumeLocalCheats_;
@@ -932,6 +985,7 @@ namespace GalaxyEggbert::CNA
             bool cheatsLocked = false, cheatsLockedForRun = false;
             bool photo = false, freeze = false, xray = false, hitbox = false;
             bool trail = false, ids = false, sounds = false, chunks = false;
+            bool step = false, practice = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;
@@ -999,7 +1053,7 @@ namespace GalaxyEggbert::CNA
         // replayed, no play-test.
         [[nodiscard]] bool CanRecordDemo() const noexcept
         {
-            return !editorPlayTestActive_ && !demoActive_ && !replayingResume_ && !demoRecording_ &&
+            return !editorPlayTestActive_ && !demoActive_ && !ReplayRunning() && !demoRecording_ &&
                    !demoRecordArmed_ && demoRecordPath_.empty() && !loadedMissionPath_.empty() &&
                    worldRuntime_.GetMissionNumber() > 0 && !autoplay_;
         }

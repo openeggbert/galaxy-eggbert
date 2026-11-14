@@ -1,0 +1,13 @@
+# Brief D, mission 012: as cheats_d_replay.txt, but Escape halfway through the visible replay skips
+# the rest, which runs fast and unseen to the same end. GALAXY_BACK_CHECKPOINTS=1071: "BACK SELFTEST
+# equal at tick 1071" and "REPLAY LOG equal (1071 of 1071 ticks)".
+wait 600
+hold 360 up
+hold 100 up right
+type replay
+wait 300
+hold 1 pause
+wait 60
+expect lives = 3
+hold 60 up
+end

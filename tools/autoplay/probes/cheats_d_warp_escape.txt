@@ -1,0 +1,20 @@
+# Brief D, mission 012: the warp panel opened, browsed with the arrows and closed with Escape (which
+# does not pause), then play goes on; back across the stretch with the panel open must replay it
+# exactly (the panel is driven by the recorded input, as the help). GALAXY_BACK_CHECKPOINTS=842 (back's target, after the panel closed at about 735; also GALAXY_RESUME_SELFTEST=760).
+wait 600
+hold 120 up
+type warp
+hold 1 down
+wait 1
+hold 1 down
+wait 1
+hold 1 right
+wait 1
+hold 1 pause
+hold 400 up
+expect phase = Play
+expect mission = 12
+type back
+wait 5
+expect lives = 3
+end

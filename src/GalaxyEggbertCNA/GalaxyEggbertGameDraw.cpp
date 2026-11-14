@@ -386,6 +386,10 @@ namespace GalaxyEggbert::CNA
                     std::snprintf(text, sizeof(text), "fps --"); // before its first half second
                 name = text;
             }
+            else if (name == "step")
+            {
+                name = "step " + std::to_string(resumeTicks_); // the world log's tick
+            }
             else if (name == "position")
             {
                 char text[64];
@@ -397,6 +401,34 @@ namespace GalaxyEggbert::CNA
             }
         }
         return names;
+    }
+
+    void GalaxyEggbertGame::DrawWarpPanel(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int w, int h)
+    {
+        // The `warp` cheat's panel (WarpPanel.hpp) as the network game's and the demo positions' screens.
+        warpPanel_.Layout(w, h);
+        const auto& panelButtons = warpPanel_.Buttons();
+        std::vector<GalaxyEggbert::Game::PanelButton> buttons;
+        for (std::size_t i = 0; i < panelButtons.size(); ++i)
+        {
+            GalaxyEggbert::Game::PanelButton button;
+            button.rect = panelButtons[i].rect;
+            button.label = panelButtons[i].label;
+            button.size = panelButtons[i].label.size() > 3 ? 0.55f : 0.5f;
+            button.held = warpPanel_.Pressed() == static_cast<int>(i);
+            buttons.push_back(std::move(button));
+        }
+        std::vector<GalaxyEggbert::Game::PanelLine> lines;
+        const float s = static_cast<float>(h) / 480.0f;
+        lines.push_back({"Arrows and Enter / A, or a click: go there; your progress stays. Esc / B: close.",
+                         static_cast<float>(w) * 0.5f, 60.0f * s, 0.36f, true});
+        for (const auto& caption : warpPanel_.Captions())
+            lines.push_back({caption.text, caption.x, caption.y, caption.size});
+        std::optional<GalaxyEggbert::Game::QuadBatch::Rect> focus;
+        if (const int at = warpPanel_.Focused(); at >= 0 && static_cast<std::size_t>(at) < panelButtons.size())
+            focus = panelButtons[static_cast<std::size_t>(at)].rect;
+        inputPad_.DrawPanel(device, w, h, galaxyGamer_ >= 0 ? "warp: this galaxy" : "warp", buttons, lines, nullptr,
+                            focus);
     }
 
     void GalaxyEggbertGame::DrawFrame()
@@ -988,6 +1020,8 @@ namespace GalaxyEggbert::CNA
                     // The network game's notices (the original's NotifPush) and another player's pause.
                     std::vector<std::string> names = NetNotices();
                     if (demoRecording_ && demoRecordByPlayer_) names.push_back(std::string(Tr("REC")));
+                    // The `replay` cheat playing the last seconds again (a cheat's word, untranslated).
+                    if (instantReplay_.Visible()) names.insert(names.begin(), "REPLAY");
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
                     const auto cheats = ActiveCheatNames();
@@ -1078,12 +1112,17 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
-            if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !controlsHelp_.shown && !cheatMenuShown_)
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Play && !controlsHelp_.shown && !cheatMenuShown_ &&
+                !warpPanel_.IsOpen())
                 inputPad_.DrawCheatKeyboard(device,viewport.getWidthProperty(),viewport.getHeightProperty());
             if (controlsHelp_.shown)
             {
                 inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                           controlsHelp_.cheats, controlsHelp_.page);
+            }
+            else if (warpPanel_.IsOpen() && phase_ == GalaxyEggbert::Def::GamePhase::Play)
+            {
+                DrawWarpPanel(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
         }
         // The "Save the recording" panel over whatever screen the recording ended on.
@@ -1140,7 +1179,7 @@ namespace GalaxyEggbert::CNA
 
         // At the end of a fully drawn frame, never a mid-frame read (Vulkan). The notice is
         // deliberately scheduled after readback, so it first appears in the following frame.
-        if (snapPending_ && drawFrameIndex_ > terrainPixelPrintedFrame_ && !replayingResume_ && !demoActive_)
+        if (snapPending_ && drawFrameIndex_ > terrainPixelPrintedFrame_ && !ReplayRunning() && !demoActive_)
         {
             snapPending_ = false;
             try

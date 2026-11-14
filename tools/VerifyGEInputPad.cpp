@@ -5,11 +5,14 @@
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
 #include <GalaxyEggbert/Game/FocusNavigator.hpp>
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
+#include <GalaxyEggbert/Game/WarpPanel.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <set>
 #include <string>
 #include <utility>
 #include <unordered_set>
@@ -143,8 +146,22 @@ int main()
         check(!pad.CheatKeys().Visible() && pad.CheatKeys().StateSignature() == CheatKeyboard{}.StateSignature(),
               "cheat keyboard: mission reset clears every replay-relevant field");
         k.Reset(); k.Layout(800,360);
-        check(k.KeysOnScreen().size() == 36 && k.KeysOnScreen()[0].rect.y1-k.KeysOnScreen()[0].rect.y0 >= 43,
-              "cheat keyboard: all letters, F1, F3, F4-F8, Tab, F12 and close; phone keys at least 43 pixels tall");
+        check(k.KeysOnScreen().size() == 37 && k.KeysOnScreen()[0].rect.y1-k.KeysOnScreen()[0].rect.y0 >= 43,
+              "cheat keyboard: all letters, F1, F2, F3, F4-F8, Tab, F12 and close; phone keys at least 43 pixels tall");
+        {
+            const auto& list = k.KeysOnScreen();
+            const auto& tab = list[index(Keys::Tab)].rect;
+            const auto& f2 = list[index(Keys::F2)].rect;
+            const auto& f12 = list[index(Keys::F12)].rect;
+            check(index(Keys::F2) >= 0 && f2.y0 == tab.y0 && f2.y0 == f12.y0 && f2.x0 >= tab.x1 && f2.x1 <= f12.x0,
+                  "cheat keyboard: F2 (step) sits in the top row's gap between Tab and F12");
+        }
+        k.Reset();
+        for (int i = 0; i < CheatKeyboard::kHoldTicks; ++i) tick({},{{-2,400,180}});
+        tick();
+        out = tick({}, {pointer(Keys::F2)});
+        check(out.key == Keys::F2 && k.Visible() && tick().key == Keys::None,
+              "cheat keyboard: F2 tapped fires once (one step) and the keyboard stays open for the next");
         check(k.OrderedLetter('a',Keys::Z,{}) == 'a' && k.OrderedLetter(0,Keys::None,{}) == 'z',
               "cheat keyboard: simultaneous physical and screen letters retain order");
         k.Reset();
@@ -1294,7 +1311,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 48;
+        bool all = count == 52;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -1303,11 +1320,12 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 48 words including restart/snap/here/trail/ids/sounds/chunks fire and have an explanation");
+        check(all, "Typed cheats: all 52 words including step/practice/replay/warp fire and have an explanation");
         bool distinct = true, origins = true;
         int pages[2]{};
         const std::unordered_set<std::string> galaxy{
-            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox", "restart", "snap", "here", "trail", "ids", "sounds", "chunks"};
+            "help", "compass", "fairplay", "fps", "position", "honest", "back", "mark", "recall", "photo", "freeze", "freecam", "xray", "hitbox", "restart", "snap", "here", "trail", "ids", "sounds", "chunks",
+            "step", "practice", "replay", "warp"};
         const std::unordered_set<std::string> mobile{"quick", "ghost", "zoom", "debug", "cheats"};
         for (int i = 0; i < count; ++i)
         {
@@ -1320,7 +1338,8 @@ int main()
                 words[i].cheat != TC::Xray && words[i].cheat != TC::Hitbox &&
                 words[i].cheat != TC::Restart && words[i].cheat != TC::Snap && words[i].cheat != TC::Here &&
                 words[i].cheat != TC::Trail && words[i].cheat != TC::Ids && words[i].cheat != TC::Sounds &&
-                words[i].cheat != TC::Chunks) continue;
+                words[i].cheat != TC::Chunks && words[i].cheat != TC::Step && words[i].cheat != TC::Practice &&
+                words[i].cheat != TC::Replay && words[i].cheat != TC::Warp) continue;
             for (int j = 0; j < count; ++j)
             {
                 if (i == j) continue;
@@ -1339,8 +1358,18 @@ int main()
                               < 416.0f * height / 480;
         }
         check(helpFits, "cheat help descriptions end above page arrows at both required heights");
+        {
+            // Brief E adds perf and cascades to page two: two more rows must still fit.
+            const auto layout = InputPad::LayoutCheatHelp(pages[1] + 2);
+            bool roomForTwo = true;
+            for (const int height : {480, 360})
+                for (int i = 0; i < pages[1] + 2; ++i)
+                    roomForTwo &= (layout.RowTop(i) + layout.DescriptionOffset() + 32 * layout.DescriptionSize()) * height / 480
+                                  < 416.0f * height / 480;
+            check(roomForTwo, "cheat help page two keeps room for two more words above its arrows");
+        }
         check(distinct, "new cheats neither prefix nor share matched suffixes with another word");
-        check(origins && pages[0] == 27 && pages[1] == 21,
+        check(origins && pages[0] == 27 && pages[1] == 25,
               "every word belongs to exactly one origin/page; original and Mobile words fill page one");
         {
             InputPad reset;
@@ -1573,6 +1602,140 @@ int main()
         out = navigator.Update(targets, in);
         check(!out.active && !navigator.Active(), "the mouse moved: the choice is gone, the real mouse again");
     }
+    {
+        // Brief D, warp: the list from a set of world files, and the panel driven by recorded input.
+        std::set<int> files{1, 199, 201, 202, 217, 998, 999};
+        for (const auto& [hub, last] : std::vector<std::pair<int, int>>{{10, 14}, {20, 25}, {30, 34}, {40, 46}, {50, 58},
+                 {60, 66}, {70, 75}, {80, 84}, {90, 95}, {100, 107}, {110, 115}, {120, 125}})
+            for (int mission = hub; mission <= last; ++mission) files.insert(mission);
+        const auto exists = [&files](int mission) { return files.contains(mission); };
+        const auto campaign = BuildWarpRows(exists, false);
+        int places = 0;
+        bool ordered = true;
+        for (std::size_t i = 1; i < campaign.size(); ++i)
+        {
+            places += static_cast<int>(campaign[i].missions.size());
+            ordered &= campaign[i].label == "World " + std::to_string(i) && campaign[i].missions.front() == int(i) * 10 &&
+                       std::is_sorted(campaign[i].missions.begin(), campaign[i].missions.end());
+        }
+        check(campaign.size() == 13 && campaign[0].label.empty() && campaign[0].missions == std::vector<int>{1, 199, 999} &&
+                  places == 76 && ordered && campaign[5].missions.size() == 9,
+              "warp: the campaign's main hub, bonus world and showcase, then twelve worlds' hubs and missions "
+              "(no gallery 998, no multiplayer 2xx)");
+        files.insert(59);
+        files.insert(130);
+        files.insert(131);
+        const auto galaxy = BuildWarpRows(exists, true);
+        check(galaxy[0].missions == std::vector<int>{1, 199} && galaxy.size() == 14 && galaxy.back().label == "World 13" &&
+                  galaxy[5].missions.size() == 9 && std::find(galaxy[5].missions.begin(), galaxy[5].missions.end(), 59) ==
+                                                         galaxy[5].missions.end(),
+              "warp: a galaxy's places (worlds 1-14, missions 1-8, no showcase), only those whose file exists");
+        check(WarpPlaceName(1) == "Main hub" && WarpPlaceName(199) == "Bonus world" && WarpPlaceName(12).empty() &&
+                  WarpPlaceName(999).empty(),
+              "warp: names only where the game has them");
+
+        using Panel = WarpPanel;
+        bool fits = true;
+        for (const auto& size : std::vector<std::pair<int, int>>{{800, 480}, {800, 360}, {640, 480}})
+        {
+            Panel panel;
+            panel.Open(campaign);
+            panel.Layout(size.first, size.second);
+            const auto& buttons = panel.Buttons();
+            for (std::size_t i = 0; i < buttons.size(); ++i)
+            {
+                const auto& a = buttons[i].rect;
+                fits &= a.x0 >= 0 && a.y0 >= 0 && a.x1 <= size.first && a.y1 <= size.second && a.x1 > a.x0 &&
+                        a.y1 - a.y0 >= 0.05f * size.second;
+                for (std::size_t j = i + 1; j < buttons.size(); ++j)
+                {
+                    const auto& b = buttons[j].rect;
+                    fits &= a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+                }
+            }
+            fits &= buttons.size() == 3 + 76 + 1;
+        }
+        check(fits, "warp: every place and Cancel on the screen without overlapping, at 800x480, 800x360, 640x480");
+
+        Panel panel;
+        panel.Open(campaign);
+        Panel::Input held;
+        held.confirm = held.down = true;
+        held.pointerDown = true;
+        auto out = panel.Update(held, 800, 480);
+        check(panel.IsOpen() && out.chosen < 0 && !out.closed && panel.Focused() < 0,
+              "warp: Enter, an arrow and a press held as it opens do nothing");
+        held.pointerDown = false;
+        out = panel.Update(held, 800, 480);
+        check(panel.IsOpen() && out.chosen < 0, "warp: letting go of the press held at opening chooses nothing");
+        Panel::Input none;
+        panel.Update(none, 800, 480);
+        Panel::Input key = none;
+        key.right = true;
+        panel.Update(key, 800, 480); // the first arrow shows the choice
+        panel.Update(none, 800, 480);
+        const int first = panel.Focused();
+        panel.Update(key, 800, 480);
+        panel.Update(none, 800, 480);
+        const int second = panel.Focused();
+        Panel::Input enter = none;
+        enter.confirm = true;
+        out = panel.Update(enter, 800, 480);
+        check(first == 0 && second == 1 && out.chosen == 199 && !panel.IsOpen(),
+              "warp: the arrows move the choice, Enter / A goes to the chosen world (199) and closes");
+
+        panel.Open(campaign);
+        panel.Update(none, 800, 480);
+        const auto target = [&](int mission) {
+            for (const auto& b : panel.Buttons()) if (b.mission == mission) return b.rect;
+            return QuadBatch::Rect{0, 0, 0, 0};
+        };
+        const auto r45 = target(45), r46 = target(46);
+        Panel::Input press = none;
+        press.pointerDown = true;
+        press.x = (r45.x0 + r45.x1) / 2;
+        press.y = (r45.y0 + r45.y1) / 2;
+        panel.Update(press, 800, 480);
+        Panel::Input elsewhere = none;
+        elsewhere.x = (r46.x0 + r46.x1) / 2;
+        elsewhere.y = (r46.y0 + r46.y1) / 2;
+        out = panel.Update(elsewhere, 800, 480);
+        check(out.chosen < 0 && panel.IsOpen(), "warp: pressed on one world and let go over another chooses nothing");
+        panel.Update(press, 800, 480);
+        Panel::Input release = press;
+        release.pointerDown = false;
+        out = panel.Update(release, 800, 480);
+        check(out.chosen == 45 && !panel.IsOpen(), "warp: a click or a tap on a world chooses it");
+
+        panel.Open(campaign);
+        panel.Update(none, 800, 360);
+        Panel::Input escape = none;
+        escape.cancel = true;
+        out = panel.Update(escape, 800, 360);
+        check(out.closed && out.chosen < 0 && !panel.IsOpen(), "warp: Escape / B closes without a choice");
+        panel.Open(campaign);
+        panel.Update(none, 800, 360);
+        const auto cancel = panel.Buttons().back().rect;
+        Panel::Input onCancel = none;
+        onCancel.pointerDown = true;
+        onCancel.x = (cancel.x0 + cancel.x1) / 2;
+        onCancel.y = (cancel.y0 + cancel.y1) / 2;
+        panel.Update(onCancel, 800, 360);
+        onCancel.pointerDown = false;
+        out = panel.Update(onCancel, 800, 360);
+        check(out.closed && out.chosen < 0 && panel.Buttons().back().mission < 0, "warp: Cancel closes without a choice");
+        Panel a, b;
+        a.Open(campaign);
+        b.Open(campaign);
+        for (const auto& in : {none, key, none, key, none})
+        {
+            a.Update(in, 800, 480);
+            b.Update(in, 800, 480);
+        }
+        check(a.StateSignature() == b.StateSignature() && a.StateSignature() != Panel{}.StateSignature(),
+              "warp: the same recorded input gives the same panel state (the replay check's signature)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

@@ -12,6 +12,7 @@
 #include <emscripten.h>
 #endif
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
+#include <GalaxyEggbert/Game/UserFolder.hpp> // savedata.txt, SaveData::SavePath()'s file (GALAXY_WARP_CHECK)
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
@@ -107,6 +108,9 @@ namespace GalaxyEggbert::CNA
     {
         positionTrail_.Clear();
         snapPending_ = false;
+        stepGate_.Reset();
+        stepRunsTick_ = practiceDeath_ = false;
+        warpPanel_.Close();
         pendingCheatLetters_.clear();
         debugVelocity_ = {};
         inputPad_.ResetMissionInput();
@@ -155,12 +159,14 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::StartResumeLog()
     {
         ResetMissionInput();
-        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatZoomStep_, activeCheats_};
+        resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatZoomStep_, activeCheats_};
         backCheckpoints_.clear();
-        backPending_ = backReplaying_ = markPending_ = recallPending_ = restartPending_ = false;
+        backPending_ = backReplaying_ = markPending_ = recallPending_ = restartPending_ = replayPending_ = false;
         rewindPending_.reset();
         rewindLabelDrawn_ = false;
         markedTick_.reset();
+        practiceLanding_.reset();
+        instantReplay_.Clear();
         resumeLog_ = {};
         auto& start = resumeLog_.start;
         start.build = ResumeBuild();
@@ -184,6 +190,8 @@ namespace GalaxyEggbert::CNA
         start.ids = cheatIds_;
         start.sounds = cheatSounds_;
         start.chunks = cheatChunks_;
+        start.step = cheatStep_;
+        start.practice = cheatPractice_;
         start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -195,6 +203,7 @@ namespace GalaxyEggbert::CNA
         recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty();
         missionStartPending_ = false;
         CaptureBackCheckpoint();
+        CheckWarpSave("at the new world's start");
     }
 
     bool GalaxyEggbertGame::BeginResume(ResumeLog log, bool inProcess)
@@ -257,12 +266,17 @@ namespace GalaxyEggbert::CNA
         cheatIds_ = start.ids && kCheatsEnabled;
         cheatSounds_ = start.sounds && kCheatsEnabled;
         cheatChunks_ = start.chunks && kCheatsEnabled;
+        cheatStep_ = start.step && kCheatsEnabled;
+        cheatPractice_ = start.practice && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
         editorPlayTestActive_ = false;
+        // The save is the log's start's, as this world's load left it (a warp's: the progress untouched).
+        loadKeepsProgress_ = true;
         LoadMission(start.mission, &*bytes);
+        loadKeepsProgress_ = false;
         interaction_.SetLives(start.lives);
         PlaceBlupi(start.x, start.y, start.z);
         blupi_.SetYaw(start.yaw);
@@ -288,6 +302,8 @@ namespace GalaxyEggbert::CNA
             cheatIds_ = resumeLocalCheats_.ids;
             cheatSounds_ = resumeLocalCheats_.sounds;
             cheatChunks_ = resumeLocalCheats_.chunks;
+            cheatStep_ = resumeLocalCheats_.step;
+            cheatPractice_ = resumeLocalCheats_.practice;
             cheatZoomStep_ = resumeLocalCheats_.zoomStep;
             activeCheats_ = resumeLocalCheats_.active;
             blupi_.SetCheatSuperBlupi(resumeLocalCheats_.superBlupi);
@@ -295,6 +311,8 @@ namespace GalaxyEggbert::CNA
         else
         {
             markedTick_.reset();
+            practiceLanding_.reset();
+            instantReplay_.Clear();
             std::erase(activeCheats_, "photo");
             std::erase(activeCheats_, "freeze");
             std::erase(activeCheats_, "xray");
@@ -308,9 +326,12 @@ namespace GalaxyEggbert::CNA
             if (cheatIds_) activeCheats_.emplace_back("ids");
             if (cheatSounds_) activeCheats_.emplace_back("sounds");
             if (cheatChunks_) activeCheats_.emplace_back("chunks");
+            for (const auto* name : {"step", "practice"}) std::erase(activeCheats_, name);
+            if (cheatStep_) activeCheats_.emplace_back("step");
+            if (cheatPractice_) activeCheats_.emplace_back("practice");
             // A Continue becomes the start of a new in-process rewind history, with exactly
             // today's fresh-process defaults for state absent from the file format.
-            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatZoomStep_, activeCheats_};
+            resumeLocalCheats_ = {cheatFps_, blupi_.GetCheatSuperBlupi(), cheatPhoto_, cheatFreeze_, cheatXray_, cheatHitbox_, cheatFreecam_, cheatTrail_, cheatIds_, cheatSounds_, cheatChunks_, cheatStep_, cheatPractice_, cheatZoomStep_, activeCheats_};
             backCheckpoints_.clear();
         }
         replayRun_ = 0;
@@ -345,8 +366,6 @@ namespace GalaxyEggbert::CNA
         }
         if (replayRun_ != resumeLog_.runs.size()) return;
         replayingResume_ = false;
-        // "honest" typed in this run after the log was written: its cheats off again, locked.
-        if (noCheatsForRun_ && !inputPad_.IsCheatEntryLockedForRun()) TurnCheatsOff(/*forRun=*/true);
         sound_.SetReplayMuted(false);
         resumeAccelWarmStart_ = true;
         activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
@@ -359,31 +378,21 @@ namespace GalaxyEggbert::CNA
         previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
         previousObjects_.clear();
         RefreshTerrainMeshIfChanged();
-        if (backReplaying_)
+        if (instantReplay_.Active() && resumeTicks_ < instantReplay_.End())
         {
+            // replay's rebuild reached its start: the rest plays visibly, one tick a tick
+            // (InstantReplayTick()); what is held now (the letters of `replay`) does not skip it.
+            instantReplay_.BeginVisible();
+            replaySkip_.Hold();
             backReplaying_ = false;
-            ShowDemoNotice(rewindNotice_);
-            if (std::getenv("GALAXY_BACK_CHECKPOINTS"))
-            {
-                const auto expected = backCheckpoints_.find(resumeTicks_);
-                const bool equal = expected != backCheckpoints_.end() && expected->second == ResumeCheckSignature();
-                const std::string line = "BACK SELFTEST " + std::string(equal ? "equal" : "different") +
-                    " at tick " + std::to_string(resumeTicks_) + "\n";
-                std::cout << line << std::flush;
-                if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
-                if (!equal)
-                {
-                    if (expected != backCheckpoints_.end())
-                        for (const auto& [name, value] : ResumeCheckSignature())
-                            if (expected->second.at(name) != value)
-                                std::cout << "BACK difference " << name << ": " << expected->second.at(name)
-                                          << " -> " << value << std::endl;
-                    autoplayExitCode_ = 1;
-                    Exit();
-                }
-            }
-            backCheckpoints_.erase(backCheckpoints_.upper_bound(resumeTicks_), backCheckpoints_.end());
+            std::cout << "GalaxyEggbertCNA: replay plays ticks " << resumeTicks_ << " to " << instantReplay_.End()
+                      << " again." << std::endl;
+            return; // an "honest" typed since then locks again as its letters replay
         }
+        // "honest" typed in this run after the log was written: its cheats off again, locked.
+        if (noCheatsForRun_ && !inputPad_.IsCheatEntryLockedForRun()) TurnCheatsOff(/*forRun=*/true);
+        if (instantReplay_.Active()) FinishInstantReplay(); // skipped: the rest ran fast to its end
+        else if (backReplaying_) ReportRewind();
         if (!resumeSelftestSignature_.empty())
         {
             const auto actual = ResumeCheckSignature();
@@ -403,6 +412,32 @@ namespace GalaxyEggbert::CNA
             resumeSelftestSignature_.clear();
             if (!different.empty()) { autoplayExitCode_ = 1; Exit(); }
         }
+    }
+
+    void GalaxyEggbertGame::ReportRewind()
+    {
+        backReplaying_ = false;
+        ShowDemoNotice(rewindNotice_);
+        if (std::getenv("GALAXY_BACK_CHECKPOINTS"))
+        {
+            const auto expected = backCheckpoints_.find(resumeTicks_);
+            const bool equal = expected != backCheckpoints_.end() && expected->second == ResumeCheckSignature();
+            const std::string line = "BACK SELFTEST " + std::string(equal ? "equal" : "different") +
+                " at tick " + std::to_string(resumeTicks_) + "\n";
+            std::cout << line << std::flush;
+            if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
+            if (!equal)
+            {
+                if (expected != backCheckpoints_.end())
+                    for (const auto& [name, value] : ResumeCheckSignature())
+                        if (expected->second.at(name) != value)
+                            std::cout << "BACK difference " << name << ": " << expected->second.at(name)
+                                      << " -> " << value << std::endl;
+                autoplayExitCode_ = 1;
+                Exit();
+            }
+        }
+        backCheckpoints_.erase(backCheckpoints_.upper_bound(resumeTicks_), backCheckpoints_.end());
     }
 
     std::map<std::string, std::string> GalaxyEggbertGame::ResumeSignature() const
@@ -501,7 +536,8 @@ namespace GalaxyEggbert::CNA
         std::ostringstream out;
         out << cheatTrail_ << ' ' << cheatIds_ << ' ' << cheatSounds_ << ' ' << cheatChunks_ << ' ' << cheatFps_ << ' ' << cheatZoomStep_ << ' ' << blupi_.GetCheatSuperBlupi() << ' '
             << quickCheatEnabled_ << ' ' << cheatDoors_ << ' ' << cheatShowSecret_ << ' '
-            << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << cheatFreecam_ << ' ' << cheatXray_ << ' ' << cheatHitbox_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_);
+            << cheatCompass_ << ' ' << cheatPhoto_ << ' ' << cheatFreeze_ << ' ' << cheatFreecam_ << ' ' << cheatXray_ << ' ' << cheatHitbox_ << ' ' << inputPad_.IsCheatEntryLockedForRun() << ' ' << static_cast<int>(cameraMode_)
+            << ' ' << cheatStep_ << ' ' << cheatPractice_;
         for (const auto& name : activeCheats_) out << ' ' << std::quoted(name);
         result["cheat toggles"] = out.str();
         out.str("");
@@ -516,12 +552,14 @@ namespace GalaxyEggbert::CNA
         result["cheat keyboard"] = inputPad_.CheatKeys().StateSignature();
         result["controls help"] = std::to_string(controlsHelp_.shown) + " " +
             std::to_string(controlsHelp_.cheats) + " " + std::to_string(controlsHelp_.page);
+        result["step gate"] = std::to_string(stepGate_.HeldTicks());
+        result["warp panel"] = warpPanel_.StateSignature();
         return result;
     }
 
     const char* GalaxyEggbertGame::TimelineCheatRefusal() const
     {
-        if (replayingResume_) return "replay";
+        if (ReplayRunning()) return "replay";
         if (demoActive_ || demoRecording_ || demoRecordArmed_) return "demo";
         if (editorPlayTestActive_) return "editor play-test";
         if (NetMatchActive()) return "network match";
@@ -532,14 +570,15 @@ namespace GalaxyEggbert::CNA
         return nullptr;
     }
 
-    void GalaxyEggbertGame::ArmRewind(std::uint64_t target, const char* notice)
+    void GalaxyEggbertGame::ArmRewind(std::uint64_t target, const char* notice, bool replay)
     {
         if (autoplay_)
         {
-            RewindToTick(target, notice);
+            if (replay) StartInstantReplay();
+            else RewindToTick(target, notice);
             return;
         }
-        rewindPending_ = PendingRewind{target, notice};
+        rewindPending_ = PendingRewind{target, notice, replay};
         rewindLabelDrawn_ = false;
         rewindWaitUpdates_ = 0;
     }
@@ -554,9 +593,177 @@ namespace GalaxyEggbert::CNA
             backReplaying_ = true;
             rewindNotice_ = notice;
             if (markedTick_ && target < *markedTick_) markedTick_.reset();
+            if (practiceLanding_ && target < *practiceLanding_) practiceLanding_.reset();
             std::cout << "GalaxyEggbertCNA: " << notice << " removed " << removed << " ticks, replay to " << target << "." << std::endl;
         }
         else ShowDemoNotice(std::string(notice) + ": world changed; cannot rewind");
+    }
+
+    // ---- replay (brief D): the last ten seconds again (TimelineCheats.hpp InstantReplay) ----
+
+    void GalaxyEggbertGame::StartInstantReplay()
+    {
+        auto log = instantReplay_.Begin(resumeLog_);
+        // The mark and practice's landing stay: the replay ends where it began.
+        if (BeginResume(std::move(log), true))
+        {
+            backReplaying_ = true; // the picture with "Loading.." stays up while it rebuilds
+            rewindNotice_ = "replay";
+            std::cout << "GalaxyEggbertCNA: replay rebuilds to tick " << instantReplay_.Start() << " of "
+                      << instantReplay_.End() << "." << std::endl;
+        }
+        else
+        {
+            instantReplay_.Clear();
+            ShowDemoNotice("replay: world changed; cannot replay");
+        }
+    }
+
+    bool GalaxyEggbertGame::ReplaySkipPressed()
+    {
+        // The device's live input, never recorded: Escape, Enter (a gamepad's A, Start), Space (B, X),
+        // the mouse's left button, a finger; the autoplay's keys and pointer instead of the device's.
+        using namespace Microsoft::Xna::Framework::Input;
+        bool down = false;
+        if (autoplay_)
+        {
+            down = autoplayKeys_.IsKeyDown(Keys::Escape) || autoplayKeys_.IsKeyDown(Keys::Enter) ||
+                   autoplayKeys_.IsKeyDown(Keys::Space) || (autoplayPointer_.pointer && autoplayPointer_.pointerDown);
+        }
+        else if (!SuppressLiveInput())
+        {
+            const auto keys = ReadKeyboardState(false);
+            down = keys.IsKeyDown(Keys::Escape) || keys.IsKeyDown(Keys::Enter) || keys.IsKeyDown(Keys::Space) ||
+                   ReadMouseState(false).getLeftButtonProperty() == ButtonState::Pressed;
+            for (const auto& touch : Touch::TouchPanel::GetState())
+                down = down || touch.getStateProperty() == Touch::TouchLocationState::Pressed ||
+                       touch.getStateProperty() == Touch::TouchLocationState::Moved;
+        }
+        return replaySkip_.Update(down);
+    }
+
+    void GalaxyEggbertGame::InstantReplayTick()
+    {
+        pendingCheatLetters_.clear(); // live typing is not the replay's
+        if (ReplaySkipPressed())
+        {
+            SkipInstantReplay();
+            return;
+        }
+        const auto* input = instantReplay_.Next();
+        if (input)
+        {
+            tickInput_ = *input;
+            UpdateTick();
+            // Appended as it plays: the log ends as the original did.
+            resumeLog_.Append(tickInput_);
+            ++resumeTicks_;
+        }
+        if (instantReplay_.Done()) FinishInstantReplay();
+    }
+
+    void GalaxyEggbertGame::SkipInstantReplay()
+    {
+        // The rest fast and unseen to the same end: the whole original log, the resume replay's cursor
+        // where the visible one stands (its ticks so far equal the original's).
+        const auto [run, repeat] = InstantReplay::Cursor(instantReplay_.Original(), resumeTicks_);
+        resumeLog_ = instantReplay_.Original();
+        replayRun_ = run;
+        replayRepeat_ = repeat;
+        instantReplay_.EndVisible();
+        replayingResume_ = true;
+        backReplaying_ = true; // the last picture stays, no loading screen
+        resumeReplayBegan_ = std::chrono::steady_clock::now();
+        resumeReplayTotal_ = instantReplay_.End();
+        sound_.SetReplayMuted(true);
+        SuppressDraw();
+        std::cout << "GalaxyEggbertCNA: replay skipped at tick " << resumeTicks_ << "." << std::endl;
+    }
+
+    void GalaxyEggbertGame::FinishInstantReplay()
+    {
+        const bool logEqual = resumeLog_.start == instantReplay_.Original().start &&
+                              resumeLog_.runs == instantReplay_.Original().runs;
+        const std::uint64_t ticks = instantReplay_.End();
+        instantReplay_.Clear();
+        rewindNotice_ = "replay";
+        ReportRewind();
+        if (std::getenv("GALAXY_BACK_CHECKPOINTS"))
+        {
+            const std::string line = "REPLAY LOG " + std::string(logEqual ? "equal" : "different") + " (" +
+                                     std::to_string(resumeLog_.TickCount()) + " of " + std::to_string(ticks) +
+                                     " ticks)\n";
+            std::cout << line << std::flush;
+            if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
+            if (!logEqual || resumeLog_.TickCount() != ticks)
+            {
+                autoplayExitCode_ = 1;
+                Exit();
+            }
+        }
+    }
+
+    // ---- warp (brief D): WarpPanel.hpp ----
+
+    void GalaxyEggbertGame::OpenWarpPanel()
+    {
+        const bool galaxy = galaxyGamer_ >= 0;
+        auto rows = BuildWarpRows([this](int mission) {
+            std::error_code error;
+            return std::filesystem::exists(MissionPath(mission), error);
+        }, galaxy);
+        warpPanel_.Open(std::move(rows), std::string(Tr("Cancel")));
+        inputPad_.CheatKeys().Close();
+        inputPad_.ResetTouchState();
+        mouseLookActive_ = false;
+    }
+
+    void GalaxyEggbertGame::WarpTo(int mission)
+    {
+        // A replayed log never holds this tick (the load ends the world's log before the tick is kept).
+        if (ReplayRunning()) return;
+        if (std::getenv("GALAXY_WARP_CHECK"))
+        {
+            std::ostringstream memory;
+            saveData_.Write(memory);
+            std::ifstream in(UserPathString("savedata.txt"), std::ios::binary);
+            warpSaveCheck_ = std::make_pair(std::string((std::istreambuf_iterator<char>(in)), {}), memory.str());
+        }
+        std::cout << "GalaxyEggbertCNA: warp to mission " << mission << " (the progress as it is)." << std::endl;
+        // As its door would (LoadMission()), with nothing of the player's progress set or saved.
+        loadKeepsProgress_ = true;
+        LoadMission(mission);
+        loadKeepsProgress_ = false;
+        ShowDemoNotice("warp " + std::to_string(mission));
+    }
+
+    void GalaxyEggbertGame::CheckWarpSave(const char* when)
+    {
+        if (!warpSaveCheck_) return;
+        std::ostringstream memory;
+        saveData_.Write(memory);
+        std::ifstream in(UserPathString("savedata.txt"), std::ios::binary);
+        const std::string file((std::istreambuf_iterator<char>(in)), {});
+        const bool equal = file == warpSaveCheck_->first && memory.str() == warpSaveCheck_->second;
+        const std::string line = "WARP SAVEDATA " + std::string(equal ? "equal" : "different") + " " + when + " (" +
+                                 UserPathString("savedata.txt") + ", " + std::to_string(file.size()) + " bytes, and in memory)\n";
+        std::cout << line << std::flush;
+        if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
+        if (!equal) autoplayExitCode_ = 1;
+    }
+
+    void GalaxyEggbertGame::LogWorldHash()
+    {
+        // Each part of the world's state the replay check compares, but the camera and the cheats' input.
+        std::string line = "WORLD HASH";
+        for (const auto& [name, value] : ResumeSignature())
+        {
+            if (name == "camera" || name == "cheat input" || name == "debug overlay") continue;
+            line += " " + name + "=" + std::to_string(ResumeLog::HashBytes(value));
+        }
+        line += "\n";
+        std::cout << line << std::flush;
+        if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
     }
 
     // ---- Main-menu demos (DemoReplay.hpp) ----
@@ -579,8 +786,9 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::SavePlayerData()
     {
-        // A resume reconstruction replays settings already saved; a demo is not the player's game.
-        if (replayingResume_ || demoActive_) return;
+        // A resume reconstruction or a replay replays settings already saved; a demo is not the
+        // player's game.
+        if (ReplayRunning() || demoActive_) return;
         saveData_.Save();
     }
 
@@ -757,6 +965,8 @@ namespace GalaxyEggbert::CNA
             demoSaved_.ids = cheatIds_;
             demoSaved_.sounds = cheatSounds_;
             demoSaved_.chunks = cheatChunks_;
+            demoSaved_.step = cheatStep_;
+            demoSaved_.practice = cheatPractice_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
             demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
@@ -807,6 +1017,8 @@ namespace GalaxyEggbert::CNA
         cheatIds_ = start.ids && kCheatsEnabled;
         cheatSounds_ = start.sounds && kCheatsEnabled;
         cheatChunks_ = start.chunks && kCheatsEnabled;
+        cheatStep_ = start.step && kCheatsEnabled;
+        cheatPractice_ = start.practice && kCheatsEnabled;
         inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
                                         start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
@@ -829,6 +1041,8 @@ namespace GalaxyEggbert::CNA
         if (cheatIds_) activeCheats_.emplace_back("ids");
         if (cheatSounds_) activeCheats_.emplace_back("sounds");
         if (cheatChunks_) activeCheats_.emplace_back("chunks");
+        if (cheatStep_) activeCheats_.emplace_back("step");
+        if (cheatPractice_) activeCheats_.emplace_back("practice");
         if (cheatCompass_) activeCheats_.push_back("compass");
         if (cheatDebug_) activeCheats_.push_back("debug");
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
@@ -967,6 +1181,8 @@ namespace GalaxyEggbert::CNA
         cheatIds_ = demoSaved_.ids;
         cheatSounds_ = demoSaved_.sounds;
         cheatChunks_ = demoSaved_.chunks;
+        cheatStep_ = demoSaved_.step;
+        cheatPractice_ = demoSaved_.practice;
         inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;

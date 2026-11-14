@@ -1,0 +1,17 @@
+# Brief D, mission 012: warp, a click on world 4's mission 45 (at 800x480: the panel's left column,
+# fourth world row, sixth button) loads it as its door would. GALAXY_WARP_CHECK=1 compares the save
+# file byte for byte (and the save in memory) before the warp with it at the new world's start and at
+# exit: "WARP SAVEDATA equal". GALAXY_RESUME_SELFTEST=300 checks the new world's own log.
+wait 60
+type warp
+wait 5
+shots 1
+wait 1
+pointer 2 278 301 down
+pointer 1 278 301
+wait 2
+expect mission = 45
+expect lives = 3
+wait 400
+expect lives = 3
+end

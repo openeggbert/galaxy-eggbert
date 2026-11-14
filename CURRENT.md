@@ -81,6 +81,20 @@ content-authoring UX, but not new gameplay mechanics.
   `demos/shared/` with its world. Exit saves it; deactivation saves it at once (renamed or deleted
   by the choice). Positions get recordings only through Menu demo. `build-probe/replays-3/report.md`.
 
+- MODERN cheats `step`, `practice`, `replay`, `warp` (2026-11-14,
+  `plans/codex/cheats_step_practice_replay_warp.md`): step holds the world at a gate beside
+  freecam's except on ticks whose recorded input newly presses F2 (held: 10 ticks/s after 0.5 s;
+  the cheats' keyboard has F2 between Tab and F12), listed as `step <tick>`, kept across worlds
+  (`TIMELINE_CHEATS` start record), refused in network matches. Practice turns the start of a
+  death lock into a rewind 300 ticks back (a death within 5 s of its last landing goes 5 s before
+  that landing; from the world's start an ordinary death). Replay rebuilds to 600 ticks back,
+  plays them visibly from the original's tail (REPLAY label, sound, recorded camera; a key, click
+  or tap runs the rest fast) and ends at the same state and log. One guard, `ReplayRunning()`,
+  keeps every side effect out of fast and visible replays. Warp's panel (two columns of worlds,
+  arrows/A or pointer) is driven by the recorded tick and loads as a door does with the save
+  untouched (`loadKeepsProgress_`, also used by every replay's load). Evidence:
+  `build-probe/cheats-d/report.md`.
+
 - MODERN cheats `restart`, `snap`, `here`, `trail`, `ids`, `sounds`, `chunks` (2026-11-13,
   `plans/codex/cheats_restart_snap_here_trail_ids_sounds_chunks.md`): tick-zero rewind,
   completed-frame PNGs in the player's `screenshots/` (never replayed), collision-owned landing

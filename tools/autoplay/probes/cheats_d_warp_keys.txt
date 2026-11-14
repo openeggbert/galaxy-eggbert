@@ -1,0 +1,15 @@
+# Brief D, mission 012: warp chosen with the arrows and Enter (a gamepad's d-pad and A): the first
+# arrow shows the choice (the main hub), right moves to the bonus world 199, Enter goes there.
+# GALAXY_WARP_CHECK=1: "WARP SAVEDATA equal".
+wait 60
+type warp
+wait 2
+hold 1 right
+wait 1
+hold 1 right
+wait 1
+hold 1 confirm
+wait 2
+expect mission = 199
+expect lives = 3
+end

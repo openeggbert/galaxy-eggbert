@@ -55,6 +55,7 @@ namespace GalaxyEggbert::Game
             else if (name == "lt") keys.cheatKeyboard = true;
             else if (name == "confirm") keys.confirm = true;
             else if (name == "pause") keys.pause = true;
+            else if (name == "step") keys.step = true;
             else return false;
             return true;
         }

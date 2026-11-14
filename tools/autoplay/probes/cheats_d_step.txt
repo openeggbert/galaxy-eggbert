@@ -1,0 +1,39 @@
+# Brief D, mission 012: step on, 12 separate F2 presses with Up and Right held (each runs one tick; the
+# ticks between them hold), then F2 held a second with them (6 ticks: the press, then every sixth
+# tick after half a second), step off. Its `hash` must equal cheats_d_step_reference.txt's: the
+# world after exactly those 18 ticks of Up and Right, unstepped. The shot shows `step <tick>` listed.
+wait 600
+type step
+wait 20
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+hold 1 up right step
+hold 2 up right
+shots 1
+wait 1
+hold 60 up right step
+type step
+wait 30
+hash
+expect lives = 3
+end

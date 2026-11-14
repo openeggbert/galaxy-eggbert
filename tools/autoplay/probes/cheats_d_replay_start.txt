@@ -1,0 +1,9 @@
+# Brief D, mission 012: replay less than 10 s into the world plays it again from its start.
+# GALAXY_BACK_CHECKPOINTS=231: "BACK SELFTEST equal at tick 231", "REPLAY LOG equal".
+wait 100
+hold 120 up
+type replay
+wait 260
+expect lives = 3
+hold 30 up
+end

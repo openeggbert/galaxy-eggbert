@@ -1,0 +1,22 @@
+# Brief D, mission 999 --spawn 41,3,8,180 (beside the lava death_once.txt drops him into): practice
+# on, then three times the same walk and jump into the lava. The first death goes back 300 ticks
+# (no life lost; GALAXY_BACK_CHECKPOINTS=194,0 compares those moments: deaths at 494 and 397); the second, within
+# 5 s of where it landed, goes 5 s before that landing instead (here the world's start, before
+# practice was typed, so practice is off there); the third is an ordinary death: a life is lost.
+# GALAXY_RESUME_SELFTEST=600 replays that last timeline (its ordinary death included) in-process.
+mortal
+type practice
+wait 300
+go 41 5 jump 0.9 tol 0.05 max 600
+wait 60
+expect lives = 3
+go 41 5 jump 0.9 tol 0.05 max 600
+wait 60
+expect lives = 3
+go 41 5 jump 0.9 tol 0.05 max 600
+until dead = 1 max 120
+until dead = 0 max 900
+expect lives = 2
+wait 300
+expect lives = 2
+end

@@ -84,6 +84,7 @@ namespace GalaxyEggbert::Game
         if (start.xray || start.hitbox) out << "DISPLAY_CHEATS " << start.xray << ' ' << start.hitbox << '\n';
         if (start.trail || start.ids || start.sounds || start.chunks)
             out << "DIAGNOSTIC_CHEATS " << start.trail << ' ' << start.ids << ' ' << start.sounds << ' ' << start.chunks << '\n';
+        if (start.step || start.practice) out << "TIMELINE_CHEATS " << start.step << ' ' << start.practice << '\n';
         out << runs.size() << ' ' << TickCount() << '\n';
         for (const auto& run : runs)
         {
@@ -194,6 +195,13 @@ namespace GalaxyEggbert::Game
                 if (!(in >> s.trail >> s.ids >> s.sounds >> s.chunks)) return false;
             }
             else if (!tag.empty()) return false;
+        }
+        s.step = s.practice = false;
+        in >> std::ws;
+        if (in.peek() == 'T')
+        {
+            std::string tag;
+            if (!(in >> tag >> s.step >> s.practice) || tag != "TIMELINE_CHEATS") return false;
         }
         std::uint64_t runCount, ticks, actualTicks = 0;
         if (!(in >> runCount >> ticks) || ticks > kMaxTicks || runCount > ticks) return false;

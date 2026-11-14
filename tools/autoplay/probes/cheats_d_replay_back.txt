@@ -1,0 +1,11 @@
+# Brief D, mission 012: replay, play on, then back across the replayed stretch.
+# GALAXY_BACK_CHECKPOINTS=1071,879: the replay's end and back's target equal.
+wait 600
+hold 360 up
+hold 100 up right
+type replay
+wait 700
+type back
+wait 10
+expect lives = 3
+end

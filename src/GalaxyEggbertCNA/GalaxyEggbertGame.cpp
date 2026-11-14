@@ -224,7 +224,7 @@ namespace GalaxyEggbert::CNA
                 typedShiftPending_ = false;
                 return;
             }
-            if (SuppressLiveInput() || controlsHelp_.shown || replayingResume_ ||
+            if (SuppressLiveInput() || controlsHelp_.shown || ReplayRunning() ||
                 fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
@@ -697,13 +697,14 @@ namespace GalaxyEggbert::CNA
             StartResumeLog();
             if (demoRecordArmed_) BeginDemoRecording(); // as Update() would have, from this start
         }
-        if ((replayingResume_ || phase_ == GalaxyEggbert::Def::GamePhase::Play) &&
+        if ((ReplayRunning() || phase_ == GalaxyEggbert::Def::GamePhase::Play) &&
             recordingResume_ && !missionStartPending_)
         {
-            // Keep the complete source log if deactivated while reconstruction is in progress.
+            // Keep the complete source log if deactivated while reconstruction is in progress (replay's:
+            // the whole original, whose end the replay is going back to).
             const std::string temporary = ResumeLog::Path() + ".tmp";
             std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
-            out << resumeLog_.Serialize();
+            out << (instantReplay_.Active() ? instantReplay_.Original() : resumeLog_).Serialize();
             out.close();
             std::error_code error;
             if (out) std::filesystem::rename(temporary, ResumeLog::Path(), error);
@@ -734,6 +735,7 @@ namespace GalaxyEggbert::CNA
         }
         // Game1.cpp:205-208: a clean exit deletes CurrentWrite (not during a demo: DeleteResumeFile()).
         DeleteResumeFile();
+        CheckWarpSave("at exit");
         Game::OnExiting(sender, args);
     }
 
@@ -831,8 +833,8 @@ namespace GalaxyEggbert::CNA
 
     float GalaxyEggbertGame::AccelTurnInput()
     {
-        // A replay (resume or demo) reads the recorded accelerometer, never the device.
-        if (!replayingResume_ && !demoActive_)
+        // A replay (resume, replay or demo) reads the recorded accelerometer, never the device.
+        if (!ReplayRunning() && !demoActive_)
         {
             using Microsoft::Devices::Sensors::Accelerometer;
             const bool wanted = saveData_.GetAccelActive() && !autoplay_ && accelSupported_;
@@ -925,14 +927,14 @@ namespace GalaxyEggbert::CNA
             if (speed == 0.0f)
             {
                 accelWaitZero_ = false;
-                if (!replayingResume_ && !demoActive_)
+                if (!ReplayRunning() && !demoActive_)
                 {
                     std::cout << "GalaxyEggbertCNA: accelerometer level (" << y << " g): tilting turns." << std::endl;
                 }
             }
             return 0.0f;
         }
-        if (started && !replayingResume_ && !demoActive_ && accelTurnsReported_ < 4)
+        if (started && !ReplayRunning() && !demoActive_ && accelTurnsReported_ < 4)
         {
             ++accelTurnsReported_;
             std::cout << "GalaxyEggbertCNA: accelerometer turns " << (speed > 0.0f ? "right" : "left") << " (" << y
@@ -1447,7 +1449,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ToggleFullscreen()
     {
-        if (!graphics_ || replayingResume_ || demoActive_) return;
+        if (!graphics_ || ReplayRunning() || demoActive_) return;
         graphics_->ToggleFullScreen();
         saveData_.SetFullscreen(graphics_->getIsFullScreenProperty());
         SavePlayerData();
@@ -1560,11 +1562,14 @@ namespace GalaxyEggbert::CNA
             case TC::Back:
             case TC::Mark:
             case TC::Recall:
+            case TC::Replay:
             {
-                const char* word = cheat == TC::Restart ? "restart" : cheat == TC::Back ? "back" : cheat == TC::Mark ? "mark" : "recall";
+                const char* word = cheat == TC::Restart ? "restart" : cheat == TC::Back ? "back" : cheat == TC::Mark ? "mark"
+                                 : cheat == TC::Replay ? "replay" : "recall";
                 if (const auto* reason = TimelineCheatRefusal())
                     std::cout << "GalaxyEggbertCNA: " << word << " ignored: " << reason << "." << std::endl;
                 else if (cheat == TC::Restart) restartPending_ = true;
+                else if (cheat == TC::Replay) replayPending_ = true;
                 else if (cheat == TC::Back) backPending_ = true;
                 else if (cheat == TC::Mark) markPending_ = true;
                 else if (markedTick_) recallPending_ = true;
@@ -1592,8 +1597,37 @@ namespace GalaxyEggbert::CNA
                 }
                 break;
             case TC::Snap:
-                if (!replayingResume_ && !demoActive_ && !demoRecording_ && !demoRecordArmed_) snapPending_ = true;
+                if (!ReplayRunning() && !demoActive_ && !demoRecording_ && !demoRecordArmed_) snapPending_ = true;
                 break;
+            case TC::Step:
+                // Kept from world to world (ResumeStart::step); the gate is UpdateTick()'s.
+                if (NetMatchActive())
+                    std::cout << "GalaxyEggbertCNA: step refused: network match." << std::endl;
+                else
+                {
+                    cheatStep_ = !cheatStep_;
+                    stepGate_.Reset();
+                }
+                break;
+            case TC::Practice:
+                // A toggle anywhere; it acts only where back would (Update(), TimelineCheatRefusal()).
+                cheatPractice_ = !cheatPractice_;
+                break;
+            case TC::Warp:
+            {
+                // Opened as the help is, also in a replay of the world's log (the panel is part of the
+                // replayed tick; its load never is, WarpTo()).
+                const char* reason = nullptr;
+                if (NetMatchActive()) reason = "network match";
+                else if (demoActive_ || demoRecording_ || demoRecordArmed_) reason = "demo";
+                else if (editorPlayTestActive_) reason = "editor play-test";
+                else if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
+                         fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
+                         interaction_.ExitReached() || winCheerActive_) reason = "mission ending or not in Play";
+                if (reason) std::cout << "GalaxyEggbertCNA: warp ignored: " << reason << "." << std::endl;
+                else OpenWarpPanel();
+                break;
+            }
             case TC::Here:
                 if (NetMatchActive()) ShowDemoNotice("here: network match");
                 else if (!cheatFreecam_) ShowDemoNotice("here: freecam is off");
@@ -1689,7 +1723,7 @@ namespace GalaxyEggbert::CNA
             case TC::XMission:
                 // Speedy Blupi's XMISSION (BD-0118): the editor on this world, after this tick. Not in
                 // a replay (a demo, a resume reconstruction), a recording or a play-test.
-                if (!demoActive_ && !replayingResume_ && !demoRecording_ && !demoRecordArmed_ && !editorPlayTestActive_)
+                if (!demoActive_ && !ReplayRunning() && !demoRecording_ && !demoRecordArmed_ && !editorPlayTestActive_)
                     xmissionPending_ = true;
                 break;
             case TC::Honest:
@@ -1726,6 +1760,9 @@ namespace GalaxyEggbert::CNA
         StopFreecam();
         cheatXray_ = cheatHitbox_ = false;
         cheatTrail_ = cheatIds_ = cheatSounds_ = cheatChunks_ = false;
+        cheatStep_ = cheatPractice_ = false;
+        stepGate_.Reset();
+        warpPanel_.Close();
         cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = cheatPhoto_ = cheatFreeze_ = false;
         cheatZoomStep_ = 0;
         if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))

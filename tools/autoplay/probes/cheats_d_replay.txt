@@ -1,0 +1,15 @@
+# Brief D, mission 012: walk and push the first crate for a while, then replay: the last 600 ticks
+# are rebuilt fast and played again visibly (the shot shows the REPLAY label mid-replay), then play
+# goes on from where replay was typed. GALAXY_BACK_CHECKPOINTS=1071 (the tick replay completed)
+# compares the state at the end ("BACK SELFTEST equal at tick 1071") and the log with the original
+# ("REPLAY LOG equal (1071 of 1071 ticks)").
+wait 600
+hold 360 up
+hold 100 up right
+type replay
+wait 300
+shots 1
+wait 360
+expect lives = 3
+hold 60 up
+end

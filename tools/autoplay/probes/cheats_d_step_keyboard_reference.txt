@@ -1,0 +1,11 @@
+# Brief D, mission 012: cheats_d_step_keyboard.txt's world ticks without step: the letters s, t, e
+# while the world runs, the five tapped ticks (no keys reach Blupi under the keyboard), the two
+# ticks of typing step off, then as there.
+wait 600
+type ste
+wait 5
+wait 2
+wait 30
+hash
+expect lives = 3
+end

@@ -134,7 +134,8 @@ namespace GalaxyEggbert::CNA
             {
                 const auto rewind = *rewindPending_;
                 rewindPending_.reset();
-                RewindToTick(rewind.target, rewind.notice);
+                if (rewind.replay) StartInstantReplay();
+                else RewindToTick(rewind.target, rewind.notice);
             }
             return;
         }
@@ -269,6 +270,14 @@ namespace GalaxyEggbert::CNA
                 SuppressDraw();
             }
         }
+        // replay's visible part: the recorded ticks, one an update at the game's pace, live input
+        // ignored but for the key, click or touch that skips the rest (InstantReplayTick()).
+        if (instantReplay_.Visible())
+        {
+            InstantReplayTick();
+            demoNoticeSeconds_ = std::max(0.0f, demoNoticeSeconds_ - demoClockSeconds_);
+            return;
+        }
         CaptureInput();
         if (demoRecording_)
         {
@@ -283,9 +292,11 @@ namespace GalaxyEggbert::CNA
                 Exit();
                 return;
             }
+            // F2 stays: the `step` cheat's key is play, recorded and replayed as the letters are.
             tickInput_.keys.erase(std::remove_if(tickInput_.keys.begin(), tickInput_.keys.end(), [](int key) {
                 return key == static_cast<int>(Keys::Tab) ||
-                       (key >= static_cast<int>(Keys::F1) && key <= static_cast<int>(Keys::F24));
+                       (key >= static_cast<int>(Keys::F1) && key <= static_cast<int>(Keys::F24) &&
+                        key != static_cast<int>(Keys::F2));
             }), tickInput_.keys.end());
         }
         // The "Save the recording" panel (replays 3/3): nothing ticks until it is closed.
@@ -295,7 +306,12 @@ namespace GalaxyEggbert::CNA
             return;
         }
         if (UpdateDemoMenu()) return;
+        // practice: the death decided in this tick, whatever killed him (the death lock starting,
+        // BlupiController::TriggerDeathLock(), the one gate of every death).
+        const bool deathLockedBefore = blupi_.IsDeathLocked();
         UpdateTick();
+        practiceDeath_ = cheatPractice_ && !deathLockedBefore && blupi_.IsDeathLocked() &&
+                         phase_ == GalaxyEggbert::Def::GamePhase::Play && !TimelineCheatRefusal();
         if (recordingResume_ && !missionStartPending_ && !replayingResume_)
         {
             resumeLog_.Append(tickInput_);
@@ -307,13 +323,32 @@ namespace GalaxyEggbert::CNA
                 ShowDemoNotice("mark");
                 std::cout << "GalaxyEggbertCNA: mark at tick " << *markedTick_ << "." << std::endl;
             }
+            const auto practiceTarget = practiceDeath_ ? GalaxyEggbert::Game::PracticeTarget(resumeTicks_, practiceLanding_)
+                                                       : std::nullopt;
             if (restartPending_) ArmRewind(0, "restart");
             else if (backPending_)
                 ArmRewind(resumeTicks_ > 300 ? resumeTicks_ - 300 : 0, "back -5 s");
             else if (recallPending_ && markedTick_) ArmRewind(*markedTick_, "recall");
-            else CheckResumeSelftest();
+            else if (practiceTarget)
+            {
+                // The death tick is among those dropped: no death, no life lost, no Lost screen.
+                const bool farther = practiceLanding_ && resumeTicks_ - std::min(resumeTicks_, std::uint64_t{300}) <= *practiceLanding_;
+                practiceNotice_ = farther ? "practice -" + std::to_string((resumeTicks_ - *practiceTarget + 30) / 60) + " s"
+                                          : std::string("practice -5 s");
+                std::cout << "GalaxyEggbertCNA: practice: death at tick " << resumeTicks_ << ", back to " << *practiceTarget
+                          << "." << std::endl;
+                practiceLanding_ = *practiceTarget;
+                ArmRewind(*practiceTarget, practiceNotice_.c_str());
+            }
+            else if (replayPending_) ArmRewind(resumeTicks_, "replay", /*replay=*/true);
+            else
+            {
+                if (practiceDeath_)
+                    ShowDemoNotice("practice: nothing earlier to go back to"); // an ordinary death
+                CheckResumeSelftest();
+            }
         }
-        backPending_ = markPending_ = recallPending_ = restartPending_ = false;
+        backPending_ = markPending_ = recallPending_ = restartPending_ = replayPending_ = practiceDeath_ = false;
         if (demoRecording_)
         {
             demoRecordLog_.Append(tickInput_);
@@ -339,6 +374,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::UpdateTick()
     {
+        stepRunsTick_ = false; // set by this tick's UpdateScreenPlay(), read by its step gate
         // While he is hidden his own sounds are not played (Decor::PlaySound, BD-0075); in play only.
         sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.IsHidden());
         // The world's sounds are heard from Blupi, as the original's from its view (BD-0076).
@@ -356,7 +392,8 @@ namespace GalaxyEggbert::CNA
                                          CurrentKeyboardState(),pointers);
         };
         if (phase_ != GalaxyEggbert::Def::GamePhase::Play ||
-            fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None || controlsHelp_.shown || cheatMenuShown_)
+            fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None || controlsHelp_.shown || cheatMenuShown_ ||
+            warpPanel_.IsOpen())
             suspendCheatKeyboard();
         const auto helpKeys = CurrentKeyboardState();
         auto helpMouse=CurrentMouseState();
@@ -387,6 +424,40 @@ namespace GalaxyEggbert::CNA
             mouseLookActive_ = false;
             pauseKeyWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Escape);
             menuConfirmWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Enter);
+            return;
+        }
+        // The `warp` cheat's panel: the game holds while it is open, as for the help, and it is driven
+        // by this recorded tick's input (WarpPanel.hpp); a choice loads that world (WarpTo()).
+        if (warpPanel_.IsOpen())
+        {
+            using Microsoft::Xna::Framework::Input::Keys;
+            GalaxyEggbert::Game::WarpPanel::Input in;
+            in.up = helpKeys.IsKeyDown(Keys::Up);
+            in.down = helpKeys.IsKeyDown(Keys::Down);
+            in.left = helpKeys.IsKeyDown(Keys::Left);
+            in.right = helpKeys.IsKeyDown(Keys::Right);
+            in.confirm = helpKeys.IsKeyDown(Keys::Enter);
+            in.cancel = helpKeys.IsKeyDown(Keys::Escape) || helpKeys.IsKeyDown(Keys::Space);
+            in.pointerDown = helpPointerDown;
+            in.x = helpX;
+            in.y = helpY;
+            for (const auto& touch : tickInput_.touches)
+            {
+                using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+                if (touch.state == int(TouchLocationState::Released) && !helpPointerDown)
+                {
+                    in.x = touch.x; // a finger let go: where it was
+                    in.y = touch.y;
+                    break;
+                }
+            }
+            const auto chosen = warpPanel_.Update(in, tickInput_.viewportWidth, tickInput_.viewportHeight);
+            suspendCheatKeyboard();
+            inputPad_.ResetTouchState();
+            mouseLookActive_ = false;
+            pauseKeyWasDown_ = helpKeys.IsKeyDown(Keys::Escape);
+            menuConfirmWasDown_ = helpKeys.IsKeyDown(Keys::Enter);
+            if (chosen.chosen >= 0) WarpTo(chosen.chosen);
             return;
         }
         const auto phaseBeforeTick = phase_;
@@ -479,6 +550,24 @@ namespace GalaxyEggbert::CNA
             NetAgePeers(dt);
             if (NetRemotePaused()) return;
             NetBeforeStep();
+        }
+
+        // `step`'s hold: one gate, as freecam's below, unless this tick's recorded input newly pressed
+        // F2 (stepRunsTick_, UpdateScreenPlay()); freecam's hold wins. The camera keeps its drag-look
+        // and easing (real time); no Blupi, object, hazard, interaction, animation or world clock step,
+        // and no trail sample (its ten seconds are the world's).
+        const bool stepRuns = std::exchange(stepRunsTick_, false);
+        if (cheatStep_ && !stepRuns && !netMatch && !cheatFreecam_)
+        {
+            if (phase_ == phaseBeforeTick) phaseTimeSeconds_ = phaseTimeBeforeTick;
+            const auto keys = inputPad_.FilterGameplayKeyboard(inputPad_.CheatKeys().FilterGameplay(CurrentKeyboardState()));
+            const auto directions = GalaxyEggbert::Game::ReadPlayDirections(keys);
+            UpdateTickCamera(dt, 0.0f, keys, inputPadClaimedMouse,
+                keys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::LeftShift) || padPlayInput.crouchHeld,
+                keys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::RightShift),
+                std::clamp(directions.move + padPlayInput.moveInput, -1.0f, 1.0f),
+                std::clamp(directions.turn + padPlayInput.turnInput, -1.0f, 1.0f));
+            return;
         }
 
         // Sample once per Play input tick, including held freecam ticks, also during replay.
@@ -576,7 +665,7 @@ namespace GalaxyEggbert::CNA
         viewport.setHeightProperty(tickInput_.viewportHeight);
 
         auto phaseMouse = CurrentMouseState();
-        GalaxyEggbert::Game::GamepadFrame pad = SuppressLiveInput() || replayingResume_ || menuInputLatched_
+        GalaxyEggbert::Game::GamepadFrame pad = SuppressLiveInput() || ReplayRunning() || menuInputLatched_
                                                     ? GalaxyEggbert::Game::GamepadFrame{}
                                                     : ReadGamepadFrame();
         // The arrows and A on the demo positions, the galaxy screen and the world screen (2026-11-10,
@@ -3581,7 +3670,7 @@ namespace GalaxyEggbert::CNA
             // GALAXY_ACCEL_PAD=1 shows them without a sensor (a desktop's look at them).
             static const bool accelPadShown = [] { const char* v = std::getenv("GALAXY_ACCEL_PAD"); return v && *v == '1'; }();
             inputPad_.SetAccelerometerMode(accelPadShown ||
-                                           (accel_ != nullptr && accel_->getIsDataValidProperty() && !demoActive_ && !replayingResume_));
+                                           (accel_ != nullptr && accel_->getIsDataValidProperty() && !demoActive_ && !ReplayRunning()));
             inputPad_.SetVehicleFireEnabled(blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank ||
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Helicopter);
             // Several fingers at once (owner 2026-11-02: touch devices). While fingers are on
@@ -3646,6 +3735,9 @@ namespace GalaxyEggbert::CNA
                 mouseLookActive_ = false;
                 phaseKeys = inputPad_.CheatKeys().FilterGameplay(phaseKeys);
             }
+            // The `step` cheat's key, F2 or the cheats' keyboard's F2 (one tick a tap), as recorded: the
+            // gate decides whether this tick's world steps (UpdateTick()).
+            stepRunsTick_ = stepGate_.Update(phaseKeys.IsKeyDown(Keys::F2) || virtualKey.key == Keys::F2);
             // The keyboard's F1 and F3 act here: their physical keys are read elsewhere in the tick (F1
             // at its start by ControlsHelp, F3 with the camera in UpdateTickCamera), after or before
             // this key exists. F1 opens the controls' help and ends the tick as the typed `help` does.
@@ -3704,7 +3796,8 @@ namespace GalaxyEggbert::CNA
             const auto typedCheat = inputPad_.UpdateTypedGhostCheat(
                 virtualPhaseKeys, /*isPlayPhase=*/true, orderedLetter);
             ApplyTypedCheat(typedCheat.cheat);
-            if (typedCheat.cheat == InputPad::TypedCheat::Help)
+            if (typedCheat.cheat == InputPad::TypedCheat::Help ||
+                (typedCheat.cheat == InputPad::TypedCheat::Warp && warpPanel_.IsOpen()))
             {
                 inputPad_.CheatKeys().Close();
                 inputPad_.ResetTouchState();
@@ -3742,6 +3835,11 @@ namespace GalaxyEggbert::CNA
                     case TC::Ids: toggle("ids"); break;
                     case TC::Sounds: toggle("sounds"); break;
                     case TC::Chunks: toggle("chunks"); break;
+                    case TC::Step:
+                        std::erase(activeCheats_, "step");
+                        if (cheatStep_) activeCheats_.emplace_back("step");
+                        break;
+                    case TC::Practice: toggle("practice"); break;
                     case TC::Photo: toggle("photo"); break;
                     case TC::Freeze: if (!NetMatchActive()) toggle("freeze"); break;
                     case TC::Position: toggle("position"); break;

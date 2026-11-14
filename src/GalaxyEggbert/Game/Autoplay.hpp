@@ -15,6 +15,8 @@
 //                              pause (Escape: Pause and back; 2026-11-11, the network tests)
 //   pointer N X Y [down]       pointer at viewport pixels for N ticks (released unless down)
 //   hold N lt|confirm          LT mapped key / A-or-Enter keyboard confirmation
+//   hold N step                F2, the `step` cheat's key (each tick it newly goes down runs; held,
+//                              ten a second after half a second); combines with the others
 //   type WORD                  type lowercase letters, each followed by a release tick (cheats)
 //   face DEG                   turn on the spot until facing DEG
 //   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
@@ -51,7 +53,10 @@
 //                              mostly, now and then a jump, the action key or a shot (a long network
 //                              match's play, Q-022); S picks the sequence (1 by default)
 //   hash                       have the game write a hash of its world to its log (the network tests:
-//                              every machine's world the same after a long match)
+//                              every machine's world the same after a long match); outside a network
+//                              match a hash of each part of the world's state (Blupi, counters,
+//                              objects, blocks, clocks, Hide trail; not the camera) to the trace, to
+//                              compare two runs (the `step` cheat's probes)
 //   say TEXT                   in a network match, send TEXT as a chat line (as typed after Enter)
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
@@ -125,6 +130,7 @@ namespace GalaxyEggbert::Game
         bool fire = false; // F: the tank's shot, the helicopter's glue (2026-11-10, the network tests)
         bool pause = false; // Escape: Pause, and back to Play (2026-11-11, the network tests)
         bool cheatKeyboard = false, confirm = false;
+        bool step = false; // F2, the `step` cheat's key
         bool pointer = false, pointerDown = false;
         int pointerX = 0, pointerY = 0;
         char letter = 0;

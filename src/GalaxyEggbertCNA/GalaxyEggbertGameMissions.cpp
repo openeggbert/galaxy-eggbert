@@ -150,7 +150,11 @@ namespace GalaxyEggbert::CNA
             }
         }
         const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
-        if (autoplay_->TakeHashRequest()) NetLogWorldHash();
+        if (autoplay_->TakeHashRequest())
+        {
+            if (NetMatchActive()) NetLogWorldHash();
+            else LogWorldHash();
+        }
         if (const auto said = autoplay_->TakeSayRequest(); !said.empty() && NetMatchActive())
         {
             NetStartMatchTyping();
@@ -169,6 +173,7 @@ namespace GalaxyEggbert::CNA
         if (keys.pause) down.insert(Keys::Escape);
         if (keys.cheatKeyboard) down.insert(GalaxyEggbert::Game::CheatKeyboard::kHoldKey);
         if (keys.confirm) down.insert(Keys::Enter);
+        if (keys.step) down.insert(Keys::F2);
         autoplayPointer_ = keys;
         if (keys.letter >= 'a' && keys.letter <= 'z')
             down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
@@ -287,7 +292,10 @@ namespace GalaxyEggbert::CNA
         // are open slide up as the hub appears (sound 33, as in the original and the video), the
         // signs of completed worlds change, and Blupi starts past the last door opened in a world
         // hub, or beside the sign of the world he last played in the main hub.
-        if (missionNumber != 1)
+        // A warp (the cheat) goes there with the player's progress as it is: no last world, no saved
+        // mission, nothing saved (WarpTo()); nor does a replay's load, its log's start holding the save
+        // as this world's own load left it (BeginResume(): a warped world's replay keeps it too).
+        if (missionNumber != 1 && !loadKeepsProgress_)
         {
             saveData_.SetLastWorld(missionNumber / 10);
         }
@@ -353,8 +361,11 @@ namespace GalaxyEggbert::CNA
         cameraSmoothedInitialized_ = false;  // ... there at once, not easing over from the last world
 
         missionStartPending_ = !replayingResume_ && !demoActive_;
-        saveData_.SetMissionNumber(missionNumber);
-        SavePlayerData();
+        if (!loadKeepsProgress_)
+        {
+            saveData_.SetMissionNumber(missionNumber);
+            SavePlayerData();
+        }
 
         std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): loaded " << path << "."
                    << std::endl;
@@ -487,7 +498,7 @@ namespace GalaxyEggbert::CNA
 
     bool GalaxyEggbertGame::CanRevertWorld() const
     {
-        return galaxyGamer_ < 0 && !demoActive_ && !editorPlayTestActive_ && !replayingResume_ &&
+        return galaxyGamer_ < 0 && !demoActive_ && !editorPlayTestActive_ && !ReplayRunning() &&
                !loadedMissionPath_.empty() && GalaxyEggbert::Editor::HasCampaignEdit(loadedMissionPath_);
     }
 

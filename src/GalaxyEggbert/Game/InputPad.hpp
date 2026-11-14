@@ -687,6 +687,10 @@ namespace GalaxyEggbert::Game
             Ids,          // MODERN: object list indices and type IDs
             Sounds,       // MODERN: recent sound decisions
             Chunks,       // MODERN: terrain chunk boundaries and rebuilds
+            Step,         // MODERN: the world holds; F2 runs one tick (held: ten a second)
+            Practice,     // MODERN: a death goes back five seconds instead of costing a life
+            Replay,       // MODERN: the last ten seconds played again, then play on from there
+            Warp,         // MODERN: a panel of the campaign's (or galaxy's) worlds to go to directly
         };
         struct TypedCheatResult
         {

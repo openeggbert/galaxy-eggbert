@@ -1,0 +1,23 @@
+# Brief D, mission 012: step with the cheats' keyboard's F2 (a touch or gamepad player's way): the
+# keyboard opened by a 1 s hold in the centre while the world holds, then five taps on its F2 (top
+# row, between Tab and F12; at 800x480 its centre is 675,34): five world ticks. Its `hash` must equal
+# cheats_d_step_keyboard_reference.txt's. GALAXY_RESUME_SELFTEST=700 replays the taps in-process.
+wait 600
+type step
+pointer 70 400 240 down
+pointer 2 400 240
+pointer 1 675 34 down
+pointer 2 675 34
+pointer 1 675 34 down
+pointer 2 675 34
+pointer 1 675 34 down
+pointer 2 675 34
+pointer 1 675 34 down
+pointer 2 675 34
+pointer 1 675 34 down
+pointer 2 675 34
+type step
+wait 30
+hash
+expect lives = 3
+end

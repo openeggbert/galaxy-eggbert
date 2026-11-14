@@ -40,10 +40,12 @@ namespace GalaxyEggbert::Game
                 keys_.push_back({code, {x,y,x + units * unit - gap,y + height}});
             };
             // The top row in the keys' own order (the owner, 2026-11-13): F1 (controls help), F3 (first/
-            // third person), F4-F8 (speeds), Tab (slower), a gap, F12 (cheat menu) at the right as in the
-            // original. The close key (Keys::None) is two units wide with a word (Cancel), never a lone
-            // "X" that reads as the letter X, at the end of the bottom row (the top row is full).
-            const Keys top[] = {Keys::F1, Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7, Keys::F8, Keys::Tab};
+            // third person), F4-F8 (speeds), Tab (slower), F2 (the `step` cheat's key, 2026-11-14, in what
+            // was the gap), F12 (cheat menu) at the right as in the original. The close key (Keys::None)
+            // is two units wide with a word (Cancel), never a lone "X" that reads as the letter X, at the
+            // end of the bottom row (the top row is full).
+            const Keys top[] = {Keys::F1, Keys::F3, Keys::F4, Keys::F5, Keys::F6, Keys::F7, Keys::F8, Keys::Tab,
+                                Keys::F2};
             for (int col = 0; col < int(std::size(top)); ++col) key(top[col], float(col), 0);
             key(Keys::F12,9,0);
             const char* rows[] = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
