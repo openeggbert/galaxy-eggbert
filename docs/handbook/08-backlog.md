@@ -79,7 +79,7 @@ Other known gaps:
 - Playthroughs: every world's autoplay script replayed on 2026-11-14 on the 0.5.0 tree
   (`tools/autoplay_all.sh build-cna-opengl3`): **78/78 passed** (world 199's main route 40 259 ticks),
   the first full pass since 2026-11-07, after the network game, the camera's look up/down, the
-  lightning, the shadows and the cheats. Results in `build-probe/playpass-1114/results.txt`.
+  lightning, the shadows and the cheats. Results in `plans/evidence/playpass-2026-11-14.txt`.
 - Audit ledgers (`plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`): the gameplay ledger 538 rows, the asset
   ledger 703 rows, the render representations, every world's lesson (80) and target reach (921) are
   settled, none open; only the `.max` (section 1).
@@ -87,11 +87,14 @@ Other known gaps:
   `.github/workflows/release.yml` (Windows, Linux, Android signed with the release key, web, and
   `SHA256SUMS.txt`); galaxyeggbert.openeggbert.com and galaxyeggbert.com show it. Android's next
   versionCode is 10.
-- `build-probe/` holds about 8 GB of probe output from many sessions (the results it backs are written
-  down where they are cited). Clear it when no session uses it: check for live processes first
-  (`../CLAUDE.md` rule 7).
-- The worktree `../galaxy-eggbert-localization` is a detached HEAD at `89b1dc5e`, already merged into
-  `develop`; `git worktree remove ../galaxy-eggbert-localization` when nothing runs there.
+- `build-probe/` was cleared on 2026-11-14 at the owner's request (about 7.3 GB of probe output from
+  many sessions, after checking that no process used it). Only `build-probe/windows/` stays: the
+  MinGW cross-build tree that `tools/release/make_windows_zip.sh` reuses for a manual Windows release.
+  The `build-probe/...` paths that `handoff.md` and the ledgers cite are gone; their results are
+  written down where they are cited, and frames the ledgers rely on are in `plans/evidence/`.
+- The worktree `../galaxy-eggbert-localization` was removed the same day (clean, at a commit already in
+  `develop`). Its branches `localization` and `look-camera` are merged into `develop` and can be
+  deleted.
 
 ## 4. Where the details are
 
