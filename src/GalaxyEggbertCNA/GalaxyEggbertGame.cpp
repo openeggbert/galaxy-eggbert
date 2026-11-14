@@ -1573,7 +1573,7 @@ namespace GalaxyEggbert::CNA
                     cameraMode_ = CameraMode::ThirdPersonModel;
                     chaseCamera_.Reset(blupi_.GetYaw());
                     cameraSmoothedInitialized_ = false;
-                    lookYawOffset_ = lookPitchOffset_ = 0.0f;
+                    lookYawOffset_ = lookPitchOffset_ = lookVertical_ = 0.0f;
                     ShowDemoNotice("here");
                 }
                 else ShowDemoNotice("here: no standing room below");

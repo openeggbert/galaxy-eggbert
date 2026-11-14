@@ -1351,6 +1351,9 @@ namespace GalaxyEggbert::CNA
         // maps to touch-drag as well (SDL reports touch as mouse).
         float lookYawOffset_ = 0.0f;
         float lookPitchOffset_ = 0.0f;
+        // Blupi's own look up (+1) or down (-1) eased in and out (BlupiController::GetLookVertical):
+        // the camera turns that way while he holds the look.
+        float lookVertical_ = 0.0f;
         int lastMouseX_ = 0;
         int lastMouseY_ = 0;
         bool mouseLookActive_ = false;

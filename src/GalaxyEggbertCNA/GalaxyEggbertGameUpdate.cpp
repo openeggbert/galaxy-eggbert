@@ -2995,6 +2995,16 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // His own look up/down (Right/Left Shift, the pad's up/down): the original scrolls its
+        // view 150 px that way (BlupiController::GetLookVertical); here the camera turns that way,
+        // eased in and back out, a player having asked to look up (2026-11-14).
+        {
+            constexpr float kLookVerticalPerSecond = 5.0f;
+            const float alpha = 1.0f - std::exp(-kLookVerticalPerSecond * dt);
+            lookVertical_ += (static_cast<float>(blupi_.GetLookVertical()) - lookVertical_) * alpha;
+            if (std::fabs(lookVertical_) < 0.001f) lookVertical_ = 0.0f;
+        }
+
         const float yaw = blupi_.GetYaw() + lookYawOffset_;
 
         Microsoft::Xna::Framework::Vector3 rawEye;
@@ -3009,12 +3019,13 @@ namespace GalaxyEggbert::CNA
             // look target upward — neither is a real head/body pose
             // (still no first-person 3D model), just a rough
             // camera-only stand-in for the animation-indicator state.
+            // Looking down tilts it down as far (lookVertical_, 2026-11-14).
             constexpr float kEyeHeight = 0.75f;
             constexpr float kCrouchEyeHeight = 0.4f;
             constexpr float kLookDistance = 5.0f;
             constexpr float kLookUpTilt = 2.5f;
             const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
-            const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
+            const float lookYOffset = lookVertical_ * kLookUpTilt;
             rawEye = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
             chaseCamera_.Reset(blupi_.GetYaw()); // third person starts behind him
             // Mouse-look pitch: positive offset (drag down) tilts the
@@ -3099,24 +3110,35 @@ namespace GalaxyEggbert::CNA
             // kPlaceholderModelYOffset): a hand over them.
             const Microsoft::Xna::Framework::Vector3 bodyMiddle(blupi_.GetX(), blupi_.GetY() - 0.35f,
                                                                 blupi_.GetZ());
-            const float chaseElevation = GalaxyEggbert::Game::ChaseCameraElevation(
-                elevation, kChaseDistance,
-                [&](float e)
+            const auto roomAt = [&](float e)
+            {
+                const auto offset = chaseOffset(e);
+                const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                                                        offset * (1.0f / kChaseDistance), kChaseDistance);
+                const Microsoft::Xna::Framework::Vector3 toEye = rawTarget + offset - bodyMiddle;
+                const float length = toEye.Length();
+                if (length < 0.001f || BlocksCamera(worldRuntime_.GetWorld(), bodyMiddle))
                 {
-                    const auto offset = chaseOffset(e);
-                    const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
-                                                            offset * (1.0f / kChaseDistance), kChaseDistance);
-                    const Microsoft::Xna::Framework::Vector3 toEye = rawTarget + offset - bodyMiddle;
-                    const float length = toEye.Length();
-                    if (length < 0.001f || BlocksCamera(worldRuntime_.GetWorld(), bodyMiddle))
-                    {
-                        return room;
-                    }
-                    const float seen = RaymarchWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
-                                                            toEye * (1.0f / length), length);
-                    return std::min(room, kChaseDistance * seen / length);
-                });
-            Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
+                    return room;
+                }
+                const float seen = RaymarchWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
+                                                        toEye * (1.0f / length), length);
+                return std::min(room, kChaseDistance * seen / length);
+            };
+            const float chaseElevation = GalaxyEggbert::Game::ChaseCameraElevation(elevation, kChaseDistance, roomAt);
+            // His look up/down (lookVertical_) orbits it on from there: down under the look point
+            // to look up past him, up over it to look down; turning about the look point keeps him
+            // where he was in the picture. After the room's choice of elevation, which would lift
+            // a camera lowered to look up back over a ledge behind him: it comes in closer instead,
+            // as far as it still sees him over that ledge (lookRoom).
+            constexpr float kLookVerticalElevation = 0.5f;
+            constexpr float kLookMinElevation = -0.35f;
+            constexpr float kLookMaxElevation = 1.45f;
+            const float lookedElevation = std::clamp(chaseElevation - kLookVerticalElevation * lookVertical_,
+                                                     std::min(chaseElevation, kLookMinElevation),
+                                                     std::max(chaseElevation, kLookMaxElevation));
+            const float lookRoom = lookedElevation != chaseElevation ? roomAt(lookedElevation) : kChaseDistance;
+            Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(lookedElevation);
 
             // Wall collision (plan.md CAM-005, found 2026-07-17): pull
             // the eye in along the same direction if a solid block
@@ -3130,6 +3152,7 @@ namespace GalaxyEggbert::CNA
                 const auto direction = desiredOffset * (1.0f / desiredDistance);
                 safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
             }
+            safeDistance = std::min(safeDistance, lookRoom);
             // A wall right behind him (a dead end, a narrow turn, a lift in a shaft) pulled the eye
             // into his own body, which is not drawn from inside: he vanished from the picture (the
             // play pass of 2026-11-03, 064, 073, 075, 091, 092, 094, ...). Then the camera looks
@@ -3142,7 +3165,7 @@ namespace GalaxyEggbert::CNA
                 Microsoft::Xna::Framework::Vector3 bestOffset = desiredOffset;
                 for (const float yawOffset : {0.0f, 0.7f, -0.7f, 1.4f, -1.4f, 2.2f, -2.2f, 3.14159265f})
                 {
-                    for (const float e : {chaseElevation, 0.7f, 1.1f})
+                    for (const float e : {lookedElevation, 0.7f, 1.1f})
                     {
                         const float y = orbitYaw + yawOffset;
                         const Microsoft::Xna::Framework::Vector3 offset(
