@@ -96,6 +96,12 @@ namespace GalaxyEggbert::Game
             return x >= first.x0 && x < last.x1 && y >= first.y0 && y < last.y1;
         }
         [[nodiscard]] bool Shifted() const noexcept { return shift_; }
+        // Other words on OK and Cancel (a recording's Save and Discard); empty: OK and Cancel.
+        void SetActionLabels(std::string done, std::string cancel)
+        {
+            doneLabel_ = std::move(done);
+            cancelLabel_ = std::move(cancel);
+        }
 
         [[nodiscard]] std::string Label(const Key& key) const
         {
@@ -106,8 +112,8 @@ namespace GalaxyEggbert::Game
             case Kind::Shift: return std::string(Tr("Shift"));
             case Kind::Backspace: return std::string(Tr("Del"));
             case Kind::Space: return std::string(Tr("Space"));
-            case Kind::Cancel: return std::string(Tr("Cancel"));
-            case Kind::Done: return "OK";
+            case Kind::Cancel: return cancelLabel_.empty() ? std::string(Tr("Cancel")) : cancelLabel_;
+            case Kind::Done: return doneLabel_.empty() ? std::string("OK") : doneLabel_;
             }
             return {};
         }
@@ -179,5 +185,6 @@ namespace GalaxyEggbert::Game
     private:
         std::vector<Key> keys_;
         bool shift_ = false;
+        std::string doneLabel_, cancelLabel_; // SetActionLabels()
     };
 }

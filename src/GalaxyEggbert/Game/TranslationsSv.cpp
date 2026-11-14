@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kSwedishTranslations[] = {
         {"Import a demo: choose the file", "Importera en demo: välj filen"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Spara inspelningen"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Ge den ett namn: Spara lägger den i Mina inspelningar, Släng kastar den."},
+        {"Discard", "Släng"},
+        {"Discard the recording? Press Discard again.", "Släng inspelningen? Tryck på Släng igen."},
+        {"The recording was discarded.", "Inspelningen slängdes."},
+        {"The recording could not be saved.", "Inspelningen kunde inte sparas."},
+        {"Saved in My recordings: {0}.", "Sparad i Mina inspelningar: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Man spelar in i ett uppdrag med Paus > Spela in, och inspelningarna hamnar i Mina inspelningar."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "En inspelning från en äldre version kan inte vara en menydemo."},
         {"Add file", "Lägg till fil"},
@@ -177,14 +186,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Välj en .gdemo-fil: den visas här."},
         {"Position {0} has no recording of yours to name.", "Plats {0} har ingen egen inspelning att namnge."},
         {"The recording in position {0} cannot be read.", "Inspelningen på plats {0} kan inte läsas."},
-        {"A recording is made in a mission: Pause > Record.", "Man spelar in i ett uppdrag: Paus > Spela in."},
         {"Position {0} has no demo to export.", "Plats {0} har ingen demo att exportera."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} exporterad: nedladdad som {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} exporterad till {1}."},
         {"{0} cannot be imported: {1}.", "{0} kan inte importeras: {1}."},
         {"Position {0} plays {1} now.", "Plats {0} spelar nu {1}."},
         {"The demo could not be recorded.", "Demon kunde inte spelas in."},
-        {"Demo recorded in position {0}.", "Demo inspelad på plats {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "saknas"},

@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kDutchTranslations[] = {
         {"Import a demo: choose the file", "Demo importeren: kies het bestand"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Opname bewaren"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Geef haar een naam: Bewaren zet haar in Mijn opnamen, Weggooien gooit haar weg."},
+        {"Discard", "Weggooien"},
+        {"Discard the recording? Press Discard again.", "Opname weggooien? Druk nog eens op Weggooien."},
+        {"The recording was discarded.", "De opname is weggegooid."},
+        {"The recording could not be saved.", "De opname kon niet bewaard worden."},
+        {"Saved in My recordings: {0}.", "Bewaard in Mijn opnamen: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Opnemen doe je in een missie met Pauze > Opnemen; de opnamen staan in Mijn opnamen."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Een opname uit een oudere versie kan geen menudemo zijn."},
         {"Add file", "Bestand toevoegen"},
@@ -177,14 +186,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Kies een .gdemo-bestand: het verschijnt hier."},
         {"Position {0} has no recording of yours to name.", "Positie {0} heeft geen eigen opname om te benoemen."},
         {"The recording in position {0} cannot be read.", "De opname op positie {0} is niet te lezen."},
-        {"A recording is made in a mission: Pause > Record.", "Opnemen doe je in een missie: Pauze > Opnemen."},
         {"Position {0} has no demo to export.", "Positie {0} heeft geen demo om te exporteren."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} geëxporteerd: gedownload als {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} geëxporteerd naar {1}."},
         {"{0} cannot be imported: {1}.", "{0} kan niet geïmporteerd worden: {1}."},
         {"Position {0} plays {1} now.", "Positie {0} speelt nu {1}."},
         {"The demo could not be recorded.", "De demo kon niet opgenomen worden."},
-        {"Demo recorded in position {0}.", "Demo opgenomen op positie {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "ontbreekt"},

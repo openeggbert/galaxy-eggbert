@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kFinnishTranslations[] = {
         {"Import a demo: choose the file", "Tuo demo: valitse tiedosto"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Tallenna tallenne"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Nimeä se: Tallenna vie sen Omiin tallenteisiin, Hylkää heittää sen pois."},
+        {"Discard", "Hylkää"},
+        {"Discard the recording? Press Discard again.", "Hylätäänkö tallenne? Paina Hylkää uudelleen."},
+        {"The recording was discarded.", "Tallenne hylättiin."},
+        {"The recording could not be saved.", "Tallennetta ei voitu tallentaa."},
+        {"Saved in My recordings: {0}.", "Tallennettu Omiin tallenteisiin: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Tallenteet tehdään tehtävässä kohdasta Tauko > Nauhoita ja ne ovat Omissa tallenteissa."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Vanhemman version tallennetta ei voi käyttää valikon demona."},
         {"Add file", "Lisää tiedosto"},
@@ -184,14 +193,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Valitse .gdemo-tiedosto: se on listattu tähän."},
         {"Position {0} has no recording of yours to name.", "Paikassa {0} ei ole nauhoitustasi nimettäväksi."},
         {"The recording in position {0} cannot be read.", "Paikan {0} nauhoitusta ei voi lukea."},
-        {"A recording is made in a mission: Pause > Record.", "Nauhoitus tehdään tehtävässä: Tauko > Nauhoita."},
         {"Position {0} has no demo to export.", "Paikassa {0} ei ole vietävää demoa."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} viety: ladattu nimellä {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} viety: {1}."},
         {"{0} cannot be imported: {1}.", "Tiedostoa {0} ei voi tuoda: {1}."},
         {"Position {0} plays {1} now.", "Paikka {0} toistaa nyt: {1}."},
         {"The demo could not be recorded.", "Demoa ei voitu nauhoittaa."},
-        {"Demo recorded in position {0}.", "Demo nauhoitettu paikkaan {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "puuttuu"},

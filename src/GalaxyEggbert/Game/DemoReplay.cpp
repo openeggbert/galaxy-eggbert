@@ -121,6 +121,40 @@ namespace GalaxyEggbert::Game
         return target.generic_string();
     }
 
+    std::string SaveDemoToCollection(const DemoRecording& demo, const std::string& name, const std::string& fallback)
+    {
+        namespace fs = std::filesystem;
+        std::string clean = SanitizeDemoName(name);
+        if (clean.empty()) clean = SanitizeDemoName(fallback);
+        if (clean.empty()) clean = "Recording";
+        DemoRecording titled = demo;
+        titled.title = clean;
+        const std::string text = titled.Serialize();
+        std::error_code error;
+        fs::create_directories(SharedDemoDir(), error);
+        std::string stem = clean;
+        std::replace(stem.begin(), stem.end(), ' ', '-');
+        const auto target = FreeFileName(SharedDemoDir(), stem, ".gdemo");
+        const auto temporary = fs::path(target.string() + ".tmp");
+        {
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            out << text;
+            out.close();
+            if (!out)
+            {
+                fs::remove(temporary, error);
+                return {};
+            }
+        }
+        fs::rename(temporary, target, error);
+        if (error)
+        {
+            fs::remove(temporary, error);
+            return {};
+        }
+        return target.generic_string();
+    }
+
     std::string SanitizeDemoName(const std::string& name)
     {
         std::string out;

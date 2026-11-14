@@ -11,6 +11,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kCzechTranslations[] = {
         {"Import a demo: choose the file", "Importovat demo: vyber soubor"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Uložit nahrávku"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Pojmenuj ji: Uložit ji dá do Mých nahrávek, Zahodit ji zahodí."},
+        {"Discard", "Zahodit"},
+        {"Discard the recording? Press Discard again.", "Zahodit nahrávku? Stiskni znovu Zahodit."},
+        {"The recording was discarded.", "Nahrávka byla zahozena."},
+        {"The recording could not be saved.", "Nahrávku se nepodařilo uložit."},
+        {"Saved in My recordings: {0}.", "Uloženo v Mých nahrávkách: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Nahrává se v misi přes Pauza > Nahrát a nahrávky jsou v Mých nahrávkách."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Nahrávka ze starší verze nemůže být ukázkou v menu."},
         {"Add file", "Přidat soubor"},
@@ -178,14 +187,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Vyber soubor .gdemo: objeví se tady."},
         {"Position {0} has no recording of yours to name.", "Pozice {0} nemá tvou nahrávku, kterou bys pojmenoval."},
         {"The recording in position {0} cannot be read.", "Nahrávku na pozici {0} nelze přečíst."},
-        {"A recording is made in a mission: Pause > Record.", "Nahrává se v misi: Pauza > Nahrát."},
         {"Position {0} has no demo to export.", "Pozice {0} nemá demo k exportu."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} exportováno: staženo jako {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} exportováno do {1}."},
         {"{0} cannot be imported: {1}.", "{0} nelze importovat: {1}."},
         {"Position {0} plays {1} now.", "Pozice {0} teď hraje {1}."},
         {"The demo could not be recorded.", "Demo se nepodařilo nahrát."},
-        {"Demo recorded in position {0}.", "Demo nahráno na pozici {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "chybí"},

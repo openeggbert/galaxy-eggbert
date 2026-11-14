@@ -11,6 +11,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kGreekTranslations[] = {
         {"Import a demo: choose the file", "Εισαγωγή demo: διάλεξε το αρχείο"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Αποθήκευση εγγραφής"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Δώσε όνομα: η Αποθήκευση τη βάζει στις Εγγραφές μου, η Απόρριψη τη σβήνει."},
+        {"Discard", "Απόρριψη"},
+        {"Discard the recording? Press Discard again.", "Απόρριψη της εγγραφής; Πάτησε ξανά Απόρριψη."},
+        {"The recording was discarded.", "Η εγγραφή απορρίφθηκε."},
+        {"The recording could not be saved.", "Η εγγραφή δεν αποθηκεύτηκε."},
+        {"Saved in My recordings: {0}.", "Αποθηκεύτηκε στις Εγγραφές μου: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Οι εγγραφές γίνονται σε αποστολή με Παύση > Εγγραφή και μένουν στις Εγγραφές μου."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Μια εγγραφή παλιότερης έκδοσης δεν μπορεί να είναι επίδειξη μενού."},
         {"Add file", "Προσθήκη αρχείου"},
@@ -188,14 +197,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Διάλεξε ένα αρχείο .gdemo: εμφανίζεται εδώ."},
         {"Position {0} has no recording of yours to name.", "Η θέση {0} δεν έχει δική σου εγγραφή για ονομασία."},
         {"The recording in position {0} cannot be read.", "Η εγγραφή στη θέση {0} δεν διαβάζεται."},
-        {"A recording is made in a mission: Pause > Record.", "Η εγγραφή γίνεται σε αποστολή: Παύση > Εγγραφή."},
         {"Position {0} has no demo to export.", "Η θέση {0} δεν έχει demo για εξαγωγή."},
         {"Demo {0} exported: downloaded as {1}.", "Το demo {0} εξήχθη: κατέβηκε ως {1}."},
         {"Demo {0} exported to {1}.", "Το demo {0} εξήχθη στο {1}."},
         {"{0} cannot be imported: {1}.", "Το {0} δεν μπορεί να εισαχθεί: {1}."},
         {"Position {0} plays {1} now.", "Η θέση {0} παίζει τώρα {1}."},
         {"The demo could not be recorded.", "Το demo δεν εγγράφηκε."},
-        {"Demo recorded in position {0}.", "Demo εγγράφηκε στη θέση {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "λείπει"},

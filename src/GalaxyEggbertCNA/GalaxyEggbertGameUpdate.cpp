@@ -276,7 +276,7 @@ namespace GalaxyEggbert::CNA
             // Escape (a gamepad's Start) ends a developer's recording before it would pause (the
             // player's pauses, which ends it); the F-keys (camera, fullscreen, help, game speed) and
             // Tab (slow) are left out of both.
-            if (demoRecordSlot_ == 0 &&
+            if (!demoRecordByPlayer_ &&
                 std::binary_search(tickInput_.keys.begin(), tickInput_.keys.end(), static_cast<int>(Keys::Escape)))
             {
                 FinishDemoRecording();
@@ -287,6 +287,12 @@ namespace GalaxyEggbert::CNA
                 return key == static_cast<int>(Keys::Tab) ||
                        (key >= static_cast<int>(Keys::F1) && key <= static_cast<int>(Keys::F24));
             }), tickInput_.keys.end());
+        }
+        // The "Save the recording" panel (replays 3/3): nothing ticks until it is closed.
+        if (recordingSaveOpen_)
+        {
+            UpdateRecordingSave();
+            return;
         }
         if (UpdateDemoMenu()) return;
         UpdateTick();
@@ -317,7 +323,7 @@ namespace GalaxyEggbert::CNA
             if (demoEndRequested_ || demoRecordLog_.TickCount() >= limit || (autoplay_ && autoplay_->Finished()))
             {
                 const bool written = FinishDemoRecording();
-                if (demoRecordSlot_ == 0)
+                if (!demoRecordByPlayer_)
                     Exit();
                 else
                     EndPlayerRecording(written);
@@ -741,13 +747,8 @@ namespace GalaxyEggbert::CNA
                 mouseSetupPressed = pauseInput.setupPressed;
                 mouseMenuPressed = pauseInput.menuPressed;
                 mouseBackPressed = pauseInput.backPressed;
-                if (pauseInput.recordPressed)
-                {
-                    demoSlotsShown_ = true;
-                    demoSlotsMode_ = 0;
-                    demoSlotInfos_ = DemoSlotInfos();
-                    demoSlotsMessage_.clear();
-                }
+                // Replays 3/3: Record records at once into My recordings (no position to choose).
+                if (pauseInput.recordPressed) StartPlayerRecording();
             }
         }
         else if (phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||

@@ -1520,6 +1520,18 @@ int main()
         check(keyboard.Press(kindAt(ScreenKeyboard::Kind::Done), text, 24) == ScreenKeyboard::Result::Done &&
                   keyboard.Press(kindAt(ScreenKeyboard::Kind::Cancel), text, 24) == ScreenKeyboard::Result::Cancel,
               "OK is Done, Cancel is Cancel");
+        {
+            // A recording's save panel (replays 3/3): Save and Discard on them, OK and Cancel again after.
+            const auto& done = keyboard.Keys()[static_cast<std::size_t>(kindAt(ScreenKeyboard::Kind::Done))];
+            const auto& cancel = keyboard.Keys()[static_cast<std::size_t>(kindAt(ScreenKeyboard::Kind::Cancel))];
+            const bool plain = keyboard.Label(done) == "OK";
+            keyboard.SetActionLabels("Save", "Discard");
+            const bool renamed = keyboard.Label(done) == "Save" && keyboard.Label(cancel) == "Discard" &&
+                                 keyboard.Press(kindAt(ScreenKeyboard::Kind::Done), text, 24) == ScreenKeyboard::Result::Done;
+            keyboard.SetActionLabels({}, {});
+            check(plain && renamed && keyboard.Label(done) == "OK",
+                  "the keyboard's OK and Cancel take other words (Save, Discard) and give them back");
+        }
         std::string full(24, 'a');
         keyboard.Press(keyAt('b'), full, 24);
         check(full.size() == 24, "a full name takes no more");

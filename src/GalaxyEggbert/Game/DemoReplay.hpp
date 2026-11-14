@@ -78,6 +78,13 @@ namespace GalaxyEggbert::Game
     // Collection rename: title and filename, without replacing another recording. Empty on failure.
     [[nodiscard]] std::string RenameDemoFile(const std::string& path, const std::string& name);
     bool DeleteDemoFile(const std::string& path);
+    // Pause > Record's recording kept (replays 3/3, the owner 2026-11-14): written atomically into
+    // SharedDemoDir() ("My recordings") as "<name, spaces as '-'>.gdemo", numbered when taken
+    // (name-2.gdemo ...), with @p name (SanitizeDemoName(); @p fallback when nothing is left of it) as
+    // its title. Its path, empty when it could not be written.
+    struct DemoRecording;
+    [[nodiscard]] std::string SaveDemoToCollection(const DemoRecording& demo, const std::string& name,
+                                                   const std::string& fallback);
     // The .gdemo files in SharedDemoDir(), the newest first.
     [[nodiscard]] std::vector<std::string> ListSharedDemos();
 

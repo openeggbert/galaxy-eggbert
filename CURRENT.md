@@ -74,8 +74,12 @@ content-authoring UX, but not new gameplay mechanics.
   its title and filename without overwriting another file; Delete asks twice; Export gives the
   full path or a browser download; Menu demo copies into a chosen position. Older revisions get
   a warning and cannot become menu demos. Web Add file uses the browser picker. All 19 tables
-  translated. Pause retains its existing record-to-position and import flow; direct recording
-  into the collection remains part 3, not implemented. Evidence: `build-probe/replays-2/report.md`.
+  translated. Evidence: `build-probe/replays-2/report.md`.
+- Recording into My recordings (2026-11-14, `plans/codex/replays_3_record.md`, committed): Pause >
+  Record records the mission again at once; when it ends a modal "Save the recording" panel (name,
+  Save / Discard twice) over that screen, nothing ticking meanwhile; saved as `<name>.gdemo` in
+  `demos/shared/` with its world. Exit saves it; deactivation saves it at once (renamed or deleted
+  by the choice). Positions get recordings only through Menu demo. `build-probe/replays-3/report.md`.
 
 - MODERN cheats `restart`, `snap`, `here`, `trail`, `ids`, `sounds`, `chunks` (2026-11-13,
   `plans/codex/cheats_restart_snap_here_trail_ids_sounds_chunks.md`): tick-zero rewind,

@@ -11,6 +11,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kRomanianTranslations[] = {
         {"Import a demo: choose the file", "Importă un demo: alege fișierul"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Salvează înregistrarea"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Dă-i un nume: Salvează o pune în Înregistrările mele, Aruncă o șterge."},
+        {"Discard", "Aruncă"},
+        {"Discard the recording? Press Discard again.", "Arunci înregistrarea? Apasă din nou Aruncă."},
+        {"The recording was discarded.", "Înregistrarea a fost aruncată."},
+        {"The recording could not be saved.", "Înregistrarea nu a putut fi salvată."},
+        {"Saved in My recordings: {0}.", "Salvată în Înregistrările mele: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Înregistrarea se face într-o misiune cu Pauză > Înregistrează și ajunge în Înregistrările mele."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "O înregistrare dintr-o versiune mai veche nu poate fi o demonstrație în meniu."},
         {"Add file", "Adaugă fișier"},
@@ -178,14 +187,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Alege un fișier .gdemo: apare aici."},
         {"Position {0} has no recording of yours to name.", "Poziția {0} nu are o înregistrare a ta de denumit."},
         {"The recording in position {0} cannot be read.", "Înregistrarea de pe poziția {0} nu poate fi citită."},
-        {"A recording is made in a mission: Pause > Record.", "Înregistrarea se face într-o misiune: Pauză > Înregistrează."},
         {"Position {0} has no demo to export.", "Poziția {0} nu are demo de exportat."},
         {"Demo {0} exported: downloaded as {1}.", "Demo-ul {0} exportat: descărcat ca {1}."},
         {"Demo {0} exported to {1}.", "Demo-ul {0} exportat în {1}."},
         {"{0} cannot be imported: {1}.", "{0} nu poate fi importat: {1}."},
         {"Position {0} plays {1} now.", "Poziția {0} redă acum {1}."},
         {"The demo could not be recorded.", "Demo-ul nu a putut fi înregistrat."},
-        {"Demo recorded in position {0}.", "Demo înregistrat pe poziția {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "lipsește"},

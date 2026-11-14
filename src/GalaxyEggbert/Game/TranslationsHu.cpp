@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kHungarianTranslations[] = {
         {"Import a demo: choose the file", "Demó importálása: válaszd ki a fájlt"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Felvétel mentése"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Nevezd el: a Mentés a Felvételeim közé teszi, az Elvetés eldobja."},
+        {"Discard", "Elvetés"},
+        {"Discard the recording? Press Discard again.", "Elveted a felvételt? Nyomd meg újra az Elvetést."},
+        {"The recording was discarded.", "A felvételt elvetetted."},
+        {"The recording could not be saved.", "A felvételt nem sikerült menteni."},
+        {"Saved in My recordings: {0}.", "Elmentve a Felvételeim közé: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Felvételt küldetésben készíthetsz a Szünet > Felvétel gombbal; a Felvételeim között találod."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Régebbi verzióval készült felvétel nem lehet menübemutató."},
         {"Add file", "Fájl hozzáadása"},
@@ -177,14 +186,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Válassz egy .gdemo fájlt: itt jelenik meg."},
         {"Position {0} has no recording of yours to name.", "A(z) {0}. helyen nincs saját felvételed, amit elnevezhetnél."},
         {"The recording in position {0} cannot be read.", "A(z) {0}. hely felvétele nem olvasható."},
-        {"A recording is made in a mission: Pause > Record.", "Felvételt küldetésben készíthetsz: Szünet > Felvétel."},
         {"Position {0} has no demo to export.", "A(z) {0}. helyen nincs exportálható demó."},
         {"Demo {0} exported: downloaded as {1}.", "{0} demó exportálva: letöltve mint {1}."},
         {"Demo {0} exported to {1}.", "{0} demó exportálva ide: {1}."},
         {"{0} cannot be imported: {1}.", "{0} nem importálható: {1}."},
         {"Position {0} plays {1} now.", "A(z) {0}. hely most ezt játssza: {1}."},
         {"The demo could not be recorded.", "A demót nem sikerült felvenni."},
-        {"Demo recorded in position {0}.", "Demó felvéve a(z) {0}. helyre."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "hiányzik"},

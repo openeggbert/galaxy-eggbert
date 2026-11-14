@@ -1047,7 +1047,7 @@ namespace GalaxyEggbert::CNA
         demoEndRequested_ = false;
         std::cout << "GalaxyEggbertCNA: recording demo " << demoRecordPath_ << " from mission "
                   << demoRecordLog_.start.mission
-                  << (demoRecordSlot_ > 0 ? " (leaving the mission or Play ends it)." : " (Escape ends it).")
+                  << (demoRecordByPlayer_ ? " (leaving the mission or Play ends it)." : " (Escape ends it).")
                   << std::endl;
     }
 
@@ -1069,7 +1069,7 @@ namespace GalaxyEggbert::CNA
         char date[32]{};
         std::strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", &utc);
         demo.recordedAt = date;
-        if (demoRecordSlot_ > 0)
+        if (demoRecordByPlayer_)
         {
             demo.worldBytes = std::move(demoRecordWorldBytes_);
             if (!demo.worldBytes) return false;
@@ -1083,13 +1083,16 @@ namespace GalaxyEggbert::CNA
         {
             std::cout << "GalaxyEggbertCNA: demo " << demoRecordPath_ << " not written: " << DemoLoadStatusText(status)
                       << "." << std::endl;
-            if (demoRecordSlot_ == 0) autoplayExitCode_ = 1;
+            if (!demoRecordByPlayer_) autoplayExitCode_ = 1;
             return false;
         }
-        if (demoRecordSlot_ > 0)
+        if (demoRecordByPlayer_)
         {
-            std::error_code made;
-            std::filesystem::create_directories(std::filesystem::path(demoRecordPath_).parent_path(), made);
+            // Kept for the save panel (EndPlayerRecording()), written there under its name.
+            std::cout << "GalaxyEggbertCNA: recording ended (mission " << demo.log.start.mission << ", "
+                      << demo.log.TickCount() << " ticks)." << std::endl;
+            pendingRecording_ = std::move(demo);
+            return true;
         }
         const std::string temporary = demoRecordPath_ + ".tmp";
         std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
@@ -1101,7 +1104,7 @@ namespace GalaxyEggbert::CNA
         {
             std::filesystem::remove(temporary, error);
             std::cout << "GalaxyEggbertCNA: could not write demo " << demoRecordPath_ << "." << std::endl;
-            if (demoRecordSlot_ == 0) autoplayExitCode_ = 1;
+            autoplayExitCode_ = 1;
             return false;
         }
         std::cout << "GalaxyEggbertCNA: demo recorded: " << demoRecordPath_ << " (mission " << demo.log.start.mission
@@ -1612,10 +1615,8 @@ namespace GalaxyEggbert::CNA
         }
         if (demoSlotsMode_ == 0)
         {
-            if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
-                demoSlotsMessage_ = Tr("A recording is made in a mission: Pause > Record.");
-            else
-                StartPlayerRecording(slot);
+            // Replays 3/3: a recording goes into My recordings, a position gets it from there.
+            demoSlotsMessage_ = Tr("Recordings are made in a mission with Pause > Record and kept in My recordings.");
             return;
         }
         if (demoSlotsMode_ == 1)
@@ -1651,19 +1652,23 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
     }
 
-    void GalaxyEggbertGame::StartPlayerRecording(int slot)
+    void GalaxyEggbertGame::StartPlayerRecording()
     {
         using namespace GalaxyEggbert::Game;
         demoSlotsShown_ = false;
         const int mission = worldRuntime_.GetMissionNumber();
         // Speedy Blupi's DemoRecStart(): the mission from its start, at the normal speed.
-        demoRecordSlot_ = slot;
+        demoRecordByPlayer_ = true;
         demoRecordWorldBytes_.reset();
-        demoRecordPath_ = UserDemoPath(slot);
+        demoRecordPath_.clear(); // kept in memory at its end, then named (EndPlayerRecording())
         demoRecordMaxTicks_ = 0; // kDemoMaxTicks, ten minutes
         demoRecordTitle_ = std::string("Recorded by player ") + static_cast<char>('A' + saveData_.GetSelectedGamer()) +
                            (galaxyGamer_ >= 0 ? ": " + GalaxyEggbert::Editor::GalaxyMissionName(mission) + " of a galaxy"
                                               : ": mission " + std::to_string(mission));
+        // The name offered when it is saved (letters, digits, spaces: SanitizeDemoName()).
+        recordingSaveDefault_ = galaxyGamer_ >= 0 ? SanitizeDemoName(GalaxyEggbert::Editor::GalaxyMissionName(mission))
+                                                  : "Mission " + std::to_string(mission);
+        if (recordingSaveDefault_.empty()) recordingSaveDefault_ = "Mission " + std::to_string(mission);
         demoRecordArmed_ = true;
         deferredMission_ = 0;
         gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
@@ -1671,33 +1676,219 @@ namespace GalaxyEggbert::CNA
         if (!missionStartPending_)
         {
             // Its world could not be loaded again: nothing is armed, the game goes on as it was.
-            demoRecordSlot_ = 0;
-            demoRecordPath_.clear();
+            demoRecordByPlayer_ = false;
             demoRecordTitle_.clear();
             demoRecordArmed_ = false;
             ShowDemoNotice(std::string(Tr("The demo could not be recorded.")));
             return;
         }
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
-        std::cout << "GalaxyEggbertCNA: demo position " << slot << ": mission " << mission
-                  << " again from its start, recorded." << std::endl;
+        std::cout << "GalaxyEggbertCNA: recording mission " << mission << " again from its start." << std::endl;
     }
 
     void GalaxyEggbertGame::EndPlayerRecording(bool written)
     {
-        const int slot = demoRecordSlot_;
         demoRecordWorldBytes_.reset();
-        demoRecordSlot_ = 0;
+        demoRecordByPlayer_ = false;
         demoRecordPath_.clear();
         demoRecordTitle_.clear();
         demoRecordArmed_ = false;
         demoEndRequested_ = false;
-        ShowDemoNotice(written ? TrFormat("Demo recorded in position {0}.", {std::to_string(slot)})
-                               : std::string(Tr("The demo could not be recorded.")));
+        if (written && pendingRecording_)
+        {
+            OpenRecordingSave(); // the held-back mission once it is saved or discarded
+            return;
+        }
+        pendingRecording_.reset();
+        ShowDemoNotice(std::string(Tr("The demo could not be recorded.")));
+        LoadDeferredMission();
+    }
+
+    void GalaxyEggbertGame::LoadDeferredMission()
+    {
         if (const int mission = std::exchange(deferredMission_, 0); mission != 0)
         {
             LoadMission(mission); // where the recorded mission was going
         }
+    }
+
+    // ---- The "Save the recording" panel (replays 3/3) ----
+
+    void GalaxyEggbertGame::OpenRecordingSave()
+    {
+        using namespace GalaxyEggbert::Game;
+        recordingSaveOpen_ = true;
+        recordingDiscardArmed_ = false;
+        recordingSaveKeysWas_ = true;
+        recordingSavePointerHeld_ = true;
+        recordingAutosavedPath_.clear();
+        demoNameDraft_ = recordingSaveDefault_;
+        browserTypedKeys_.clear();
+        typedShiftPending_ = false;
+        demoKeyboard_.Layout(InputPad::DemoKeyboardRect(tickInput_.viewportWidth, tickInput_.viewportHeight));
+        demoKeyboard_.Begin(demoNameDraft_);
+        demoKeyboard_.SetActionLabels(std::string(Tr("Save")), std::string(Tr("Discard")));
+        focusNavigator_.Reset();
+        focusHighlight_.reset();
+        recordingSaveMessage_ = Tr("Name it: Save keeps it in My recordings, Discard drops it.");
+        mouseLookActive_ = false;
+        inputPad_.ResetTouchState();
+    }
+
+    std::string GalaxyEggbertGame::WritePendingRecording()
+    {
+        if (!pendingRecording_) return {};
+        return GalaxyEggbert::Game::SaveDemoToCollection(*pendingRecording_, demoNameDraft_, recordingSaveDefault_);
+    }
+
+    void GalaxyEggbertGame::FinishRecordingSave(bool keep)
+    {
+        using namespace GalaxyEggbert::Game;
+        std::error_code error;
+        if (keep)
+        {
+            // Saved already when the game was deactivated: that file gives way to the chosen name.
+            if (!recordingAutosavedPath_.empty()) std::filesystem::remove(recordingAutosavedPath_, error);
+            const auto path = WritePendingRecording();
+            if (path.empty())
+            {
+                recordingSaveMessage_ = Tr("The recording could not be saved.");
+                return; // the panel stays: Save again, or Discard
+            }
+            const std::string name = SanitizeDemoName(demoNameDraft_).empty() ? recordingSaveDefault_
+                                                                             : SanitizeDemoName(demoNameDraft_);
+            ShowDemoNotice(TrFormat("Saved in My recordings: {0}.", {name}));
+            std::cout << "GalaxyEggbertCNA: recording saved: " << path << "." << std::endl;
+        }
+        else
+        {
+            if (!recordingAutosavedPath_.empty()) std::filesystem::remove(recordingAutosavedPath_, error);
+            ShowDemoNotice(std::string(Tr("The recording was discarded.")));
+            std::cout << "GalaxyEggbertCNA: recording discarded." << std::endl;
+        }
+        recordingSaveOpen_ = false;
+        pendingRecording_.reset();
+        recordingAutosavedPath_.clear();
+        demoKeyboard_.SetActionLabels({}, {});
+        focusNavigator_.Reset();
+        focusHighlight_.reset();
+        browserTypedKeys_.clear();
+        // What ended it is still held (Enter, Escape, A, B, a touch): the screen under it waits for
+        // its release (the menu's latch; Pause's own edges).
+        menuInputLatched_ = true;
+        menuConfirmWasDown_ = pauseKeyWasDown_ = focusPadBWas_ = true;
+        LoadDeferredMission();
+    }
+
+    void GalaxyEggbertGame::UpdateRecordingSave()
+    {
+        using namespace GalaxyEggbert::Game;
+        using Microsoft::Xna::Framework::Input::Keys;
+        const int w = tickInput_.viewportWidth, h = tickInput_.viewportHeight;
+        demoKeyboard_.Layout(InputPad::DemoKeyboardRect(w, h)); // the window may have changed
+        const auto keys = CurrentKeyboardState();
+        const GamepadFrame pad = ReadGamepadFrame();
+        // Escape and the gamepad's B discard (twice); Enter (the typed keys) or A on a key press it.
+        const bool escape = keys.IsKeyDown(Keys::Escape) || pad.b;
+        const bool escapePressed = escape && !recordingSaveKeysWas_;
+        const auto discard = [this]() {
+            if (recordingDiscardArmed_)
+            {
+                FinishRecordingSave(false);
+                return;
+            }
+            recordingDiscardArmed_ = true;
+            recordingSaveMessage_ = Tr("Discard the recording? Press Discard again.");
+        };
+        // The name typed on the real keyboard (Enter saves).
+        for (const auto& [typed, shift] : browserTypedKeys_)
+        {
+            if (!recordingSaveOpen_) break;
+            if (recordingSaveKeysWas_ && typed == Keys::Enter) continue; // the Enter that was held
+            const auto result = ScreenKeyboard::TypeKey(typed, shift, demoNameDraft_, kDemoNameMax);
+            if (result == ScreenKeyboard::Result::Done) FinishRecordingSave(true);
+            else if (result == ScreenKeyboard::Result::Edited) recordingDiscardArmed_ = false;
+        }
+        browserTypedKeys_.clear();
+        if (!recordingSaveOpen_) return;
+        if (escapePressed)
+        {
+            discard();
+            recordingSaveKeysWas_ = escape || keys.IsKeyDown(Keys::Enter) || pad.a;
+            return;
+        }
+        recordingSaveKeysWas_ = escape || keys.IsKeyDown(Keys::Enter) || pad.a;
+        // The arrows (and the d-pad) choose a key, A presses it (FocusNavigator, as the naming panel).
+        FocusNavigator::Input in;
+        in.up = keys.IsKeyDown(Keys::Up) || pad.dpadUp;
+        in.down = keys.IsKeyDown(Keys::Down) || pad.dpadDown;
+        in.left = keys.IsKeyDown(Keys::Left) || pad.dpadLeft;
+        in.right = keys.IsKeyDown(Keys::Right) || pad.dpadRight;
+        in.confirm = pad.a;
+        unsigned now = (in.up ? 1u : 0u) | (in.down ? 2u : 0u) | (in.left ? 4u : 0u) | (in.right ? 8u : 0u) |
+                       (in.confirm ? 16u : 0u);
+        const unsigned pressed = now & ~focusKeysWas_;
+        focusKeysWas_ = now;
+        in.up = (pressed & 1u) != 0;
+        in.down = (pressed & 2u) != 0;
+        in.left = (pressed & 4u) != 0;
+        in.right = (pressed & 8u) != 0;
+        in.confirm = (pressed & 16u) != 0;
+        const bool pointerDown = (tickInput_.buttons & 1u) != 0 || !tickInput_.touches.empty();
+        in.pointer = pointerDown;
+        const auto targets = demoKeyboard_.Rects();
+        const auto focus = focusNavigator_.Update(targets, in);
+        focusHighlight_.reset();
+        if (focus.active && focus.focused >= 0 && static_cast<std::size_t>(focus.focused) < targets.size())
+            focusHighlight_ = targets[static_cast<std::size_t>(focus.focused)];
+        // The mouse (or a finger) on the keys; a press already down when the panel opened is not one.
+        auto mouse = CurrentMouseState();
+        for (const auto& touch : tickInput_.touches)
+        {
+            using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+            using Microsoft::Xna::Framework::Input::ButtonState;
+            if (touch.state == int(TouchLocationState::Pressed) || touch.state == int(TouchLocationState::Moved))
+            {
+                mouse = Microsoft::Xna::Framework::Input::MouseState(int(touch.x), int(touch.y), 0, ButtonState::Pressed,
+                                                                     ButtonState::Released, ButtonState::Released,
+                                                                     ButtonState::Released, ButtonState::Released);
+                break;
+            }
+        }
+        if (recordingSavePointerHeld_)
+        {
+            if (pointerDown && !focus.active) return;
+            recordingSavePointerHeld_ = false;
+            // Its press tracking from the screen before (a stale press) is let go here, unused.
+            (void)inputPad_.UpdateDemoSlots(CurrentMouseState(), w, h, {}, -1, false, &demoKeyboard_);
+            return;
+        }
+        if (focus.active)
+        {
+            using Microsoft::Xna::Framework::Input::ButtonState;
+            mouse = Microsoft::Xna::Framework::Input::MouseState(
+                static_cast<int>(focus.x), static_cast<int>(focus.y), 0,
+                focus.pressed ? ButtonState::Pressed : ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        }
+        const auto input = inputPad_.UpdateDemoSlots(mouse, w, h, {}, -1, false, &demoKeyboard_);
+        if (input.keyboardKey < 0) return;
+        const auto result = demoKeyboard_.Press(input.keyboardKey, demoNameDraft_, kDemoNameMax);
+        if (result == ScreenKeyboard::Result::Done) FinishRecordingSave(true);
+        else if (result == ScreenKeyboard::Result::Cancel) discard();
+        else if (result == ScreenKeyboard::Result::Edited) recordingDiscardArmed_ = false;
+    }
+
+    void GalaxyEggbertGame::DrawRecordingSave(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        GalaxyEggbert::Game::DemoSlotsExtras extras;
+        extras.keyboard = &demoKeyboard_;
+        extras.draft = demoNameDraft_;
+        extras.focus = focusHighlight_;
+        const auto& viewport = device.getViewportProperty();
+        inputPad_.DrawDemoSlots(device, viewport.getWidthProperty(), viewport.getHeightProperty(), {},
+                                recordingSaveMessage_, std::string(Tr("Save the recording")), 0, nullptr, -1, {},
+                                extras);
     }
 
     Microsoft::Xna::Framework::Input::KeyboardState GalaxyEggbertGame::CurrentKeyboardState() const

@@ -207,6 +207,23 @@ namespace GalaxyEggbert::CNA
                 if (demoKeyEvents_.size() < 64) demoKeyEvents_.push_back(static_cast<int>(key));
                 if (demoActive_) return;
             }
+            if (recordingSaveOpen_ && !SuppressLiveInput())
+            {
+                // A recording's name typed in the save panel (it can open during a fade).
+                if (key == Keys::LeftShift || key == Keys::RightShift)
+                {
+                    typedShiftPending_ = true;
+                    return;
+                }
+                if (browserTypedKeys_.size() < 64)
+                {
+                    const auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
+                    browserTypedKeys_.emplace_back(key, typedShiftPending_ || keys.IsKeyDown(Keys::LeftShift) ||
+                                                            keys.IsKeyDown(Keys::RightShift));
+                }
+                typedShiftPending_ = false;
+                return;
+            }
             if (SuppressLiveInput() || controlsHelp_.shown || replayingResume_ ||
                 fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
@@ -662,6 +679,17 @@ namespace GalaxyEggbert::CNA
             Game::OnDeactivated(sender, args);
             return;
         }
+        // The save panel open (replays 3/3): kept at once under the name typed so far, in case the
+        // game does not come back (Android); Save renames it, Discard deletes it (FinishRecordingSave()).
+        if (recordingSaveOpen_ && pendingRecording_ && recordingAutosavedPath_.empty())
+        {
+            const std::string draft = demoNameDraft_;
+            if (GalaxyEggbert::Game::SanitizeDemoName(demoNameDraft_).empty()) demoNameDraft_ = recordingSaveDefault_;
+            recordingAutosavedPath_ = WritePendingRecording();
+            demoNameDraft_ = draft;
+            std::cout << "GalaxyEggbertCNA: recording kept while away: "
+                      << (recordingAutosavedPath_.empty() ? "failed" : recordingAutosavedPath_) << "." << std::endl;
+        }
         // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
         if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
@@ -695,8 +723,15 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::OnExiting(System::Object* sender, const System::EventArgs& args)
     {
-        // A recording being made is written when the window closes (--record-demo).
+        // A recording being made is written when the window closes (--record-demo); the player's
+        // (Pause > Record) is kept in My recordings under its name so far, no panel being possible.
         FinishDemoRecording();
+        if (pendingRecording_ && recordingAutosavedPath_.empty())
+        {
+            if (demoNameDraft_.empty() || !recordingSaveOpen_) demoNameDraft_ = recordingSaveDefault_;
+            const auto path = WritePendingRecording();
+            std::cout << "GalaxyEggbertCNA: recording saved on exit: " << (path.empty() ? "failed" : path) << "." << std::endl;
+        }
         // Game1.cpp:205-208: a clean exit deletes CurrentWrite (not during a demo: DeleteResumeFile()).
         DeleteResumeFile();
         Game::OnExiting(sender, args);

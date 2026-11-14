@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kNorwegianTranslations[] = {
         {"Import a demo: choose the file", "Importer en demo: velg filen"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Lagre opptaket"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Gi det et navn: Lagre legger det i Mine opptak, Forkast kaster det."},
+        {"Discard", "Forkast"},
+        {"Discard the recording? Press Discard again.", "Forkaste opptaket? Trykk Forkast igjen."},
+        {"The recording was discarded.", "Opptaket ble forkastet."},
+        {"The recording could not be saved.", "Opptaket kunne ikke lagres."},
+        {"Saved in My recordings: {0}.", "Lagret i Mine opptak: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Opptak lages i et oppdrag med Pause > Ta opp og havner i Mine opptak."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Et opptak fra en eldre versjon kan ikke være en menydemo."},
         {"Add file", "Legg til fil"},
@@ -184,14 +193,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Velg en .gdemo-fil: den står her."},
         {"Position {0} has no recording of yours to name.", "Plass {0} har ingen innspilling av deg å gi navn."},
         {"The recording in position {0} cannot be read.", "Innspillingen på plass {0} kan ikke leses."},
-        {"A recording is made in a mission: Pause > Record.", "En innspilling lages i et oppdrag: Pause > Ta opp."},
         {"Position {0} has no demo to export.", "Plass {0} har ingen demo å eksportere."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} eksportert: lastet ned som {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} eksportert til {1}."},
         {"{0} cannot be imported: {1}.", "{0} kan ikke importeres: {1}."},
         {"Position {0} plays {1} now.", "Plass {0} spiller nå {1}."},
         {"The demo could not be recorded.", "Demoen kunne ikke tas opp."},
-        {"Demo recorded in position {0}.", "Demo tatt opp på plass {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "mangler"},

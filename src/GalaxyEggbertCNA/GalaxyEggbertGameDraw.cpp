@@ -835,8 +835,9 @@ namespace GalaxyEggbert::CNA
                 else
                     inputPad_.DrawPause(
                         device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                        phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
-                        (CanRevertWorld() || NetMatchActive()) && !demoSlotsShown_,
+                        phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_ && !recordingSaveOpen_,
+                        !demoSlotsShown_ && !recordingSaveOpen_,
+                        (CanRevertWorld() || NetMatchActive()) && !demoSlotsShown_ && !recordingSaveOpen_,
                         NetMatchActive() ? TrMark("Message") : revertArmed_ ? TrMark("Sure?") : TrMark("Original"));
                 if (demoSlotsShown_)
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
@@ -986,7 +987,7 @@ namespace GalaxyEggbert::CNA
                     // what the last recording became.
                     // The network game's notices (the original's NotifPush) and another player's pause.
                     std::vector<std::string> names = NetNotices();
-                    if (demoRecording_ && demoRecordSlot_ > 0) names.push_back(std::string(Tr("REC")));
+                    if (demoRecording_ && demoRecordByPlayer_) names.push_back(std::string(Tr("REC")));
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
                     const auto cheats = ActiveCheatNames();
@@ -1085,6 +1086,8 @@ namespace GalaxyEggbert::CNA
                                           controlsHelp_.cheats, controlsHelp_.page);
             }
         }
+        // The "Save the recording" panel over whatever screen the recording ended on.
+        if (recordingSaveOpen_) DrawRecordingSave(device);
         // A rewind about to replay (ArmRewind): this picture stays up while it runs, "Loading.." over it.
         if (rewindPending_)
         {

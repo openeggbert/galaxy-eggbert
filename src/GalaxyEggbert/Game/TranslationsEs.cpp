@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kSpanishTranslations[] = {
         {"Import a demo: choose the file", "Importar una demo: elige el archivo"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Guardar la grabación"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Ponle nombre: Guardar la deja en Mis grabaciones, Descartar la tira."},
+        {"Discard", "Descartar"},
+        {"Discard the recording? Press Discard again.", "¿Descartar la grabación? Pulsa Descartar otra vez."},
+        {"The recording was discarded.", "La grabación se ha descartado."},
+        {"The recording could not be saved.", "No se ha podido guardar la grabación."},
+        {"Saved in My recordings: {0}.", "Guardada en Mis grabaciones: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Se graba en una misión con Pausa > Grabar y las grabaciones quedan en Mis grabaciones."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Una grabación de una versión anterior no puede ser una demo del menú."},
         {"Add file", "Añadir archivo"},
@@ -177,14 +186,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Elige un archivo .gdemo: aparecerá aquí."},
         {"Position {0} has no recording of yours to name.", "La posición {0} no tiene ninguna grabación tuya que nombrar."},
         {"The recording in position {0} cannot be read.", "La grabación de la posición {0} no se puede leer."},
-        {"A recording is made in a mission: Pause > Record.", "Se graba en una misión: Pausa > Grabar."},
         {"Position {0} has no demo to export.", "La posición {0} no tiene ninguna demo que exportar."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} exportada: descargada como {1}."},
         {"Demo {0} exported to {1}.", "Demo {0} exportada a {1}."},
         {"{0} cannot be imported: {1}.", "{0} no se puede importar: {1}."},
         {"Position {0} plays {1} now.", "La posición {0} reproduce ahora {1}."},
         {"The demo could not be recorded.", "No se ha podido grabar la demo."},
-        {"Demo recorded in position {0}.", "Demo grabada en la posición {0}."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "no encontrado"},

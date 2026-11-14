@@ -247,7 +247,7 @@ namespace GalaxyEggbert::CNA
             demoEndRequested_ = true;
             // The player's recording ends as its replay will (here); the mission follows once it
             // is written (EndPlayerRecording()).
-            if (demoRecording_ && demoRecordSlot_ > 0) deferredMission_ = missionNumber;
+            if (demoRecording_ && demoRecordByPlayer_) deferredMission_ = missionNumber;
             return;
         }
         if (!replayingResume_)
@@ -277,7 +277,7 @@ namespace GalaxyEggbert::CNA
         }
         loadedMissionPath_ = path;
         loadedMissionHash_ = ResumeLog::HashBytes(*bytes);
-        if (demoRecordArmed_ && demoRecordSlot_ > 0) demoRecordWorldBytes_ = *bytes;
+        if (demoRecordArmed_ && demoRecordByPlayer_) demoRecordWorldBytes_ = *bytes;
         // A replay keeps the recorded identity, including hub rules, even from a cached file.
         if (galaxyGamer_ >= 0 || demoActive_) worldRuntime_.OverrideMissionNumber(missionNumber);
 

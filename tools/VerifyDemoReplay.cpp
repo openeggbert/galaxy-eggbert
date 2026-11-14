@@ -374,6 +374,27 @@ int main(int argc, char** argv)
         const auto afterDelete = ListSharedDemos();
         check(std::find(afterDelete.begin(), afterDelete.end(), samePath) == afterDelete.end(),
               "deleted recording disappears on refresh");
+        // Pause > Record's recording kept (replays 3/3): the name as its title and file, numbered when
+        // taken, the fallback when nothing of the name is left; whole and readable, nothing temporary.
+        const auto keptFirst = SaveDemoToCollection(recorded, "Garden run", "Mission 11");
+        const auto keptSecond = SaveDemoToCollection(recorded, "Garden run", "Mission 11");
+        const auto keptFallback = SaveDemoToCollection(recorded, "!!!", "Mission 11");
+        std::string keptText;
+        {
+            std::ifstream in(keptFirst, std::ios::binary);
+            keptText.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+        }
+        DemoRecording kept;
+        const bool keptParsed = ParseDemo(keptText, kDemoSimulationRevision, kept) == DemoLoadStatus::Ok;
+        bool temporaryLeft = false;
+        for (const auto& entry : std::filesystem::directory_iterator(SharedDemoDir(), error))
+            temporaryLeft = temporaryLeft || entry.path().extension() == ".tmp";
+        check(keptFirst == SharedDemoDir() + "/Garden-run.gdemo" && keptSecond == SharedDemoDir() + "/Garden-run-2.gdemo" &&
+                  keptFallback == SharedDemoDir() + "/Mission-11.gdemo" && DemoTitle(keptFirst) == "Garden run" &&
+                  DemoTitle(keptFallback) == "Mission 11" && keptParsed && kept.worldBytes == recorded.worldBytes &&
+                  kept.log.TickCount() == recorded.log.TickCount() && kept.gameVersion == recorded.gameVersion &&
+                  !temporaryLeft,
+              "a recording saved into My recordings: named, numbered, fallback name, whole, no temporary file");
         std::filesystem::current_path(home, error);
         std::filesystem::remove_all(here, error);
     }

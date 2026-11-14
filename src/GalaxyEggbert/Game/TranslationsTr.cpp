@@ -10,6 +10,15 @@ namespace GalaxyEggbert::Game
 {
     extern const Translation kTurkishTranslations[] = {
         {"Import a demo: choose the file", "Bir demoyu içe aktar: dosyayı seç"},
+        // Saving a recording (replays 3/3).
+        {"Save the recording", "Kaydı sakla"},
+        {"Name it: Save keeps it in My recordings, Discard drops it.", "Bir ad ver: Kaydet onu Kayıtlarım'a koyar, Sil onu atar."},
+        {"Discard", "Sil"},
+        {"Discard the recording? Press Discard again.", "Kayıt silinsin mi? Sil'e bir kez daha bas."},
+        {"The recording was discarded.", "Kayıt silindi."},
+        {"The recording could not be saved.", "Kayıt saklanamadı."},
+        {"Saved in My recordings: {0}.", "Kayıtlarım'a kaydedildi: {0}."},
+        {"Recordings are made in a mission with Pause > Record and kept in My recordings.", "Kayıt bir görevde Duraklat > Kayıt ile yapılır ve Kayıtlarım'da durur."},
         // My recordings (replays 2/3).
         {"A recording of an older version cannot be a menu demo.", "Eski bir sürümün kaydı menü demosu olamaz."},
         {"Add file", "Dosya ekle"},
@@ -184,14 +193,12 @@ namespace GalaxyEggbert::Game
         {"Choose a .gdemo file: it is listed here.", "Bir .gdemo dosyası seç: burada listelenir."},
         {"Position {0} has no recording of yours to name.", "{0}. yerde adlandırılacak bir kaydın yok."},
         {"The recording in position {0} cannot be read.", "{0}. yerdeki kayıt okunamıyor."},
-        {"A recording is made in a mission: Pause > Record.", "Kayıt bir görevde yapılır: Duraklat > Kayıt."},
         {"Position {0} has no demo to export.", "{0}. yerde dışa aktarılacak demo yok."},
         {"Demo {0} exported: downloaded as {1}.", "Demo {0} dışa aktarıldı: {1} olarak indirildi."},
         {"Demo {0} exported to {1}.", "Demo {0} dışa aktarıldı: {1}."},
         {"{0} cannot be imported: {1}.", "{0} içe aktarılamıyor: {1}."},
         {"Position {0} plays {1} now.", "{0}. yer artık {1} oynatıyor."},
         {"The demo could not be recorded.", "Demo kaydedilemedi."},
-        {"Demo recorded in position {0}.", "Demo {0}. yere kaydedildi."},
 
         // GalaxyEggbert/Game/DemoReplay.cpp
         {"missing", "eksik"},

@@ -985,12 +985,14 @@ namespace GalaxyEggbert::CNA
         std::string demoVerifyPath_;
         bool demoVerifyPending_ = false, demoVerifying_ = false;
 
-        // The player's own demo recordings (BD-0116): Pause's Record button shows the ten demo
-        // positions (demoSlotsShown_); the one chosen records the mission again from its start
-        // (demoRecordSlot_, into UserDemoPath()), as the developer's --record-demo does, but the
-        // game goes on afterwards. A mission change that ends the recording is held back until
-        // the recording is written (deferredMission_), so that the recording ends as its replay
-        // will. demoNotice_ says what happened, for a few seconds.
+        // The player's own recordings (BD-0116; replays 3/3, the owner 2026-11-14): Pause's Record
+        // records the mission again from its start (demoRecordByPlayer_), as the developer's
+        // --record-demo does, but the game goes on afterwards; it ends where it did (leaving Play, a
+        // mission change, ten minutes) and the "Save the recording" panel (recordingSaveOpen_) then
+        // keeps it in My recordings under a name or discards it. A mission change that ends the
+        // recording is held back until then (deferredMission_), so that the recording ends as its
+        // replay will. The ten demo positions get a recording only through My recordings' Menu demo.
+        // demoNotice_ says what happened, for a few seconds.
         bool demoSlotsShown_ = false;
         std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> demoSlotInfos_; // read as they open
         // Pause shows Record: a mission of the campaign or a galaxy being played, nothing recorded or
@@ -1001,14 +1003,36 @@ namespace GalaxyEggbert::CNA
                    !demoRecordArmed_ && demoRecordPath_.empty() && !loadedMissionPath_.empty() &&
                    worldRuntime_.GetMissionNumber() > 0 && !autoplay_;
         }
-        int demoRecordSlot_ = 0; // 1-10 while the player records; 0 the developer's recording
+        bool demoRecordByPlayer_ = false; // Pause > Record; false: the developer's --record-demo
         int deferredMission_ = 0;
         std::string demoSlotsMessage_;
         std::string demoNotice_;
         float demoNoticeSeconds_ = 0.0f;
-        void StartPlayerRecording(int slot);
-        // After FinishDemoRecording() of the player's recording: the notice, the held-back mission.
+        void StartPlayerRecording();
+        // After FinishDemoRecording() of the player's recording: the save panel (or the notice that
+        // it failed and the held-back mission).
         void EndPlayerRecording(bool written);
+        // The "Save the recording" panel: the recording ended (pendingRecording_, serialized at its
+        // last tick) is named on the keyboard on the screen or the real one; Save (OK, Enter) keeps it
+        // in My recordings, Discard (Cancel, Escape, B) twice drops it. While it is open nothing ticks
+        // (Update() returns before UpdateTick(): no resume-log tick, so a replay never needs it).
+        // Deactivated meanwhile it is saved at once (recordingAutosavedPath_) and that file is renamed
+        // or deleted by the choice; the application's exit saves it too.
+        std::optional<GalaxyEggbert::Game::DemoRecording> pendingRecording_;
+        bool recordingSaveOpen_ = false;
+        bool recordingDiscardArmed_ = false;
+        bool recordingSaveKeysWas_ = true;    // Escape/Enter/B held when it opened are not presses
+        bool recordingSavePointerHeld_ = true; // nor a press still down (Pause's button, a touch)
+        std::string recordingSaveDefault_;     // "Mission 11", a galaxy mission's name
+        std::string recordingSaveMessage_;
+        std::string recordingAutosavedPath_;
+        void OpenRecordingSave();
+        void UpdateRecordingSave();
+        void FinishRecordingSave(bool keep);
+        // Writes the pending recording into My recordings under the draft (or the default); its path.
+        std::string WritePendingRecording();
+        void DrawRecordingSave(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void LoadDeferredMission();
         // Which file demo position @p slot plays: the player's recording if it is there.
         [[nodiscard]] std::string DemoSlotPath(int slot) const;
         [[nodiscard]] std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> DemoSlotInfos() const;
