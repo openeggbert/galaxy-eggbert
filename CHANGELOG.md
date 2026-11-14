@@ -43,6 +43,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the
 
 ### Changed
 
+- The `opendoors` cheat opens the hubs' doors only and gives no key, as in Speedy Blupi 1 and 2;
+  the keys cheat is spelled `wellkeys`, as in Speedy Blupi 2 (was `weelkeys`).
 - Lightning cells flicker independently, as in the original.
 - Releases are built and published by GitHub Actions from a version tag.
 - Both websites and the online game update automatically after a final release.

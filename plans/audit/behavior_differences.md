@@ -2235,3 +2235,9 @@ and the golden trace unchanged. Silent Xvfb mouse hold and a real SDL virtual co
 activate `zoom`; captures include 800x360, closed/open/active and the visible orange focus.
 Evidence: `build-probe/cheat-keyboard/`; run directories removed. Android/web and physical
 mobile/controller hardware not tested.
+
+## BD-0128 — `opendoors` gave every key and the keys cheat was spelled `weelkeys` (cheats, Mobile Eggbert's port) — INTENDED_DIFFERENCE (the owner, 2026-11-14)
+
+| Reference | Galaxy | Reason / verification |
+|---|---|---|
+| Mobile Eggbert: typed `opendoors` runs `CheatAction(OpenDoors)` (`m_bCheatDoors`, `AdaptDoors`) **and** `CheatAction(WeelKeys)` (`InputPad.cpp:838-841`); its keys word is `weelkeys` (`InputPad.cpp:736`, `Decor.cpp:2039-2041`). PC originals (`../blupi_recon`): SB1 `src/event.cpp:4244-4249` and SB2 `games/sb2/src/event.cpp:4916` make `OPENDOORS` `SetAllMissions()` only (`m_bCheatDoors` + `AdaptDoors`, SB1 `src/decdesign.cpp:1140-1143`): the hubs' doors, no keys. SB1 has no keys cheat; SB2's is `WELLKEYS` (`event.cpp:79`, rank 24 -> `CheatAction(24)`: `m_blupiCle \|= 7`, `decdesign.cpp:1594-1596`). | `opendoors` opens the hubs' doors (the main hub's gold doors and world signs, a world hub's mission doors; every hub entered while it is on) and gives no key; `wellkeys` gives all three keys; `weelkeys` is no longer a word. | The owner (2026-11-14): for this cheat the 30-year-old PC originals are the model, not Mobile Eggbert. Checked in the reconstruction's sources above; `VerifyGEInputPad` covers the words; the door effect itself was verified unchanged (hub 010 and the main hub: blocks and objects change after `opendoors`, `WORLD HASH`). |

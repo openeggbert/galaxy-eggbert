@@ -3148,7 +3148,7 @@ namespace GalaxyEggbert::Game
     {
         if (!kCheatsEnabled) { count = 0; return nullptr; }
         static constexpr TypedCheatWord kWords[] = {
-            {"opendoors", TypedCheat::OpenDoors, "Toggle hub doors; give every key"},
+            {"opendoors", TypedCheat::OpenDoors, "Toggle open doors in every hub"},
             {"cleanall", TypedCheat::CleanAll, "Clear enemies and hazards"},
             {"megablupi", TypedCheat::MegaBlupi, "Toggle invincibility"},
             {"layegg", TypedCheat::LayEgg, "Set lives to nine"},
@@ -3168,7 +3168,7 @@ namespace GalaxyEggbert::Game
             {"hidedrink", TypedCheat::HideDrink, "Grant temporary invisibility"},
             {"iovercraft", TypedCheat::IOvercraft, "Ride an overcraft"},
             {"udynamite", TypedCheat::UDynamite, "Give one dynamite stick"},
-            {"weelkeys", TypedCheat::WeelKeys, "Give all three keys"},
+            {"wellkeys", TypedCheat::WellKeys, "Give all three keys"},
             {"quick", TypedCheat::Quick, "Toggle F7/F8 speed shortcuts", CheatOrigin::MobileEggbert},
             {"ghost", TypedCheat::Ghost, "Toggle ghost mode (pass walls)", CheatOrigin::MobileEggbert},
             {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance", CheatOrigin::MobileEggbert},

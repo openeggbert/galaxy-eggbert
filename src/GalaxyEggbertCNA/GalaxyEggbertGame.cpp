@@ -1673,8 +1673,10 @@ namespace GalaxyEggbert::CNA
                 else cheatFreeze_ = !cheatFreeze_;
                 break;
             case TC::OpenDoors:
+                // As the PC originals (the owner, 2026-11-14): SB1 event.cpp:4244-4249 and SB2
+                // event.cpp:4916 SetAllMissions() -- the hubs' doors, no keys (Mobile Eggbert's port
+                // added every key, InputPad.cpp:838-841; BD-0128). The keys are `wellkeys`.
                 ApplyCheat(1);
-                interaction_.CheatAllKeys(); // InputPad.cpp:838-841
                 break;
             case TC::CleanAll: ApplyCheat(7); break;
             case TC::MegaBlupi: ApplyCheat(2); break;
@@ -1714,7 +1716,7 @@ namespace GalaxyEggbert::CNA
                 interaction_.CheatSetDynamite(1);
                 sound_.Play(SoundChannel::SoundChannel60);
                 break;
-            case TC::WeelKeys: interaction_.CheatAllKeys(); break;
+            case TC::WellKeys: interaction_.CheatAllKeys(); break; // SB2 decdesign.cpp:1594-1596
             case TC::Zoom:
                 cheatZoomStep_ = (cheatZoomStep_ + 1) % 5; // 1x, 2x, 4x, 8x, 16x (6 %), back to 1x
                 break;

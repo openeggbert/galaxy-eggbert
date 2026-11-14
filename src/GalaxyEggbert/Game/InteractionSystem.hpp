@@ -731,8 +731,8 @@ namespace GalaxyEggbert::Game
         // slot to read lives from directly.
         void SetLives(int lives) noexcept { lives_ = lives; }
         // The typed cheats' inventory (Decor::CheatAction, OR-0007): tenbombs m_blupiPerso = 10,
-        // birdlime m_blupiBullet = 10, udynamite m_blupiDynamite = 1, weelkeys (and opendoors)
-        // every key.
+        // birdlime m_blupiBullet = 10, udynamite m_blupiDynamite = 1, wellkeys every key (SB2;
+        // not opendoors, BD-0128).
         void CheatSetPerso(int count) noexcept { persoCount_ = count; }
         void CheatSetBullets(int count) noexcept { bulletCount_ = count; }
         void CheatSetDynamite(int count) noexcept { dynamiteCount_ = count; }

@@ -1431,15 +1431,15 @@ int main()
     {
         using namespace Microsoft::Xna::Framework::Input;
         InputPad pad;
-        for (char c : std::string("weelkeys"))
+        for (char c : std::string("wellkeys"))
         {
             const auto key = static_cast<Keys>(int(Keys::A) + c - 'a');
             const auto result = pad.UpdateTypedGhostCheat(KeyboardState{key}, true);
             if (c == 's')
             {
-                check(result.cheat == InputPad::TypedCheat::WeelKeys &&
+                check(result.cheat == InputPad::TypedCheat::WellKeys &&
                           !pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
-                      "typing weelkeys consumes its final S rather than turning Blupi around");
+                      "typing wellkeys consumes its final S rather than turning Blupi around");
                 (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::S}, true);
                 check(!pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
                       "the cheat's final S stays suppressed until released");
@@ -1451,13 +1451,13 @@ int main()
               "a fresh S press after the cheat still turns normally");
         InputPad slow;
         auto slowCheat=InputPad::TypedCheat::None;
-        for (char c : std::string("weelkeys"))
+        for (char c : std::string("wellkeys"))
         {
             const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
             slowCheat=slow.UpdateTypedGhostCheat(KeyboardState{key},true).cheat;
             for (int tick=0;tick<120;++tick) (void)slow.UpdateTypedGhostCheat(KeyboardState{},true);
         }
-        check(slowCheat==InputPad::TypedCheat::WeelKeys, "cheat recognition retains the original buffer even with two-second typing pauses");
+        check(slowCheat==InputPad::TypedCheat::WellKeys, "cheat recognition retains the original buffer even with two-second typing pauses");
         InputPad walking;
         for (int i=0; i<120; ++i) (void)walking.UpdateTypedGhostCheat(KeyboardState{Keys::W}, true);
         check(walking.FilterGameplayKeyboard(KeyboardState{Keys::W}).IsKeyDown(Keys::W),
@@ -1497,7 +1497,7 @@ int main()
         int count=1;
         (void)InputPad::TypedCheatWords(count);
         bool none=count==0;
-        for(char c:std::string("ghostcompasshelpweelkeysfairplaydebug"))
+        for(char c:std::string("ghostcompasshelpwellkeysfairplaydebug"))
         {
             const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
             none &= pad.UpdateTypedGhostCheat(KeyboardState{key},true).cheat==InputPad::TypedCheat::None;

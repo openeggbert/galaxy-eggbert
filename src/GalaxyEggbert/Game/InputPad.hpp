@@ -641,7 +641,7 @@ namespace GalaxyEggbert::Game
         enum class TypedCheat : std::uint8_t
         {
             None,
-            OpenDoors,    // "opendoors": doors toggle (and every key, InputPad.cpp:838-841)
+            OpenDoors,    // "opendoors": the hubs' doors toggle (no keys, as SB1/SB2; BD-0128)
             CleanAll,     // "cleanall"
             MegaBlupi,    // "megablupi": SuperBlupi
             LayEgg,       // "layegg": nine lives
@@ -661,7 +661,7 @@ namespace GalaxyEggbert::Game
             HideDrink,    // "hidedrink": the drink's Hide
             IOvercraft,   // "iovercraft": on the overcraft
             UDynamite,    // "udynamite": one dynamite stick
-            WeelKeys,     // "weelkeys" (sic): every key
+            WellKeys,     // "wellkeys" (SB2's spelling; Mobile Eggbert's "weelkeys", BD-0128): every key
             Ghost,        // "ghost" (MODERN): walk through walls
             Quick,        // "quick" (MODERN): F7/F8 unlocked
             Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 16x (6 %) -> 1x
