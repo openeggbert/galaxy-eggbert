@@ -102,7 +102,7 @@ Directories that are generated or machine-local are marked.
 | `cmake/` | `CopyDirectoryIfDifferent.cmake`, `toolchains/mingw-w64.cmake`, `web/` (Emscripten HTML shells) |
 | `packaging/` | Linux runtime-bundle launcher template and README |
 | `web/` | the project's static website (deployed by `.github/workflows/pages.yml`); not the game's web build |
-| `.github/workflows/` | `cna-ci.yml` (build and test), `pages.yml` (website) |
+| `.github/workflows/`, `.github/actions/` | `cna-ci.yml` (build and test on pushes to `develop` and `master`), `release.yml` (a version tag builds and publishes the release), `pages.yml` (website); `actions/checkout-siblings/` holds the siblings' pins |
 | `docs/handbook/` | this handbook |
 | `build-cna-opengl3/`, `build-cna-webgl2/`, `build/`, `build-probe/` | build trees and scratch output; git-ignored, machine-local |
 | root documents | `CURRENT.md`, `handoff.md`, `plan.md`, `NEXT.md` (frozen), `missing.md`, `REMAKE-ANALYSIS.md`, `renderers*.md`, `easy3d.md` (historical migration analysis), `upstream_bugs.md`, `World Format.md`, `ANDROID.md`, `WINDOWS.md` |

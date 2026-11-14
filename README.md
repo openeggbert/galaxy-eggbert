@@ -39,12 +39,17 @@ Lua is not part of the first CNA migration phase.
 
 ## Development
 
-### Init submodules
+### Siblings (a fresh clone)
+
+This repository has no submodules. CNA, cna-engine and their dependencies are checked out beside it,
+at the commits CI and the releases use:
 
 ```bash
-git submodule init --recursive
-git submodule update --recursive
+python3 tools/clone_siblings.py --test-worlds   # --dry-run to see what it does
 ```
+
+The whole recipe for a new machine (packages, configure, build, test) is in
+[docs/handbook/03-build-and-run.md](docs/handbook/03-build-and-run.md), "Building from a fresh clone".
 
 ### `GalaxyEggbertCNA` build — the active target (default ON)
 

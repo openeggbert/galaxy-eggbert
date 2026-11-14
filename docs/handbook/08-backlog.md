@@ -100,6 +100,8 @@ Other known gaps:
 
 - Verified current state: `CURRENT.md`; what changed in each version: `CHANGELOG.md`; where work stood
   and how it was checked, task by task: `handoff.md` (a long log; newest first).
+- Building from a fresh clone on a new machine: `docs/handbook/03-build-and-run.md`, "Building from
+  a fresh clone" (`python3 tools/clone_siblings.py --test-worlds` checks the siblings out at the pins).
 - Releasing and the websites: `docs/releasing.md`.
 - Owner questions and answers: `plans/audit/owner_questions.md`; owner reports and their fixes:
   `plans/audit/owner_reports.md`; differences from the originals: `plans/audit/behavior_differences.md`

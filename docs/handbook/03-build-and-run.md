@@ -29,8 +29,11 @@ wherever `-DCNA_HOME=<path>` and `-DCNA_ENGINE_HOME=<path>` point. CI uses the f
 five checked out side by side next to `galaxy-eggbert`). On the maintainer's machine they live in a
 different directory, `/rv/data/development/github.com/libcna/`, so the existing tree was configured
 with explicit `-D` paths (its cache has `CNA_HOME` and `CNA_ENGINE_HOME` set there). The revisions
-CI uses are pinned in `.github/workflows/cna-ci.yml`; `python3 tools/ci_pin_siblings.py` bumps
-them to the local sibling HEADs and `--check` reports drift.
+CI and the releases use are pinned in one place, `.github/actions/checkout-siblings/action.yml` (a
+composite action that `cna-ci.yml` and `release.yml` both call). `python3 tools/clone_siblings.py`
+clones them at those commits for a fresh clone (see "Building from a fresh clone" below);
+`python3 tools/ci_pin_siblings.py` bumps the pins to the local sibling HEADs after a local
+verification, and `--check` reports drift.
 
 **System libraries** (from the CI job; Debian/Ubuntu names): `build-essential ninja-build
 pkg-config ccache libasound2-dev libpulse-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev
@@ -48,6 +51,69 @@ and no `gtest_main` target exists. To avoid a download, pass
 `xvfb-run`, `xdotool` and ImageMagick's `import` (live QA scripts); `ffmpeg` (music, video
 evidence); Blender (one terrain-relief step); Emscripten SDK (web); Android Studio, SDK API 35, NDK
 29.0.14206865, JDK 17 or 21 (Android).
+
+## Building from a fresh clone (any Linux machine)
+
+What the release workflow's Linux job does on a clean Debian 13 runner
+(`.github/workflows/release.yml`, job `linux`), which built and tested release 0.5.0 from scratch.
+Other distributions are not verified; Debian 13 or a container of it is the safe choice (the
+FFmpeg 7 libraries, glibc 2.38 or newer).
+
+1. **This repository and its siblings, at the pinned commits:**
+
+   ```bash
+   git clone https://github.com/openeggbert/galaxy-eggbert.git
+   cd galaxy-eggbert
+   python3 tools/clone_siblings.py --test-worlds
+   ```
+
+   `tools/clone_siblings.py` reads the pins from `.github/actions/checkout-siblings/action.yml` and
+   puts `cna` (with its SDL submodules, non-recursive as CI), `cna-engine`, `easy-gl`,
+   `sharp-runtime` and `meta-gl` beside this repository, where CMake looks for them, and with
+   `--test-worlds` only the `worlds/` of `mobile-eggbert` (a few MB of a 2.3 GB repository) for the
+   two tests that read it. It never overwrites: a sibling already there at another commit is
+   reported, and only `--checkout` moves a clean one to its pin. `--dry-run` prints what it would do;
+   `--dest DIR` puts them elsewhere (then configure with `-DCNA_HOME` and `-DCNA_ENGINE_HOME`). Stay on
+   the pins: newer sibling revisions are not verified with this tree.
+
+2. **System packages** (Debian 13 names, the release job's list):
+
+   ```bash
+   sudo apt-get install -y --no-install-recommends \
+     build-essential cmake ninja-build pkg-config ccache python3 \
+     libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-jackd2-dev \
+     libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+     libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+     libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+     libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+     libthai-dev libwayland-dev wayland-protocols libdecor-0-dev \
+     libavcodec-dev libavformat-dev libavutil-dev libswresample-dev \
+     libcurl4-openssl-dev nlohmann-json3-dev libzstd-dev libopus-dev
+   ```
+
+3. **Configure, build, test** (the first configure also builds CNA's SDL3 and SDL3_mixer, several
+   minutes; ccache is optional):
+
+   ```bash
+   cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGALAXY_EGGBERT_BUILD_CNA=ON \
+     -DCNA_GRAPHICS_RENDERER=OPENGL33 \
+     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+   cmake --build build --parallel 4
+   ctest --test-dir build --output-on-failure
+   ```
+
+   `ctest` needs no display (CI runs it headless). The golden checks outside it,
+   `tools/verify_golden_frames.sh build` and `tools/verify_golden_trace.sh build`, need one: run them
+   under `xvfb-run -a` on a machine without a desktop.
+
+4. **Play:** `cd build && ./GalaxyEggbert` (runtime assets are found relative to the build directory;
+   the player's files go to `~/.local/share/Galaxy Eggbert`).
+
+Windows, the web and Android are built by the release workflow from a version tag
+(`docs/releasing.md`), so none of their toolchains is needed to publish a release; to build them
+locally, see the sections below, `WINDOWS.md` and `ANDROID.md`. The rules in the next section
+("Build-hygiene rules": the shared ccache, job limits, no builds in `/tmp`) belong to the owner's
+shared workstation; on another machine they are only good habits.
 
 ## Build-hygiene rules
 
@@ -354,8 +420,11 @@ SpeedyBlupi`) are in `ANDROID.md`.
 
 ## CI
 
-`.github/workflows/cna-ci.yml` checks out the five siblings at pinned revisions plus the `worlds/`
-directory of `mobile-eggbert`, installs the system packages, configures with the ccache launchers,
-builds with `-j2` and runs `ctest --output-on-failure`. Golden frames, the trace, autoplay and the
-web and Android builds are not in CI. `pages.yml` deploys `web/` (the project's website) and ignores
+`.github/workflows/cna-ci.yml` (pushes and pull requests to `develop` and `master`, not for `web/`) checks out the five siblings at their pins plus the
+`worlds/` directory of `mobile-eggbert` (both through `.github/actions/checkout-siblings`), installs
+the system packages, configures with the ccache launchers, builds with `-j2` and runs
+`ctest --output-on-failure`. `release.yml` (a pushed `vX.Y.Z` tag, or a manual dry run) builds and
+checks the Linux, Windows, web and Android packages, publishes the GitHub release and updates both
+websites (`docs/releasing.md`). Golden frames, the trace and the autoplay playthroughs are not in CI:
+run them locally (`04-testing.md`). `pages.yml` deploys `web/` (the project's website) and ignores
 everything else.
