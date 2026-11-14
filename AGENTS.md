@@ -1,4 +1,4 @@
-# AI Contribution Policy (v3)
+# AI Contribution Policy (v4)
 
 AI-assisted contributions are permitted under the conditions below.
 The human contributor remains responsible for the entire contribution,
