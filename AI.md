@@ -1,0 +1,117 @@
+# AGENTS.md — Galaxy Eggbert contributor instructions
+
+## Current direction lock
+
+Galaxy Eggbert is a faithful 3D remake of `mobile-eggbert` / *Speedy Blupi*. The sole game target
+is `GalaxyEggbertCNA`: CNA is the engine/API surface, and cna-engine's strict modules
+(`CnaEngine::Core`, `CnaEngine::Graphics` -- camera, mesh builder, GPU meshes, texture regions; XNA
+4.0 types only) are the helpers beside it. They must not hide CNA: game code calls CNA directly.
+cna-engine replaced the former helper library easy-3d on 2026-10-20 (`NEXT.md` §3, frozen history).
+
+The retired pre-CNA implementation was removed from the live tree on 2026-07-25 after playable
+parity and explicit user approval (`E3D-MIG-110..112`, `CLEANUP-S3D-001`). Its last state is
+recoverable at git commit `4afd53e`. Do not resurrect that dependency path or add alternate engine
+targets.
+
+Read `CURRENT.md` first for verified current state, `handoff.md` for where work stands, commands
+and how to continue, and `plans/GALAXY_EGGBERT_COMPLETION.md` for the active completion plan
+(direction, art fidelity, inventories, milestones); `plan.md` is the historical log and detailed
+task inventory. `NEXT.md` is obsolete (frozen history since
+2026-10-24); do not add to it. `easy3d.md` is the historical migration analysis, not current build
+guidance.
+
+## Faithful-remake rules
+
+- Every gameplay feature must trace to confirmed `mobile-eggbert` behavior. Do not invent
+  mechanics from plausibility.
+- `../mobile-eggbert` is read-only: never modify it, even temporarily. Copying code/data tables,
+  enum values, byte layouts, or sprite-frame tables into this repository requires explicit
+  user approval; since 2026-10-25 a standing approval covers small data tables needed for
+  fidelity (glyph widths, animation and timing tables), citing the source. Larger code still
+  needs asking.
+- Reusing approved media assets by their existing paths is allowed where already established.
+  Do not add new copied asset sets without approval.
+- Preserve real numeric IDs (`ObjectType`, block icons, sound channels); they encode reference
+  data.
+- The in-game 3D world editor is the one approved exception: editor UX may be invented, but it
+  must not introduce new gameplay behavior. Its palette/order and interaction should follow the
+  Eggbert 2 editor where specified, with documented Galaxy-only additions such as background
+  selection.
+- Real 3D worlds are hand-authored as original tile-based 3D designs. Mobile Eggbert's maps
+  give identity, theme and mechanics only: no 2D-to-3D conversion or extrusion, no 2.5D.
+- Models and animations come from the original Ray Dream sources (`../speedyblupi-data`)
+  whenever they can be recovered; never a modernized redesign
+  (`plans/GALAXY_EGGBERT_COMPLETION.md` §2).
+
+## Repository boundaries
+
+- Do not modify sibling repositories (`../cna`, `../cna-engine`, `../easy-gl`, `../sharp-runtime`,
+  `../meta-gl`, `../mobile-eggbert`) unless the user explicitly scopes that repository into the
+  task.
+- Keep `InteractionSystem` free of controller, camera, and graphics dependencies.
+- Keep engine-independent world data under `include/GalaxyEggbert/` and
+  `src/GalaxyEggbert/Worlds/`.
+- Avoid backend-specific branches in game logic. `GalaxyEggbertCNA` speaks CNA directly.
+- Reuse existing engine-independent code and verification tests before re-deriving math or
+  reference behavior; see `missing.md`.
+
+## Source layout
+
+- `src/GalaxyEggbertCNA/` — thin CNA application host (`GalaxyEggbertGame`) and platform wiring.
+  `GalaxyEggbertGame` is split by topic: `GalaxyEggbertGame.cpp` (constructor, input, vehicles,
+  sounds, cheats), `...Load.cpp`, `...Demo.cpp`, `...Missions.cpp`, `...Update.cpp` (UpdateTick and its steps:
+  UpdateTickScreens/UpdateScreenPlay, UpdateTickWorld, UpdateTickActions, UpdateTickEvents,
+  UpdateTickCamera),
+  `...Scene.cpp` (the SceneFrame: what the world draws), `...Draw.cpp` (the frame); shared
+  file-local helpers in `GameHelpers.hpp`/`GameInternal.hpp`. The world is drawn by
+  `src/GalaxyEggbert/Game/WorldRenderer` from the SceneFrame (renderers.md).
+- `include/GalaxyEggbert/`, `src/GalaxyEggbert/Worlds/` — engine-independent world/data model.
+- `include/GalaxyEggbert/BlockDefinitionRegistry.hpp` — authoritative backend-independent voxel
+  definition table; render/collision/gameplay consumers must not duplicate its classifications.
+- `src/GalaxyEggbert/Game/` — canonical game implementation in namespace
+  `GalaxyEggbert::Game`; `ObjectDefinitionRegistry` is the authoritative MoveObject type/visual/
+  capability table. Keep game-owned names free of the legacy `GE` prefix.
+- `src/GalaxyEggbert/Editor/` — shared editor implementation in namespace
+  `GalaxyEggbert::Editor`; keep editor-owned names free of the legacy `GE` prefix.
+- `include/GalaxyEggbert/Def/` — shared game definitions in namespace `GalaxyEggbert::Def`.
+- `tools/` — generators and scripted verification executables.
+- `mobile-eggbert-reference/` — researched behavioral/source-of-truth notes.
+- `worlds3d/` — hand-authored `.vwr` worlds.
+- `Content/`, `textures3d/`, `avatars3d/` — runtime assets.
+
+## Build and verification
+
+Use at most six parallel compile jobs on this machine (the owner, 2026-11-01; four is the habit),
+in the existing build tree `build-cna-opengl3/` (reconfigure only when it is broken):
+
+```bash
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4
+ctest --test-dir build-cna-opengl3 -j4 --output-on-failure
+```
+
+Every test is expected to pass; `easy-gl-resource-smoke-tests` was quarantined until 2026-10-23
+(fixed in easy-gl `0b46d35`, part of the pinned v0.1.1), so a failure there is a real signal now.
+Run the game from its build directory because runtime asset paths are relative:
+
+```bash
+cd build-cna-opengl3
+./GalaxyEggbert          # the target GalaxyEggbertCNA builds the file GalaxyEggbert
+```
+
+For risky rendering/editor changes, add or update a pure-logic verifier when possible and perform
+a proportional live/screenshot check. Do not claim visual parity from compilation alone.
+
+## Working practices
+
+- Preserve unrelated user changes in a dirty worktree.
+- Keep changes scoped and update `CURRENT.md`, `handoff.md`, or `plan.md` only where their documented
+  ownership requires it; update `handoff.md` after every committed task.
+- Use at most six jobs (`--parallel 6`) for every build, including packaging and cross-builds.
+- Avoid redundant fresh build trees and compiler caches; SSD write volume matters on this
+  workstation.
+- Commit discrete completed tasks. Push only when the user explicitly requests it.
+- Never add AI attribution to commit messages or PR bodies: no `Co-Authored-By: Claude ...`
+  trailer, no "Generated with Claude Code" line. Attribution is deliberately disabled in the
+  Claude Code settings, so nothing in your context asks for one; do not add it from habit, also
+  not after a context compaction (13 commits of 2026-10-24 got it that way and were rewritten).
